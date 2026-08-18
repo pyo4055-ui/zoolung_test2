@@ -15,16 +15,34 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-s
   try{
     if(typeof pako==='undefined') throw new Error('페이지 실행 모듈을 불러오지 못했습니다. 새로고침해주세요.');
     const [r1,r2]=await Promise.all([
-      fetch('./data1.txt?v=18',{cache:'no-store'}),
-      fetch('./data2.txt?v=18',{cache:'no-store'})
+      fetch('./data1.txt?v=19',{cache:'no-store'}),
+      fetch('./data2.txt?v=19',{cache:'no-store'})
     ]);
     if(!r1.ok||!r2.ok) throw new Error('테스트 데이터를 불러오지 못했습니다.');
     const a=(await r1.text()).trim();
     const b=(await r2.text()).trim();
-    const bin=atob(a+b);
-    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    const out=pako.ungzip(bytes);
-    const html=new TextDecoder('utf-8').decode(out);
+    const clean=s=>s.replace(/[^A-Za-z0-9+/=]/g,'');
+    const b64ToBytes=s=>{
+      const bin=atob(clean(s));
+      return Uint8Array.from(bin,c=>c.charCodeAt(0));
+    };
+    const join=(x,y)=>{const z=new Uint8Array(x.length+y.length);z.set(x,0);z.set(y,x.length);return z};
+
+    let html='';
+    try{
+      const all=b64ToBytes(a+b);
+      html=new TextDecoder('utf-8').decode(pako.ungzip(all));
+    }catch(firstErr){
+      const x=b64ToBytes(a), y=b64ToBytes(b);
+      try{
+        html=new TextDecoder('utf-8').decode(pako.ungzip(join(x,y)));
+      }catch(secondErr){
+        const hx=new TextDecoder('utf-8').decode(pako.ungzip(x));
+        const hy=new TextDecoder('utf-8').decode(pako.ungzip(y));
+        html=hx+hy;
+      }
+    }
+    if(!html || !html.includes('<html')) throw new Error('페이지 데이터 복원에 실패했습니다.');
     document.open();
     document.write(html);
     document.close();
