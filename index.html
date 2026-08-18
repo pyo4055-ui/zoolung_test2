@@ -9,21 +9,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-s
 </head>
 <body>
 <div class="loading"><div class="box"><div class="spin"></div><b>주렁주렁 단체예약 테스트</b><br><small>페이지를 불러오는 중입니다.</small><div id="error"></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <script>
 (async()=>{
   try{
-    if(typeof DecompressionStream==='undefined') throw new Error('이 Safari에서는 압축 해제를 지원하지 않습니다. iOS를 최신 버전으로 업데이트해주세요.');
+    if(typeof pako==='undefined') throw new Error('페이지 실행 모듈을 불러오지 못했습니다. 새로고침해주세요.');
     const [r1,r2]=await Promise.all([
-      fetch('./data1.txt?v=17',{cache:'no-store'}),
-      fetch('./data2.txt?v=17',{cache:'no-store'})
+      fetch('./data1.txt?v=18',{cache:'no-store'}),
+      fetch('./data2.txt?v=18',{cache:'no-store'})
     ]);
     if(!r1.ok||!r2.ok) throw new Error('테스트 데이터를 불러오지 못했습니다.');
     const a=(await r1.text()).trim();
     const b=(await r2.text()).trim();
     const bin=atob(a+b);
     const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    const html=await new Response(stream).text();
+    const out=pako.ungzip(bytes);
+    const html=new TextDecoder('utf-8').decode(out);
     document.open();
     document.write(html);
     document.close();
