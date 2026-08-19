@@ -5,6 +5,14 @@
     if(rs.some(r=>!r.ok)) throw new Error('관리자 확장 기능 데이터를 불러오지 못했습니다.');
     const code=(await Promise.all(rs.map(r=>r.text()))).join('');
     (0,eval)(code);
+    try{
+      const r3=await fetch('./admin_features_v3_patch.js?v=3',{cache:'no-store'});
+      if(!r3.ok)throw new Error('관리자 v3 패치를 불러오지 못했습니다.');
+      (0,eval)(await r3.text());
+    }catch(e3){
+      console.error('admin v3 patch load failed',e3);
+      if(typeof toast==='function')toast('최신 관리자 기능 일부를 불러오지 못했습니다.');
+    }
   }catch(e){
     console.error('admin v2 patch load failed',e);
     if(typeof toast==='function') toast('관리자 확장 기능 로딩에 실패했습니다.');
