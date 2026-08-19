@@ -86,12 +86,8 @@
       return a;
     },{paid:0,paidChap:0,freeChap:0});
 
-    box.innerHTML=`<span class="help">실제 인원</span><b id="outsourceKpiPeople" style="display:block;margin-top:4px;font-size:14px;line-height:1.55">유료인원 ${sum.paid}명<br>유료인솔자 ${sum.paidChap}명<br>무료 인솔자 ${sum.freeChap}명</b>`;
-  }
-
-  function refreshV9(){
-    paintManualClosedDaysV9();
-    renderOutsourcePeopleV9();
+    const html=`<span class="help">실제 인원</span><b id="outsourceKpiPeople" style="display:block;margin-top:4px;font-size:14px;line-height:1.55">유료인원 ${sum.paid}명<br>유료인솔자 ${sum.paidChap}명<br>무료 인솔자 ${sum.freeChap}명</b>`;
+    if(box.innerHTML!==html)box.innerHTML=html;
   }
 
   if(typeof renderAdmin==='function'){
@@ -99,10 +95,21 @@
     renderAdmin=function(){
       const out=base.apply(this,arguments);
       setTimeout(paintManualClosedDaysV9,0);
-      setTimeout(paintManualClosedDaysV9,40);
+      setTimeout(paintManualClosedDaysV9,50);
       return out;
     };
     try{window.renderAdmin=renderAdmin;}catch{}
+  }
+
+  if(typeof window.toggleManualClose==='function'){
+    const base=window.toggleManualClose;
+    window.toggleManualClose=function(){
+      const out=base.apply(this,arguments);
+      setTimeout(paintManualClosedDaysV9,0);
+      setTimeout(paintManualClosedDaysV9,80);
+      return out;
+    };
+    try{toggleManualClose=window.toggleManualClose;}catch{}
   }
 
   if(typeof window.renderOutsourcingPayments==='function'){
@@ -110,25 +117,20 @@
     window.renderOutsourcingPayments=function(){
       const out=base.apply(this,arguments);
       setTimeout(renderOutsourcePeopleV9,0);
-      setTimeout(renderOutsourcePeopleV9,40);
+      setTimeout(renderOutsourcePeopleV9,60);
       return out;
     };
     try{renderOutsourcingPayments=window.renderOutsourcingPayments;}catch{}
   }
 
   const search=document.getElementById('outsourceSearch');
-  if(search)search.addEventListener('click',()=>{setTimeout(renderOutsourcePeopleV9,0);setTimeout(renderOutsourcePeopleV9,60);});
+  if(search)search.addEventListener('click',()=>{setTimeout(renderOutsourcePeopleV9,0);setTimeout(renderOutsourcePeopleV9,80);});
   ['outsourceStart','outsourceEnd','outsourceVendorFilter'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.addEventListener('change',()=>setTimeout(renderOutsourcePeopleV9,0));
   });
+  document.querySelectorAll('[data-tab],#outsourceTabBtn').forEach(btn=>btn.addEventListener('click',()=>setTimeout(()=>{
+    paintManualClosedDaysV9();renderOutsourcePeopleV9();
+  },30)));
 
-  const observer=new MutationObserver(()=>{
-    if(!document.getElementById('adminView')||document.getElementById('adminView').style.display==='none')return;
-    if(!document.getElementById('tab-calendar')?.classList.contains('hidden'))paintManualClosedDaysV9();
-    if(!document.getElementById('tab-outsourcing')?.classList.contains('hidden'))renderOutsourcePeopleV9();
-  });
-  const admin=document.getElementById('adminView');
-  if(admin)observer.observe(admin,{childList:true,subtree:true});
-
-  setTimeout(refreshV9,0);
+  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();},0);
 })();
