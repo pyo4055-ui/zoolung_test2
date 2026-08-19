@@ -32,7 +32,7 @@ const SECURITY_PATCH=[["const PRICE=15000, ADMIN_PASSWORD=\"zoolung09\";", "cons
       html=html.replace(from,to);
     }
     if(html.includes('ADMIN_PASSWORD=')) throw new Error('보안 패치 검증에 실패했습니다.');
-    html=html.replace('</body>','<script src="./admin_features.js?v=1"><\/script></body>');
+    html=html.replace('</body>','<script src="./admin_features.js?v=1"><\/script><script src="./admin_features_v2_loader.js?v=2"><\/script></body>');
     document.open();document.write(html);document.close();
   }catch(e){
     document.getElementById('error').innerHTML='<p style="color:#b23838;font-size:13px;line-height:1.6">로딩 실패<br>'+String(e.message||e)+'</p>';
