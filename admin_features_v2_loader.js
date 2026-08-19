@@ -15,6 +15,9 @@
       const r4=await fetch('./admin_features_v4_patch.js?v=4',{cache:'no-store'});
       if(!r4.ok)throw new Error('관리자 v4 패치를 불러오지 못했습니다.');
       (0,eval)(await r4.text());
+      const r5=await fetch('./admin_features_v5_patch.js?v=5',{cache:'no-store'});
+      if(!r5.ok)throw new Error('관리자 v5 패치를 불러오지 못했습니다.');
+      (0,eval)(await r5.text());
     }catch(e3){
       console.error('admin latest patch load failed',e3);
       if(typeof toast==='function')toast('최신 관리자 기능 일부를 불러오지 못했습니다.');
