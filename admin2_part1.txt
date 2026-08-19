@@ -1,0 +1,44 @@
+(()=>{
+const BASE_PRICE=15000;
+const KR_HOLIDAYS_2026=new Set([
+'2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
+'2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-08-15','2026-08-17',
+'2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25'
+]);
+const isHoliday=date=>KR_HOLIDAYS_2026.has(date)||['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25'].includes(String(date||'').slice(5));
+const vendors=()=>[{id:'self',name:'자체',groupPrice:BASE_PRICE,ticketFeeType:'flat',ticketFeeValue:0,cafeFeeType:'flat',cafeFeeValue:0},...(settings().outsourcingVendors||[]).filter(v=>String(v.name||'').trim()).slice(0,10)];
+const vendorById=id=>vendors().find(v=>v.id===id)||null;
+const selectedVendorId=b=>b.outsourcingVendorId||b.settlement?.vendorId||'self';
+const snapshot=v=>({id:v.id,name:v.name,groupPrice:Number(v.groupPrice||0),ticketFeeType:v.ticketFeeType==='percent'?'percent':'flat',ticketFeeValue:Number(v.ticketFeeValue||0),cafeFeeType:v.cafeFeeType==='percent'?'percent':'flat',cafeFeeValue:Number(v.cafeFeeValue||0)});
+const fee=(amount,type,value)=>Number(amount||0)<=0?0:(type==='percent'?Math.round(Number(amount||0)*Number(value||0)/100):Math.round(Number(value||0)));
+const freeChap=(paid,chap)=>Math.min(Math.floor(Math.max(0,Number(paid||0))/5),Math.max(0,Number(chap||0)));
+const addMin=(start,dur)=>{const m=toMin(start);return m==null||!dur?'':toTime(m+Number(dur||0))};
+function recalcSettlement(b,v){
+if(!b.settlement)return;
+const st=b.settlement,s=snapshot(v),paid=Number(st.actualPaidCount||0),paidChap=Number(st.actualPaidChaperone||0),cafe=Number(st.actualCafeAmount||0),ticket=(paid+paidChap)*s.groupPrice;
+Object.assign(st,{vendorId:v.id,vendorSnapshot:s,ticketUnitPrice:s.groupPrice,ticketAmount:ticket,totalActualSales:ticket+cafe,ticketFee:v.id==='self'?0:fee(ticket,s.ticketFeeType,s.ticketFeeValue),cafeFee:v.id==='self'?0:fee(cafe,s.cafeFeeType,s.cafeFeeValue),savedAt:new Date().toISOString()});
+st.totalFee=st.ticketFee+st.cafeFee;
+}
+window.saveBookingVendor=function(id,vendorId){
+if(!adminGuard())return;const v=vendorById(vendorId),bs=bookings(),b=bs.find(x=>x.id===id);if(!v||!b)return toast('업체 또는 예약 정보를 찾지 못했습니다.');
+b.outsourcingVendorId=v.id;b.outsourcingVendorSnapshot=snapshot(v);recalcSettlement(b,v);setStore('zr_bookings',bs);addActivity('vendor',b,`결제 구분 변경 · ${v.name}`);toast(`${v.name}으로 설정했습니다.`);renderOutsourcingPayments();
+if(!$('adminBookingDetailModal').classList.contains('hidden'))openAdminBookingDetail(id);if(!$('dayDetailModal').classList.contains('hidden'))openDay(b.date);
+};
+function vendorBox(b){
+const sel=selectedVendorId(b),r=vendors().map(v=>`<label class="zr2-radio ${sel===v.id?'on':''}"><input type="radio" name="v_${escapeHtml(b.id)}" value="${escapeHtml(v.id)}" ${sel===v.id?'checked':''} onchange="saveBookingVendor('${b.id}',this.value)"><span>${escapeHtml(v.name)}${v.id!=='self'?` <small>${money(v.groupPrice)}</small>`:''}</span></label>`).join('');
+return `<div class="zr2-vendor"><div class="help"><b>결제 구분 / 아웃소싱 업체</b> · 하나만 선택</div><div class="zr2-radios">${r}</div></div>`;
+}
+function settlementHtml(b){
+const st=b.settlement||{},v=vendorById(selectedVendorId(b))||vendorById('self'),ap=st.actualPaidCount??b.paidCount??0,af=st.actualFreeChaperone??b.freeChaperone??0,ac=st.actualPaidChaperone??b.paidChaperone??0,cafe=st.actualCafeAmount??0;
+return `<div class="calc zr2-settle" data-id="${escapeHtml(b.id)}" style="margin-top:14px"><input type="radio" data-field="vendor" value="${escapeHtml(v.id)}" checked hidden><div class="row"><div><b>실제 결제 / 정산 입력</b><div class="help">접수일 ${dateTimeText(b.createdAt)} · 방문일 ${b.date}</div></div><span class="status confirmed">${escapeHtml(v.name)}</span></div><div class="grid2" style="margin-top:12px"><div><label>실제 유료인원</label><input type="number" min="0" data-field="actualPaid" value="${ap}" oninput="zr2Preview('${b.id}',this)"></div><div><label>실제 무료인솔</label><input type="number" min="0" data-field="actualFree" value="${af}" oninput="zr2Preview('${b.id}',this)"></div><div><label>실제 유료인솔</label><input type="number" min="0" data-field="actualPaidChap" value="${ac}" oninput="zr2Preview('${b.id}',this)"></div><div><label>카페 실제 결제금액</label><input type="number" min="0" step="100" data-field="actualCafe" value="${cafe}" oninput="zr2Preview('${b.id}',this)"></div></div><div class="calc" data-preview style="margin-top:10px"></div><div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn-primary" onclick="zr2SaveSettlement('${b.id}',this)">실제 결제 저장</button></div></div>`;
+}
+window.zr2Preview=function(id,el){
+const root=el.closest('.zr2-settle'),b=bookings().find(x=>x.id===id);if(!root||!b)return;const v=vendorById(selectedVendorId(b))||vendorById('self'),paid=Number(root.querySelector('[data-field="actualPaid"]').value||0),pc=Number(root.querySelector('[data-field="actualPaidChap"]').value||0),cafe=Number(root.querySelector('[data-field="actualCafe"]').value||0),ticket=(paid+pc)*Number(v.groupPrice||0);root.querySelector('[data-preview]').innerHTML=`<b>실제 매출 계산</b><br>결제 구분 <b>${escapeHtml(v.name)}</b> · 적용 단체가 <b>${money(v.groupPrice)}</b><br>매표 매출 <b>${money(ticket)}</b> · 카페 실제 결제 <b>${money(cafe)}</b><br><span class="money">실제 총매출 ${money(ticket+cafe)}</span>`;
+};
+window.zr2SaveSettlement=function(id,el){
+if(!adminGuard())return;const root=el.closest('.zr2-settle'),bs=bookings(),b=bs.find(x=>x.id===id);if(!root||!b)return;const v=vendorById(selectedVendorId(b))||vendorById('self'),s=snapshot(v),paid=Number(root.querySelector('[data-field="actualPaid"]').value||0),fr=Number(root.querySelector('[data-field="actualFree"]').value||0),pc=Number(root.querySelector('[data-field="actualPaidChap"]').value||0),cafe=Number(root.querySelector('[data-field="actualCafe"]').value||0),ticket=(paid+pc)*s.groupPrice,ticketFee=v.id==='self'?0:fee(ticket,s.ticketFeeType,s.ticketFeeValue),cafeFee=v.id==='self'?0:fee(cafe,s.cafeFeeType,s.cafeFeeValue);
+b.outsourcingVendorId=v.id;b.outsourcingVendorSnapshot=s;b.settlement={vendorId:v.id,vendorSnapshot:s,actualPaidCount:paid,actualFreeChaperone:fr,actualPaidChaperone:pc,actualCafeAmount:cafe,ticketUnitPrice:s.groupPrice,ticketAmount:ticket,totalActualSales:ticket+cafe,ticketFee,cafeFee,totalFee:ticketFee+cafeFee,savedAt:new Date().toISOString()};setStore('zr_bookings',bs);addActivity('settlement',b,`실제 결제 저장 · ${v.name}`);toast('실제 결제 내역을 저장했습니다.');renderOutsourcingPayments();if(!$('dayDetailModal').classList.contains('hidden'))openDay(b.date);if(!$('adminBookingDetailModal').classList.contains('hidden'))openAdminBookingDetail(id);
+};
+const actionButtons=b=>b.status==='pending'?`<div class="top-actions" style="margin-top:14px"><button class="btn-primary" onclick="requestBookingStatus('${b.id}','confirmed')">예약 확정</button><button class="btn-soft" onclick="openAdminEditBooking('${b.id}')">예약 수정</button><button class="btn-gray" onclick="requestBookingStatus('${b.id}','cancelled')">취소 처리</button></div>`:b.status==='confirmed'?`<div class="top-actions" style="margin-top:14px"><button class="btn-soft" onclick="openAdminEditBooking('${b.id}')">예약 수정</button><button class="btn-danger" onclick="requestBookingStatus('${b.id}','cancelled')">예약 취소 처리</button></div>`:'';
+function detailHtml(b){
+const mt={lunchbox:'도시락 지참',cafe:'내부 카페 주문',none:'식사 없음'}[b.mealType]||'-',play=(b.playUse==='no'||!b.playStart)?'이용 안 함':`${b.playStart}~${b.playEnd}`,items=(b.cafe?.items||[]
