@@ -6,7 +6,7 @@ window.__ZR_ADMIN_SCHEDULE_V3=true;
 const FV='12.17.1', STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const START=600, MAX=1080, SLOT=15;
 const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터'};
-const SHORT={f4:'4F',f5:'5F',meal:'식사',play:'놀이터'};
+const SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀'};
 const CLS={f4:'zrsc-f4',f5:'zrsc-f5',meal:'zrsc-meal',play:'zrsc-play'};
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
@@ -107,7 +107,7 @@ function injectStyle(){
   #tab-schedule .zrsc-phone{background:#eef6f1;color:#2f6b4f}
   #tab-schedule .zrsc-edit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px;align-items:stretch}
   #tab-schedule .zrsc-timebox{border:1px solid var(--line);border-radius:12px;padding:9px}
-  #tab-schedule .zrsc-timebox.f4{background:#fff3ea;border-color:#f2d0b8}.zrsc-timebox.f5{background:#eef8ff;border-color:#c7e1f2}.zrsc-timebox.meal{background:#fffbea;border-color:#eadc99}.zrsc-timebox.play{background:#f1faec;border-color:#cce4be}
+  #tab-schedule .zrsc-timebox.f4{background:#f8d7bf;border-color:#e8b995}.zrsc-timebox.f5{background:#cfe7f7;border-color:#a9d1ec}.zrsc-timebox.meal{background:#fff0a8;border-color:#e7d46f}.zrsc-timebox.play{background:#d8efc9;border-color:#b9dba4}
   #tab-schedule .zrsc-timebox>strong{display:block;font-size:12px;margin-bottom:7px}
   #tab-schedule .zrsc-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   #tab-schedule .zrsc-pair label{font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:3px}
