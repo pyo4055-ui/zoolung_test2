@@ -144,7 +144,7 @@
       addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=3');
       addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=4');
       addScript('zrSchedulePublishToggleV5','./schedule_publish_toggle_v5.js?v=5');
-      addScript('zrScheduleContentCustomV11','./schedule_content_custom_v11.js?v=12');
+      addScript('zrScheduleContentManagerV13','./schedule_content_manager_v13.js?v=13');
     });
   }
 
