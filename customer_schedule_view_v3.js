@@ -9,8 +9,8 @@ const pad=n=>String(n).padStart(2,'0'),tm=m=>pad(Math.floor(m/60))+':'+pad(m%60)
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),tel=s=>String(s||'').replace(/\D/g,'');
 function read(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function axis(b,segs){let end=mn(b.exitTime)||900;for(const s of segs){const z=mn(s.end);if(z!=null)end=Math.max(end,z)}end=Math.max(900,Math.ceil(end/60)*60);return {start:START,end:Math.min(MAX,end)}}
-function pct(t,a){const m=mn(t);return m==null?0:Math.max(0,Math.min(100),(m-a.start)/(a.end-a.start)*100)}
-function segHtml(s,a,zoom=false){if(!s?.start||!s?.end)return'';const w=Math.max(1,pct(s.end,a)-pct(s.start,a)),label=w<(zoom?5:9)?(SHORT[s.type]||s.type):(LABEL[s.type]||s.type);return `<div class="zr-customer-seg ${CLS[s.type]||''} ${w<(zoom?5:9)?'compact':''}" style="left:${pct(s.start,a)}%;width:${w}%" title="${esc((LABEL[s.type]||s.type)+' '+s.start+'~'+s.end)}"><b>${esc(label)}</b>${w>=(zoom?7:14)?`<small>${esc(s.start)}~${esc(s.end)}</small>`:''}</div>`}
+function pct(t,a){const m=mn(t);return m==null?0:Math.max(0,Math.min(100,(m-a.start)/(a.end-a.start)*100))}
+function segHtml(s,a,zoom=false){if(!s?.start||!s?.end)return'';const w=Math.max(1,pct(s.end,a)-pct(s.start,a)),label=w<(zoom?7:9)?(SHORT[s.type]||s.type):(LABEL[s.type]||s.type);return `<div class="zr-customer-seg ${CLS[s.type]||''} ${w<(zoom?7:9)?'compact':''}" style="left:${pct(s.start,a)}%;width:${w}%" title="${esc((LABEL[s.type]||s.type)+' '+s.start+'~'+s.end)}"><b>${esc(label)}</b>${w>=(zoom?7:14)?`<small>${esc(s.start)}~${esc(s.end)}</small>`:''}</div>`}
 function ruler(a){let h='';for(let m=a.start;m<=a.end;m+=30)h+=`<span style="left:${(m-a.start)/(a.end-a.start)*100}%">${tm(m)}</span>`;return h}
 
 function style(){
