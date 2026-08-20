@@ -148,6 +148,7 @@
 
   setTimeout(()=>{
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
+    addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=14');
     addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=12'));
     loadAdminScheduleTab();
   },0);
