@@ -63,7 +63,7 @@ function timeOptions(value,maxTime){
   for(let m=START;m<=mx;m+=SLOT){const t=tm(m);h+=`<option value="${t}" ${t===value?'selected':''}>${t}</option>`}
   return h;
 }
-function interval(type,s,e){return s&&e?{type,start:s,end:e}:null}
+function interval(type,s,e){return (s||e)?{type,start:s,end:e}:null}
 function overlaps(a,b){return mn(a.start)<mn(b.end)&&mn(b.start)<mn(a.end)}
 function validateSegments(list,b){
   for(const s of list){
