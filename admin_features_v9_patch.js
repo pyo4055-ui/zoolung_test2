@@ -139,13 +139,20 @@
   function loadAdminScheduleTab(){
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
     addScript('zrAdminScheduleScript','./admin_schedule_tab_v3.js?v=3',()=>{
-      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=3');
+      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=11');
       addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=3');
       addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=3');
       addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=4');
       addScript('zrSchedulePublishToggleV5','./schedule_publish_toggle_v5.js?v=5');
+      addScript('zrScheduleContentCustomV11','./schedule_content_custom_v11.js?v=11',()=>{
+        addScript('zrScheduleContentCompactV11','./schedule_content_compact_fix_v11.js?v=11');
+      });
     });
   }
 
-  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10');loadAdminScheduleTab();},0);
+  setTimeout(()=>{
+    paintManualClosedDaysV9();renderOutsourcePeopleV9();
+    addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=11'));
+    loadAdminScheduleTab();
+  },0);
 })();
