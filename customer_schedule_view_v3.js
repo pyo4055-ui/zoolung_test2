@@ -4,7 +4,7 @@ if(window.__ZR_CUSTOMER_SCHEDULE_V3)return;
 window.__ZR_CUSTOMER_SCHEDULE_V3=true;
 
 const $=id=>document.getElementById(id),START=600,MAX=1080,SLOT=15;
-const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터'},SHORT={f4:'4F',f5:'5F',meal:'식사',play:'놀이터'},CLS={f4:'zrsc-f4',f5:'zrsc-f5',meal:'zrsc-meal',play:'zrsc-play'};
+const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터'},SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀'},CLS={f4:'zrsc-f4',f5:'zrsc-f5',meal:'zrsc-meal',play:'zrsc-play'};
 const pad=n=>String(n).padStart(2,'0'),tm=m=>pad(Math.floor(m/60))+':'+pad(m%60),mn=t=>{if(!t)return null;const [h,m]=String(t).split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),tel=s=>String(s||'').replace(/\D/g,'');
 function read(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
