@@ -4,14 +4,19 @@ if(window.__ZR_CUSTOMER_SCHEDULE_V3)return;
 window.__ZR_CUSTOMER_SCHEDULE_V3=true;
 
 const $=id=>document.getElementById(id),START=600,MAX=1080,SLOT=15;
-const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터'},SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀'},CLS={f4:'zrsc-f4',f5:'zrsc-f5',meal:'zrsc-meal',play:'zrsc-play'};
+const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터',free:'자율관람'},SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀',free:'자율'},CLS={f4:'zrsc-f4',f5:'zrsc-f5',meal:'zrsc-meal',play:'zrsc-play'};
+const COLOR={f4:'#f8d7bf',f5:'#cfe7f7',meal:'#fff0a8',play:'#d8efc9',free:'#edf0ed'};
 const pad=n=>String(n).padStart(2,'0'),tm=m=>pad(Math.floor(m/60))+':'+pad(m%60),mn=t=>{if(!t)return null;const [h,m]=String(t).split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),tel=s=>String(s||'').replace(/\D/g,'');
+const segName=s=>s?.label||LABEL[s?.type]||String(s?.type||'컨텐츠');
+const segColor=s=>s?.color||COLOR[s?.type]||'#edf0ed';
+const segShort=s=>SHORT[s?.type]||segName(s).slice(0,2);
 function read(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function axis(b,segs){let end=mn(b.exitTime)||900;for(const s of segs){const z=mn(s.end);if(z!=null)end=Math.max(end,z)}end=Math.max(900,Math.ceil(end/60)*60);return {start:START,end:Math.min(MAX,end)}}
 function pct(t,a){const m=mn(t);return m==null?0:Math.max(0,Math.min(100,(m-a.start)/(a.end-a.start)*100))}
-function segHtml(s,a,zoom=false){if(!s?.start||!s?.end)return'';const w=Math.max(1,pct(s.end,a)-pct(s.start,a)),label=w<(zoom?7:9)?(SHORT[s.type]||s.type):(LABEL[s.type]||s.type);return `<div class="zr-customer-seg ${CLS[s.type]||''} ${w<(zoom?7:9)?'compact':''}" style="left:${pct(s.start,a)}%;width:${w}%" title="${esc((LABEL[s.type]||s.type)+' '+s.start+'~'+s.end)}"><b>${esc(label)}</b>${w>=(zoom?7:14)?`<small>${esc(s.start)}~${esc(s.end)}</small>`:''}</div>`}
+function segHtml(s,a,zoom=false){if(!s?.start||!s?.end)return'';const w=Math.max(1,pct(s.end,a)-pct(s.start,a)),compact=w<(zoom?7:9),label=compact?segShort(s):segName(s);return `<div class="zr-customer-seg ${CLS[s.type]||''} ${compact?'compact':''}" style="left:${pct(s.start,a)}%;width:${w}%;background:${esc(segColor(s))}" title="${esc(segName(s)+' '+s.start+'~'+s.end)}"><b>${esc(label)}</b>${w>=(zoom?7:14)?`<small>${esc(s.start)}~${esc(s.end)}</small>`:''}</div>`}
 function ruler(a){let h='';for(let m=a.start;m<=a.end;m+=30)h+=`<span style="left:${(m-a.start)/(a.end-a.start)*100}%">${tm(m)}</span>`;return h}
+function legend(segs){const seen=new Set(),out=[];for(const s of segs){const key=s.type||segName(s);if(seen.has(key))continue;seen.add(key);out.push(`<span style="background:${esc(segColor(s))}">${esc(segName(s))}</span>`)}return out.join('')}
 
 function style(){
   if($('zrCustomerScheduleStyleV3'))return;
@@ -24,7 +29,6 @@ function style(){
   .zr-customer-seg{position:absolute;top:4px;bottom:4px;border-radius:7px;padding:4px 5px;box-sizing:border-box;overflow:hidden;font-size:10px;z-index:2;display:flex;flex-direction:column;justify-content:center}
   .zr-customer-seg.compact{padding:3px 2px;text-align:center;align-items:center}.zr-customer-seg.compact b{font-size:9px;letter-spacing:-.4px}
   .zr-customer-seg b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.zr-customer-seg small{font-size:9px;white-space:nowrap}
-  .zrsc-f4{background:#f8d7bf}.zrsc-f5{background:#cfe7f7}.zrsc-meal{background:#fff0a8}.zrsc-play{background:#d8efc9}
   .zr-customer-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.zr-customer-legend span{font-size:10px;padding:4px 6px;border-radius:7px}
   .zr-customer-zoom{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px}
   .zr-customer-zoom.hidden{display:none!important}.zr-customer-zoom-card{width:min(980px,100%);max-height:92vh;background:#fff;border-radius:16px;padding:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)}
@@ -50,7 +54,7 @@ function openZoom(id){
 }
 function render(){
   const list=$('existingBookingList');if(!list)return;let box=$('zrCustomerScheduleBox');if(!box){box=document.createElement('div');box.id='zrCustomerScheduleBox';list.insertAdjacentElement('afterend',box)}
-  const found=matching();box.innerHTML=found.map(b=>{const cs=b.customerSchedule||{},segs=Array.isArray(cs.segments)?[...cs.segments].sort((a,z)=>String(a.start).localeCompare(String(z.start))):[],a=axis(b,segs),grid=`${SLOT/(a.end-a.start)*100}% 100%`;return `<div class="zr-customer-schedule"><div class="zr-customer-schedule-top"><h3>${esc(b.orgName||cs.org||'예약')} · 확정 스케줄</h3><button class="zr-customer-zoom-btn" data-zr-zoom="${esc(b.id)}">🔍 크게 보기</button></div><div class="help">관리자가 확정한 방문 스케줄입니다. 예약 ${esc(b.entryTime||cs.entryTime||'')}~${esc(b.exitTime||cs.exitTime||'')}</div><div class="zr-customer-line"><div class="zr-customer-grid" style="background-size:${grid}"></div>${segs.map(s=>segHtml(s,a,false)).join('')}</div><div class="zr-customer-legend"><span class="zrsc-f4">4F 베이직</span><span class="zrsc-f5">5F 워터가든</span><span class="zrsc-meal">식사</span><span class="zrsc-play">놀이터</span></div></div>`}).join('');box.querySelectorAll('[data-zr-zoom]').forEach(b=>b.onclick=()=>openZoom(b.dataset.zrZoom));
+  const found=matching();box.innerHTML=found.map(b=>{const cs=b.customerSchedule||{},segs=Array.isArray(cs.segments)?[...cs.segments].sort((a,z)=>String(a.start).localeCompare(String(z.start))):[],a=axis(b,segs),grid=`${SLOT/(a.end-a.start)*100}% 100%`;return `<div class="zr-customer-schedule"><div class="zr-customer-schedule-top"><h3>${esc(b.orgName||cs.org||'예약')} · 확정 스케줄</h3><button class="zr-customer-zoom-btn" data-zr-zoom="${esc(b.id)}">🔍 크게 보기</button></div><div class="help">관리자가 확정한 방문 스케줄입니다. 예약 ${esc(b.entryTime||cs.entryTime||'')}~${esc(b.exitTime||cs.exitTime||'')}</div><div class="zr-customer-line"><div class="zr-customer-grid" style="background-size:${grid}"></div>${segs.map(s=>segHtml(s,a,false)).join('')}</div><div class="zr-customer-legend">${legend(segs)}</div></div>`}).join('');box.querySelectorAll('[data-zr-zoom]').forEach(b=>b.onclick=()=>openZoom(b.dataset.zrZoom));
 }
 function hook(){
   style();ensureModal();['lookupBooking','checkExisting'].forEach(id=>{const e=$(id);if(e&&!e.dataset.zrCustomerScheduleV3){e.dataset.zrCustomerScheduleV3='1';e.addEventListener('click',()=>setTimeout(render,300))}});
