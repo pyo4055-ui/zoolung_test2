@@ -23,7 +23,10 @@ function fixPhones(){
     const gid=cardId(card),head=card.querySelector('.head');if(!gid||!head)return;
     const phone=String(contacts.get(gid)||'').trim();let tag=head.querySelector('.zr-phone-tag');
     if(!phone){tag?.remove();return}
-    if(!tag){tag=document.createElement('a');tag.className='tag zr-phone-tag';const detail=head.querySelector('.detail');if(detail)head.insertBefore(tag,detail);else head.appendChild(tag)}
+    if(!tag){tag=document.createElement('a');tag.className='tag zr-phone-tag'}
+    const org=head.querySelector('.org');
+    if(org&&org.nextElementSibling!==tag)org.insertAdjacentElement('afterend',tag);
+    else if(!org&&!tag.parentElement)head.prepend(tag);
     tag.href='tel:'+phone.replace(/[^0-9+]/g,'');const want='☎ '+phone;if(tag.textContent!==want)tag.textContent=want;tag.title='예약자 전화번호';
   });
 }
@@ -40,7 +43,7 @@ function subscribe(){
 }
 function injectStyle(){
   if($('zrScheduleDisplayV8Style'))return;const s=document.createElement('style');s.id='zrScheduleDisplayV8Style';s.textContent=`
-  .zr-phone-tag{background:#eef6f1!important;color:#2f6b4f!important;text-decoration:none;white-space:nowrap}
+  .zr-phone-tag{background:#eef6f1!important;color:#2f6b4f!important;text-decoration:none;white-space:nowrap;flex:none}
   .seg.zr-short-seg{padding-left:2px!important;padding-right:2px!important;text-align:center!important;align-items:center!important}
   .seg.zr-short-seg b{font-size:9px!important;letter-spacing:-.5px!important;text-align:center!important;width:100%}
   `;document.head.appendChild(s)
