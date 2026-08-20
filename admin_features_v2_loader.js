@@ -30,6 +30,14 @@
       const r9=await fetch('./admin_features_v9_patch.js?v=9',{cache:'no-store'});
       if(!r9.ok)throw new Error('관리자 v9 패치를 불러오지 못했습니다.');
       (0,eval)(await r9.text());
+
+      if(!document.getElementById('zrCustomerVisitGuideV16')){
+        const g=document.createElement('script');
+        g.id='zrCustomerVisitGuideV16';
+        g.src='./customer_visit_guide_v16.js?v=16';
+        document.body.appendChild(g);
+      }
+
       const waitSchedule=setInterval(()=>{
         if(!window.zrReservationFirebase)return;
         clearInterval(waitSchedule);
