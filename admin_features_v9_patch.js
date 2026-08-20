@@ -132,5 +132,14 @@
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
   },30)));
 
-  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();},0);
+  function loadAdminScheduleTab(){
+    if(document.getElementById('zrAdminScheduleScript'))return;
+    if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
+    const s=document.createElement('script');
+    s.id='zrAdminScheduleScript';
+    s.src='./admin_schedule_tab.js?v=1';
+    document.body.appendChild(s);
+  }
+
+  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();loadAdminScheduleTab();},0);
 })();
