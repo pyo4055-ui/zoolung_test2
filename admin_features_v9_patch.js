@@ -143,6 +143,7 @@
       addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=3');
       addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=3');
       addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=4');
+      addScript('zrSchedulePublishToggleV5','./schedule_publish_toggle_v5.js?v=5');
     });
   }
 
