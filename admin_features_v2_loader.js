@@ -30,6 +30,16 @@
       const r9=await fetch('./admin_features_v9_patch.js?v=9',{cache:'no-store'});
       if(!r9.ok)throw new Error('관리자 v9 패치를 불러오지 못했습니다.');
       (0,eval)(await r9.text());
+      const waitSchedule=setInterval(()=>{
+        if(!window.zrReservationFirebase)return;
+        clearInterval(waitSchedule);
+        if(document.getElementById('zrAdminScheduleScript'))return;
+        const s=document.createElement('script');
+        s.id='zrAdminScheduleScript';
+        s.src='./admin_schedule_tab.js?v=1';
+        document.body.appendChild(s);
+      },300);
+      setTimeout(()=>clearInterval(waitSchedule),15000);
     }catch(e3){
       console.error('admin latest patch load failed',e3);
       if(typeof toast==='function')toast('최신 관리자 기능 일부를 불러오지 못했습니다.');
