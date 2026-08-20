@@ -147,5 +147,5 @@
     });
   }
 
-  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();loadAdminScheduleTab();},0);
+  setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10');loadAdminScheduleTab();},0);
 })();
