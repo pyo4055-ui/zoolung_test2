@@ -27,22 +27,16 @@ function arrangeActivityToolbar(){
   if(!row){row=document.createElement('div');row.id='zr11ActivityToolbar';row.className='zr11-activity-toolbar';const card=search.closest('.card')||tab;const firstHelp=[...card.querySelectorAll('.help')].find(x=>(x.textContent||'').includes('기준으로 조회'));if(firstHelp)firstHelp.insertAdjacentElement('beforebegin',row);else card.prepend(row)}
   const sp=start.closest('div'),ep=end.closest('div');
   [sp,ep,basis,search,excel,today].forEach(x=>{if(x&&x.parentElement!==row)row.appendChild(x)});
-  [sp?.parentElement,ep?.parentElement].forEach(p=>{if(p&&p!==row&&!p.textContent.trim())p.style.display='none'});
  }finally{arranging=false}
 }
 function stripCafeItemsDuring(fn){
  if(typeof fn!=='function')return;
- let base=null,hadWindow=typeof window.bookings==='function';
- try{base=hadWindow?window.bookings:(typeof bookings==='function'?bookings:null)}catch{}
- if(typeof base!=='function')return fn();
- let list=[];try{list=base().map(b=>{const x={...b};if(b?.cafe)x.cafe={...b.cafe,items:[]};return x})}catch{return fn()}
- const wrapped=()=>list;
- try{
-  window.bookings=wrapped;try{bookings=wrapped}catch{}
-  return fn();
- }finally{
-  window.bookings=base;try{bookings=base}catch{}
- }
+ const key='zr_bookings',raw=localStorage.getItem(key);
+ if(raw==null)return fn();
+ let list;try{list=JSON.parse(raw)}catch{return fn()}
+ const modified=Array.isArray(list)?list.map(b=>{const x={...b};if(b?.cafe)x.cafe={...b.cafe,items:[]};return x}):list;
+ try{localStorage.setItem(key,JSON.stringify(modified));return fn()}
+ finally{localStorage.setItem(key,raw)}
 }
 function hookExcel(){
  const v10=window.downloadActivityExcelV10;if(typeof v10!=='function')return false;
