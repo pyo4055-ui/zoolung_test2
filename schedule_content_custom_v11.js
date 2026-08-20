@@ -13,6 +13,7 @@ const defaults=()=>[
  {id:'meal',name:'식사',color:'#fff0a8',fixed:true},
  {id:'play',name:'놀이터',color:'#d8efc9',fixed:true}
 ];
+const SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀'};
 let app=null,auth=null,db=null,F=null,catalog=defaults(),unsubCatalog=null,unsubGroups=null,groups=new Map(),editingBookingId='';
 const cat=id=>catalog.find(x=>x.id===id)||null;
 const toast=s=>{try{window.toast?.(s)}catch{alert(s)}};
@@ -111,9 +112,10 @@ function installButtons(){
  document.querySelectorAll('#tab-schedule .zrsc-card[data-booking]').forEach(card=>{if(card.querySelector('[data-content-add]'))return;const pub=card.querySelector('[data-publish]');if(!pub)return;const b=document.createElement('button');b.className='btn-soft zr11-content-btn';b.textContent='컨텐츠 추가';b.dataset.contentAdd=card.dataset.booking;pub.insertAdjacentElement('beforebegin',b);b.onclick=()=>openModal(b.dataset.contentAdd)})
 }
 function typeFromTitle(title){if(title.startsWith('4F 베이직 '))return'f4';if(title.startsWith('5F 워터가든 '))return'f5';if(title.startsWith('식사 '))return'meal';if(title.startsWith('놀이터 '))return'play';const m=title.match(/^(custom_[^ ]+)\s/);return m?m[1]:''}
+function displayName(type,name,compact){return compact?(SHORT[type]||String(name||'').slice(0,2)):name}
 function enhanceAdmin(){
- document.querySelectorAll('#tab-schedule .zrsc-timebox').forEach(box=>{const type=['f4','f5','meal','play'].find(x=>box.classList.contains(x)),c=cat(type);if(c){const st=box.querySelector('strong');if(st)st.textContent=c.name;box.style.background=c.color}});
- document.querySelectorAll('#tab-schedule .zrsc-seg').forEach(el=>{const type=typeFromTitle(el.title||''),c=cat(type);if(!c)return;const b=el.querySelector('b');if(b)b.textContent=c.name;el.style.background=c.color});
+ document.querySelectorAll('#tab-schedule .zrsc-timebox').forEach(box=>{const type=['f4','f5','meal','play'].find(x=>box.classList.contains(x)),c=cat(type);if(c){const st=box.querySelector('strong');if(st&&st.textContent!==c.name)st.textContent=c.name;if(box.style.background!==c.color)box.style.background=c.color}});
+ document.querySelectorAll('#tab-schedule .zrsc-seg').forEach(el=>{const type=typeFromTitle(el.title||''),c=cat(type);if(!c)return;const b=el.querySelector('b'),want=displayName(type,c.name,el.classList.contains('compact'));if(b&&b.textContent!==want)b.textContent=want;if(el.style.background!==c.color)el.style.background=c.color});
  installButtons();
 }
 function subscribeDate(){
