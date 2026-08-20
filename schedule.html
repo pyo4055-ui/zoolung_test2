@@ -12,17 +12,18 @@
 .appearanceTag.noAppearance{background:#f3f5f6;color:#77838a;border:1px dashed #ccd6db}
 .appearanceTag.hasAppearance{background:#eef4f7;color:#405b69}
 .editable .appearanceTag{outline:1px dashed rgba(154,90,0,.25)}
+.syncPill.ok{color:#2f6b4f;background:#e9f3ed;border-color:#c6decf}.syncPill.wait{color:#8a661f;background:#fff7e5;border-color:#ead8aa}.syncPill.err{color:#a33b3b;background:#fbecec;border-color:#e8c6c6}
 </style>
 </head>
 <body class="viewLocked">
-<div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>주렁주렁 동탄점 내부 테스트용</p><input id="pw" type="password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
+<div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>주렁주렁 동탄점 · 공용 스케줄 로그인</p><input id="pw" type="password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
 
 <header><div class="top"><div class="brand">주렁주렁 동탄점 <small>현장 단체 스케줄 · 테스트 버전</small></div><div class="topRight"><button class="sharedMemoBtn" id="sharedMemoBtn">📝 공용 메모</button><button class="editLock locked" id="editLock">🔒 수정 불가</button></div></div></header>
 
 <main class="app">
 <div class="toolbar" id="toolbar">
   <div class="controls"><button class="soft" id="prev">‹</button><input id="date" type="date"><button class="soft" id="next">›</button><button class="gray" id="today">오늘</button><button class="refreshBtn" id="refreshBtn">↻ 새로고침</button></div>
-  <div class="summary"><span class="pill">운영 <b id="teams">0팀</b></span><span class="pill">취소 <b id="cancelledCount">0팀</b></span><span class="pill">예약 유료 <b id="reserved">0명</b></span><span class="pill">현장 유료 <b id="actualPaidSum">0명</b></span><span class="pill">현장 인솔 <b id="actualChapSum">0명</b></span><span class="pill" id="nowtxt">현재 --:--</span><span class="pill" id="rangeTxt">10:00~15:00</span></div>
+  <div class="summary"><span class="pill">운영 <b id="teams">0팀</b></span><span class="pill">취소 <b id="cancelledCount">0팀</b></span><span class="pill">예약 유료 <b id="reserved">0명</b></span><span class="pill">현장 유료 <b id="actualPaidSum">0명</b></span><span class="pill">현장 인솔 <b id="actualChapSum">0명</b></span><span class="pill" id="nowtxt">현재 --:--</span><span class="pill" id="rangeTxt">10:00~15:00</span><span class="pill syncPill" id="syncStatus">● 연결 대기</span></div>
   <div class="editHint">수정 가능 상태 · 컨텐츠 블록을 터치하면 기존/변경 시간표를 비교하며 수정할 수 있습니다.</div>
   <div class="legend"><span class="f4">4F 베이직</span><span class="f5">5F 워터가든</span><span class="mealC">식사</span><span class="play">놀이터</span><span class="free">자율/기타</span></div>
 </div>
@@ -79,6 +80,6 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
-<script src="schedule_v4.js?v=5"></script>
+<script type="module" src="schedule_v6.js?v=6"></script>
 </body>
 </html>
