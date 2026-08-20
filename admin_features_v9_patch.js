@@ -132,13 +132,16 @@
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
   },30)));
 
+  function addScript(id,src,onload){
+    if(document.getElementById(id)){onload?.();return}
+    const s=document.createElement('script');s.id=id;s.src=src;if(onload)s.onload=onload;document.body.appendChild(s);
+  }
   function loadAdminScheduleTab(){
-    if(document.getElementById('zrAdminScheduleScript'))return;
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
-    const s=document.createElement('script');
-    s.id='zrAdminScheduleScript';
-    s.src='./admin_schedule_tab.js?v=1';
-    document.body.appendChild(s);
+    addScript('zrAdminScheduleScript','./admin_schedule_tab.js?v=2',()=>{
+      addScript('zrCustomerScheduleScript','./customer_schedule_view.js?v=2');
+      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel.js?v=2');
+    });
   }
 
   setTimeout(()=>{paintManualClosedDaysV9();renderOutsourcePeopleV9();loadAdminScheduleTab();},0);
