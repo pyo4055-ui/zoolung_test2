@@ -12,7 +12,7 @@ function fixSegments(){
   document.querySelectorAll('.seg').forEach(el=>{
     const type=typeOf(el),b=el.querySelector('b');if(!type||!b)return;
     const w=el.getBoundingClientRect().width;
-    b.textContent=w>0&&w<54?SHORT[type]:LABEL[type];
+    const want=w>0&&w<54?SHORT[type]:LABEL[type];if(b.textContent!==want)b.textContent=want;
     el.classList.toggle('zr-short-seg',w>0&&w<54);
     if(!el.title){const small=el.querySelector('small')?.textContent||'';el.title=(LABEL[type]||type)+(small?' '+small:'')}
   });
@@ -24,7 +24,7 @@ function fixPhones(){
     const phone=String(contacts.get(gid)||'').trim();let tag=head.querySelector('.zr-phone-tag');
     if(!phone){tag?.remove();return}
     if(!tag){tag=document.createElement('a');tag.className='tag zr-phone-tag';const detail=head.querySelector('.detail');if(detail)head.insertBefore(tag,detail);else head.appendChild(tag)}
-    tag.href='tel:'+phone.replace(/[^0-9+]/g,'');tag.textContent='☎ '+phone;tag.title='예약자 전화번호';
+    tag.href='tel:'+phone.replace(/[^0-9+]/g,'');const want='☎ '+phone;if(tag.textContent!==want)tag.textContent=want;tag.title='예약자 전화번호';
   });
 }
 function enhance(){fixSegments();fixPhones()}
