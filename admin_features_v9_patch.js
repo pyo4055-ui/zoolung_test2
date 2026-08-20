@@ -132,13 +132,20 @@
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
   },30)));
 
+  /* 구형 loader의 admin_schedule_tab.js 자동 주입을 막는 자리표시자 */
+  if(!document.getElementById('zrAdminScheduleScript')){
+    const guard=document.createElement('span');guard.id='zrAdminScheduleScript';guard.hidden=true;guard.dataset.zrV14Guard='1';document.body.appendChild(guard);
+  }
+
   function addScript(id,src,onload){
-    if(document.getElementById(id)){onload?.();return}
+    const found=document.getElementById(id);
+    if(found&&!found.dataset.zrV14Guard){onload?.();return}
+    if(found?.dataset.zrV14Guard)found.remove();
     const s=document.createElement('script');s.id=id;s.src=src;if(onload)s.onload=onload;document.body.appendChild(s);
   }
   function loadAdminScheduleTab(){
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
-    addScript('zrAdminScheduleScriptV14','./admin_schedule_tab_v14.js?v=14',()=>{
+    addScript('zrAdminScheduleScript','./admin_schedule_tab_v14.js?v=14',()=>{
       addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=12');
       addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=3');
       addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=3');
