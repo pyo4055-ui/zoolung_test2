@@ -69,11 +69,10 @@ function render(){
    let ss=(g.segments||[]).map(s=>segHtml(s,axis,`data-seg="${s.id}" data-g="${g.id}"`)).join("");
    let cafe=String(g.meal||"").includes("카페"),mealClass=cafe?"tag mealTag cafe":"tag mealTag";
    return `<article class="card ${editMode?"editable":""} ${g.cancelled?"cancelled":""}">
-   <div class="head"><div class="org">${esc(g.org)}</div><span class="tag">${g.res}(${g.tea})명</span><span class="${mealClass}" ${cafe?`data-cafe="${g.id}"`:""}>${esc(g.meal||"")}</span>${!String(g.meal||"").includes("식사없음")?`<span class="tag locTag ${g.mealLoc?"hasLoc":"noLoc"}" data-loc="${g.id}">식사위치: ${esc(g.mealLoc||"미입력")}</span>`:""}${g.cancelled?'<span class="tag cancelTag">당일취소</span>':""}<button class="soft detail" data-e="${g.id}">상세</button></div>
+   <div class="head"><div class="org">${esc(g.org)}</div><span class="tag">${g.res}(${g.tea})명</span><span class="${mealClass}" ${cafe?`data-cafe="${g.id}"`:""}>${esc(g.meal||"")}</span>${!String(g.meal||"").includes("식사없음")?`<span class="tag locTag ${g.mealLoc?"hasLoc":"noLoc"}" data-loc="${g.id}" title="식사위치">📍 ${esc(g.mealLoc||"식사위치")}</span>`:""}<span class="tag appearanceTag ${g.appearance?"hasAppearance":"noAppearance"}" data-a="${g.id}" title="아이들 인상착의">👕 ${esc(g.appearance||"인상착의")}</span>${g.cancelled?'<span class="tag cancelTag">당일취소</span>':""}<button class="soft detail" data-e="${g.id}">상세</button></div>
    <div class="meta"><span class="planT" data-q="plan" data-id="${g.id}">예약 ${g.ps}~${g.pe}</span><span class="live ${g.eta?"has":""}" data-q="eta" data-id="${g.id}">도착예정 ${g.eta||"--:--"}</span><span class="live ${g.aend?"has":""}" data-q="aend" data-id="${g.id}">퇴장예정 ${g.aend||"--:--"}</span><span class="live ${g.actualPaid!==""?"has":""}" data-q="actualPaid" data-id="${g.id}">유료 ${g.actualPaid!==""?g.actualPaid+"명":"--"}</span><span class="live ${g.actualChap!==""?"has":""}" data-q="actualChap" data-id="${g.id}">인솔 ${g.actualChap!==""?g.actualChap+"명":"--"}</span><div class="quick"><button class="check ${g.pay?"on":""}" data-c="pay" data-id="${g.id}">${g.pay?"✓ ":""}결제</button><button class="check ${g.book?"on":""}" data-c="book" data-id="${g.id}">${g.book?"✓ ":""}컬러북</button></div></div>
    <div class="timeline"><div class="grid" style="background-size:${(SLOT/(axis.end-axis.start))*100}% 100%"></div>${ss}${np==null?"":`<div class="now" style="left:${np}%"></div>`}</div>
-   <div class="memo" data-m="${g.id}"><b>메모</b>${esc(g.memo||"메모 없음 · 눌러서 입력")}</div>
-   <div class="appearance ${g.appearance?"has":""}" data-a="${g.id}"><b>인상착의</b>${esc(g.appearance||"미입력 · 눌러서 입력")}</div></article>`
+   <div class="memo" data-m="${g.id}"><b>메모</b>${esc(g.memo||"메모 없음 · 눌러서 입력")}</div></article>`
  }).join("");
  document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>editMode?openDetail(x.dataset.e):lockedMsg());
  document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!editMode)return lockedMsg();openDetail(x.dataset.m);setTimeout(()=>$("memo").focus(),80)});
@@ -100,24 +99,25 @@ function fill(el,blank){let h=blank?'<option value="">--:--</option>':"";for(let
 ["ps","pe"].forEach(x=>fill($(x),false));["eta","aend"].forEach(x=>fill($(x),true));
 function fresh(){return {id:id(),date,org:"",res:15,tea:0,actualPaid:"",actualChap:"",ps:"10:30",pe:"14:00",eta:"",aend:"",meal:"도시락",mealLoc:"",cafeDetail:"",appearance:"",pay:false,book:false,memo:"",cancelled:false,segments:segs(["f4","meal","play","f5"])}}
 function openDetail(i){if(!editMode)return lockedMsg();eid=i||null;draft=JSON.parse(JSON.stringify(i?data.groups.find(g=>g.id===i):fresh()));$("detailTitle").textContent=i?"단체 상세 수정":"단체 스케줄 추가";["org","res","tea","actualPaid","actualChap","ps","pe","eta","aend","meal","mealLoc","cafeDetail","memo","appearance"].forEach(k=>$(k).value=draft[k]??"");refreshDetailChecks();refreshCancelBtn();$("detailModal").classList.remove("hidden")}
-function refreshDetailChecks(){$("pay").classList.toggle("on",draft.pay);$("pay").textContent="결제완료 "+(draft.pay?"✓":"□");$("book").classList.toggle("on",draft.book);$("book").textContent="컬러북 제공 "+(draft.book?"✓":"□")}
-function refreshCancelBtn(){let b=$("cancelToggle");b.classList.toggle("active",!!draft.cancelled);b.textContent=draft.cancelled?"↩ 취소 해제":"당일취소"}
+function refreshDetailChecks(){$("pay").classList.toggle("on",!!draft.pay);$("pay").textContent="결제완료 "+(draft.pay?"✓":"□");$("book").classList.toggle("on",!!draft.book);$("book").textContent="컬러북 제공 "+(draft.book?"✓":"□")}
+function refreshCancelBtn(){$("cancelToggle").textContent=draft.cancelled?"↩ 취소 해제":"당일취소";$('cancelToggle').classList.toggle('uncancel',!!draft.cancelled)}
 $("pay").onclick=()=>{draft.pay=!draft.pay;refreshDetailChecks()};$("book").onclick=()=>{draft.book=!draft.book;refreshDetailChecks()};
-$("cancelToggle").onclick=()=>{draft.cancelled=!draft.cancelled;draft.cancelledAt=draft.cancelled?new Date().toISOString():"";refreshCancelBtn()};
+$("cancelToggle").onclick=()=>{draft.cancelled=!draft.cancelled;refreshCancelBtn();toast(draft.cancelled?"당일취소로 표시합니다. 저장을 눌러 확정하세요.":"취소를 해제합니다. 저장을 눌러 확정하세요.")};
 $("detailSave").onclick=()=>{["org","res","tea","actualPaid","actualChap","ps","pe","eta","aend","meal","mealLoc","cafeDetail","memo","appearance"].forEach(k=>draft[k]=$(k).value);draft.res=Number(draft.res||0);draft.tea=Number(draft.tea||0);draft.actualPaid=draft.actualPaid===""?"":Number(draft.actualPaid||0);draft.actualChap=draft.actualChap===""?"":Number(draft.actualChap||0);if(!draft.org)return toast("단체명을 입력해주세요.");if(min(draft.pe)<=min(draft.ps))return toast("퇴장시간을 도착시간보다 늦게 설정해주세요.");if(eid)data.groups[data.groups.findIndex(g=>g.id===eid)]=draft;else data.groups.push(draft);set(KEY,data);$("detailModal").classList.add("hidden");render();toast("저장했습니다.")};
-$("detailClose").onclick=()=>$("detailModal").classList.add("hidden");
-$("detailModal").onclick=e=>{if(e.target===$("detailModal"))$("detailModal").classList.add("hidden")};
+$("detailClose").onclick=()=>$("detailModal").classList.add("hidden");$("detailModal").onclick=e=>{if(e.target===$("detailModal"))$("detailModal").classList.add("hidden")};
+$("fab").onclick=()=>openDetail();
 
-function opts(v){let h="";for(let m=START_MIN;m<=MAX_PICK;m+=SLOT){let t=tm(m);h+=`<option value="${t}" ${t===v?"selected":""}>${t}</option>`}return h}
-function contentAxis(){let all=[...contentState.original,...contentState.changed],used=[900];all.forEach(s=>{used.push(min(s.start),min(s.end))});let end=Math.max(900,Math.ceil(Math.max(...used.filter(x=>x!=null))/60)*60);return {start:START_MIN,end:Math.min(MAX_PICK,end)}}
-function preview(rulerId,timelineId,segsArr,axis){$(rulerId).innerHTML=rulerHtml(axis);$(timelineId).innerHTML='<div class="grid" style="background-size:'+((SLOT/(axis.end-axis.start))*100)+'% 100%"></div>'+segsArr.map(s=>segHtml(s,axis)).join("")}
-function updateContentPreview(){let axis=contentAxis();preview("originalRuler","originalTimeline",contentState.original,axis);preview("changedRuler","changedTimeline",contentState.changed,axis)}
-function openContentEditor(gid){let g=data.groups.find(z=>z.id===gid);if(!g)return;contentState={gid,original:JSON.parse(JSON.stringify(g.segments||[])),changed:JSON.parse(JSON.stringify(g.segments||[]))};$("contentTitle").textContent=g.org+" · 컨텐츠 스케줄";renderContentRows();updateContentPreview();$("contentModal").classList.remove("hidden")}
-function renderContentRows(){$("contentRows").innerHTML=contentState.changed.map((s,i)=>{let tt=T[s.type]||T.free;return `<div class="contentRow" data-i="${i}"><div class="contentName ${tt[1]}">${tt[0]}</div><div><label>시작</label><select data-k="start">${opts(s.start)}</select></div><div><label>종료</label><select data-k="end">${opts(s.end)}</select></div></div>`}).join("");document.querySelectorAll(".contentRow").forEach(r=>r.querySelectorAll("select").forEach(sel=>sel.onchange=()=>{let i=Number(r.dataset.i);contentState.changed[i][sel.dataset.k]=sel.value;updateContentPreview()}))}
-function validateContent(){let arr=contentState.changed.map(s=>({...s,a:min(s.start),b:min(s.end)}));for(let s of arr)if(s.b<=s.a)return "종료시간은 시작시간보다 늦어야 합니다.";let sorted=[...arr].sort((x,y)=>x.a-y.a);for(let i=1;i<sorted.length;i++)if(sorted[i].a<sorted[i-1].b)return "같은 단체의 컨텐츠 시간이 겹쳐요.";return ""}
-$("contentSave").onclick=()=>{let err=validateContent();if(err)return toast(err);let g=data.groups.find(z=>z.id===contentState.gid);if(!g)return;g.segments=JSON.parse(JSON.stringify(contentState.changed));set(KEY,data);$("contentModal").classList.add("hidden");contentState=null;render();toast("컨텐츠 시간을 저장했습니다.")};
-$("contentCancel").onclick=$("contentClose").onclick=()=>{$("contentModal").classList.add("hidden");contentState=null};
-$("contentModal").onclick=e=>{if(e.target===$("contentModal")){$("contentModal").classList.add("hidden");contentState=null}};
+function previewAxis(segments){let used=[900];segments.forEach(s=>{used.push(min(s.start)||START_MIN,min(s.end)||900)});let end=Math.max(900,Math.ceil(Math.max(...used)/60)*60);return {start:START_MIN,end:Math.min(MAX_PICK,end)}}
+function previewTimelineHtml(segments,axis){return `<div class="grid" style="background-size:${(SLOT/(axis.end-axis.start))*100}% 100%"></div>`+segments.map(s=>segHtml(s,axis)).join("")}
+function renderContentEditor(){
+ let original=contentState.original,changed=contentState.changed,axis=previewAxis([...original,...changed]);
+ $("originalRuler").innerHTML=rulerHtml(axis);$("changedRuler").innerHTML=rulerHtml(axis);$("originalTimeline").innerHTML=previewTimelineHtml(original,axis);$("changedTimeline").innerHTML=previewTimelineHtml(changed,axis);
+ $("contentRows").innerHTML=changed.map((s,i)=>{let tt=T[s.type]||T.free;return `<div class="contentRow"><div class="contentName ${tt[1]}">${tt[0]}</div><label>시작<input type="time" step="900" min="10:00" max="18:00" value="${s.start}" data-ct="start" data-i="${i}"></label><label>종료<input type="time" step="900" min="10:00" max="18:00" value="${s.end}" data-ct="end" data-i="${i}"></label></div>`}).join("");
+ document.querySelectorAll("[data-ct]").forEach(x=>x.onchange=()=>{let i=+x.dataset.i,v=x.value;if(!v)return;let m=min(v);m=Math.round(m/SLOT)*SLOT;v=tm(Math.max(START_MIN,Math.min(MAX_PICK,m)));contentState.changed[i][x.dataset.ct]=v;renderContentEditor()})
+}
+function openContentEditor(gid){let g=data.groups.find(z=>z.id===gid);if(!g)return;contentState={gid,original:JSON.parse(JSON.stringify(g.segments||[])),changed:JSON.parse(JSON.stringify(g.segments||[]))};$("contentTitle").textContent=g.org+" · 컨텐츠 수정";renderContentEditor();$("contentModal").classList.remove("hidden")}
+$("contentSave").onclick=()=>{for(let s of contentState.changed){if(min(s.end)<=min(s.start))return toast("컨텐츠 종료시간은 시작시간보다 늦어야 합니다.")}let g=data.groups.find(z=>z.id===contentState.gid);g.segments=contentState.changed;set(KEY,data);$("contentModal").classList.add("hidden");render();toast("컨텐츠 시간을 변경했습니다.")};
+$("contentCancel").onclick=$("contentClose").onclick=()=>$("contentModal").classList.add("hidden");$("contentModal").onclick=e=>{if(e.target===$("contentModal"))$("contentModal").classList.add("hidden")};
 
 function openCafe(gid){
  let g=data.groups.find(z=>z.id===gid);if(!g)return;cafeEditGid=gid;
@@ -136,7 +136,6 @@ $("cafeSave").onclick=()=>{
 $("cafeClose").onclick=()=>{$("cafeModal").classList.add("hidden");cafeEditGid=null};
 $("cafeModal").onclick=e=>{if(e.target===$("cafeModal")){$("cafeModal").classList.add("hidden");cafeEditGid=null}};
 
-$("fab").onclick=()=>openDetail();
 $("refreshBtn").onclick=()=>{
  data=get(KEY,data);normalize();render();toast("새로고침했습니다.");
 };
@@ -162,8 +161,7 @@ $("sharedMemoModal").onclick=e=>{if(e.target===$("sharedMemoModal"))$("sharedMem
 
 function setdate(d){date=d;set(PK,date);render()}
 $("date").onchange=()=>setdate($("date").value);$("prev").onclick=()=>setdate(shift(date,-1));$("next").onclick=()=>setdate(shift(date,1));$("today").onclick=()=>setdate(today());
-
-window.addEventListener("storage",e=>{if(e.key===KEY){data=get(KEY,data);normalize();render()}});
-setInterval(()=>{let latest=get(KEY,data);if(JSON.stringify(latest)!==JSON.stringify(data)){data=latest;normalize();render()}},3000);
-render();setInterval(render,60000);
+window.addEventListener("storage",e=>{if(e.key===KEY){data=get(KEY,data);normalize();render();toast("다른 화면의 변경사항을 반영했습니다.")}});
+setInterval(()=>{let latest=get(KEY,null);if(latest&&JSON.stringify(latest)!==JSON.stringify(data)){data=latest;normalize();render()}},3000);
+render();
 })();
