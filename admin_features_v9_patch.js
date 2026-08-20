@@ -138,9 +138,10 @@
   }
   function loadAdminScheduleTab(){
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
-    addScript('zrAdminScheduleScript','./admin_schedule_tab.js?v=2',()=>{
-      addScript('zrCustomerScheduleScript','./customer_schedule_view.js?v=2');
-      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel.js?v=2');
+    addScript('zrAdminScheduleScript','./admin_schedule_tab_v3.js?v=3',()=>{
+      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=3');
+      addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=3');
+      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=3');
     });
   }
 
