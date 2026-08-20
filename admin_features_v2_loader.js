@@ -37,6 +37,12 @@
         g.src='./customer_visit_guide_v16.js?v=16';
         document.body.appendChild(g);
       }
+      if(!document.getElementById('zrCustomerVisitGuideSaveFixV17')){
+        const g=document.createElement('script');
+        g.id='zrCustomerVisitGuideSaveFixV17';
+        g.src='./customer_visit_guide_save_fix_v17.js?v=17';
+        document.body.appendChild(g);
+      }
 
       const waitSchedule=setInterval(()=>{
         if(!window.zrReservationFirebase)return;
