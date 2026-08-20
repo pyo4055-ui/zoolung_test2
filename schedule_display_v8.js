@@ -41,8 +41,9 @@ function fixPhones(){
 }
 function fixLegend(){
   const root=document.querySelector('.legend');if(!root)return;
+  const sig=JSON.stringify([...catalog.entries()]);if(root.dataset.zrCatalogSig===sig)return;root.dataset.zrCatalogSig=sig;
   const base=[['f4','.f4'],['f5','.f5'],['meal','.mealC'],['play','.play']];
-  base.forEach(([id,sel])=>{const el=root.querySelector(sel),c=catalog.get(id)||DEFAULTS[id];if(el&&c){el.textContent=c.name;el.style.background=c.color}});
+  base.forEach(([id,sel])=>{const el=root.querySelector(sel),c=catalog.get(id)||DEFAULTS[id];if(el&&c){if(el.textContent!==c.name)el.textContent=c.name;el.style.background=c.color}});
   root.querySelectorAll('[data-custom-legend]').forEach(x=>x.remove());
   [...catalog.entries()].filter(([id])=>id.startsWith('custom_')).forEach(([id,c])=>{const s=document.createElement('span');s.dataset.customLegend=id;s.textContent=c.name;s.style.background=c.color;root.appendChild(s)});
 }
