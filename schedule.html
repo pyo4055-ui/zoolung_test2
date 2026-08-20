@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f7f4">
 <title>주렁주렁 동탄점 현장 스케줄</title>
-<link rel="stylesheet" href="schedule_v4.css?v=5">
+<link rel="stylesheet" href="schedule_v4.css?v=7">
 <style>
 @media(max-width:430px){.card{min-height:0!important}}
 .appearanceTag{cursor:pointer;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#eef4f7;color:#49616f}
@@ -15,6 +15,14 @@
 
 .syncPill.ok{color:#2f6b4f;background:#e9f3ed;border-color:#c6decf}.syncPill.wait{color:#8a661f;background:#fff7e5;border-color:#ead8aa}.syncPill.err{color:#a33b3b;background:#fbecec;border-color:#e8c6c6}
 #nowtxt,#rangeTxt{display:none!important}
+.comparePreview{border-radius:11px;padding:7px 7px 3px;margin-bottom:7px}
+.comparePreview.original{background:#f5f6f5;border:1px solid #e0e4e1}
+.comparePreview.original .previewTimeline,.comparePreview.original .previewRuler{opacity:.68;filter:saturate(.62)}
+.comparePreview.changed{background:#fff9ef;border:1px solid #efcf98;box-shadow:0 0 0 1px rgba(239,207,152,.2) inset}
+.comparePreview.changed .previewLabel{color:#9a5a00}
+.comparePreview.changed .previewTimeline{box-shadow:0 0 0 1px rgba(154,90,0,.10) inset}
+.comparePreview .previewLabel{margin-top:0}
+.contentHelp{margin-top:8px!important}
 </style>
 </head>
 <body class="viewLocked">
@@ -58,14 +66,18 @@
 </div></div>
 
 <div class="modal hidden" id="contentModal"><div class="sheet contentSheet"><div class="handle"></div><div class="titleRow"><h2 id="contentTitle">컨텐츠 스케줄 수정</h2><button class="gray" id="contentClose">✕</button></div>
-  <div class="previewLabel">기존 컨텐츠</div>
-  <div class="previewRuler" id="originalRuler"></div>
-  <div class="previewTimeline" id="originalTimeline"></div>
-  <div class="contentHelp">아래 시작/종료 시간을 누르면 휴대폰 시간 선택기가 열립니다. 15분 단위로 선택하면 아래 변경 컨텐츠가 바로 바뀝니다.</div>
+  <div class="comparePreview original">
+    <div class="previewLabel">기존 컨텐츠</div>
+    <div class="previewRuler" id="originalRuler"></div>
+    <div class="previewTimeline" id="originalTimeline"></div>
+  </div>
+  <div class="comparePreview changed">
+    <div class="previewLabel">변경 컨텐츠 · 수정중</div>
+    <div class="previewRuler" id="changedRuler"></div>
+    <div class="previewTimeline" id="changedTimeline"></div>
+  </div>
+  <div class="contentHelp">아래 시작/종료 시간을 누르면 휴대폰 시간 선택기가 열립니다. 15분 단위로 선택하면 위 변경 컨텐츠가 바로 바뀝니다.</div>
   <div class="contentRows" id="contentRows"></div>
-  <div class="previewLabel">변경 컨텐츠</div>
-  <div class="previewRuler" id="changedRuler"></div>
-  <div class="previewTimeline" id="changedTimeline"></div>
   <div class="contentActions"><button class="gray" id="contentCancel">취소</button><button class="primary" id="contentSave">변경 저장</button></div>
 </div></div>
 
@@ -82,6 +94,6 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
-<script type="module" src="schedule_v6.js?v=6"></script>
+<script type="module" src="schedule_v6.js?v=7"></script>
 </body>
 </html>
