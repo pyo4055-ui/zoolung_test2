@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f7f4">
 <title>주렁주렁 동탄점 현장 스케줄</title>
-<link rel="stylesheet" href="schedule_v4.css?v=4">
+<link rel="stylesheet" href="schedule_v4.css?v=5">
+<style>
+@media(max-width:430px){.card{min-height:0!important}}
+.appearanceTag{cursor:pointer;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#eef4f7;color:#49616f}
+.appearanceTag.noAppearance{background:#f3f5f6;color:#77838a;border:1px dashed #ccd6db}
+.appearanceTag.hasAppearance{background:#eef4f7;color:#405b69}
+.editable .appearanceTag{outline:1px dashed rgba(154,90,0,.25)}
+</style>
 </head>
 <body class="viewLocked">
 <div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>주렁주렁 동탄점 내부 테스트용</p><input id="pw" type="password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
@@ -72,6 +79,6 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
-<script src="schedule_v4.js?v=4"></script>
+<script src="schedule_v4.js?v=5"></script>
 </body>
 </html>
