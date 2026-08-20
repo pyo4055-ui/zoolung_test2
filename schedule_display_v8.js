@@ -4,7 +4,7 @@ import { getFirestore, collection, query, where, onSnapshot } from "https://www.
 
 const $=id=>document.getElementById(id);
 const LABEL={f4:'4F 베이직',f5:'5F 워터가든',meal:'식사',play:'놀이터',free:'자율관람'};
-const SHORT={f4:'4F',f5:'5F',meal:'식사',play:'놀이터',free:'자율'};
+const SHORT={f4:'4F',f5:'5F',meal:'식',play:'놀',free:'자율'};
 let db=null,auth=null,unsub=null,contacts=new Map(),pending=false;
 
 function typeOf(el){return ['f4','f5','meal','play','free'].find(x=>el.classList.contains(x))||''}
