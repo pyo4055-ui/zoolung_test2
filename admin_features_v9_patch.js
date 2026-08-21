@@ -155,7 +155,9 @@
 
   setTimeout(()=>{
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
-    addScript('zrCustomerVisitGuideV16','./customer_visit_guide_v19.js?v=19');
+    addScript('zrCustomerVisitGuideV16','./customer_visit_guide_v19.js?v=19',()=>{
+      addScript('zrCustomerVisitGuideFixV20','./customer_visit_guide_fix_v20.js?v=20');
+    });
     addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=14');
     addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=12'));
     loadAdminScheduleTab();
