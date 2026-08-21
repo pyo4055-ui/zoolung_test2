@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
-if(window.__ZR_CUSTOMER_GUIDE_SAVE_FIX_V17)return;
-window.__ZR_CUSTOMER_GUIDE_SAVE_FIX_V17=true;
+if(window.__ZR_CUSTOMER_GUIDE_SAVE_FIX_V18)return;
+window.__ZR_CUSTOMER_GUIDE_SAVE_FIX_V18=true;
 
 const FV='12.17.1';
 const COLLECTION='reservationAvailability';
@@ -35,6 +35,10 @@ function readScreen(){
     .filter(x=>x.text);
   return {contents,notices};
 }
+function errCode(e){
+  const raw=String(e?.code||e?.name||'unknown');
+  return raw.replace(/^firestore\//,'');
+}
 async function save(ev){
   ev.preventDefault();
   ev.stopImmediatePropagation();
@@ -56,16 +60,18 @@ async function save(ev){
     },{merge:true});
     toast('고객 안내 설정을 저장했습니다.');
   }catch(e){
-    console.error('customer guide v17 save',e);
-    toast('고객 안내 설정 저장에 실패했습니다. DB 연결을 확인해주세요.');
+    console.error('customer guide v18 save',e);
+    const code=errCode(e);
+    toast(`고객 안내 저장 실패 · ${code}`);
+    try{alert(`고객 안내 설정 저장 실패\n오류코드: ${code}\n\n이 오류코드를 알려주세요.`)}catch{}
   }finally{
     btn.disabled=false;btn.textContent=old;
   }
 }
 function bind(){
   const btn=document.getElementById('zrGuideAdminSave');
-  if(!btn||btn.dataset.zrGuideSave17)return false;
-  btn.dataset.zrGuideSave17='1';
+  if(!btn||btn.dataset.zrGuideSave18)return false;
+  btn.dataset.zrGuideSave18='1';
   btn.addEventListener('click',save,true);
   bound=true;return true;
 }
