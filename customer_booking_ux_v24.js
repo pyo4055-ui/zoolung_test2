@@ -5,6 +5,7 @@ window.__ZR_CUSTOMER_BOOKING_UX_V24=true;
 
 const $=id=>document.getElementById(id);
 const toast=s=>{try{window.toast?.(s)}catch{}};
+const PRIVACY_TEXT='단체예약 접수 및 관리, 예약 확인·변경·취소, 이용 안내를 위해 단체명, 예약자명, 연락처, 이메일(선택), 예약 관련 요청사항 등 예약 과정에서 입력한 정보를 수집·이용합니다. 수집된 개인정보는 이용 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 안전하게 보관합니다.';
 
 function phone(){
   return $('startContact');
@@ -36,10 +37,17 @@ function validPhone(show=false){
   }
   return ok;
 }
+function applyPrivacyText(){
+  const privacy=$('privacy');
+  const box=privacy?.closest?.('.calc');
+  const help=box?.querySelector?.('.help');
+  if(help&&help.textContent!==PRIVACY_TEXT)help.textContent=PRIVACY_TEXT;
+}
 function applyStartUi(){
   const btn=$('lookupBooking');
   if(btn&&btn.textContent!=='예약 / 조회')btn.textContent='예약 / 조회';
   preparePhone();
+  applyPrivacyText();
 }
 function boot(){
   applyStartUi();
@@ -56,7 +64,7 @@ function boot(){
     e.stopImmediatePropagation();
   },true);
   const t=setInterval(applyStartUi,500);
-  setTimeout(()=>clearInterval(t),10000);
+  setTimeout(()=>clearInterval(t),15000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
