@@ -5,19 +5,21 @@ window.__ZR_CUSTOMER_GUIDE_MAP_V1=true;
 
 const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
-const COLLECTION='customerGuides';
-const DOC_ID='main';
+const COLLECTION='reservationAvailability';
+const DOC_ID='__customer_guide__';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toast=s=>{try{window.toast?.(s)}catch{}};
 const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
 
-let FS=null,db=null,unsub=null,imageUrl='';
+let FS=null,db=null,unsub=null,imageUrl='',draftDirty=false,saving=false;
 
+function bridge(){return window.zrReservationFirebase||null}
 function isStaff(){
-  const u=window.zrReservationFirebase?.auth?.currentUser;
+  const u=bridge()?.auth?.currentUser;
   return !!u&&String(u.email||'').toLowerCase()===STAFF_EMAIL;
 }
+function errCode(e){return String(e?.code||e?.name||'unknown').replace(/^firestore\//,'')}
 function notify(){
   try{document.dispatchEvent(new CustomEvent('zr:guide-map-updated',{detail:{imageUrl}}))}catch{}
 }
@@ -57,32 +59,45 @@ function renderAdmin(){
     if(parking)parking.insertAdjacentElement('beforebegin',root);
     else if(savebar)savebar.insertAdjacentElement('beforebegin',root);
     else sec.appendChild(root);
-    root.innerHTML=`<h3>가이드맵 이미지</h3><div class="zr-gmap-help">고객 예약확인 화면의 ‘가이드맵’ 탭에 표시할 이미지 URL을 등록합니다. 비워서 저장하면 가이드맵 이미지를 숨깁니다.</div><div class="zr-gmap-row"><div><label for="zrGuideMapImageUrl">가이드맵 이미지 URL</label><input id="zrGuideMapImageUrl" type="url" placeholder="https://..." autocomplete="off"></div><button type="button" class="btn-primary" id="zrGuideMapSave">가이드맵 저장</button></div><div class="zr-gmap-preview" id="zrGuideMapPreview"></div>`;
-    $('zrGuideMapImageUrl').addEventListener('input',renderPreview);
+    root.innerHTML=`<h3>가이드맵 이미지</h3><div class="zr-gmap-help">고객 예약확인 화면의 ‘가이드맵’ 버튼에 표시할 이미지 URL을 등록합니다. 비워서 저장하면 가이드맵 이미지를 숨깁니다.</div><div class="zr-gmap-row"><div><label for="zrGuideMapImageUrl">가이드맵 이미지 URL</label><input id="zrGuideMapImageUrl" type="url" placeholder="https://..." autocomplete="off"></div><button type="button" class="btn-primary" id="zrGuideMapSave">가이드맵 저장</button></div><div class="zr-gmap-preview" id="zrGuideMapPreview"></div>`;
+    $('zrGuideMapImageUrl').addEventListener('input',()=>{draftDirty=true;renderPreview()});
     $('zrGuideMapSave').onclick=saveGuideMap;
   }
   const input=$('zrGuideMapImageUrl');
-  if(input&&document.activeElement!==input&&input.value!==imageUrl)input.value=imageUrl;
+  if(input&&!draftDirty&&!saving&&document.activeElement!==input&&input.value!==imageUrl)input.value=imageUrl;
   renderPreview();
   return true;
 }
 async function saveGuideMap(){
-  if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
+  const z=bridge();
+  if(!z?.db||!z?.auth||!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
   if(!db||!FS)return toast('가이드맵 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
   const input=$('zrGuideMapImageUrl'),raw=String(input?.value||'').trim(),url=safeUrl(raw);
   if(raw&&!url){toast('가이드맵 이미지는 http 또는 https URL로 입력해주세요.');input?.focus?.();return}
   const btn=$('zrGuideMapSave'),old=btn?.textContent||'가이드맵 저장';
+  saving=true;
   if(btn){btn.disabled=true;btn.textContent='저장 중...'}
   try{
-    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{guideMapImageUrl:url,guideMapUpdatedAt:FS.serverTimestamp()},{merge:true});
-    imageUrl=url;expose();renderPreview();notify();toast('가이드맵 이미지를 저장했습니다.');
-  }catch(e){console.error('guide map save',e);toast('가이드맵 이미지 저장에 실패했습니다.');}
-  finally{if(btn){btn.disabled=false;btn.textContent=old}}
+    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{
+      kind:'customerGuide',ownerUid:z.auth.currentUser.uid,
+      date:'',status:'cancelled',playUse:'no',playStart:'',playEnd:'',
+      guideMapImageUrl:url,guideMapUpdatedAt:FS.serverTimestamp()
+    },{merge:true});
+    imageUrl=url;draftDirty=false;expose();renderPreview();notify();toast('가이드맵 이미지를 저장했습니다.');
+  }catch(e){
+    draftDirty=true;
+    console.error('guide map save',e);
+    toast(`가이드맵 이미지 저장 실패 · ${errCode(e)}`);
+  }finally{
+    saving=false;
+    if(btn){btn.disabled=false;btn.textContent=old}
+    renderAdmin();
+  }
 }
 async function initDb(){
   try{
     FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);
-    const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;
+    const z=bridge();if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;
     if(unsub)unsub();
     unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{
       imageUrl=safeUrl(snap.exists()?snap.data()?.guideMapImageUrl:'');
@@ -98,7 +113,7 @@ function boot(){
   injectStyle();expose();syncAdmin();
   new MutationObserver(syncAdmin).observe(document.body,{childList:true,subtree:true});
   const tabTimer=setInterval(()=>{const tab=$('zrGuideAdminTab');if(!tab)return;tab.addEventListener('click',()=>setTimeout(renderAdmin,80));clearInterval(tabTimer)},250);setTimeout(()=>clearInterval(tabTimer),20000);
-  const wait=setInterval(()=>{if(!window.zrReservationFirebase?.db)return;clearInterval(wait);initDb()},200);setTimeout(()=>clearInterval(wait),20000);
+  const wait=setInterval(()=>{if(!bridge()?.db)return;clearInterval(wait);initDb()},200);setTimeout(()=>clearInterval(wait),20000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
