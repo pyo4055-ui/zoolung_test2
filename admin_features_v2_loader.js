@@ -32,13 +32,13 @@
       (0,eval)(await r9.text());
 
       if(!window.__ZR_CUSTOMER_BOOKING_UX_V24){
-        const rux=await fetch('./customer_booking_ux_v24.js?v=29',{cache:'no-store'});
+        const rux=await fetch('./customer_booking_ux_v24.js?v=30',{cache:'no-store'});
         if(!rux.ok)throw new Error('고객 예약 입력 보정 패치를 불러오지 못했습니다.');
         (0,eval)(await rux.text());
       }
 
       if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const r16=await fetch('./customer_visit_guide_v16.js?v=29',{cache:'no-store'});
+        const r16=await fetch('./customer_visit_guide_v16.js?v=30',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
         const fnStart=guide16.indexOf('function isEntryControl(el){');
@@ -73,24 +73,16 @@
         const g=document.createElement('script');
         g.id='zrCustomerVisitGuideFixV20';
         g.async=false;
-        g.src='./customer_visit_guide_fix_v20.js?v=29';
+        g.src='./customer_visit_guide_fix_v20.js?v=30';
         document.body.appendChild(g);
       }
 
-      if(!document.getElementById('zrParkingInfoV29')){
+      if(!document.getElementById('zrParkingInfoV30')){
         const p=document.createElement('script');
-        p.id='zrParkingInfoV29';
+        p.id='zrParkingInfoV30';
         p.async=false;
-        p.src='./parking_info_v29.js?v=29';
+        p.src='./parking_info_v30.js?v=30';
         document.body.appendChild(p);
-      }
-
-      if(!document.getElementById('zrParkingPhotosV30')){
-        const pp=document.createElement('script');
-        pp.id='zrParkingPhotosV30';
-        pp.async=false;
-        pp.src='./parking_photos_v30.js?v=30';
-        document.body.appendChild(pp);
       }
 
       const waitSchedule=setInterval(()=>{
