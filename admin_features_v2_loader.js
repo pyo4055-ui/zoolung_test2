@@ -19,7 +19,54 @@ function removeBootShield(){
   document.getElementById('zrRefactorBootShield')?.remove();
   document.getElementById('zrRefactorBootShieldStyle')?.remove();
 }
+function bridgeStaffReady(){
+  const z=window.zrReservationFirebase;
+  return !!z?.db&&!!z?.auth&&!!z?.isStaff?.()&&!!z.auth.currentUser;
+}
+function waitForStaffBridge(timeout=7000){
+  if(bridgeStaffReady())return Promise.resolve(true);
+  return new Promise(resolve=>{
+    const started=Date.now();
+    const t=setInterval(()=>{
+      if(bridgeStaffReady()){clearInterval(t);resolve(true);return}
+      if(Date.now()-started>=timeout){clearInterval(t);resolve(false)}
+    },120);
+  });
+}
+function installScheduleAuthGuard(){
+  if(window.__ZR_SCHEDULE_AUTH_GUARD)return;
+  window.__ZR_SCHEDULE_AUTH_GUARD=true;
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#tab-schedule [data-apply],#tab-schedule [data-publish]');
+    if(!btn)return;
+    if(btn.dataset.zrAuthRetry==='1'){delete btn.dataset.zrAuthRetry;return}
+    if(bridgeStaffReady())return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if(btn.dataset.zrAuthWaiting==='1')return;
+    btn.dataset.zrAuthWaiting='1';
+    const old=btn.textContent;
+    btn.disabled=true;
+    btn.textContent='DB 연결 확인 중...';
+    waitForStaffBridge().then(ok=>{
+      delete btn.dataset.zrAuthWaiting;
+      btn.disabled=false;
+      btn.textContent=old;
+      if(ok){btn.dataset.zrAuthRetry='1';btn.click();return}
+      try{if(typeof toast==='function')toast('관리자 DB 연결이 완료되지 않았습니다. 관리자 로그인을 다시 확인해주세요.')}catch{}
+    });
+  },true);
+  const repair=setInterval(()=>{
+    if(!bridgeStaffReady())return;
+    const sec=document.getElementById('tab-schedule');
+    const status=document.getElementById('zrscStatus');
+    if(!sec||sec.classList.contains('hidden')||!status)return;
+    if(status.textContent.includes('DB 로그인 필요'))document.getElementById('zrScheduleTabBtn')?.click();
+  },400);
+  setTimeout(()=>clearInterval(repair),30000);
+}
 installBootShield();
+installScheduleAuthGuard();
 
 const fetchText=async(src,message)=>{
   const r=await fetch(src,{cache:'no-store'});
@@ -120,10 +167,17 @@ function installLegacyScheduleFallback(){
   setTimeout(()=>clearInterval(waitSchedule),15000);
 }
 
+function revealPage(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}));
+}
 function signalReady(){
   window.__ZR_ADMIN_REFACTOR_READY=true;
   try{document.dispatchEvent(new CustomEvent('zr:admin-runtime-ready'))}catch{}
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}));
+  if(window.zrReservationFirebase){revealPage();return}
+  const started=Date.now();
+  const t=setInterval(()=>{
+    if(window.zrReservationFirebase||Date.now()-started>=7000){clearInterval(t);revealPage()}
+  },100);
 }
 
 (async()=>{
