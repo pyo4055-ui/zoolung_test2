@@ -92,11 +92,15 @@ for(const needle of ['확정 일정','오전 10:30 이전에 도착하셔도 동
 
 const customerLookup=read('customer_lookup_actions_v1.js');
 textHealth('customer_lookup_actions_v1.js',customerLookup);syntax('customer_lookup_actions_v1.js');
-for(const needle of ['3. 예약 취소하기','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약확정 되었습니다.','window.openCustomerCancel=wrapped','confirmCustomerCancel'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
+for(const needle of ['3. 예약 취소하기','이 예약 취소하기','취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요.','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약확정 되었습니다.','본 예약은 취소 되었습니다.','cancelSuccessView','window.openCustomerCancel=wrapped','confirmCustomerCancel'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
 
 const customerInfoTabs=read('customer_info_tabs_v1.js');
 textHealth('customer_info_tabs_v1.js',customerInfoTabs);syntax('customer_info_tabs_v1.js');
-for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrGuideCards','zrpk31-map'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=1','guideMapUrl()'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+
+const customerGuideMap=read('customer_guide_map_v1.js');
+textHealth('customer_guide_map_v1.js',customerGuideMap);syntax('customer_guide_map_v1.js');
+for(const needle of ["COLLECTION='customerGuides'","DOC_ID='main'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL','FS.serverTimestamp()','{merge:true}','zr:guide-map-updated'])if(!customerGuideMap.includes(needle))fail(`customer guide map contract missing: ${needle}`);
 
 const scheduleHtml=read('schedule.html');
 if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
