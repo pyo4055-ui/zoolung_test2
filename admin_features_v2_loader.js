@@ -38,7 +38,7 @@
       }
 
       if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const r16=await fetch('./customer_visit_guide_v16.js?v=25',{cache:'no-store'});
+        const r16=await fetch('./customer_visit_guide_v16.js?v=26',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
         const fnStart=guide16.indexOf('function isEntryControl(el){');
@@ -54,11 +54,11 @@
         (0,eval)(guide16);
       }
 
-      if(!window.__ZR_PLAY_ZOO_GUIDE_GUARD_V25){
-        window.__ZR_PLAY_ZOO_GUIDE_GUARD_V25=true;
+      if(!window.__ZR_PLAY_ZOO_GUIDE_GUARD_V26){
+        window.__ZR_PLAY_ZOO_GUIDE_GUARD_V26=true;
         document.addEventListener('change',e=>{
           const id=e.target?.id||'';
-          if(id!=='playStart'&&id!=='playDuration')return;
+          if(id!=='exitTime'&&id!=='playStart'&&id!=='playDuration')return;
           setTimeout(()=>{
             const m=document.getElementById('zrGuideModal');
             if(m&&!m.classList.contains('hidden'))m.classList.add('hidden');
