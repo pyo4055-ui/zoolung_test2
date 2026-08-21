@@ -49,7 +49,7 @@ function applyPrivacyText(){
   let help=[...scope.querySelectorAll('.help,small,p')].find(el=>el.id!=='zrSpecialRequestHelp'&&/(개인정보|단체예약 접수|브라우저에만 저장|입력 정보를 수집)/.test((el.textContent||'').trim()));
   if(!help){
     help=document.createElement('div');
-    help.id='zrPrivacyHelpV34';
+    help.id='zrPrivacyHelpV35';
     help.className='help';
     help.style.marginTop='6px';
     if(heading)heading.insertAdjacentElement('afterend',help);else scope.insertBefore(help,scope.firstChild);
@@ -61,7 +61,7 @@ function applySpecialRequestText(){
   const label=[...root.querySelectorAll('label')].find(x=>/^특이사항\s*\*?$/.test((x.textContent||'').replace(/\s+/g,' ').trim()));
   if(!label)return;
   const holder=label.parentElement;
-  const ta=holder?.querySelector?.('textarea')||label.nextElementSibling?.matches?.('textarea')&&label.nextElementSibling;
+  const ta=holder?.querySelector?.('textarea')||((label.nextElementSibling?.matches?.('textarea'))?label.nextElementSibling:null);
   if(!ta)return;
   ta.placeholder=SPECIAL_EXAMPLE;
   let help=$('zrSpecialRequestHelp');
@@ -108,46 +108,41 @@ function installExitGuideGuard(){
   },true);
 }
 
-function installFinalSubmitGuard(){
-  if(window.__ZR_FINAL_SUBMIT_GUARD_V34)return;
-  window.__ZR_FINAL_SUBMIT_GUARD_V34=true;
-
+function installSubmitBypassBridge(){
+  if(window.__ZR_SUBMIT_BYPASS_BRIDGE_V35)return;
+  window.__ZR_SUBMIT_BYPASS_BRIDGE_V35=true;
   document.documentElement.classList.remove('zr-final-confirm-active');
   $('zrFinalOnlyGuardStyleV33')?.remove();
   window.__ZR_FINAL_DIRECT_SUBMIT=false;
 
-  let finalSubmitting=false;
-  const hideLegacy=()=>['zrGuideModal','zrPlayGuideModal','zrFinalGuideModal','zrFinalGuideModalV30'].forEach(id=>$(id)?.classList.add('hidden'));
-
-  const wrapToast=()=>{
-    const fn=window.toast;
-    if(typeof fn!=='function'||fn.__zrFinalV34Wrapped)return false;
-    const wrapped=function(msg,...rest){
-      const s=String(msg||'');
-      if(finalSubmitting&&/(방문|놀이터).*안내사항.*(필요|확인)/.test(s))return;
-      return fn.call(this,msg,...rest);
-    };
-    wrapped.__zrFinalV34Wrapped=true;
-    window.toast=wrapped;
-    return true;
+  let resetTimer=0;
+  const customerVisible=()=>{const v=$('customerView');return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'};
+  const bookingButton=b=>{
+    const t=(b?.textContent||b?.value||'').replace(/\s+/g,'');
+    return !!b&&(/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t));
   };
-  if(!wrapToast()){
-    const wt=setInterval(()=>{if(wrapToast())clearInterval(wt)},100);
-    setTimeout(()=>clearInterval(wt),10000);
-  }
+  const arm=()=>{
+    window.__ZR_FINAL_DIRECT_SUBMIT=true;
+    clearTimeout(resetTimer);
+    resetTimer=setTimeout(()=>{
+      const final=$('zrFinalGuideModalV31');
+      if(!final||final.classList.contains('hidden'))window.__ZR_FINAL_DIRECT_SUBMIT=false;
+    },900);
+  };
+  const disarm=()=>{
+    clearTimeout(resetTimer);
+    window.__ZR_FINAL_DIRECT_SUBMIT=false;
+  };
 
   window.addEventListener('click',e=>{
-    if(e.target?.closest?.('#zrFinalBackV31')){
-      finalSubmitting=false;
-      window.__ZR_FINAL_DIRECT_SUBMIT=false;
-      return;
-    }
-    if(!e.target?.closest?.('#zrFinalOkV31'))return;
-    finalSubmitting=true;
-    window.__ZR_FINAL_DIRECT_SUBMIT=true;
-    hideLegacy();
-    [0,40,100,250,600].forEach(ms=>setTimeout(hideLegacy,ms));
-    setTimeout(()=>{finalSubmitting=false},1600);
+    if(e.target?.closest?.('#zrFinalBackV31')){disarm();return;}
+    const b=e.target?.closest?.('button,input[type="submit"],a');
+    if(!b||b.closest('#zrGuideModal,#zrPlayGuideModal'))return;
+    if(b.id==='zrFinalOkV31'||(customerVisible()&&bookingButton(b)))arm();
+  },true);
+
+  window.addEventListener('submit',()=>{
+    if(customerVisible())arm();
   },true);
 }
 
@@ -161,7 +156,7 @@ function applyStartUi(){
 }
 function boot(){
   installExitGuideGuard();
-  installFinalSubmitGuard();
+  installSubmitBypassBridge();
   applyStartUi();
   const el=phone();
   if(el){
