@@ -43,6 +43,32 @@ function applyPrivacyText(){
   const help=box?.querySelector?.('.help');
   if(help&&help.textContent!==PRIVACY_TEXT)help.textContent=PRIVACY_TEXT;
 }
+function installExitGuideGuard(){
+  if(window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28)return;
+  window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28=true;
+  const style=document.createElement('style');
+  style.id='zrExitGuideGuardStyleV28';
+  style.textContent='html.zr-exit-guide-suppress #zrGuideModal{display:none!important}';
+  document.head.appendChild(style);
+  let token=0;
+  window.addEventListener('change',e=>{
+    const id=e.target?.id||'';
+    if(id==='entryTime'){
+      token++;
+      document.documentElement.classList.remove('zr-exit-guide-suppress');
+      return;
+    }
+    if(id!=='exitTime')return;
+    const mine=++token;
+    document.documentElement.classList.add('zr-exit-guide-suppress');
+    setTimeout(()=>{
+      if(mine!==token)return;
+      const modal=$('zrGuideModal');
+      if(modal)modal.classList.add('hidden');
+      document.documentElement.classList.remove('zr-exit-guide-suppress');
+    },180);
+  },true);
+}
 function applyStartUi(){
   const btn=$('lookupBooking');
   if(btn&&btn.textContent!=='예약 / 조회')btn.textContent='예약 / 조회';
@@ -50,6 +76,7 @@ function applyStartUi(){
   applyPrivacyText();
 }
 function boot(){
+  installExitGuideGuard();
   applyStartUi();
   const el=phone();
   if(el){
