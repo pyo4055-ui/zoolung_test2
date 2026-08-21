@@ -11,8 +11,30 @@ $("editLock").onclick=()=>{state.editMode=!state.editMode;render();toast(state.e
 async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
 $("refreshBtn").onclick=refreshFromServer;
 
-async function openSharedMemo(){const d=state.date;$("sharedMemoTitle").textContent="공용 메모";$("sharedMemoDate").textContent=d;$("sharedMemoText").readOnly=false;$("sharedMemoSave").classList.remove("hidden");$("sharedMemoHint").textContent="수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.";$("sharedMemoText").value=state.data.sharedMemos?.[d]||"";$("sharedMemoModal").classList.remove("hidden");if(!auth.currentUser)return;try{const snap=await F.getDoc(F.doc(db,"scheduleSharedMemos",d));if(state.date===d)$("sharedMemoText").value=snap.exists()?(snap.data().text||""):""}catch(e){console.debug("shared memo load",e)}}
-$("sharedMemoBtn").onclick=openSharedMemo;$("sharedMemoSave").onclick=async()=>{const d=$("sharedMemoDate")?.textContent||state.date;if(!d||!auth.currentUser)return toast("공용 DB 연결을 확인해주세요.");const value=$("sharedMemoText").value.trim(),old=state.data.sharedMemos[d]||"";state.data.sharedMemos[d]=value;try{setSync("저장 중","wait");await F.setDoc(F.doc(db,"scheduleSharedMemos",d),{text:value,updatedAt:F.serverTimestamp()},{merge:true});$("sharedMemoModal").classList.add("hidden");setSync("실시간 연결됨","ok");toast("공용 메모를 저장했습니다.")}catch(e){state.data.sharedMemos[d]=old;writeError(e)}};$("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");$("sharedMemoModal").onclick=e=>{if(e.target===$("sharedMemoModal"))$("sharedMemoModal").classList.add("hidden")};
+async function openSharedMemo(){
+  const d=state.date;if(!d)return;
+  $("sharedMemoTitle").textContent="공용 메모";$("sharedMemoDate").textContent=d;
+  $("sharedMemoText").readOnly=false;$("sharedMemoSave").classList.remove("hidden");
+  $("sharedMemoHint").textContent="수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.";
+  $("sharedMemoModal").classList.remove("hidden");
+  if(!auth.currentUser)return;
+  try{const snap=await F.getDoc(F.doc(db,"scheduleSharedMemos",d));if(state.date===d)$("sharedMemoText").value=snap.exists()?(snap.data().text||""):""}
+  catch(e){console.debug("shared memo load",e)}
+}
+$("sharedMemoBtn").onclick=openSharedMemo;
+$("sharedMemoSave").onclick=async()=>{
+  const d=$("sharedMemoDate")?.textContent||state.date;
+  if(!d||!auth.currentUser)return toast("공용 DB 연결을 확인해주세요.");
+  const value=$("sharedMemoText").value.trim();
+  try{
+    setSync("저장 중","wait");
+    await F.setDoc(F.doc(db,"scheduleSharedMemos",d),{text:value,updatedAt:F.serverTimestamp()},{merge:true});
+    $("sharedMemoModal").classList.add("hidden");setSync("실시간 연결됨","ok");toast("공용 메모를 저장했습니다.");
+  }catch(e){
+    console.error("shared memo save",e);setSync("저장 오류","err");toast("공용 메모 저장에 실패했습니다.");
+  }
+};
+$("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");$("sharedMemoModal").onclick=e=>{if(e.target===$("sharedMemoModal"))$("sharedMemoModal").classList.add("hidden")};
 
 function stopListeners(){if(state.unsubGroups){state.unsubGroups();state.unsubGroups=null}if(state.unsubMemo){state.unsubMemo();state.unsubMemo=null}if(state.unsubCatalog){state.unsubCatalog();state.unsubCatalog=null}}
 function startListeners(){if(!auth.currentUser)return;stopListeners();setSync("연결 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date));state.unsubGroups=F.onSnapshot(q,snap=>{state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));setSync("실시간 연결됨","ok");render()},e=>writeError(e));state.unsubMemo=F.onSnapshot(F.doc(db,"scheduleSharedMemos",state.date),snap=>{state.data.sharedMemos[state.date]=snap.exists()?(snap.data().text||""):"";setSync("실시간 연결됨","ok")},e=>writeError(e));state.unsubCatalog=F.onSnapshot(F.doc(db,"scheduleGroups","__content_catalog__"),snap=>{state.catalog=new Map(Object.entries(DEFAULT_CATALOG));const list=snap.exists()&&Array.isArray(snap.data()?.catalog)?snap.data().catalog:[];list.forEach(x=>{if(x?.id)state.catalog.set(String(x.id),{name:String(x.name||x.id),color:x.color||"#edf0ed"})});scheduleEnhance()},e=>console.debug("schedule catalog",e))}
