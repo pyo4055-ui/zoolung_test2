@@ -32,6 +32,8 @@ const SECURITY_PATCH=[["const PRICE=15000, ADMIN_PASSWORD=\"zoolung09\";", "cons
       html=html.replace(from,to);
     }
     if(html.includes('ADMIN_PASSWORD=')) throw new Error('보안 패치 검증에 실패했습니다.');
+    const prebootStyle='<style id="zrPreBootStyle">html{background:#f6f7f4!important}body{visibility:hidden!important}</style>';
+    if(!html.includes('id="zrPreBootStyle"')) html=html.replace('</head>',prebootStyle+'</head>');
     html=html.replace('</body>','<script src="./admin_features.js?v=1"><\/script><script src="./admin_features_v2_loader.js?v=31"><\/script><script src="./reservation_firebase_bridge.js?v=1"><\/script></body>');
     document.open();document.write(html);document.close();
   }catch(e){

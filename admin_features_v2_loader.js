@@ -123,7 +123,7 @@ function installLegacyScheduleFallback(){
 function signalReady(){
   window.__ZR_ADMIN_REFACTOR_READY=true;
   try{document.dispatchEvent(new CustomEvent('zr:admin-runtime-ready'))}catch{}
-  requestAnimationFrame(()=>requestAnimationFrame(removeBootShield));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}));
 }
 
 (async()=>{
