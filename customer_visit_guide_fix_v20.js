@@ -8,7 +8,7 @@ const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const COLLECTION='customerGuides';
 const DOC_ID='main';
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
 const clone=v=>JSON.parse(JSON.stringify(v));
 const uid=p=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
@@ -23,7 +23,7 @@ const DEFAULT_GUIDE={contents:[
   {id:'notice_2',text:'예약한 입장시간에 맞춰 방문해주세요.'}
 ]};
 
-let APP=null,FS=null,db=null,unsub=null;
+let FS=null,db=null,unsub=null;
 let current=clone(DEFAULT_GUIDE),draft=clone(DEFAULT_GUIDE);
 
 function normalize(raw){
@@ -86,6 +86,8 @@ function bindAdmin(){
   tab.addEventListener('click',()=>setTimeout(()=>{draft=clone(current);renderAdmin();},0));
   addContent.onclick=()=>{collect();if(draft.contents.length>=10)return toast('컨텐츠는 최대 10개까지 등록할 수 있습니다.');draft.contents.push({id:uid('guide'),name:'새 컨텐츠',duration:'',imageUrl:'',description:'',enabled:true});renderAdmin()};
   addNotice.onclick=()=>{collect();if(draft.notices.length>=20)return toast('주의사항은 최대 20개까지 등록할 수 있습니다.');draft.notices.push({id:uid('notice'),text:''});renderAdmin()};
+  save.onclick=null;
+  save.dataset.zrGuideSaveOwner='v20';
   save.addEventListener('click',saveGuide,true);
   return true;
 }
@@ -97,7 +99,8 @@ async function saveGuide(e){
   collect();const cleaned=normalize(draft);
   const b=$('zrGuideAdminSave'),old=b?.textContent||'안내 설정 저장';if(b){b.disabled=true;b.textContent='저장 중...'}
   try{
-    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{contents:cleaned.contents,notices:cleaned.notices,updatedAtMs:Date.now()},{merge:true});
+    const payload={contents:cleaned.contents,notices:cleaned.notices,updatedAtMs:Date.now()};
+    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),payload,{merge:true});
     current=clone(cleaned);draft=clone(cleaned);toast('고객 안내 설정을 저장했습니다.');
   }catch(err){
     const code=String(err?.code||err?.name||'unknown').replace(/^firestore\//,'');
@@ -121,14 +124,10 @@ function watchModal(){
 
 async function init(){
   try{
-    const [appMod,fsMod]=await Promise.all([
-      import(`https://www.gstatic.com/firebasejs/${FV}/firebase-app.js`),
-      import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`)
-    ]);
-    APP=appMod;FS=fsMod;
-    const app=APP.getApps().length?APP.getApp():null;
-    if(!app)throw new Error('Firebase 앱이 아직 초기화되지 않았습니다.');
-    db=FS.getFirestore(app);
+    FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);
+    const z=window.zrReservationFirebase;
+    if(!z?.db)throw new Error('Firebase DB 브리지가 아직 초기화되지 않았습니다.');
+    db=z.db;
     if(unsub)unsub();
     unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{
       current=normalize(snap.exists()?snap.data():DEFAULT_GUIDE);
@@ -141,7 +140,7 @@ async function init(){
 function boot(){
   const t=setInterval(()=>{if(bindAdmin())clearInterval(t)},200);setTimeout(()=>clearInterval(t),20000);
   watchModal();
-  const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
+  const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
