@@ -44,16 +44,13 @@ function ensureTabs(){
   if(!tabs){
     tabs=document.createElement('div');tabs.id='zrCustomerInfoTabsV1';tabs.className='hidden';
     tabs.innerHTML='<button type="button" id="zrCustomerGuideTabV1">가이드맵</button><button type="button" class="parking" id="zrCustomerParkingTabV1">주차 및 인솔</button>';
-    $('zrCustomerGuideTabV1')?.addEventListener('click',openGuideQuick);
-    $('zrCustomerParkingTabV1')?.addEventListener('click',openParkingQuick);
+    tabs.querySelector('#zrCustomerGuideTabV1').addEventListener('click',openGuideQuick);
+    tabs.querySelector('#zrCustomerParkingTabV1').addEventListener('click',openParkingQuick);
+    document.body.appendChild(tabs);
   }
   const target=bookingCardTarget();
   document.querySelectorAll('#existingBookingList .existing-card.zr-has-info-tabs').forEach(card=>{if(card!==target)card.classList.remove('zr-has-info-tabs')});
-  if(!target){
-    tabs.classList.add('hidden');
-    if(!tabs.isConnected)document.body.appendChild(tabs);
-    return;
-  }
+  if(!target){tabs.classList.add('hidden');return}
   target.classList.add('zr-has-info-tabs');
   if(tabs.parentElement!==target)target.appendChild(tabs);
   tabs.classList.remove('hidden');
