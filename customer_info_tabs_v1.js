@@ -6,18 +6,15 @@ window.__ZR_CUSTOMER_INFO_TABS_V1=true;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function visible(el){return !!el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}
-function customerVisible(){
-  if(visible($('adminView')))return false;
-  return visible($('startView'))||visible($('customerView'));
-}
 function guideMapUrl(){return String(window.zrCustomerGuideMapV1?.imageUrl||'').trim()}
 
 function injectStyle(){
   if($('zrCustomerInfoTabsV1Style'))return;
   const s=document.createElement('style');s.id='zrCustomerInfoTabsV1Style';s.textContent=`
-  #zrCustomerInfoTabsV1{position:fixed;left:0;bottom:18px;z-index:10020;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+  #existingBookingList .existing-card.zr-has-info-tabs{position:relative!important;padding-bottom:72px!important}
+  #zrCustomerInfoTabsV1{position:absolute;left:14px;bottom:14px;z-index:20;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
   #zrCustomerInfoTabsV1.hidden{display:none!important}
-  #zrCustomerInfoTabsV1 button{min-height:40px;border:1px solid #cad8cf;border-left:0;border-radius:0 11px 11px 0;padding:0 14px;background:#fff;color:#315843;font-size:12px;font-weight:900;box-shadow:0 4px 16px rgba(30,50,36,.14);cursor:pointer}
+  #zrCustomerInfoTabsV1 button{min-height:40px;border:1px solid #cad8cf;border-radius:11px;padding:0 14px;background:#fff;color:#315843;font-size:12px;font-weight:900;box-shadow:0 3px 10px rgba(30,50,36,.08);cursor:pointer}
   #zrCustomerInfoTabsV1 button:hover{background:#eef6f1}
   #zrCustomerInfoTabsV1 .parking{border-color:#d8c998;background:#fff9e9;color:#705817}
   #zrCustomerInfoTabsV1 .parking:hover{background:#fff4d7}
@@ -29,7 +26,7 @@ function injectStyle(){
   #zrCustomerParkingQuickBody .zrpk31-title{padding-top:4px}#zrCustomerParkingQuickBody .zrpk31-maps{margin-top:10px}
   #zrCustomerParkingQuickBody .zrpk31-map{min-height:38px;padding:0 14px}
   .zr-customer-info-loading{padding:24px 8px;text-align:center;color:#6c766f;font-size:13px}
-  @media(max-width:520px){#zrCustomerInfoTabsV1{bottom:10px}#zrCustomerInfoTabsV1 button{min-height:38px;padding:0 11px;font-size:11px}.zr-customer-info-sheet{padding:14px}}
+  @media(max-width:520px){#existingBookingList .existing-card.zr-has-info-tabs{padding-bottom:118px!important}#zrCustomerInfoTabsV1{left:12px;right:12px;bottom:12px}#zrCustomerInfoTabsV1 button{flex:1;min-width:120px;min-height:38px;padding:0 10px;font-size:11px}.zr-customer-info-sheet{padding:14px}}
   `;document.head.appendChild(s);
 }
 
@@ -37,16 +34,29 @@ function loadGuideMapConfig(){
   if($('zrCustomerGuideMapV1Script'))return;
   const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=2';document.body.appendChild(s);
 }
+function bookingCardTarget(){
+  const list=$('existingBookingList');
+  if(!visible(list))return null;
+  return [...list.querySelectorAll('.existing-card')].find(visible)||null;
+}
 function ensureTabs(){
   let tabs=$('zrCustomerInfoTabsV1');
   if(!tabs){
     tabs=document.createElement('div');tabs.id='zrCustomerInfoTabsV1';tabs.className='hidden';
     tabs.innerHTML='<button type="button" id="zrCustomerGuideTabV1">가이드맵</button><button type="button" class="parking" id="zrCustomerParkingTabV1">주차 및 인솔</button>';
-    document.body.appendChild(tabs);
-    $('zrCustomerGuideTabV1').onclick=openGuideQuick;
-    $('zrCustomerParkingTabV1').onclick=openParkingQuick;
+    $('zrCustomerGuideTabV1')?.addEventListener('click',openGuideQuick);
+    $('zrCustomerParkingTabV1')?.addEventListener('click',openParkingQuick);
   }
-  tabs.classList.toggle('hidden',!customerVisible());
+  const target=bookingCardTarget();
+  document.querySelectorAll('#existingBookingList .existing-card.zr-has-info-tabs').forEach(card=>{if(card!==target)card.classList.remove('zr-has-info-tabs')});
+  if(!target){
+    tabs.classList.add('hidden');
+    if(!tabs.isConnected)document.body.appendChild(tabs);
+    return;
+  }
+  target.classList.add('zr-has-info-tabs');
+  if(tabs.parentElement!==target)target.appendChild(tabs);
+  tabs.classList.remove('hidden');
 }
 function ensureModal(id,title,bodyId){
   let m=$(id);if(m)return m;
@@ -97,7 +107,8 @@ function sync(){
 function boot(){
   injectStyle();loadGuideMapConfig();sync();
   new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-  const timer=setInterval(sync,400);setTimeout(()=>clearInterval(timer),20000);
+  const timer=setInterval(sync,350);setTimeout(()=>clearInterval(timer),20000);
+  ['checkExisting','cancelExisting'].forEach(id=>$(id)?.addEventListener('click',()=>[0,100,300,800].forEach(ms=>setTimeout(sync,ms))));
   document.addEventListener('zr:guide-map-updated',()=>{if(!$('zrCustomerGuideQuickV1')?.classList.contains('hidden'))fillGuideQuick()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
