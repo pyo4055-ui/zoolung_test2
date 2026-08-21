@@ -7,7 +7,7 @@ const START=600,MAX=1080,SLOT=15;
 const $=id=>document.getElementById(id);
 const mn=t=>{if(!t)return null;const [h,m]=String(t).split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
 const pct=(m,a)=>Math.max(0,Math.min(100,(m-a.start)/(a.end-a.start)*100));
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function readBookings(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function bookingById(id){return readBookings().find(b=>String(b?.id||'')===String(id))||null}
