@@ -85,6 +85,14 @@
         document.body.appendChild(p);
       }
 
+      if(!document.getElementById('zrParkingPhotosV30')){
+        const pp=document.createElement('script');
+        pp.id='zrParkingPhotosV30';
+        pp.async=false;
+        pp.src='./parking_photos_v30.js?v=30';
+        document.body.appendChild(pp);
+      }
+
       const waitSchedule=setInterval(()=>{
         if(!window.zrReservationFirebase)return;
         clearInterval(waitSchedule);
