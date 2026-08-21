@@ -32,13 +32,13 @@
       (0,eval)(await r9.text());
 
       if(!window.__ZR_CUSTOMER_BOOKING_UX_V24){
-        const rux=await fetch('./customer_booking_ux_v24.js?v=31',{cache:'no-store'});
+        const rux=await fetch('./customer_booking_ux_v24.js?v=32',{cache:'no-store'});
         if(!rux.ok)throw new Error('고객 예약 입력 보정 패치를 불러오지 못했습니다.');
         (0,eval)(await rux.text());
       }
 
       if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const r16=await fetch('./customer_visit_guide_v16.js?v=31',{cache:'no-store'});
+        const r16=await fetch('./customer_visit_guide_v16.js?v=32',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
         const fnStart=guide16.indexOf('function isEntryControl(el){');
@@ -72,7 +72,7 @@
       }
 
       if(!window.__ZR_CUSTOMER_GUIDE_FIX_V20){
-        const r20=await fetch('./customer_visit_guide_fix_v20.js?v=31',{cache:'no-store'});
+        const r20=await fetch('./customer_visit_guide_fix_v20.js?v=32',{cache:'no-store'});
         if(!r20.ok)throw new Error('고객 안내 분리 기능을 불러오지 못했습니다.');
         let guide20=await r20.text();
         const playAckNeedle='function playAcknowledged(){';
@@ -81,11 +81,17 @@
         (0,eval)(guide20);
       }
 
+      if(!window.__ZR_BOOKING_FLOW_FIX_V32){
+        const rf=await fetch('./booking_flow_fix_v32.js?v=32',{cache:'no-store'});
+        if(!rf.ok)throw new Error('최종 예약 확인 보정 기능을 불러오지 못했습니다.');
+        (0,eval)(await rf.text());
+      }
+
       if(!document.getElementById('zrParkingInfoV31')){
         const p=document.createElement('script');
         p.id='zrParkingInfoV31';
         p.async=false;
-        p.src='./parking_info_v31.js?v=31';
+        p.src='./parking_info_v31.js?v=32';
         document.body.appendChild(p);
       }
 
