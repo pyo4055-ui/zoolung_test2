@@ -49,7 +49,7 @@ function applyPrivacyText(){
   let help=[...scope.querySelectorAll('.help,small,p')].find(el=>el.id!=='zrSpecialRequestHelp'&&/(개인정보|단체예약 접수|브라우저에만 저장|입력 정보를 수집)/.test((el.textContent||'').trim()));
   if(!help){
     help=document.createElement('div');
-    help.id='zrPrivacyHelpV35';
+    help.id='zrPrivacyHelpV36';
     help.className='help';
     help.style.marginTop='6px';
     if(heading)heading.insertAdjacentElement('afterend',help);else scope.insertBefore(help,scope.firstChild);
@@ -80,72 +80,6 @@ function applyProgramScheduleText(){
   const el=all.find(x=>(x.textContent||'').includes(OLD_PROGRAM_TEXT)&&![...x.children].some(c=>(c.textContent||'').includes(OLD_PROGRAM_TEXT)));
   if(el&&el.innerHTML!==NEW_PROGRAM_HTML)el.innerHTML=NEW_PROGRAM_HTML;
 }
-
-function installExitGuideGuard(){
-  if(window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28)return;
-  window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28=true;
-  const style=document.createElement('style');
-  style.id='zrExitGuideGuardStyleV28';
-  style.textContent='html.zr-exit-guide-suppress #zrGuideModal{display:none!important}';
-  document.head.appendChild(style);
-  let token=0;
-  window.addEventListener('change',e=>{
-    const id=e.target?.id||'';
-    if(id==='entryTime'){
-      token++;
-      document.documentElement.classList.remove('zr-exit-guide-suppress');
-      return;
-    }
-    if(id!=='exitTime')return;
-    const mine=++token;
-    document.documentElement.classList.add('zr-exit-guide-suppress');
-    setTimeout(()=>{
-      if(mine!==token)return;
-      const modal=$('zrGuideModal');
-      if(modal)modal.classList.add('hidden');
-      document.documentElement.classList.remove('zr-exit-guide-suppress');
-    },180);
-  },true);
-}
-
-function installSubmitBypassBridge(){
-  if(window.__ZR_SUBMIT_BYPASS_BRIDGE_V35)return;
-  window.__ZR_SUBMIT_BYPASS_BRIDGE_V35=true;
-  document.documentElement.classList.remove('zr-final-confirm-active');
-  $('zrFinalOnlyGuardStyleV33')?.remove();
-  window.__ZR_FINAL_DIRECT_SUBMIT=false;
-
-  let resetTimer=0;
-  const customerVisible=()=>{const v=$('customerView');return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'};
-  const bookingButton=b=>{
-    const t=(b?.textContent||b?.value||'').replace(/\s+/g,'');
-    return !!b&&(/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t));
-  };
-  const arm=()=>{
-    window.__ZR_FINAL_DIRECT_SUBMIT=true;
-    clearTimeout(resetTimer);
-    resetTimer=setTimeout(()=>{
-      const final=$('zrFinalGuideModalV31');
-      if(!final||final.classList.contains('hidden'))window.__ZR_FINAL_DIRECT_SUBMIT=false;
-    },900);
-  };
-  const disarm=()=>{
-    clearTimeout(resetTimer);
-    window.__ZR_FINAL_DIRECT_SUBMIT=false;
-  };
-
-  window.addEventListener('click',e=>{
-    if(e.target?.closest?.('#zrFinalBackV31')){disarm();return;}
-    const b=e.target?.closest?.('button,input[type="submit"],a');
-    if(!b||b.closest('#zrGuideModal,#zrPlayGuideModal'))return;
-    if(b.id==='zrFinalOkV31'||(customerVisible()&&bookingButton(b)))arm();
-  },true);
-
-  window.addEventListener('submit',()=>{
-    if(customerVisible())arm();
-  },true);
-}
-
 function applyStartUi(){
   const btn=$('lookupBooking');
   if(btn&&btn.textContent!=='예약 / 조회')btn.textContent='예약 / 조회';
@@ -155,8 +89,6 @@ function applyStartUi(){
   applyProgramScheduleText();
 }
 function boot(){
-  installExitGuideGuard();
-  installSubmitBypassBridge();
   applyStartUi();
   const el=phone();
   if(el){
