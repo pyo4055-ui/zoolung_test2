@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 
 const frozen = {
@@ -69,7 +70,8 @@ for(const needle of [
   "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
   'function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
-  'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;'
+  'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;',
+  'zrRefactorBootShield','requestAnimationFrame(()=>requestAnimationFrame(removeBootShield))'
 ])if(!loader.includes(needle))fail(`admin loader behavior transform missing: ${needle}`);
 
 const bridge=read('reservation_firebase_bridge.js');
@@ -89,6 +91,25 @@ const scheduleFiles=['schedule_refactor/core.js','schedule_refactor/display.js',
 let scheduleBundle='';
 for(const file of scheduleFiles){
   const text=read(file);scheduleBundle+='\n'+text;textHealth(file,text);syntax(file);
+}
+
+const exportedByFile=new Map();
+for(const file of scheduleFiles){
+  const names=new Set();
+  for(const m of read(file).matchAll(/export\s+(?:async\s+)?(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/g))names.add(m[1]);
+  exportedByFile.set(path.normalize(file),names);
+}
+for(const file of scheduleFiles){
+  const text=read(file);
+  for(const m of text.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"](\.\/[^'"]+)['"]/g)){
+    const target=path.normalize(path.join(path.dirname(file),m[2]));
+    if(!exportedByFile.has(target)){fail(`local import target missing: ${file} -> ${target}`);continue}
+    const available=exportedByFile.get(target);
+    for(const raw of m[1].split(',')){
+      const imported=raw.trim().split(/\s+as\s+/)[0].trim();
+      if(imported&&!available.has(imported))fail(`missing export: ${file} imports ${imported} from ${target}`);
+    }
+  }
 }
 
 const scheduleCore=read('schedule_refactor/core.js');
