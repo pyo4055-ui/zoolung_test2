@@ -41,8 +41,29 @@
         const r16=await fetch('./customer_visit_guide_v16.js?v=22',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
-        const oldEntry=`  const key=\`${'${el.id||\'\'} ${el.name||\'\'} ${el.getAttribute(\'aria-label\')||\'\'} ${el.placeholder||\'\'}'}\`.toLowerCase();\n  if(/(^|[^a-z])(entry|admission)(time)?([^a-z]|$)|entrytime|admissiontime/.test(key))return true;\n  const txt=labelText(el).replace(/\\s/g,'');\n  if(txt.includes('입장시간'))return true;\n  return txt.includes('입장')&&!txt.includes('퇴장')&&txt.length<80;`;
-        const newEntry=`  const key=\`${'${el.id||\'\'} ${el.name||\'\'} ${el.getAttribute(\'aria-label\')||\'\'} ${el.placeholder||\'\'}'}\`.toLowerCase();\n  if(/play|playground/.test(key))return false;\n  if(/exit|leave|departure|checkout/.test(key))return false;\n  let local='';\n  if(el.id){try{document.querySelectorAll(\`label[for=\"\${CSS.escape(el.id)}\"]\`).forEach(l=>local+=' '+l.textContent)}catch{}}\n  const own=el.closest('label');if(own)local+=' '+own.textContent;\n  const prev=el.previousElementSibling;if(prev&&!prev.matches?.('input,select,textarea,button'))local+=' '+(prev.textContent||'');\n  local=local.replace(/\\s/g,'');\n  if(local.includes('놀이터')||local.includes('퇴장'))return false;\n  if(/(^|[^a-z])(entry|admission)(time)?([^a-z]|$)|entrytime|admissiontime/.test(key))return true;\n  if(local.includes('입장시간')||local.includes('입장'))return true;\n  const txt=labelText(el).replace(/\\s/g,'');\n  if(txt.includes('놀이터')||txt.includes('퇴장'))return false;\n  return txt.includes('입장')&&txt.length<80;`;
+        const oldEntry=[
+          "  const key=`${el.id||''} ${el.name||''} ${el.getAttribute('aria-label')||''} ${el.placeholder||''}`.toLowerCase();",
+          "  if(/(^|[^a-z])(entry|admission)(time)?([^a-z]|$)|entrytime|admissiontime/.test(key))return true;",
+          "  const txt=labelText(el).replace(/\\s/g,'');",
+          "  if(txt.includes('입장시간'))return true;",
+          "  return txt.includes('입장')&&!txt.includes('퇴장')&&txt.length<80;"
+        ].join('\n');
+        const newEntry=[
+          "  const key=`${el.id||''} ${el.name||''} ${el.getAttribute('aria-label')||''} ${el.placeholder||''}`.toLowerCase();",
+          "  if(/play|playground/.test(key))return false;",
+          "  if(/exit|leave|departure|checkout/.test(key))return false;",
+          "  let local='';",
+          "  if(el.id){try{document.querySelectorAll(`label[for=\"${CSS.escape(el.id)}\"]`).forEach(l=>local+=' '+l.textContent)}catch{}}",
+          "  const own=el.closest('label');if(own)local+=' '+own.textContent;",
+          "  const prev=el.previousElementSibling;if(prev&&!prev.matches?.('input,select,textarea,button'))local+=' '+(prev.textContent||'');",
+          "  local=local.replace(/\\s/g,'');",
+          "  if(local.includes('놀이터')||local.includes('퇴장'))return false;",
+          "  if(/(^|[^a-z])(entry|admission)(time)?([^a-z]|$)|entrytime|admissiontime/.test(key))return true;",
+          "  if(local.includes('입장시간')||local.includes('입장'))return true;",
+          "  const txt=labelText(el).replace(/\\s/g,'');",
+          "  if(txt.includes('놀이터')||txt.includes('퇴장'))return false;",
+          "  return txt.includes('입장')&&txt.length<80;"
+        ].join('\n');
         if(!guide16.includes(oldEntry))throw new Error('고객 방문 안내 시간 판별 패치 위치를 찾지 못했습니다.');
         guide16=guide16.replace(oldEntry,newEntry);
         const marker=document.createElement('script');
