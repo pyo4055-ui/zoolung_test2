@@ -105,7 +105,7 @@ function confirmedBanner(card){
   if(card.querySelector('.zr-confirmed-emphasis'))return;
   const confirmed=[...card.querySelectorAll('.status')].some(x=>String(x.textContent||'').trim()==='확정'||x.classList.contains('confirmed'));
   if(!confirmed)return;
-  const banner=document.createElement('div');banner.className='zr-confirmed-emphasis';banner.textContent='✓ 본 예약은 담당자로부터 예약 확정되었습니다.';
+  const banner=document.createElement('div');banner.className='zr-confirmed-emphasis';banner.textContent='✓ 본 예약은 담당자로부터 예약확정 되었습니다.';
   card.prepend(banner);
 }
 function renameCancelButtons(root=document){
