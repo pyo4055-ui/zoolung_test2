@@ -1,20 +1,23 @@
 import fs from 'node:fs';
-import {gunzipSync} from 'node:zlib';
+import path from 'node:path';
 
-const clean=s=>s.replace(/[^A-Za-z0-9+/=]/g,'');
-const packed=clean(fs.readFileSync('data1.txt','utf8')+fs.readFileSync('data2.txt','utf8'));
-const source=gunzipSync(Buffer.from(packed,'base64')).toString('utf8');
-const needles=['가이드맵','가이드 맵','주차 및 인솔','주차안내','주차 안내','guideMap','GuideMap','zrParkingInfoCard','zrGuideModal','본 예약은','예약확정'];
-for(const needle of needles){
-  let from=0,count=0;
-  while(true){
-    const at=source.indexOf(needle,from);
-    if(at<0)break;
-    count++;
-    console.log(`\n===== SOURCE INSPECT: ${needle} #${count} @ ${at} =====`);
-    console.log(source.slice(Math.max(0,at-1200),Math.min(source.length,at+2200)));
-    from=at+needle.length;
-    if(count>=6)break;
+const needles=['가이드맵','가이드 맵','주차 및 인솔','zrParkingInfoCard','zrGuideModal','position:fixed','bottom:'];
+const skip=new Set(['.git','node_modules']);
+function walk(dir){
+  const out=[];
+  for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
+    if(skip.has(ent.name))continue;
+    const p=path.join(dir,ent.name);
+    if(ent.isDirectory())out.push(...walk(p));
+    else if(/\.(js|html|txt|mjs)$/i.test(ent.name))out.push(p);
   }
-  if(!count)console.log(`\n===== SOURCE INSPECT: ${needle} NOT FOUND =====`);
+  return out;
+}
+for(const file of walk('.')){
+  let text='';try{text=fs.readFileSync(file,'utf8')}catch{continue}
+  for(const needle of needles){
+    let at=text.indexOf(needle);if(at<0)continue;
+    console.log(`\n===== FILE INSPECT: ${file} :: ${needle} @ ${at} =====`);
+    console.log(text.slice(Math.max(0,at-900),Math.min(text.length,at+1800)));
+  }
 }
