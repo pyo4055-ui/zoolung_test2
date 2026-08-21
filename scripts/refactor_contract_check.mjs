@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 
 const frozen = {
+  'index.html':'0499a5fbf82c3c39b7812e18c9a26c2b64584db7',
+  'firestore.rules':'cc28cd06415bd2da6d6d407026a3191a67e11c8d',
   'admin_features.js':'92b56752200626496fedb9816b880414a74c571c',
   'admin2_part1.txt':'118b334e77bf168659a1f9d9f3b83282f04c730c',
   'admin2_part2.txt':'5e0d2acd06f6b1b417d42c29da488c03811fd0fb',
@@ -27,6 +29,9 @@ const frozen = {
   'reservation_firebase_bridge.js':'45a64b680d371eca97026de652c30dce0940bf43',
   'reservation_staff_login_fix_v14.js':'d30e7203f2ed3b2e7ddb122cb6f665300cca70a2',
   'parking_info_v31.js':'185b857d2369ae44bfbbd63bbd0c3e182ec0c472',
+  'schedule_v6.js':'fc7f94d1d237cbee78723f994665ba4903ae8767',
+  'schedule_display_v8.js':'c7927cb4b2aeeb124fb39617b8215c1f1cdad1a3',
+  'schedule_shared_memo_unlock_v10.js':'8a27ef346b36546a35455e04f70469777825dc3f',
   'legacy/admin_features_v2_loader.js':'9c6e29c1e03182d160c9489d9dcfdb344860cf99'
 };
 
@@ -66,8 +71,9 @@ if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html 
 for(const old of ['schedule_v6.js?v=8','schedule_display_v8.js?v=12','schedule_shared_memo_unlock_v10.js?v=1'])if(scheduleHtml.includes(old))fail(`schedule.html still loads legacy runtime: ${old}`);
 
 const scheduleFiles=['schedule_refactor/core.js','schedule_refactor/display.js','schedule_refactor/detail.js','schedule_refactor/content.js','schedule_refactor/app.js'];
+let scheduleBundle='';
 for(const file of scheduleFiles){
-  const text=read(file);
+  const text=read(file);scheduleBundle+='\n'+text;
   if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text))fail(`control character found: ${file}`);
   if(text.includes('\uFFFD'))fail(`replacement character found: ${file}`);
   const mojibake=(text.match(/[ìëíêð]/g)||[]).length;
@@ -84,6 +90,16 @@ for(const needle of [
 
 const scheduleApp=read('schedule_refactor/app.js');
 for(const needle of ['scheduleGroups','scheduleSharedMemos','__content_catalog__','수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.'])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
+if((scheduleApp.match(/state\.unsubGroups=F\.onSnapshot\(q/g)||[]).length!==1)fail('scheduleGroups realtime listener must be exactly one in refactored app');
+if(read('schedule_refactor/display.js').includes('onSnapshot'))fail('display module must not create a second Firestore listener');
+for(const forbidden of ["'reservations'",'"reservations"',"'reservationAvailability'",'"reservationAvailability"'])if(scheduleBundle.includes(forbidden))fail(`onsite schedule must not reverse-sync reservation data: ${forbidden}`);
+
+const detail=read('schedule_refactor/detail.js');
+for(const needle of [
+  '"org","res","tea","actualPaid","actualChap","ps","pe","eta","aend","meal","mealLoc","cafeDetail","memo","appearance"',
+  '"pay","book","cancelled","cancelledAt"',
+  'segments:segs(["f4","meal","play","f5"])'
+])if(!detail.includes(needle))fail(`onsite detail field contract missing: ${needle}`);
 
 if(failed){console.error('\nRefactor contract check failed. Do not merge.');process.exit(1)}
 console.log('\nRefactor contract check passed.');
