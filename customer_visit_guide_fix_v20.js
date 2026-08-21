@@ -79,8 +79,8 @@ function renderAdmin(){
 }
 
 function bindAdmin(){
-  const tab=$('zrGuideAdminTab'), addContent=$('zrGuideAddContent'), addNotice=$('zrGuideAddNotice'), save=$('zrGuideAdminSave');
-  if(!tab||!addContent||!addNotice||!save)return false;
+  const tab=$('zrGuideAdminTab'), addContent=$('zrGuideAddContent'), addNotice=$('zrGuideAddNotice'), save=$('zrGuideAdminSave'), root=$('zrGuideAdminContents');
+  if(!tab||!addContent||!addNotice||!save||!root)return false;
   if(tab.dataset.v20Bound)return true;
   tab.dataset.v20Bound='1';
   tab.addEventListener('click',()=>setTimeout(()=>{draft=clone(current);renderAdmin();},0));
@@ -89,6 +89,19 @@ function bindAdmin(){
   save.onclick=null;
   save.dataset.zrGuideSaveOwner='v20';
   save.addEventListener('click',saveGuide,true);
+
+  if(!root.dataset.v20CompatWatch){
+    root.dataset.v20CompatWatch='1';
+    let queued=false;
+    new MutationObserver(()=>{
+      if(queued||!root.querySelector('.zrga-row[data-i]'))return;
+      queued=true;
+      queueMicrotask(()=>{
+        queued=false;
+        if(root.querySelector('.zrga-row[data-i]')){draft=clone(current);renderAdmin()}
+      });
+    }).observe(root,{childList:true});
+  }
   return true;
 }
 
