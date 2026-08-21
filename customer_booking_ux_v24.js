@@ -8,10 +8,10 @@ const toast=s=>{try{window.toast?.(s)}catch{}};
 const PRIVACY_TEXT='단체예약 접수 및 관리, 예약 확인·변경·취소, 이용 안내를 위해 단체명, 예약자명, 연락처, 이메일(선택), 예약 관련 요청사항 등 예약 과정에서 입력한 정보를 수집·이용합니다. 수집된 개인정보는 이용 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 안전하게 보관합니다.';
 const SPECIAL_TEXT='간식시간 등 별도 시간 조정이 필요하거나, 예약 시 전달할 사항이 있다면 작성해주세요.';
 const SPECIAL_EXAMPLE='예) 14:00~14:30 간식시간 필요';
+const OLD_PROGRAM_TEXT='동물원 프로그램 시간은 방문 전주 스케줄을 통해 안내됩니다.';
+const NEW_PROGRAM_HTML='동물원 프로그램 일정 시간표는 <b>방문 전주 스케줄</b>을 통해 안내됩니다.';
 
-function phone(){
-  return $('startContact');
-}
+function phone(){return $('startContact')}
 function preparePhone(){
   const el=phone();if(!el)return;
   el.setAttribute('inputmode','numeric');
@@ -39,18 +39,29 @@ function validPhone(show=false){
   }
   return ok;
 }
+
 function applyPrivacyText(){
+  const root=$('customerView');if(!root)return;
+  const heading=[...root.querySelectorAll('h2,h3,h4,strong,b,label,div')].find(el=>(el.textContent||'').trim()==='개인정보 수집 및 이용 안내');
   const privacy=$('privacy');
-  const box=privacy?.closest?.('.calc');
-  const help=box?.querySelector?.('.help');
-  if(help&&help.textContent!==PRIVACY_TEXT)help.textContent=PRIVACY_TEXT;
+  const scope=heading?.closest('.calc,.card,.box,.field,.form-group')||privacy?.closest('.calc,.card,.box,.field,.form-group')||privacy?.parentElement;
+  if(!scope)return;
+  let help=[...scope.querySelectorAll('.help,small,p')].find(el=>el.id!=='zrSpecialRequestHelp'&&/(개인정보|단체예약 접수|브라우저에만 저장|입력 정보를 수집)/.test((el.textContent||'').trim()));
+  if(!help){
+    help=document.createElement('div');
+    help.id='zrPrivacyHelpV34';
+    help.className='help';
+    help.style.marginTop='6px';
+    if(heading)heading.insertAdjacentElement('afterend',help);else scope.insertBefore(help,scope.firstChild);
+  }
+  if(help.textContent!==PRIVACY_TEXT)help.textContent=PRIVACY_TEXT;
 }
 function applySpecialRequestText(){
   const root=$('customerView');if(!root)return;
   const label=[...root.querySelectorAll('label')].find(x=>/^특이사항\s*\*?$/.test((x.textContent||'').replace(/\s+/g,' ').trim()));
   if(!label)return;
   const holder=label.parentElement;
-  const ta=holder?.querySelector?.('textarea');
+  const ta=holder?.querySelector?.('textarea')||label.nextElementSibling?.matches?.('textarea')&&label.nextElementSibling;
   if(!ta)return;
   ta.placeholder=SPECIAL_EXAMPLE;
   let help=$('zrSpecialRequestHelp');
@@ -63,6 +74,13 @@ function applySpecialRequestText(){
   }
   if(help.textContent!==SPECIAL_TEXT)help.textContent=SPECIAL_TEXT;
 }
+function applyProgramScheduleText(){
+  const root=$('customerView');if(!root)return;
+  const all=[...root.querySelectorAll('p,div,span,small,.help')];
+  const el=all.find(x=>(x.textContent||'').includes(OLD_PROGRAM_TEXT)&&![...x.children].some(c=>(c.textContent||'').includes(OLD_PROGRAM_TEXT)));
+  if(el&&el.innerHTML!==NEW_PROGRAM_HTML)el.innerHTML=NEW_PROGRAM_HTML;
+}
+
 function installExitGuideGuard(){
   if(window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28)return;
   window.__ZR_EXIT_GUIDE_VISUAL_GUARD_V28=true;
@@ -89,54 +107,27 @@ function installExitGuideGuard(){
     },180);
   },true);
 }
-function installFinalOnlyGuard(){
-  if(window.__ZR_FINAL_ONLY_GUARD_V33)return;
-  window.__ZR_FINAL_ONLY_GUARD_V33=true;
-  const style=document.createElement('style');
-  style.id='zrFinalOnlyGuardStyleV33';
-  style.textContent='html.zr-final-confirm-active #zrGuideModal,html.zr-final-confirm-active #zrPlayGuideModal,html.zr-final-confirm-active #zrFinalGuideModal,html.zr-final-confirm-active #zrFinalGuideModalV30{display:none!important}';
-  document.head.appendChild(style);
-  const customerVisible=()=>{const v=$('customerView');return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'};
-  const bookingButton=b=>{const t=(b?.textContent||b?.value||'').replace(/\s+/g,'');return !!b&&/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t)};
-  let settleTimer=0;
-  const finalActive=()=>document.documentElement.classList.contains('zr-final-confirm-active');
+
+function installFinalSubmitGuard(){
+  if(window.__ZR_FINAL_SUBMIT_GUARD_V34)return;
+  window.__ZR_FINAL_SUBMIT_GUARD_V34=true;
+
+  document.documentElement.classList.remove('zr-final-confirm-active');
+  $('zrFinalOnlyGuardStyleV33')?.remove();
+  window.__ZR_FINAL_DIRECT_SUBMIT=false;
+
+  let finalSubmitting=false;
   const hideLegacy=()=>['zrGuideModal','zrPlayGuideModal','zrFinalGuideModal','zrFinalGuideModalV30'].forEach(id=>$(id)?.classList.add('hidden'));
-  const settleLegacy=()=>{
-    if(!finalActive())return;
-    const zoo=$('zrGuideModal');
-    if(zoo&&!zoo.classList.contains('hidden')){
-      try{$('zrGuideConfirm')?.click?.()}catch{}
-      zoo.classList.add('hidden');
-    }
-    const play=$('zrPlayGuideModal');
-    if(play&&!play.classList.contains('hidden')){
-      try{$('zrPlayGuideConfirm')?.click?.()}catch{}
-      play.classList.add('hidden');
-    }
-    hideLegacy();
-  };
-  const arm=()=>{
-    window.__ZR_FINAL_DIRECT_SUBMIT=true;
-    document.documentElement.classList.add('zr-final-confirm-active');
-    settleLegacy();
-    clearInterval(settleTimer);
-    settleTimer=setInterval(settleLegacy,25);
-    setTimeout(()=>{clearInterval(settleTimer);settleLegacy()},1800);
-  };
-  const disarm=()=>{
-    window.__ZR_FINAL_DIRECT_SUBMIT=false;
-    document.documentElement.classList.remove('zr-final-confirm-active');
-    clearInterval(settleTimer);
-  };
+
   const wrapToast=()=>{
     const fn=window.toast;
-    if(typeof fn!=='function'||fn.__zrFinalWrapped)return false;
+    if(typeof fn!=='function'||fn.__zrFinalV34Wrapped)return false;
     const wrapped=function(msg,...rest){
       const s=String(msg||'');
-      if(finalActive()&&/(방문|놀이터).*안내사항.*(필요|확인)/.test(s))return;
+      if(finalSubmitting&&/(방문|놀이터).*안내사항.*(필요|확인)/.test(s))return;
       return fn.call(this,msg,...rest);
     };
-    wrapped.__zrFinalWrapped=true;
+    wrapped.__zrFinalV34Wrapped=true;
     window.toast=wrapped;
     return true;
   };
@@ -144,31 +135,37 @@ function installFinalOnlyGuard(){
     const wt=setInterval(()=>{if(wrapToast())clearInterval(wt)},100);
     setTimeout(()=>clearInterval(wt),10000);
   }
+
   window.addEventListener('click',e=>{
-    if(e.target?.closest?.('#zrFinalBackV31')){disarm();return;}
-    const b=e.target?.closest?.('button,input[type="submit"],a');
-    if(!customerVisible()||!bookingButton(b))return;
-    if(b?.closest?.('#zrGuideModal,#zrPlayGuideModal'))return;
-    if(b?.closest?.('#zrFinalGuideModalV31')){arm();return;}
-    arm();
+    if(e.target?.closest?.('#zrFinalBackV31')){
+      finalSubmitting=false;
+      window.__ZR_FINAL_DIRECT_SUBMIT=false;
+      return;
+    }
+    if(!e.target?.closest?.('#zrFinalOkV31'))return;
+    finalSubmitting=true;
+    window.__ZR_FINAL_DIRECT_SUBMIT=true;
+    hideLegacy();
+    [0,40,100,250,600].forEach(ms=>setTimeout(hideLegacy,ms));
+    setTimeout(()=>{finalSubmitting=false},1600);
   },true);
 }
+
 function applyStartUi(){
   const btn=$('lookupBooking');
   if(btn&&btn.textContent!=='예약 / 조회')btn.textContent='예약 / 조회';
   preparePhone();
-  applyPrivacyText();
   applySpecialRequestText();
+  applyPrivacyText();
+  applyProgramScheduleText();
 }
-
-installFinalOnlyGuard();
-
 function boot(){
   installExitGuideGuard();
+  installFinalSubmitGuard();
   applyStartUi();
   const el=phone();
   if(el){
-    el.addEventListener('input',()=>sanitizePhone());
+    el.addEventListener('input',sanitizePhone);
     el.addEventListener('blur',()=>{if(String(el.value||'').trim())validPhone(false)});
   }
   document.addEventListener('click',e=>{
@@ -179,7 +176,7 @@ function boot(){
     e.stopImmediatePropagation();
   },true);
   const t=setInterval(applyStartUi,500);
-  setTimeout(()=>clearInterval(t),15000);
+  setTimeout(()=>clearInterval(t),20000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
