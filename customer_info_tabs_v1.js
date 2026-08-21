@@ -4,7 +4,9 @@ if(window.__ZR_CUSTOMER_INFO_TABS_V1)return;
 window.__ZR_CUSTOMER_INFO_TABS_V1=true;
 
 const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function customerVisible(){const v=$('customerView');return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'}
+function guideMapUrl(){return String(window.zrCustomerGuideMapV1?.imageUrl||'').trim()}
 
 function injectStyle(){
   if($('zrCustomerInfoTabsV1Style'))return;
@@ -18,7 +20,8 @@ function injectStyle(){
   .zr-customer-info-modal{position:fixed;inset:0;z-index:10250;background:rgba(16,25,20,.58);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
   .zr-customer-info-modal.hidden{display:none!important}.zr-customer-info-sheet{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:17px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.26);-webkit-overflow-scrolling:touch}
   .zr-customer-info-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}.zr-customer-info-head h2{margin:0;flex:1;font-size:20px}.zr-customer-info-close{border:0;border-radius:9px;padding:8px 11px;background:#eef1ee;color:#4f5c54;font-weight:900;cursor:pointer}
-  #zrCustomerGuideQuickBody .zr-guide-cards{margin-top:0}#zrCustomerGuideQuickBody .zr-guide-notices{margin-top:12px}
+  .zr-guide-map-note{margin-bottom:10px;color:#68736b;font-size:12px;line-height:1.55}.zr-guide-map-frame{display:block;border:1px solid #dfe5df;border-radius:13px;overflow:hidden;background:#f5f7f5}
+  .zr-guide-map-frame img{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain}.zr-guide-map-empty{padding:30px 12px;text-align:center;border:1px dashed #d6ddd8;border-radius:12px;background:#fafbfa;color:#6d776f;font-size:13px;line-height:1.6}
   #zrCustomerParkingQuickBody .zrpk31-title{padding-top:4px}#zrCustomerParkingQuickBody .zrpk31-maps{margin-top:10px}
   #zrCustomerParkingQuickBody .zrpk31-map{min-height:38px;padding:0 14px}
   .zr-customer-info-loading{padding:24px 8px;text-align:center;color:#6c766f;font-size:13px}
@@ -26,6 +29,10 @@ function injectStyle(){
   `;document.head.appendChild(s);
 }
 
+function loadGuideMapConfig(){
+  if($('zrCustomerGuideMapV1Script'))return;
+  const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=1';document.body.appendChild(s);
+}
 function ensureTabs(){
   let tabs=$('zrCustomerInfoTabsV1');
   if(!tabs){
@@ -47,16 +54,19 @@ function ensureModal(id,title,bodyId){
   return m;
 }
 
+function fillGuideQuick(){
+  const body=$('zrCustomerGuideQuickBody');if(!body)return;
+  const url=guideMapUrl();
+  if(url){
+    body.innerHTML=`<div class="zr-guide-map-note">가이드맵을 확인해주세요. 이미지를 누르면 원본 크기로 열립니다.</div><a class="zr-guide-map-frame" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(url)}" alt="주렁주렁 동탄점 가이드맵" onerror="this.parentElement.outerHTML='<div class=&quot;zr-guide-map-empty&quot;>가이드맵 이미지를 불러오지 못했습니다.<br>잠시 후 다시 확인해주세요.</div>'"></a>`;
+  }else{
+    body.innerHTML='<div class="zr-guide-map-empty">등록된 가이드맵 이미지가 없습니다.<br>관리자가 이미지를 등록한 뒤 확인해주세요.</div>';
+  }
+}
 function openGuideQuick(){
   const m=ensureModal('zrCustomerGuideQuickV1','가이드맵','zrCustomerGuideQuickBody');
-  const body=$('zrCustomerGuideQuickBody');
-  const cards=$('zrGuideCards'),notices=$('zrGuideNotices');
-  if(cards&&(cards.innerHTML.trim()||notices?.innerHTML.trim())){
-    body.innerHTML='<div class="help" style="margin-bottom:10px">동물원 관람 및 체험 이용 안내입니다.</div>'+(cards?.outerHTML||'')+(notices?.outerHTML||'');
-    body.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
-  }else{
-    body.innerHTML='<div class="zr-customer-info-loading">가이드 정보를 불러오는 중입니다. 잠시 후 다시 확인해주세요.</div>';
-  }
+  fillGuideQuick();
+  if(!guideMapUrl()){setTimeout(fillGuideQuick,450);setTimeout(fillGuideQuick,1200)}
   m.classList.remove('hidden');
 }
 function parkingCopy(){
@@ -81,7 +91,9 @@ function sync(){
   if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;injectStyle();ensureTabs()});
 }
 function boot(){
-  sync();new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  injectStyle();loadGuideMapConfig();sync();
+  new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  document.addEventListener('zr:guide-map-updated',()=>{if(!$('zrCustomerGuideQuickV1')?.classList.contains('hidden'))fillGuideQuick()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
