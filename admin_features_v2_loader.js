@@ -38,7 +38,7 @@
       }
 
       if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const r16=await fetch('./customer_visit_guide_v16.js?v=24',{cache:'no-store'});
+        const r16=await fetch('./customer_visit_guide_v16.js?v=25',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
         const fnStart=guide16.indexOf('function isEntryControl(el){');
@@ -58,7 +58,7 @@
         const g=document.createElement('script');
         g.id='zrCustomerVisitGuideFixV20';
         g.async=false;
-        g.src='./customer_visit_guide_fix_v20.js?v=24';
+        g.src='./customer_visit_guide_fix_v20.js?v=25';
         document.body.appendChild(g);
       }
 
