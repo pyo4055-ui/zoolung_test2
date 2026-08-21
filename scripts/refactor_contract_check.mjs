@@ -1,0 +1,78 @@
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+
+const frozen = {
+  'admin_features.js':'92b56752200626496fedb9816b880414a74c571c',
+  'admin2_part1.txt':'118b334e77bf168659a1f9d9f3b83282f04c730c',
+  'admin2_part2.txt':'5e0d2acd06f6b1b417d42c29da488c03811fd0fb',
+  'admin2_part3.txt':'0c7ae5706c190a0c8f941114b95c501c3977fb8f',
+  'admin2_part4.txt':'30a836a742a6a5196b75a1d75020831c7ac7b593',
+  'admin_features_v3_patch.js':'fd7e81ec6a021bfbef587a244f5b268bb1740542',
+  'admin_features_v3_excel_fix.js':'fb1dbf3aaf3a58da7fbb185d8e885aa8efcc5adf',
+  'admin_features_v4_patch.js':'1fb5e7aacae1c36d14cd1d4b1333d3965a0955b4',
+  'admin_features_v5_patch.js':'10ad21bc0e7d5d3ef19301660dc3722b8447399d',
+  'admin_features_v6_patch.js':'1624f8aae6ba2226ecdb70fc4586099f23023f2d',
+  'admin_features_v7_patch.js':'8c76a8adaca91b0ebe5ec161017941acc90e91a1',
+  'admin_features_v8_patch.js':'7f17bd1780c25e86ce03bf9553caaa6e4c7d1b3f',
+  'admin_features_v9_patch.js':'a8299bf9ab52a91ab6efacb9a83c61ec814d6165',
+  'admin_ops_v10.js':'9f945bc144662dfa061e705b711db97d43da20c2',
+  'admin_ops_v11_patch.js':'c360527fb732bbca32145217dc2e041879d8578b',
+  'admin_schedule_tab_v14.js':'f9789332ad5f3e565d98e43abdf1a8b59b9e81be',
+  'admin_schedule_excel_v3.js':'e9f557afc87d50c03821d6496c0fe9719a26974e',
+  'customer_booking_rules_v3.js':'2086a3f1c1bc9facc77015625b40e06f8e241746',
+  'customer_booking_ux_v24.js':'cecf6406df1e2972083208f06e78cb7ba272bd6a',
+  'customer_schedule_view_v3.js':'9a3542d69cea4df54df905ab6f047adf0ffec733',
+  'customer_visit_guide_v16.js':'7dcaeb0b3c104db5610783dd89deb4a99f3e3e54',
+  'customer_visit_guide_fix_v20.js':'ae24df945d6adfd21644f2d0442c4910238d9b28',
+  'reservation_firebase_bridge.js':'45a64b680d371eca97026de652c30dce0940bf43',
+  'reservation_staff_login_fix_v14.js':'d30e7203f2ed3b2e7ddb122cb6f665300cca70a2',
+  'parking_info_v31.js':'185b857d2369ae44bfbbd63bbd0c3e182ec0c472',
+  'legacy/admin_features_v2_loader.js':'9c6e29c1e03182d160c9489d9dcfdb344860cf99'
+};
+
+let failed=false;
+const fail=m=>{failed=true;console.error('FAIL:',m)};
+const ok=m=>console.log('OK:',m);
+const read=p=>fs.readFileSync(p,'utf8');
+
+for(const [file,sha] of Object.entries(frozen)){
+  if(!fs.existsSync(file)){fail(`frozen file missing: ${file}`);continue}
+  const actual=execFileSync('git',['hash-object',file],{encoding:'utf8'}).trim();
+  if(actual!==sha)fail(`frozen behavior file changed: ${file} (${actual} != ${sha})`);
+  else ok(`frozen ${file}`);
+}
+
+const loader=read('admin_features_v2_loader.js');
+const ordered=[
+  'admin_features_v3_patch.js?v=3','admin_features_v3_excel_fix.js?v=31','admin_features_v4_patch.js?v=4',
+  'admin_features_v5_patch.js?v=5','admin_features_v6_patch.js?v=6','admin_features_v7_patch.js?v=7',
+  'admin_features_v8_patch.js?v=8','admin_features_v9_patch.js?v=9'
+];
+let last=-1;
+for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
+for(const needle of ['customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1'])if(!loader.includes(needle))fail(`admin loader missing ${needle}`);
+
+const bridge=read('reservation_firebase_bridge.js');
+for(const needle of ["BOOKING_KEY='zr_bookings'","FULL_COLLECTION='reservations'","AVAIL_COLLECTION='reservationAvailability'","writeChain=Promise.resolve()","window.setStore=wrapped"]){if(!bridge.includes(needle))fail(`reservation DB contract missing: ${needle}`)}
+
+const adminSchedule=read('admin_schedule_tab_v14.js');
+for(const needle of ["'scheduleGroups'","schedulePublished=true","customerSchedule={reservationId:String(b.id)","{merge:true}"]){if(!adminSchedule.includes(needle))fail(`admin schedule contract missing: ${needle}`)}
+
+const customerSchedule=read('customer_schedule_view_v3.js');
+for(const needle of ["b.status==='confirmed'","b.schedulePublished","b.customerSchedule"]){if(!customerSchedule.includes(needle))fail(`customer schedule visibility contract missing: ${needle}`)}
+
+const scheduleHtml=read('schedule.html');
+if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
+for(const old of ['schedule_v6.js?v=8','schedule_display_v8.js?v=12','schedule_shared_memo_unlock_v10.js?v=1'])if(scheduleHtml.includes(old))fail(`schedule.html still loads legacy runtime: ${old}`);
+
+const scheduleCore=read('schedule_refactor/core.js');
+const scheduleApp=read('schedule_refactor/app.js');
+for(const needle of ['scheduleGroups','updatedAt:F.serverTimestamp()'])if(!scheduleCore.includes(needle))fail(`schedule core DB contract missing: ${needle}`);
+for(const needle of ['scheduleGroups','scheduleSharedMemos','__content_catalog__','수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.'])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
+
+for(const file of ['schedule_refactor/core.js','schedule_refactor/display.js','schedule_refactor/detail.js','schedule_refactor/content.js','schedule_refactor/app.js']){
+  try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}
+}
+
+if(failed){console.error('\nRefactor contract check failed. Do not merge.');process.exit(1)}
+console.log('\nRefactor contract check passed.');
