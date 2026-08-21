@@ -5,15 +5,19 @@ window.__ZR_CUSTOMER_INFO_TABS_V1=true;
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function customerVisible(){const v=$('customerView');return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'}
+function visible(el){return !!el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}
+function customerVisible(){
+  if(visible($('adminView')))return false;
+  return visible($('startView'))||visible($('customerView'));
+}
 function guideMapUrl(){return String(window.zrCustomerGuideMapV1?.imageUrl||'').trim()}
 
 function injectStyle(){
   if($('zrCustomerInfoTabsV1Style'))return;
   const s=document.createElement('style');s.id='zrCustomerInfoTabsV1Style';s.textContent=`
-  #zrCustomerInfoTabsV1{position:fixed;left:12px;bottom:14px;z-index:9050;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+  #zrCustomerInfoTabsV1{position:fixed;left:0;bottom:18px;z-index:10020;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
   #zrCustomerInfoTabsV1.hidden{display:none!important}
-  #zrCustomerInfoTabsV1 button{min-height:38px;border:1px solid #cad8cf;border-radius:0 10px 10px 0;padding:0 13px;background:#fff;color:#315843;font-size:12px;font-weight:900;box-shadow:0 3px 12px rgba(30,50,36,.10);cursor:pointer}
+  #zrCustomerInfoTabsV1 button{min-height:40px;border:1px solid #cad8cf;border-left:0;border-radius:0 11px 11px 0;padding:0 14px;background:#fff;color:#315843;font-size:12px;font-weight:900;box-shadow:0 4px 16px rgba(30,50,36,.14);cursor:pointer}
   #zrCustomerInfoTabsV1 button:hover{background:#eef6f1}
   #zrCustomerInfoTabsV1 .parking{border-color:#d8c998;background:#fff9e9;color:#705817}
   #zrCustomerInfoTabsV1 .parking:hover{background:#fff4d7}
@@ -25,13 +29,13 @@ function injectStyle(){
   #zrCustomerParkingQuickBody .zrpk31-title{padding-top:4px}#zrCustomerParkingQuickBody .zrpk31-maps{margin-top:10px}
   #zrCustomerParkingQuickBody .zrpk31-map{min-height:38px;padding:0 14px}
   .zr-customer-info-loading{padding:24px 8px;text-align:center;color:#6c766f;font-size:13px}
-  @media(max-width:520px){#zrCustomerInfoTabsV1{left:7px;bottom:9px}#zrCustomerInfoTabsV1 button{min-height:36px;padding:0 10px;font-size:11px}.zr-customer-info-sheet{padding:14px}}
+  @media(max-width:520px){#zrCustomerInfoTabsV1{bottom:10px}#zrCustomerInfoTabsV1 button{min-height:38px;padding:0 11px;font-size:11px}.zr-customer-info-sheet{padding:14px}}
   `;document.head.appendChild(s);
 }
 
 function loadGuideMapConfig(){
   if($('zrCustomerGuideMapV1Script'))return;
-  const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=1';document.body.appendChild(s);
+  const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=2';document.body.appendChild(s);
 }
 function ensureTabs(){
   let tabs=$('zrCustomerInfoTabsV1');
@@ -93,6 +97,7 @@ function sync(){
 function boot(){
   injectStyle();loadGuideMapConfig();sync();
   new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  const timer=setInterval(sync,400);setTimeout(()=>clearInterval(timer),20000);
   document.addEventListener('zr:guide-map-updated',()=>{if(!$('zrCustomerGuideQuickV1')?.classList.contains('hidden'))fillGuideQuick()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
