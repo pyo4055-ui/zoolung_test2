@@ -23,7 +23,7 @@ const frozen = {
   'admin_schedule_tab_v14.js':'f9789332ad5f3e565d98e43abdf1a8b59b9e81be',
   'admin_schedule_excel_v3.js':'e9f557afc87d50c03821d6496c0fe9719a26974e',
   'customer_booking_rules_v3.js':'2086a3f1c1bc9facc77015625b40e06f8e241746',
-  'customer_booking_ux_v24.js':'cecf6406df1e2972083208f06e78cb7ba272bd6a',
+  'customer_booking_ux_v24.js':'26e33dc4dd7cc209ce70797dcc4757f61c7310ba',
   'customer_schedule_view_v3.js':'9a3542d69cea4df54df905ab6f047adf0ffec733',
   'customer_visit_guide_v16.js':'7dcaeb0b3c104db5610783dd89deb4a99f3e3e54',
   'customer_visit_guide_fix_v20.js':'ae24df945d6adfd21644f2d0442c4910238d9b28',
