@@ -10,6 +10,8 @@ function injectStyle(){
   s.textContent=`
   #tab-schedule .zrsc-seg.zr-force-time small{display:block!important;font-size:7.5px!important;line-height:1!important;margin-top:2px!important;white-space:nowrap!important}
   #tab-schedule .zrsc-seg.zr-force-time b{line-height:1.05!important}
+  #tab-schedule .zrsc-card.zr-time-promoted .zrsc-org{margin-right:0!important}
+  #tab-schedule .zrsc-reservation-time{margin-right:auto!important;padding:6px 10px!important;font-size:13px!important;font-weight:900!important;line-height:1.1!important;color:#245c43!important;background:#e8f4ec!important;border:1px solid #bcd8c7!important;box-shadow:0 1px 3px rgba(36,92,67,.08)!important;white-space:nowrap!important}
   .zr-customer-ruler span:first-child{left:0!important;transform:none!important;text-align:left!important}
   .zr-customer-ruler span:last-child{transform:translateX(-100%)!important;text-align:right!important}
   `;
@@ -37,6 +39,19 @@ function fixAdminScheduleTimes(){
     const text=`${m[1]}~${m[2]}`;
     if(small.textContent!==text)small.textContent=text;
     el.classList.add('zr-force-time');
+  });
+}
+
+function promoteReservationTimes(){
+  document.querySelectorAll('#tab-schedule .zrsc-card').forEach(card=>{
+    const head=card.querySelector('.zrsc-head');
+    const org=head?.querySelector('.zrsc-org');
+    if(!head||!org)return;
+    const time=[...head.querySelectorAll('.zrsc-tag')].find(tag=>/^예약\s+\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}$/.test((tag.textContent||'').trim()));
+    if(!time)return;
+    time.classList.add('zrsc-reservation-time');
+    card.classList.add('zr-time-promoted');
+    if(org.nextElementSibling!==time)org.insertAdjacentElement('afterend',time);
   });
 }
 
@@ -101,6 +116,7 @@ function scheduleFix(){
     pending=false;
     injectStyle();
     fixAdminScheduleTimes();
+    promoteReservationTimes();
   });
 }
 
