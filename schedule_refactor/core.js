@@ -52,7 +52,10 @@ export const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const cleanObj=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined));
 export const tel=s=>String(s||"").replace(/[^0-9+]/g,"");
 
-export const firebaseApp=initializeApp(firebaseConfig);
+// 현장스케줄은 단체예약 관리자와 같은 Firebase 프로젝트를 사용하지만
+// Auth 세션 저장공간은 분리한다. 같은 origin의 탭에서 LOCAL 인증 상태가
+// 동기화되며 서로의 직원 로그인 상태를 덮어쓰는 문제를 방지한다.
+export const firebaseApp=initializeApp(firebaseConfig,"zrOnsiteSchedule");
 export const auth=getAuth(firebaseApp);
 export const db=getFirestore(firebaseApp);
 export const F={
