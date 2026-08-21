@@ -34,13 +34,15 @@
       if(!document.getElementById('zrCustomerVisitGuideV16')){
         const g=document.createElement('script');
         g.id='zrCustomerVisitGuideV16';
+        g.async=false;
         g.src='./customer_visit_guide_v16.js?v=16';
         document.body.appendChild(g);
       }
-      if(!document.getElementById('zrCustomerVisitGuideSaveFixV17')){
+      if(!document.getElementById('zrCustomerVisitGuideFixV20')){
         const g=document.createElement('script');
-        g.id='zrCustomerVisitGuideSaveFixV17';
-        g.src='./customer_visit_guide_save_fix_v17.js?v=17';
+        g.id='zrCustomerVisitGuideFixV20';
+        g.async=false;
+        g.src='./customer_visit_guide_fix_v20.js?v=21';
         document.body.appendChild(g);
       }
 
