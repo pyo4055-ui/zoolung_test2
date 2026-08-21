@@ -154,6 +154,18 @@ function loadParkingInfo(){
   document.body.appendChild(p);
 }
 
+function loadCustomerQuickTools(){
+  const tools=[
+    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=2'],
+    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=2']
+  ];
+  for(const [id,src] of tools){
+    if(document.getElementById(id))continue;
+    const s=document.createElement('script');
+    s.id=id;s.async=false;s.src=src;document.body.appendChild(s);
+  }
+}
+
 function installLegacyScheduleFallback(){
   const waitSchedule=setInterval(()=>{
     if(!window.zrReservationFirebase)return;
@@ -190,6 +202,7 @@ function signalReady(){
       installPlayZooGuideGuard();
       await loadCustomerGuideFixV20();
       loadParkingInfo();
+      loadCustomerQuickTools();
       installLegacyScheduleFallback();
     }catch(e3){
       console.error('admin latest patch load failed',e3);
