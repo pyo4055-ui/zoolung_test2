@@ -18,7 +18,10 @@ export const firebaseConfig={
   measurementId:"G-GZ4BPNB5KP"
 };
 export const STAFF_EMAIL="zoolung09@zoolungzoolung.com";
-export const PK="zr_schedule_date_v2",START_MIN=600,MAX_PICK=1080,SLOT=15;
+export const PK="zr_schedule_date_v2";
+export const START_MIN=600;
+export const MAX_PICK=1080;
+export const SLOT=15;
 export const T={
   f4:["4F 베이직","f4"],
   f5:["5F 워터가든","f5"],
