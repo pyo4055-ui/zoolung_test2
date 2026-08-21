@@ -32,13 +32,13 @@
       (0,eval)(await r9.text());
 
       if(!window.__ZR_CUSTOMER_BOOKING_UX_V24){
-        const rux=await fetch('./customer_booking_ux_v24.js?v=24',{cache:'no-store'});
+        const rux=await fetch('./customer_booking_ux_v24.js?v=27',{cache:'no-store'});
         if(!rux.ok)throw new Error('고객 예약 입력 보정 패치를 불러오지 못했습니다.');
         (0,eval)(await rux.text());
       }
 
       if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const r16=await fetch('./customer_visit_guide_v16.js?v=26',{cache:'no-store'});
+        const r16=await fetch('./customer_visit_guide_v16.js?v=27',{cache:'no-store'});
         if(!r16.ok)throw new Error('고객 방문 안내 기능을 불러오지 못했습니다.');
         let guide16=await r16.text();
         const fnStart=guide16.indexOf('function isEntryControl(el){');
@@ -47,6 +47,9 @@
         guide16=guide16.slice(0,fnStart)+
           "function isEntryControl(el){\n  if(!el?.matches?.('select,input')||el.closest('#adminView'))return false;\n  return el.id==='entryTime';\n}"+
           guide16.slice(fnEnd);
+        const openNeedle='function openCustomerGuide(control){';
+        if(!guide16.includes(openNeedle))throw new Error('고객 방문 안내 팝업 함수를 찾지 못했습니다.');
+        guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;");
         const marker=document.createElement('script');
         marker.id='zrCustomerVisitGuideV16';
         marker.type='application/json';
@@ -54,11 +57,11 @@
         (0,eval)(guide16);
       }
 
-      if(!window.__ZR_PLAY_ZOO_GUIDE_GUARD_V26){
-        window.__ZR_PLAY_ZOO_GUIDE_GUARD_V26=true;
+      if(!window.__ZR_PLAY_ZOO_GUIDE_GUARD_V27){
+        window.__ZR_PLAY_ZOO_GUIDE_GUARD_V27=true;
         document.addEventListener('change',e=>{
           const id=e.target?.id||'';
-          if(id!=='exitTime'&&id!=='playStart'&&id!=='playDuration')return;
+          if(id!=='playStart'&&id!=='playDuration')return;
           setTimeout(()=>{
             const m=document.getElementById('zrGuideModal');
             if(m&&!m.classList.contains('hidden'))m.classList.add('hidden');
