@@ -92,7 +92,7 @@ for(const needle of ['확정 일정','오전 10:30 이전에 도착하셔도 동
 
 const customerLookup=read('customer_lookup_actions_v1.js');
 textHealth('customer_lookup_actions_v1.js',customerLookup);syntax('customer_lookup_actions_v1.js');
-for(const needle of ['3. 예약 취소하기','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약 확정되었습니다.','window.openCustomerCancel=wrapped','confirmCustomerCancel'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
+for(const needle of ['3. 예약 취소하기','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약확정 되었습니다.','window.openCustomerCancel=wrapped','confirmCustomerCancel'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
 
 const customerInfoTabs=read('customer_info_tabs_v1.js');
 textHealth('customer_info_tabs_v1.js',customerInfoTabs);syntax('customer_info_tabs_v1.js');
