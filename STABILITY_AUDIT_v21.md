@@ -54,19 +54,13 @@ v19와 v20이 동일한 관리자 DOM을 서로 다른 data 속성으로 렌더�
 
 조치: 정리 후 값이 `undefined`면 patch에 포함하지 않는다. 정상 데이터 값의 저장 방식은 변경하지 않음.
 
-### 4. 관리자 로그아웃 후 legacy 예약 캐시 재혼입 가능성
-
-Firebase bridge는 시작 시 로컬 예약을 `legacyLocal`에 별도로 기억한다. 관리자 로그아웃 시 화면의 로컬 저장소만 비우고 `legacyLocal`을 유지하면 익명 사용자 리스너가 다시 시작된 뒤 오래된 관리자 캐시가 로컬 목록에 재삽입될 수 있다.
-
-조치: 직원 계정 로그아웃 전 `legacyLocal.clear()`를 수행해 관리자용 레거시 캐시를 폐기한다. Firestore 원격 데이터는 삭제하지 않는다.
-
-### 5. 현장스케줄 alias 캐시 버전 불일치
+### 4. 현장스케줄 alias 캐시 버전 불일치
 
 최신 현장 표시 수정 후 `schedule_v8.html`은 `schedule_display_v8.js?v=15`를 사용하지만 `schedule.html`은 `?v=12`에 남아 있었다. 사용 URL과 브라우저 캐시에 따라 서로 다른 세대의 표시 JS가 사용될 수 있다.
 
 조치: `schedule.html`도 `?v=15`로 맞춘다. 실제 JS 코드나 현장 데이터 저장 로직은 변경하지 않는다.
 
-### 6. 안정화 파일의 배포 캐시 혼재
+### 5. 안정화 파일의 배포 캐시 혼재
 
 v21에서 `admin_features_v2_loader.js`, `reservation_firebase_bridge.js`, `customer_visit_guide_fix_v20.js`를 수정해도 진입 HTML/로더의 query version이 그대로면 기존 브라우저 캐시가 남을 수 있다.
 
@@ -90,6 +84,14 @@ query string만 변경하며 실행 내용 자체를 추가로 변경하지 않�
 ### 공용메모
 
 `scheduleSharedMemos` 별도 컬렉션을 사용하므로 단체 스케줄 문서와 분리되어 있다.
+
+## 검토 후 의도적으로 되돌린 변경
+
+### 관리자 로그아웃 시 `legacyLocal.clear()`
+
+처음에는 관리자 캐시가 고객 모드에 다시 섞이는 가능성을 줄이기 위해 `legacyLocal.clear()`를 검토했다. 그러나 `legacyLocal`은 관리자 로그인 전에 존재하던 정상 로컬 예약의 복원 경로 역할도 할 수 있어, 이를 일괄 삭제하면 기존 로컬 예약을 잃어버리는 회귀가 생길 수 있다.
+
+결론: 확실한 개선으로 입증되지 않아 v21 후보에서 제거하고 기존 동작을 유지한다. 관리자/고객 캐시 소유권을 완전히 분리하려면 별도 설계가 필요하다.
 
 ## 의도적으로 건드리지 않은 부분
 
@@ -151,7 +153,6 @@ query string만 변경하며 실행 내용 자체를 추가로 변경하지 않�
 - v19 → v20 최신 로딩 경로 확인
 - v20 저장 소유권 확인
 - Firestore undefined patch 방어 확인
-- 직원 로그아웃 legacy cache clear 확인
 - 현장 alias display cache v15 확인
 - index loader/bridge v21 cache 확인
 
@@ -170,9 +171,8 @@ query string만 변경하며 실행 내용 자체를 추가로 변경하지 않�
 9. 스케줄 확정/확정취소 및 고객 확정스케줄 표시
 10. 고객 방문안내 편집 저장 후 새로고침 및 고객 팝업 반영
 11. 예약현황/아웃소싱/스케줄 엑셀 내려받기
-12. 관리자 로그아웃 → 고객 모드에서 관리자 예약 캐시가 재혼입되지 않는지 확인
-13. `schedule.html`과 `schedule_v8.html`에서 동일한 현장 표시 확인
-14. 새로고침 및 재로그인 후 데이터 유지
+12. `schedule.html`과 `schedule_v8.html`에서 동일한 현장 표시 확인
+13. 새로고침 및 재로그인 후 데이터 유지
 
 ## 롤백 원칙
 
