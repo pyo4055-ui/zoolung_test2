@@ -31,21 +31,7 @@
       if(!r9.ok)throw new Error('관리자 v9 패치를 불러오지 못했습니다.');
       (0,eval)(await r9.text());
 
-      if(!document.getElementById('zrCustomerVisitGuideV16')){
-        const g=document.createElement('script');
-        g.id='zrCustomerVisitGuideV16';
-        g.async=false;
-        g.src='./customer_visit_guide_v16.js?v=16';
-        document.body.appendChild(g);
-      }
-      if(!document.getElementById('zrCustomerVisitGuideFixV20')){
-        const g=document.createElement('script');
-        g.id='zrCustomerVisitGuideFixV20';
-        g.async=false;
-        g.src='./customer_visit_guide_fix_v20.js?v=21';
-        document.body.appendChild(g);
-      }
-
+      /* 고객 안내와 최신 스케줄 모듈은 v9 패치가 단일 경로로 관리한다. */
       const waitSchedule=setInterval(()=>{
         if(!window.zrReservationFirebase)return;
         clearInterval(waitSchedule);
