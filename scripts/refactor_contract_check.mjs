@@ -66,6 +66,7 @@ let last=-1;
 for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
 for(const needle of [
   'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1',
+  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=2','loadCustomerQuickTools()',
   "return el.id==='entryTime';",
   "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
@@ -88,15 +89,16 @@ textHealth('schedule_ui_fix_v4.js',scheduleUiFix);syntax('schedule_ui_fix_v4.js'
 if(!scheduleUiFix.includes('./customer_schedule_ui_v5.js?v=5'))fail('customer schedule UI v5 is not loaded by schedule UI fix');
 const customerScheduleUi=read('customer_schedule_ui_v5.js');
 textHealth('customer_schedule_ui_v5.js',customerScheduleUi);syntax('customer_schedule_ui_v5.js');
-for(const needle of ['확정 일정','오전 10:30 이전에 도착하셔도 동물 관람은 10:30부터 가능합니다.','zr-customer-notice','MutationObserver(patch).observe(document.body','./customer_lookup_actions_v1.js?v=1','./customer_info_tabs_v1.js?v=1'])if(!customerScheduleUi.includes(needle))fail(`customer schedule UI contract missing: ${needle}`);
+for(const needle of ['확정 일정','오전 10:30 이전에 도착하셔도 동물 관람은 10:30부터 가능합니다.','zr-customer-notice','MutationObserver(patch).observe(document.body'])if(!customerScheduleUi.includes(needle))fail(`customer schedule UI contract missing: ${needle}`);
+if(customerScheduleUi.includes('loadCustomerModules'))fail('customer quick tools must not depend on customer schedule UI');
 
 const customerLookup=read('customer_lookup_actions_v1.js');
 textHealth('customer_lookup_actions_v1.js',customerLookup);syntax('customer_lookup_actions_v1.js');
-for(const needle of ['3. 예약 취소하기','이 예약 취소하기','취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요.','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약확정 되었습니다.','본 예약은 취소 되었습니다.','cancelSuccessView','window.openCustomerCancel=wrapped','confirmCustomerCancel'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
+for(const needle of ['3. 예약 취소하기','이 예약 취소하기','취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요.','취소 사유를 입력해주세요.','cancelReason=reason','본 예약은 담당자로부터 예약확정 되었습니다.','본 예약은 취소 되었습니다.','cancelSuccessView','window.openCustomerCancel=wrapped','confirmCustomerCancel','zrCancelledBookingRecordsV2','예약번호','취소일시','취소구분','cancellableCustomerBookings()'])if(!customerLookup.includes(needle))fail(`customer lookup actions contract missing: ${needle}`);
 
 const customerInfoTabs=read('customer_info_tabs_v1.js');
 textHealth('customer_info_tabs_v1.js',customerInfoTabs);syntax('customer_info_tabs_v1.js');
-for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=1','guideMapUrl()'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=2','guideMapUrl()',"visible($('startView'))","visible($('customerView'))"])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
 
 const customerGuideMap=read('customer_guide_map_v1.js');
 textHealth('customer_guide_map_v1.js',customerGuideMap);syntax('customer_guide_map_v1.js');
