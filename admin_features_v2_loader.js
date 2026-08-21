@@ -192,6 +192,8 @@ function signalReady(){
   },100);
 }
 
+loadCustomerQuickTools();
+
 (async()=>{
   try{
     await loadAdminBase();
@@ -202,7 +204,6 @@ function signalReady(){
       installPlayZooGuideGuard();
       await loadCustomerGuideFixV20();
       loadParkingInfo();
-      loadCustomerQuickTools();
       installLegacyScheduleFallback();
     }catch(e3){
       console.error('admin latest patch load failed',e3);
