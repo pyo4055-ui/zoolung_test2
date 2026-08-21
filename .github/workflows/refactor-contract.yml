@@ -13,6 +13,8 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/refactor_contract_check.mjs
+      - name: Temporary booking source inspect
+        run: node scripts/source_inspect_temp.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
