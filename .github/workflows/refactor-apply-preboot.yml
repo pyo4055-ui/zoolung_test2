@@ -1,0 +1,51 @@
+name: Apply refactor preboot shield
+on:
+  push:
+    branches:
+      - refactor-preserve-behavior
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor-preserve-behavior
+      - name: Patch preboot visibility
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index_path = Path('index.html')
+          index = index_path.read_text(encoding='utf-8')
+          anchor = "    if(html.includes('ADMIN_PASSWORD=')) throw new Error('보안 패치 검증에 실패했습니다.');\n"
+          injection = anchor + "    const prebootStyle='<style id=\"zrPreBootStyle\">html{background:#f6f7f4!important}body{visibility:hidden!important}</style>';\n    if(!html.includes('id=\"zrPreBootStyle\"')) html=html.replace('</head>',prebootStyle+'</head>');\n"
+          if index.count(anchor) != 1:
+              raise SystemExit('index preboot anchor mismatch')
+          if 'zrPreBootStyle' not in index:
+              index = index.replace(anchor, injection)
+              index_path.write_text(index, encoding='utf-8')
+
+          loader_path = Path('admin_features_v2_loader.js')
+          loader = loader_path.read_text(encoding='utf-8')
+          old = "  requestAnimationFrame(()=>requestAnimationFrame(removeBootShield));"
+          new = "  requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}));"
+          if old in loader:
+              loader = loader.replace(old, new, 1)
+              loader_path.write_text(loader, encoding='utf-8')
+          elif new not in loader:
+              raise SystemExit('loader reveal anchor mismatch')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- index.html admin_features_v2_loader.js
+          if git diff --cached --quiet; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git commit -m "fix: prevent legacy UI flash during boot"
+          git push origin HEAD:refactor-preserve-behavior
