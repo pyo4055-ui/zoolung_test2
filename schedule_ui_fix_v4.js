@@ -40,6 +40,59 @@ function fixAdminScheduleTimes(){
   });
 }
 
+function fixedRowsSnapshot(){
+  return JSON.stringify([...document.querySelectorAll('#zr14FixedRows [data-fixed]')].map(row=>({
+    id:row.dataset.fixed||'',
+    name:row.querySelector('input[type="text"]')?.value||'',
+    color:row.querySelector('input[type="color"]')?.value||''
+  })));
+}
+
+function installCustomContentSaveFix(){
+  if(window.__ZR_CUSTOM_CONTENT_SAVE_FIX_V4)return;
+  window.__ZR_CUSTOM_CONTENT_SAVE_FIX_V4=true;
+  let fixedBaseline='';
+
+  // The v14 content button opens/renders the modal at target phase. Capture the
+  // fixed global catalog afterwards so custom-only edits can be distinguished.
+  document.addEventListener('click',e=>{
+    const open=e.target?.closest?.('#tab-schedule [data-content]');
+    if(!open)return;
+    setTimeout(()=>{fixedBaseline=fixedRowsSnapshot()},0);
+  });
+
+  // v14 always writes the global fixed catalog, even when only per-group custom
+  // content changed. For custom-only edits, use v14's existing early-return path
+  // after it has updated draftCustom/rendered the card, preventing the redundant
+  // catalog write that can emit a false DB-save failure toast.
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#zr14SaveSettings');
+    if(!btn||!fixedBaseline)return;
+    const current=fixedRowsSnapshot();
+    if(current!==fixedBaseline)return;
+
+    const bridge=window.zrReservationFirebase;
+    if(!bridge||typeof bridge.isStaff!=='function')return;
+    const originalIsStaff=bridge.isStaff;
+    const originalToast=window.toast;
+    bridge.isStaff=()=>false;
+    if(typeof originalToast==='function'){
+      window.toast=function(msg){
+        if(String(msg||'').includes('컨텐츠 설정은 화면에 적용했습니다. DB 저장은 관리자 DB 로그인 후 가능합니다.'))return;
+        return originalToast.apply(this,arguments);
+      };
+    }
+
+    setTimeout(()=>{
+      bridge.isStaff=originalIsStaff;
+      if(typeof originalToast==='function')window.toast=originalToast;
+      document.getElementById('zr14ContentModal')?.classList.add('hidden');
+      fixedBaseline='';
+      try{originalToast?.('추가 컨텐츠 설정을 적용했습니다. 시간 지정 후 스케줄 반영을 눌러 저장해주세요.')}catch{}
+    },0);
+  },true);
+}
+
 let pending=false;
 function scheduleFix(){
   if(pending)return;
@@ -53,6 +106,7 @@ function scheduleFix(){
 
 function boot(){
   injectStyle();
+  installCustomContentSaveFix();
   scheduleFix();
   const root=document.getElementById('adminView')||document.body;
   new MutationObserver(scheduleFix).observe(root,{childList:true,subtree:true});
