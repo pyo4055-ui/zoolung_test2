@@ -15,7 +15,7 @@ const frozen = {
   'admin_features_v4_patch.js':'1fb5e7aacae1c36d14cd1d4b1333d3965a0955b4',
   'admin_features_v5_patch.js':'10ad21bc0e7d5d3ef19301660dc3722b8447399d',
   'admin_features_v6_patch.js':'1624f8aae6ba2226ecdb70fc4586099f23023f2d',
-  'admin_features_v7_patch.js':'8c76a8adaca91ab0ebe5ec161017941acc90e91a1',
+  'admin_features_v7_patch.js':'8c76a8adaca91b0ebe5ec161017941acc90e91a1',
   'admin_features_v8_patch.js':'7f17bd1780c25e86ce03bf9553caaa6e4c7d1b3f',
   'admin_features_v9_patch.js':'a8299bf9ab52a91ab6efacb9a83c61ec814d6165',
   'admin_ops_v10.js':'9f945bc144662dfa061e705b711db97d43da20c2',
