@@ -1,7 +1,7 @@
 import {state,$,START_MIN,MAX_PICK,SLOT,tm,min,clone,T,savePatch,writeError,toast} from './core.js';
 import {contentPreview,scheduleEnhance} from './display.js';
 let render=()=>{};
-export function initContent(ctx){render=ctx.render;$("contentSave").onclick=save;$("contentCancel").onclick=$("contentClose").onclick=close;$("contentModal").onclick=e=>{if(e.target===$("contentModal"))close()}}
+export function initContent(ctx){render=ctx.render;$("contentSave").onclick=save;$("contentCancel").onclick=$("contentClose").onclick=close}
 function opts(v){let h="";for(let m=START_MIN;m<=MAX_PICK;m+=SLOT){const t=tm(m);h+=`<option value="${t}" ${t===v?"selected":""}>${t}</option>`}return h}
 function axis(){const used=[900];[...state.contentState.original,...state.contentState.changed].forEach(s=>{used.push(min(s.start),min(s.end))});const end=Math.max(900,Math.ceil(Math.max(...used.filter(x=>x!=null))/60)*60);return {start:START_MIN,end:Math.min(MAX_PICK,end)}}
 function updatePreview(){const a=axis();contentPreview("originalRuler","originalTimeline",state.contentState.original,a);contentPreview("changedRuler","changedTimeline",state.contentState.changed,a)}
