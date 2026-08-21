@@ -54,6 +54,18 @@
         (0,eval)(guide16);
       }
 
+      if(!window.__ZR_PLAY_ZOO_GUIDE_GUARD_V25){
+        window.__ZR_PLAY_ZOO_GUIDE_GUARD_V25=true;
+        document.addEventListener('change',e=>{
+          const id=e.target?.id||'';
+          if(id!=='playStart'&&id!=='playDuration')return;
+          setTimeout(()=>{
+            const m=document.getElementById('zrGuideModal');
+            if(m&&!m.classList.contains('hidden'))m.classList.add('hidden');
+          },45);
+        },true);
+      }
+
       if(!document.getElementById('zrCustomerVisitGuideFixV20')){
         const g=document.createElement('script');
         g.id='zrCustomerVisitGuideFixV20';
