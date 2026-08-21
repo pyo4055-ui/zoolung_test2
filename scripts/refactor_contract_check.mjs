@@ -3,7 +3,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 
 const frozen = {
-  'index.html':'0499a5fbf82c3c39b7812e18c9a26c2b64584db7',
+  'index.html':'3d92d7e08b85eb2326aeba0d0def53659dac0ec9',
   'firestore.rules':'cc28cd06415bd2da6d6d407026a3191a67e11c8d',
   'admin_features.js':'92b56752200626496fedb9816b880414a74c571c',
   'admin2_part1.txt':'118b334e77bf168659a1f9d9f3b83282f04c730c',
@@ -71,7 +71,7 @@ for(const needle of [
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
   'function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
   'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;',
-  'zrRefactorBootShield','requestAnimationFrame(()=>requestAnimationFrame(removeBootShield))'
+  'zrRefactorBootShield',"document.getElementById('zrPreBootStyle')?.remove()","requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}))"
 ])if(!loader.includes(needle))fail(`admin loader behavior transform missing: ${needle}`);
 
 const bridge=read('reservation_firebase_bridge.js');
