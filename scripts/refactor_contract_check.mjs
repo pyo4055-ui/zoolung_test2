@@ -65,14 +65,25 @@ const scheduleHtml=read('schedule.html');
 if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
 for(const old of ['schedule_v6.js?v=8','schedule_display_v8.js?v=12','schedule_shared_memo_unlock_v10.js?v=1'])if(scheduleHtml.includes(old))fail(`schedule.html still loads legacy runtime: ${old}`);
 
-const scheduleCore=read('schedule_refactor/core.js');
-const scheduleApp=read('schedule_refactor/app.js');
-for(const needle of ['scheduleGroups','updatedAt:F.serverTimestamp()'])if(!scheduleCore.includes(needle))fail(`schedule core DB contract missing: ${needle}`);
-for(const needle of ['scheduleGroups','scheduleSharedMemos','__content_catalog__','수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.'])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
-
-for(const file of ['schedule_refactor/core.js','schedule_refactor/display.js','schedule_refactor/detail.js','schedule_refactor/content.js','schedule_refactor/app.js']){
+const scheduleFiles=['schedule_refactor/core.js','schedule_refactor/display.js','schedule_refactor/detail.js','schedule_refactor/content.js','schedule_refactor/app.js'];
+for(const file of scheduleFiles){
+  const text=read(file);
+  if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text))fail(`control character found: ${file}`);
+  if(text.includes('\uFFFD'))fail(`replacement character found: ${file}`);
+  const mojibake=(text.match(/[ìëíêð]/g)||[]).length;
+  if(mojibake>=6)fail(`possible UTF-8 mojibake: ${file} (${mojibake} suspicious chars)`);
   try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}
 }
+
+const scheduleCore=read('schedule_refactor/core.js');
+for(const needle of [
+  '4F 베이직','5F 워터가든','식사','놀이터','자율관람',
+  '● ','저장 중','실시간 연결됨','저장 오류','저장에 실패했습니다. Firebase 설정을 확인해주세요.',
+  'scheduleGroups','updatedAt:F.serverTimestamp()'
+])if(!scheduleCore.includes(needle))fail(`schedule core contract missing: ${needle}`);
+
+const scheduleApp=read('schedule_refactor/app.js');
+for(const needle of ['scheduleGroups','scheduleSharedMemos','__content_catalog__','수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.'])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
 
 if(failed){console.error('\nRefactor contract check failed. Do not merge.');process.exit(1)}
 console.log('\nRefactor contract check passed.');
