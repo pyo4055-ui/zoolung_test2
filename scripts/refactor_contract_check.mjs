@@ -39,6 +39,13 @@ let failed=false;
 const fail=m=>{failed=true;console.error('FAIL:',m)};
 const ok=m=>console.log('OK:',m);
 const read=p=>fs.readFileSync(p,'utf8');
+const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}};
+const textHealth=(file,text)=>{
+  if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text))fail(`control character found: ${file}`);
+  if(text.includes('\uFFFD'))fail(`replacement character found: ${file}`);
+  const mojibake=(text.match(/[ìëíêð]/g)||[]).length;
+  if(mojibake>=6)fail(`possible UTF-8 mojibake: ${file} (${mojibake} suspicious chars)`);
+};
 
 for(const [file,sha] of Object.entries(frozen)){
   if(!fs.existsSync(file)){fail(`frozen file missing: ${file}`);continue}
@@ -48,6 +55,7 @@ for(const [file,sha] of Object.entries(frozen)){
 }
 
 const loader=read('admin_features_v2_loader.js');
+textHealth('admin_features_v2_loader.js',loader);syntax('admin_features_v2_loader.js');
 const ordered=[
   'admin_features_v3_patch.js?v=3','admin_features_v3_excel_fix.js?v=31','admin_features_v4_patch.js?v=4',
   'admin_features_v5_patch.js?v=5','admin_features_v6_patch.js?v=6','admin_features_v7_patch.js?v=7',
@@ -55,7 +63,14 @@ const ordered=[
 ];
 let last=-1;
 for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
-for(const needle of ['customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1'])if(!loader.includes(needle))fail(`admin loader missing ${needle}`);
+for(const needle of [
+  'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1',
+  "return el.id==='entryTime';",
+  "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
+  'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
+  'function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
+  'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;'
+])if(!loader.includes(needle))fail(`admin loader behavior transform missing: ${needle}`);
 
 const bridge=read('reservation_firebase_bridge.js');
 for(const needle of ["BOOKING_KEY='zr_bookings'","FULL_COLLECTION='reservations'","AVAIL_COLLECTION='reservationAvailability'","writeChain=Promise.resolve()","window.setStore=wrapped"]){if(!bridge.includes(needle))fail(`reservation DB contract missing: ${needle}`)}
@@ -73,12 +88,7 @@ for(const old of ['schedule_v6.js?v=8','schedule_display_v8.js?v=12','schedule_s
 const scheduleFiles=['schedule_refactor/core.js','schedule_refactor/display.js','schedule_refactor/detail.js','schedule_refactor/content.js','schedule_refactor/app.js'];
 let scheduleBundle='';
 for(const file of scheduleFiles){
-  const text=read(file);scheduleBundle+='\n'+text;
-  if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text))fail(`control character found: ${file}`);
-  if(text.includes('\uFFFD'))fail(`replacement character found: ${file}`);
-  const mojibake=(text.match(/[ìëíêð]/g)||[]).length;
-  if(mojibake>=6)fail(`possible UTF-8 mojibake: ${file} (${mojibake} suspicious chars)`);
-  try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}
+  const text=read(file);scheduleBundle+='\n'+text;textHealth(file,text);syntax(file);
 }
 
 const scheduleCore=read('schedule_refactor/core.js');
@@ -89,7 +99,11 @@ for(const needle of [
 ])if(!scheduleCore.includes(needle))fail(`schedule core contract missing: ${needle}`);
 
 const scheduleApp=read('schedule_refactor/app.js');
-for(const needle of ['scheduleGroups','scheduleSharedMemos','__content_catalog__','수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.'])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
+for(const needle of [
+  'scheduleGroups','scheduleSharedMemos','__content_catalog__',
+  '수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.',
+  '공용 메모 저장에 실패했습니다.'
+])if(!scheduleApp.includes(needle))fail(`schedule app contract missing: ${needle}`);
 if((scheduleApp.match(/state\.unsubGroups=F\.onSnapshot\(q/g)||[]).length!==1)fail('scheduleGroups realtime listener must be exactly one in refactored app');
 if(read('schedule_refactor/display.js').includes('onSnapshot'))fail('display module must not create a second Firestore listener');
 for(const forbidden of ["'reservations'",'"reservations"',"'reservationAvailability'",'"reservationAvailability"'])if(scheduleBundle.includes(forbidden))fail(`onsite schedule must not reverse-sync reservation data: ${forbidden}`);
