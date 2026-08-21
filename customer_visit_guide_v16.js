@@ -87,7 +87,7 @@ function renderCustomerModal(control){
   $('zrGuideCards').innerHTML=active.map(x=>{const u=safeUrl(x.imageUrl),dur=Number(x.duration||0);return `<article class="zr-guide-card">${u?`<img class="zr-guide-img" src="${attr(u)}" alt="${attr(x.name)}" onerror="this.style.display='none'">`:''}<div class="zr-guide-card-body"><h3>${esc(x.name)}</h3>${dur>0?`<span class="zr-guide-duration">평균 소요시간 약 ${dur}분</span>`:''}${x.description?`<p class="zr-guide-desc">${esc(x.description)}</p>`:''}</div></article>`}).join('');
   $('zrGuideNotices').innerHTML=guide.notices.length?`<section class="zr-guide-notices"><h3>방문 전 주의사항</h3><ul>${guide.notices.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ul></section>`:'';
 }
-function openCustomerGuide(control){ensureCustomerModal();renderCustomerModal(control);$('zrGuideModal').classList.remove('hidden');(()=>{const sh=$('zrGuideModal').querySelector('.zr-guide-sheet');if(sh)sh.scrollTop=0})()}
+function openCustomerGuide(control){if(control?.id!=='entryTime')return;ensureCustomerModal();renderCustomerModal(control);$('zrGuideModal').classList.remove('hidden');(()=>{const sh=$('zrGuideModal').querySelector('.zr-guide-sheet');if(sh)sh.scrollTop=0})()}
 
 function labelText(el){
   let out='';
@@ -98,12 +98,7 @@ function labelText(el){
 }
 function looksTimeControl(el){if(!el?.matches?.('select,input'))return false;if(el.matches('input[type="time"]'))return true;if(el.tagName==='SELECT'){const vals=[...el.options].slice(0,8).map(o=>o.value||o.textContent);return vals.some(v=>/^\d{1,2}:\d{2}$/.test(String(v).trim()))}return /^\d{1,2}:\d{2}$/.test(String(el.value||''))}
 function isEntryControl(el){
-  if(!looksTimeControl(el)||el.closest('#adminView'))return false;
-  const key=`${el.id||''} ${el.name||''} ${el.getAttribute('aria-label')||''} ${el.placeholder||''}`.toLowerCase();
-  if(/(^|[^a-z])(entry|admission)(time)?([^a-z]|$)|entrytime|admissiontime/.test(key))return true;
-  const txt=labelText(el).replace(/\s/g,'');
-  if(txt.includes('입장시간'))return true;
-  return txt.includes('입장')&&!txt.includes('퇴장')&&txt.length<80;
+  return !!el?.matches?.('select,input')&&!el.closest('#adminView')&&el.id==='entryTime';
 }
 function findVisibleEntry(){return [...document.querySelectorAll('select,input')].find(el=>isEntryControl(el)&&visible(el))||null}
 function acknowledgementOk(control){const v=String(control?.value||'').trim();return !!v&&ackEntry===v&&ackSig===guideSig}
@@ -121,8 +116,6 @@ function interceptSubmit(ev){if(!customerVisible())return;const q=ev.target?.que
 
 function bindCustomer(){
   document.addEventListener('change',e=>{const el=e.target;if(!customerVisible()||!isEntryControl(el))return;entryControl=el;ackEntry='';ackSig='';if(String(el.value||'').trim())setTimeout(()=>openCustomerGuide(el),20)},true);
-  document.addEventListener('click',interceptBooking,true);
-  document.addEventListener('submit',interceptSubmit,true);
 }
 
 function ensureAdminSection(){
