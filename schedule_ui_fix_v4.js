@@ -203,6 +203,14 @@ function installPublishMismatchGuard(){
   },true);
 }
 
+function loadCustomerScheduleUiV5(){
+  if(document.getElementById('zrCustomerScheduleUiV5'))return;
+  const s=document.createElement('script');
+  s.id='zrCustomerScheduleUiV5';
+  s.src='./customer_schedule_ui_v5.js?v=5';
+  document.body.appendChild(s);
+}
+
 let pending=false;
 function scheduleFix(){
   if(pending)return;
@@ -219,6 +227,7 @@ function boot(){
   injectStyle();
   installCustomContentSaveFix();
   installPublishMismatchGuard();
+  loadCustomerScheduleUiV5();
   scheduleFix();
   const root=document.getElementById('adminView')||document.body;
   new MutationObserver(scheduleFix).observe(root,{childList:true,subtree:true});
