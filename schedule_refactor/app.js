@@ -4,9 +4,19 @@ import {initDetail,openDetail,quickField,openCafe} from './detail.js';
 import {initContent,openContentEditor} from './content.js';
 
 function lockedMsg(){toast("상단에서 '수정 가능'을 먼저 켜주세요.")}
-function render(){renderView();document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>state.editMode?openDetail(x.dataset.e):lockedMsg());document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openDetail(x.dataset.m);setTimeout(()=>$("memo").focus(),80)});document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(!state.editMode)return lockedMsg();const g=state.data.groups.find(z=>z.id===x.dataset.id);if(!g)return;const field=x.dataset.c,old=g[field];g[field]=!g[field];render();try{await savePatch(g.id,{[field]:g[field]})}catch(e){g[field]=old;render();writeError(e)}});document.querySelectorAll("[data-seg]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openContentEditor(x.dataset.g)});document.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.id,x.dataset.q)});document.querySelectorAll("[data-cafe]").forEach(x=>x.onclick=e=>{e.stopPropagation();openCafe(x.dataset.cafe)});document.querySelectorAll("[data-loc]").forEach(x=>x.onclick=e=>{e.stopPropagation();if(!state.editMode)return lockedMsg();quickField(x.dataset.loc,"mealLoc")});document.querySelectorAll("[data-a]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.a,"appearance")})}
+function render(){renderView();document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>state.editMode?openDetail(x.dataset.e):lockedMsg());document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openDetail(x.dataset.m);setTimeout(()=>$("memo").focus(),80)});document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(!state.editMode)return lockedMsg();const g=state.data.groups.find(z=>z.id===x.dataset.id);if(!g)return;const field=x.dataset.c,old=g[field];g[field]=!g[field];render();try{await savePatch(g.id,{[field]:g[field]})}catch(e){g[field]=old;render();writeError(e)}});document.querySelectorAll("[data-seg]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openContentEditor(x.dataset.g)});document.querySelectorAll("[data-cafe]").forEach(x=>x.onclick=e=>{e.stopPropagation();openCafe(x.dataset.cafe)});document.querySelectorAll("[data-loc]").forEach(x=>x.onclick=e=>{e.stopPropagation();if(!state.editMode)return lockedMsg();quickField(x.dataset.loc,"mealLoc")});document.querySelectorAll("[data-a]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.a,"appearance")})}
 initDetail({render,lockedMsg});initContent({render});
 $("editLock").onclick=()=>{state.editMode=!state.editMode;render();toast(state.editMode?"수정 가능 상태입니다.":"수정을 잠갔습니다.")};
+
+// Realtime snapshots rebuild the list DOM. Keep quick-field taps/clicks stable by
+// handling them once on the persistent list container instead of rebinding each span.
+$("list").addEventListener("click",e=>{
+  const x=e.target?.closest?.("[data-q]");
+  if(!x||!$("list").contains(x))return;
+  e.preventDefault();
+  if(!state.editMode)return lockedMsg();
+  quickField(x.dataset.id,x.dataset.q);
+});
 
 async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
 $("refreshBtn").onclick=refreshFromServer;
