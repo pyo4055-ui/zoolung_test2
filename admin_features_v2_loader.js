@@ -3,6 +3,24 @@
 if(window.__ZR_ADMIN_REFACTOR_LOADER)return;
 window.__ZR_ADMIN_REFACTOR_LOADER=true;
 
+function installBootShield(){
+  if(document.getElementById('zrRefactorBootShield'))return;
+  const style=document.createElement('style');
+  style.id='zrRefactorBootShieldStyle';
+  style.textContent='#zrRefactorBootShield{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box;background:#f6f7f4;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;color:#1f2a23}#zrRefactorBootShield .zrbs-box{background:#fff;border:1px solid #dfe5df;border-radius:18px;padding:26px;max-width:420px;width:100%;text-align:center;box-shadow:0 6px 24px rgba(30,50,36,.07)}#zrRefactorBootShield .zrbs-spin{width:34px;height:34px;border:4px solid #e9f3ed;border-top-color:#2f6b4f;border-radius:50%;margin:0 auto 16px;animation:zrbs-spin .8s linear infinite}#zrRefactorBootShield small{color:#6d756f;line-height:1.6}@keyframes zrbs-spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(style);
+  const shield=document.createElement('div');
+  shield.id='zrRefactorBootShield';
+  shield.setAttribute('role','status');
+  shield.innerHTML='<div class="zrbs-box"><div class="zrbs-spin"></div><b>주렁주렁 단체예약 테스트</b><br><small>페이지를 준비하는 중입니다.</small></div>';
+  document.body.appendChild(shield);
+}
+function removeBootShield(){
+  document.getElementById('zrRefactorBootShield')?.remove();
+  document.getElementById('zrRefactorBootShieldStyle')?.remove();
+}
+installBootShield();
+
 const fetchText=async(src,message)=>{
   const r=await fetch(src,{cache:'no-store'});
   if(!r.ok)throw new Error(message);
@@ -105,6 +123,7 @@ function installLegacyScheduleFallback(){
 function signalReady(){
   window.__ZR_ADMIN_REFACTOR_READY=true;
   try{document.dispatchEvent(new CustomEvent('zr:admin-runtime-ready'))}catch{}
+  requestAnimationFrame(()=>requestAnimationFrame(removeBootShield));
 }
 
 (async()=>{
