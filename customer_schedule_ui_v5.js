@@ -7,7 +7,7 @@ const START=600,MAX=1080,SLOT=15;
 const $=id=>document.getElementById(id);
 const mn=t=>{if(!t)return null;const [h,m]=String(t).split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
 const pct=(m,a)=>Math.max(0,Math.min(100,(m-a.start)/(a.end-a.start)*100));
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
 function readBookings(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function bookingById(id){return readBookings().find(b=>String(b?.id||'')===String(id))||null}
@@ -69,7 +69,7 @@ function patchCard(card){
     const left=pct(time.start,axis),width=Math.max(1,pct(time.end,axis)-left);
     el.style.left=`${left}%`;el.style.width=`${width}%`;
     el.classList.add('zr-time-always');
-    if(width<9)el.classList.add('compact');
+    if(width<9)el.classList.add('compact');else el.classList.remove('compact');
     let small=el.querySelector('small');
     if(!small){small=document.createElement('small');el.appendChild(small)}
     const html=width<9?`<span>${esc(time.startText)}</span><span>${esc(time.endText)}</span>`:`${esc(time.startText)}~${esc(time.endText)}`;
@@ -110,9 +110,15 @@ function patch(){
   });
 }
 function boot(){
-  injectStyle();patch();
-  const root=$('customerView')||document.body;
-  new MutationObserver(patch).observe(root,{childList:true,subtree:true});
+  injectStyle();
+  patch();
+  new MutationObserver(patch).observe(document.body,{childList:true,subtree:true});
+  ['lookupBooking','checkExisting'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    el.addEventListener('click',()=>{setTimeout(patch,0);setTimeout(patch,300);setTimeout(patch,800);setTimeout(patch,1500)});
+  });
+  const timer=setInterval(patch,300);
+  setTimeout(()=>clearInterval(timer),15000);
   window.addEventListener('resize',patch);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
