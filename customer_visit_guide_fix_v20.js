@@ -198,13 +198,6 @@ function bindCustomer(){
       if(String($('playUse')?.value||'')==='yes'&&String(el.value||'').trim())setTimeout(openPlayGuide,30);
     }
   },true);
-  document.addEventListener('click',e=>{
-    const btn=e.target?.closest?.('button,input[type="submit"],a');if(!bookingButton(btn)||btn?.closest?.('#zrPlayGuideModal'))return;
-    if(playAcknowledged())return;e.preventDefault();e.stopImmediatePropagation();openPlayGuide();toast('놀이터 안내사항 확인이 필요합니다.');
-  },true);
-  document.addEventListener('submit',e=>{
-    if(playAcknowledged())return;e.preventDefault();e.stopImmediatePropagation();openPlayGuide();
-  },true);
 }
 function watchZooModal(){
   const attach=()=>{const m=$('zrGuideModal');if(!m||m.dataset.v25Watch)return false;m.dataset.v25Watch='1';new MutationObserver(()=>{if(!m.classList.contains('hidden'))setTimeout(renderZooCustomer,0)}).observe(m,{attributes:true,attributeFilter:['class']});return true};
