@@ -83,6 +83,13 @@ for(const needle of ["'scheduleGroups'","schedulePublished=true","customerSchedu
 const customerSchedule=read('customer_schedule_view_v3.js');
 for(const needle of ["b.status==='confirmed'","b.schedulePublished","b.customerSchedule"]){if(!customerSchedule.includes(needle))fail(`customer schedule visibility contract missing: ${needle}`)}
 
+const scheduleUiFix=read('schedule_ui_fix_v4.js');
+textHealth('schedule_ui_fix_v4.js',scheduleUiFix);syntax('schedule_ui_fix_v4.js');
+if(!scheduleUiFix.includes('./customer_schedule_ui_v5.js?v=5'))fail('customer schedule UI v5 is not loaded by schedule UI fix');
+const customerScheduleUi=read('customer_schedule_ui_v5.js');
+textHealth('customer_schedule_ui_v5.js',customerScheduleUi);syntax('customer_schedule_ui_v5.js');
+for(const needle of ['확정 일정','오전 10:30 이전에 도착하셔도 동물 관람은 10:30부터 가능합니다.','zr-customer-notice','MutationObserver(patch).observe(document.body'])if(!customerScheduleUi.includes(needle))fail(`customer schedule UI contract missing: ${needle}`);
+
 const scheduleHtml=read('schedule.html');
 if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
 for(const old of ['schedule_v6.js?v=8','schedule_display_v8.js?v=12','schedule_shared_memo_unlock_v10.js?v=1'])if(scheduleHtml.includes(old))fail(`schedule.html still loads legacy runtime: ${old}`);
