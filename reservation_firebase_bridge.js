@@ -244,7 +244,7 @@ function hookAdminLogout(){
     const r=original.call(this,ev);
     try{
       if(isStaff(auth.currentUser)){
-        directWriteLocal([]);stopListeners();
+        directWriteLocal([]);legacyLocal.clear();stopListeners();
         await F.signOut(auth);
         await F.signInAnonymously(auth);
       }
