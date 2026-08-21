@@ -102,7 +102,14 @@ for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrp
 
 const customerGuideMap=read('customer_guide_map_v1.js');
 textHealth('customer_guide_map_v1.js',customerGuideMap);syntax('customer_guide_map_v1.js');
-for(const needle of ["COLLECTION='customerGuides'","DOC_ID='main'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL','FS.serverTimestamp()','{merge:true}','zr:guide-map-updated'])if(!customerGuideMap.includes(needle))fail(`customer guide map contract missing: ${needle}`);
+for(const needle of [
+  "COLLECTION='reservationAvailability'","DOC_ID='__customer_guide__'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL',
+  'FS.serverTimestamp()','{merge:true}','zr:guide-map-updated','draftDirty=false','saving=false',
+  "$('zrGuideMapImageUrl').addEventListener('input',()=>{draftDirty=true;renderPreview()})",
+  'if(input&&!draftDirty&&!saving&&document.activeElement!==input&&input.value!==imageUrl)input.value=imageUrl',
+  "kind:'customerGuide'",'ownerUid:z.auth.currentUser.uid'
+])if(!customerGuideMap.includes(needle))fail(`customer guide map contract missing: ${needle}`);
+if(customerGuideMap.includes("COLLECTION='customerGuides'")||customerGuideMap.includes("DOC_ID='main'"))fail('customer guide map must use existing customer guide storage path');
 
 const scheduleHtml=read('schedule.html');
 if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
