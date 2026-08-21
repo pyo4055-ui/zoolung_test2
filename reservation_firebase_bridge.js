@@ -55,7 +55,9 @@ function changedTop(prev,next){
   const keys=new Set([...Object.keys(prev||{}),...Object.keys(next||{})]);
   for(const k of keys){
     if(k.startsWith('__')||k==='updatedAt'||k==='ownerUid'||k==='bridgeVersion')continue;
-    if(!same(prev?.[k],next?.[k]))out[k]=clean(next?.[k]);
+    if(same(prev?.[k],next?.[k]))continue;
+    const c=clean(next?.[k]);
+    if(c!==undefined)out[k]=c;
   }
   return out;
 }
