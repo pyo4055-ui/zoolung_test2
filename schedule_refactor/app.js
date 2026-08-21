@@ -3,8 +3,9 @@ import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js';
 import {initDetail,openDetail,quickField,openCafe} from './detail.js';
 import {initContent,openContentEditor} from './content.js';
 
+let groupMemoGid="";
 function lockedMsg(){toast("상단에서 '수정 가능'을 먼저 켜주세요.")}
-function render(){renderView();document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>state.editMode?openDetail(x.dataset.e):lockedMsg());document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openDetail(x.dataset.m);setTimeout(()=>$("memo").focus(),80)});document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(!state.editMode)return lockedMsg();const g=state.data.groups.find(z=>z.id===x.dataset.id);if(!g)return;const field=x.dataset.c,old=g[field];g[field]=!g[field];render();try{await savePatch(g.id,{[field]:g[field]})}catch(e){g[field]=old;render();writeError(e)}});document.querySelectorAll("[data-seg]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openContentEditor(x.dataset.g)});document.querySelectorAll("[data-cafe]").forEach(x=>x.onclick=e=>{e.stopPropagation();openCafe(x.dataset.cafe)});document.querySelectorAll("[data-loc]").forEach(x=>x.onclick=e=>{e.stopPropagation();if(!state.editMode)return lockedMsg();quickField(x.dataset.loc,"mealLoc")});document.querySelectorAll("[data-a]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.a,"appearance")})}
+function render(){renderView();document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>state.editMode?openDetail(x.dataset.e):lockedMsg());document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openGroupMemo(x.dataset.m)});document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(!state.editMode)return lockedMsg();const g=state.data.groups.find(z=>z.id===x.dataset.id);if(!g)return;const field=x.dataset.c,old=g[field];g[field]=!g[field];render();try{await savePatch(g.id,{[field]:g[field]})}catch(e){g[field]=old;render();writeError(e)}});document.querySelectorAll("[data-seg]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openContentEditor(x.dataset.g)});document.querySelectorAll("[data-cafe]").forEach(x=>x.onclick=e=>{e.stopPropagation();openCafe(x.dataset.cafe)});document.querySelectorAll("[data-loc]").forEach(x=>x.onclick=e=>{e.stopPropagation();if(!state.editMode)return lockedMsg();quickField(x.dataset.loc,"mealLoc")});document.querySelectorAll("[data-a]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.a,"appearance")})}
 initDetail({render,lockedMsg});initContent({render});
 $("editLock").onclick=()=>{state.editMode=!state.editMode;render();toast(state.editMode?"수정 가능 상태입니다.":"수정을 잠갔습니다.")};
 
@@ -17,6 +18,31 @@ $("list").addEventListener("click",e=>{
   if(!state.editMode)return lockedMsg();
   quickField(x.dataset.id,x.dataset.q);
 });
+
+function openGroupMemo(gid){
+  if(!state.editMode)return lockedMsg();
+  const g=state.data.groups.find(z=>String(z.id)===String(gid));if(!g)return;
+  groupMemoGid=String(g.id);
+  $("groupMemoTitle").textContent=(g.org||"단체")+" · 단체 메모";
+  $("groupMemoText").value=g.memo||"";
+  $("groupMemoModal").classList.remove("hidden");
+  setTimeout(()=>$("groupMemoText")?.focus(),80);
+}
+function closeGroupMemo(){
+  $("groupMemoModal").classList.add("hidden");
+  groupMemoGid="";
+}
+$("groupMemoClose").onclick=closeGroupMemo;
+$("groupMemoSave").onclick=async()=>{
+  if(!state.editMode)return lockedMsg();
+  const g=state.data.groups.find(z=>String(z.id)===String(groupMemoGid));if(!g)return;
+  const value=$("groupMemoText").value;
+  try{
+    await savePatch(g.id,{memo:value});
+    g.memo=value;
+    closeGroupMemo();render();toast("단체 메모를 저장했습니다.");
+  }catch(e){writeError(e)}
+};
 
 async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
 $("refreshBtn").onclick=refreshFromServer;
@@ -44,7 +70,7 @@ $("sharedMemoSave").onclick=async()=>{
     console.error("shared memo save",e);setSync("저장 오류","err");toast("공용 메모 저장에 실패했습니다.");
   }
 };
-$("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");$("sharedMemoModal").onclick=e=>{if(e.target===$("sharedMemoModal"))$("sharedMemoModal").classList.add("hidden")};
+$("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");
 
 function stopListeners(){if(state.unsubGroups){state.unsubGroups();state.unsubGroups=null}if(state.unsubMemo){state.unsubMemo();state.unsubMemo=null}if(state.unsubCatalog){state.unsubCatalog();state.unsubCatalog=null}}
 function startListeners(){if(!auth.currentUser)return;stopListeners();setSync("연결 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date));state.unsubGroups=F.onSnapshot(q,snap=>{state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));setSync("실시간 연결됨","ok");render()},e=>writeError(e));state.unsubMemo=F.onSnapshot(F.doc(db,"scheduleSharedMemos",state.date),snap=>{state.data.sharedMemos[state.date]=snap.exists()?(snap.data().text||""):"";setSync("실시간 연결됨","ok")},e=>writeError(e));state.unsubCatalog=F.onSnapshot(F.doc(db,"scheduleGroups","__content_catalog__"),snap=>{state.catalog=new Map(Object.entries(DEFAULT_CATALOG));const list=snap.exists()&&Array.isArray(snap.data()?.catalog)?snap.data().catalog:[];list.forEach(x=>{if(x?.id)state.catalog.set(String(x.id),{name:String(x.name||x.id),color:x.color||"#edf0ed"})});scheduleEnhance()},e=>console.debug("schedule catalog",e))}
