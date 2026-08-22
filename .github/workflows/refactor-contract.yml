@@ -17,6 +17,8 @@ jobs:
         run: node scripts/cancellation_contract_check.mjs
       - name: Verify admin group search safety
         run: node scripts/admin_group_search_contract_check.mjs
+      - name: Verify customer guide modal transitions
+        run: node scripts/customer_guide_transition_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
