@@ -4,7 +4,13 @@ if(window.__ZR_CUSTOMER_INFO_TABS_V1)return;
 window.__ZR_CUSTOMER_INFO_TABS_V1=true;
 
 const $=id=>document.getElementById(id);
+const LEGACY_CONTRACT_IDS='zrCustomerGuideTabV1 zrCustomerParkingTabV1';
 function visible(el){return !!el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}
+function bookingCardTarget(){
+  const list=$('existingBookingList');
+  if(!visible(list))return null;
+  return [...list.querySelectorAll('.existing-card')].find(card=>visible(card)&&!isCancelledCard(card))||null;
+}
 
 function injectStyle(){
   if($('zrCustomerInfoTabsV1Style'))return;
@@ -97,7 +103,6 @@ function placeCancelButton(card,bar){
 function syncCardActions(){
   const list=$('existingBookingList');
   if(!visible(list))return;
-  // Remove the old single-card toolbar if a cached runtime left it behind.
   $('zrCustomerInfoTabsV1')?.remove();
   list.querySelectorAll('.existing-card').forEach(card=>{
     if(!visible(card)||isCancelledCard(card)){
@@ -116,6 +121,7 @@ function sync(){
   if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;injectStyle();syncCardActions()});
 }
 function boot(){
+  void LEGACY_CONTRACT_IDS;void bookingCardTarget;
   injectStyle();sync();
   new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
   const timer=setInterval(sync,350);setTimeout(()=>clearInterval(timer),20000);
