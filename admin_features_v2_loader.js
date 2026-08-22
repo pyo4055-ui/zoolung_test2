@@ -76,6 +76,22 @@ const fetchText=async(src,message)=>{
 const evalText=code=>(0,eval)(code);
 const evalFile=async(src,message)=>evalText(await fetchText(src,message));
 
+function installLegacyGuideGuards(){
+  for(const id of ['zrCustomerVisitGuideV16','zrCustomerVisitGuideFixV20']){
+    if(document.getElementById(id))continue;
+    const guard=document.createElement('script');
+    guard.id=id;
+    guard.type='application/json';
+    guard.dataset.zrLegacyGuideGuard='1';
+    document.body.appendChild(guard);
+  }
+}
+function takeLegacyGuideGuard(id){
+  const el=document.getElementById(id);
+  if(el?.dataset?.zrLegacyGuideGuard==='1'){el.remove();return true}
+  return false;
+}
+
 async function loadAdminBase(){
   const parts=['admin2_part1.txt','admin2_part2.txt','admin2_part3.txt','admin2_part4.txt'];
   const rs=await Promise.all(parts.map(u=>fetch(`./${u}?v=2`,{cache:'no-store'})));
@@ -95,6 +111,9 @@ async function loadAdminPatchChain(){
     ['./admin_features_v9_patch.js?v=9','관리자 v9 패치를 불러오지 못했습니다.']
   ];
   for(const [src,message] of chain)await evalFile(src,message);
+  // v9 schedules its legacy guide loader with setTimeout(0). Keep the placeholders
+  // alive until that callback has observed them, then load the validated guides below.
+  await new Promise(resolve=>setTimeout(resolve,0));
 }
 
 async function loadCustomerBookingUx(){
@@ -103,7 +122,9 @@ async function loadCustomerBookingUx(){
 }
 
 async function loadCustomerVisitGuideV16(){
-  if(document.getElementById('zrCustomerVisitGuideV16'))return;
+  if(window.__ZR_CUSTOMER_VISIT_GUIDE_V16){takeLegacyGuideGuard('zrCustomerVisitGuideV16');return}
+  const existing=document.getElementById('zrCustomerVisitGuideV16');
+  if(existing&&!takeLegacyGuideGuard('zrCustomerVisitGuideV16'))throw new Error('예전 고객 방문 안내가 이미 로드되어 새 안내를 적용할 수 없습니다.');
   let guide16=await fetchText('./customer_visit_guide_v16.js?v=31','고객 방문 안내 기능을 불러오지 못했습니다.');
   const fnStart=guide16.indexOf('function isEntryControl(el){');
   const fnEnd=guide16.indexOf('\nfunction findVisibleEntry()',fnStart);
@@ -113,7 +134,7 @@ async function loadCustomerVisitGuideV16(){
     guide16.slice(fnEnd);
   const openNeedle='function openCustomerGuide(control){';
   if(!guide16.includes(openNeedle))throw new Error('고객 방문 안내 팝업 함수를 찾지 못했습니다.');
-  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;");
+  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;if(!document.getElementById('zrFinalGuideModalV31')?.classList.contains('hidden'))return;");
   guide16=guide16.replace('function interceptBooking(ev){',"function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   guide16=guide16.replace('function interceptSubmit(ev){',"function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   const marker=document.createElement('script');
@@ -129,29 +150,36 @@ function installPlayZooGuideGuard(){
   document.addEventListener('change',e=>{
     const id=e.target?.id||'';
     if(id!=='playStart'&&id!=='playDuration')return;
-    setTimeout(()=>{
-      const m=document.getElementById('zrGuideModal');
-      if(m&&!m.classList.contains('hidden'))m.classList.add('hidden');
-    },45);
+    document.getElementById('zrGuideModal')?.classList.add('hidden');
   },true);
 }
 
 async function loadCustomerGuideFixV20(){
-  if(window.__ZR_CUSTOMER_GUIDE_FIX_V20)return;
+  if(window.__ZR_CUSTOMER_GUIDE_FIX_V20){takeLegacyGuideGuard('zrCustomerVisitGuideFixV20');return}
+  const existing=document.getElementById('zrCustomerVisitGuideFixV20');
+  if(existing&&!takeLegacyGuideGuard('zrCustomerVisitGuideFixV20'))throw new Error('예전 놀이터 안내가 이미 로드되어 새 안내를 적용할 수 없습니다.');
   let guide20=await fetchText('./customer_visit_guide_fix_v20.js?v=31','고객 안내 분리 기능을 불러오지 못했습니다.');
   const playAckNeedle='function playAcknowledged(){';
   if(!guide20.includes(playAckNeedle))throw new Error('놀이터 안내 확인 함수를 찾지 못했습니다.');
   guide20=guide20.replace(playAckNeedle,"function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;");
+  const playOpenNeedle='function openPlayGuide(){';
+  if(!guide20.includes(playOpenNeedle))throw new Error('놀이터 안내 팝업 함수를 찾지 못했습니다.');
+  guide20=guide20.replace(playOpenNeedle,"function openPlayGuide(){document.getElementById('zrGuideModal')?.classList.add('hidden');if(!document.getElementById('zrFinalGuideModalV31')?.classList.contains('hidden'))return;");
   evalText(guide20);
 }
 
-function loadParkingInfo(){
+async function loadParkingInfo(){
+  if(window.__ZR_PARKING_INFO_V31)return;
   if(document.getElementById('zrParkingInfoV31'))return;
-  const p=document.createElement('script');
-  p.id='zrParkingInfoV31';
-  p.async=false;
-  p.src='./parking_info_v31.js?v=32';
-  document.body.appendChild(p);
+  let parking=await fetchText('./parking_info_v31.js?v=32','주차 및 최종확인 기능을 불러오지 못했습니다.');
+  const finalBindNeedle="function bindFinal(){\n  window.addEventListener('click',e=>{";
+  if(!parking.includes(finalBindNeedle))throw new Error('예약 최종확인 이벤트 함수를 찾지 못했습니다.');
+  parking=parking.replace(finalBindNeedle,"function bindFinal(){\n  document.addEventListener('click',e=>{");
+  const marker=document.createElement('script');
+  marker.id='zrParkingInfoV31';
+  marker.type='application/json';
+  document.body.appendChild(marker);
+  evalText(parking);
 }
 
 function loadCustomerQuickTools(){
@@ -204,6 +232,7 @@ function signalReady(){
   },100);
 }
 
+installLegacyGuideGuards();
 loadCustomerQuickTools();
 loadAdminSearchEnhancements();
 
@@ -216,7 +245,7 @@ loadAdminSearchEnhancements();
       await loadCustomerVisitGuideV16();
       installPlayZooGuideGuard();
       await loadCustomerGuideFixV20();
-      loadParkingInfo();
+      await loadParkingInfo();
       installLegacyScheduleFallback();
     }catch(e3){
       console.error('admin latest patch load failed',e3);
