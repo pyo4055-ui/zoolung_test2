@@ -12,7 +12,7 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrCustomerStatusBannerV1Style';
   s.textContent=`
-  #existingBookingList .zr-received-emphasis{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:11px 12px;border:1px solid #b9dfe2;border-radius:11px;background:#eef9fa;color:#245a5d;font-size:14px;font-weight:900;line-height:1.5}
+  #existingBookingList .zr-received-emphasis{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:11px 12px;border:1px solid #efd49b;border-radius:11px;background:#fff3d7;color:#b56d00;font-size:14px;font-weight:900;line-height:1.5}
   `;
   document.head.appendChild(s);
 }
