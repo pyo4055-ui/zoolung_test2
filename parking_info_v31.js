@@ -116,13 +116,26 @@ function guideMapControls(button){
       ||inputs.find(x=>String(x.type||'').toLowerCase()==='url')
       ||inputs.find(x=>/url/i.test(`${x.id||''} ${x.name||''} ${x.placeholder||''}`))
       ||inputs[0];
-    if(input)return {button:b,scope,input};
+    if(input){
+      b.onclick=null;
+      input.oninput=null;input.onchange=null;input.onblur=null;input.onfocusout=null;
+      return {button:b,scope,input,root};
+    }
   }
   return null;
 }
 function guideMapPreview(c,raw){
   if(!c)return;
-  const img=c.scope.querySelector('img');if(!img)return;
+  const roots=[];
+  for(const r of [c.scope,c.button?.closest?.('.card'),c.button?.closest?.('section')])if(r&&!roots.includes(r))roots.push(r);
+  let img=null;
+  for(const r of roots){
+    const imgs=[...r.querySelectorAll('img')];
+    img=imgs.find(x=>/가이드맵|guide.?map/i.test(`${x.id||''} ${x.className||''} ${x.alt||''}`));
+    if(!img&&imgs.length===1)img=imgs[0];
+    if(img)break;
+  }
+  if(!img)return;
   const url=safeUrl(raw);
   if(!url){img.removeAttribute('src');img.style.display='none';return;}
   if(img.src!==url)img.src=url;
