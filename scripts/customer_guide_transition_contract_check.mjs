@@ -17,6 +17,7 @@ for(const needle of [
   "guard.dataset.zrLegacyGuideGuard='1'",
   'await new Promise(resolve=>setTimeout(resolve,0))',
   "return el.id==='entryTime';",
+  "const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;",
   "document.getElementById('zrGuideModal')?.classList.add('hidden')",
   "id!=='playStart'&&id!=='playDuration'",
   "const finalBindNeedle=\"function bindFinal(){\\n  window.addEventListener('click',e=>{\"",
@@ -28,8 +29,9 @@ for(const forbidden of [
   'customer_visit_guide_v19.js',
   '},45);',
   'customer_guide_transition_v3.js',
-  'zr-play-guide-transition'
-])if(loader.includes(forbidden))fail(`obsolete guide transition behavior still present in active loader: ${forbidden}`);
+  'zr-play-guide-transition',
+  "if(!document.getElementById('zrFinalGuideModalV31')?.classList.contains('hidden'))return;"
+])if(loader.includes(forbidden))fail(`obsolete or unsafe guide transition behavior still present in active loader: ${forbidden}`);
 
 for(const needle of ["el?.id==='exitTime'",'exitGuardUntil','queueMicrotask(closeZooGuide)','zrGuideModal','MutationObserver(closeZooGuide)'])if(!exitGuard.includes(needle))fail(`exit time guard contract missing: ${needle}`);
 for(const forbidden of ['stopPropagation','stopImmediatePropagation','preventDefault'])if(exitGuard.includes(forbidden))fail(`exit time guard must not block booking behavior: ${forbidden}`);
