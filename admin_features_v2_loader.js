@@ -111,8 +111,6 @@ async function loadAdminPatchChain(){
     ['./admin_features_v9_patch.js?v=9','관리자 v9 패치를 불러오지 못했습니다.']
   ];
   for(const [src,message] of chain)await evalFile(src,message);
-  // v9 schedules its legacy guide loader with setTimeout(0). Keep the placeholders
-  // alive until that callback has observed them, then load the validated guides below.
   await new Promise(resolve=>setTimeout(resolve,0));
 }
 
@@ -185,7 +183,7 @@ async function loadParkingInfo(){
 function loadCustomerQuickTools(){
   const tools=[
     ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=2'],
-    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=4'],
+    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=5'],
     ['zrCustomerGuideMapAdminUiV2','./customer_guide_map_admin_ui_v2.js?v=1'],
     ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=1'],
     ['zrAdminCancelVisibilityV1','./admin_cancel_visibility_v1.js?v=1']
