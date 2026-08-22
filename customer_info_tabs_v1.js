@@ -32,7 +32,7 @@ function injectStyle(){
 
 function loadGuideMapConfig(){
   if($('zrCustomerGuideMapV1Script'))return;
-  const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=2';document.body.appendChild(s);
+  const s=document.createElement('script');s.id='zrCustomerGuideMapV1Script';s.src='./customer_guide_map_v1.js?v=3';document.body.appendChild(s);
 }
 function bookingCardTarget(){
   const list=$('existingBookingList');
