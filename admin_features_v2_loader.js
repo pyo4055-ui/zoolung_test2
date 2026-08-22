@@ -134,7 +134,7 @@ async function loadCustomerVisitGuideV16(){
     guide16.slice(fnEnd);
   const openNeedle='function openCustomerGuide(control){';
   if(!guide16.includes(openNeedle))throw new Error('고객 방문 안내 팝업 함수를 찾지 못했습니다.');
-  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;if(!document.getElementById('zrFinalGuideModalV31')?.classList.contains('hidden'))return;");
+  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
   guide16=guide16.replace('function interceptBooking(ev){',"function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   guide16=guide16.replace('function interceptSubmit(ev){',"function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   const marker=document.createElement('script');
@@ -164,7 +164,7 @@ async function loadCustomerGuideFixV20(){
   guide20=guide20.replace(playAckNeedle,"function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;");
   const playOpenNeedle='function openPlayGuide(){';
   if(!guide20.includes(playOpenNeedle))throw new Error('놀이터 안내 팝업 함수를 찾지 못했습니다.');
-  guide20=guide20.replace(playOpenNeedle,"function openPlayGuide(){document.getElementById('zrGuideModal')?.classList.add('hidden');if(!document.getElementById('zrFinalGuideModalV31')?.classList.contains('hidden'))return;");
+  guide20=guide20.replace(playOpenNeedle,"function openPlayGuide(){document.getElementById('zrGuideModal')?.classList.add('hidden');const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
   evalText(guide20);
 }
 
@@ -201,9 +201,7 @@ function loadAdminSearchEnhancements(){
   if(document.getElementById('zrAdminGroupSearchV2'))return;
   const s=document.createElement('script');
   s.id='zrAdminGroupSearchV2';
-  s.async=false;
-  s.src='./admin_group_search_v2.js?v=2';
-  document.body.appendChild(s);
+  s.async=false;s.src='./admin_group_search_v2.js?v=2';document.body.appendChild(s);
 }
 
 function installLegacyScheduleFallback(){
