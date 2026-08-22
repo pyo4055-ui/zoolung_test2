@@ -150,15 +150,14 @@ function loadParkingInfo(){
   const p=document.createElement('script');
   p.id='zrParkingInfoV31';
   p.async=false;
-  p.src='./parking_info_v31.js?v=31';
+  p.src='./parking_info_v31.js?v=32';
   document.body.appendChild(p);
 }
 
 function loadCustomerQuickTools(){
   const tools=[
     ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=2'],
-    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=3'],
-    ['zrCustomerParkingUiV2','./customer_parking_ui_v2.js?v=1'],
+    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=4'],
     ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=1']
   ];
   for(const [id,src] of tools){
