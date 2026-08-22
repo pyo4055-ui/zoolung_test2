@@ -169,6 +169,15 @@ function loadCustomerQuickTools(){
   }
 }
 
+function loadAdminSearchEnhancements(){
+  if(document.getElementById('zrAdminGroupSearchV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminGroupSearchV1';
+  s.async=false;
+  s.src='./admin_group_search_v1.js?v=1';
+  document.body.appendChild(s);
+}
+
 function installLegacyScheduleFallback(){
   const waitSchedule=setInterval(()=>{
     if(!window.zrReservationFirebase)return;
@@ -196,6 +205,7 @@ function signalReady(){
 }
 
 loadCustomerQuickTools();
+loadAdminSearchEnhancements();
 
 (async()=>{
   try{
