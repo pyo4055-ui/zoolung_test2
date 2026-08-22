@@ -16,6 +16,9 @@ function injectStyle(){
   if($('zrCustomerInfoTabsV1Style'))return;
   const s=document.createElement('style');s.id='zrCustomerInfoTabsV1Style';s.textContent=`
   #existingBookingList .existing-card.zr-has-info-tabs{position:relative!important}
+  #existingBookingList .zr-booking-fact-line{display:inline-flex;align-items:baseline;gap:8px;min-height:24px;line-height:1.6}
+  #existingBookingList .zr-booking-fact-label{display:inline-block;min-width:62px;color:#2f6b4f;font-weight:950;letter-spacing:-.2px}
+  #existingBookingList .zr-booking-fact-value{color:#17221c;font-weight:800;letter-spacing:-.15px}
   #existingBookingList .zr-customer-card-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid #e4eae6}
   #existingBookingList .zr-customer-card-actions-left,#existingBookingList .zr-customer-card-actions-right{display:flex;align-items:center;gap:7px;min-width:0}
   #existingBookingList .zr-customer-card-actions-left{flex:0 1 auto}
@@ -27,6 +30,11 @@ function injectStyle(){
   #existingBookingList .zr-customer-parking-action:hover{background:#fff4d7}
   #existingBookingList .zr-customer-action-cancel{min-height:40px!important}
   #existingBookingList .zr-action-origin-empty{display:none!important}
+  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type{background:#fff2cf!important;border-left-color:#dc8d00!important}
+  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type h4,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type h4{background:#ffd86f!important;color:#624000!important}
+  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type .zrpk31-place,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type .zrpk31-place{color:#3d2b00!important;font-weight:950!important}
+  .zrfinal31-place:first-of-type{background:#fff2cf!important;border-color:#e9c66f!important;border-left-color:#dc8d00!important}
+  .zrfinal31-place:first-of-type>b{background:#ffd86f!important;color:#624000!important}
   .zr-customer-info-modal{position:fixed;inset:0;z-index:10250;background:rgba(16,25,20,.58);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
   .zr-customer-info-modal.hidden{display:none!important}.zr-customer-info-sheet{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:17px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.26);-webkit-overflow-scrolling:touch}
   .zr-customer-info-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}.zr-customer-info-head h2{margin:0;flex:1;font-size:20px}.zr-customer-info-close{border:0;border-radius:9px;padding:8px 11px;background:#eef1ee;color:#4f5c54;font-weight:900;cursor:pointer}
@@ -34,6 +42,8 @@ function injectStyle(){
   #zrCustomerParkingQuickBody .zrpk31-map{min-height:38px;padding:0 14px}
   .zr-customer-info-loading{padding:24px 8px;text-align:center;color:#6c766f;font-size:13px}
   @media(max-width:520px){
+    #existingBookingList .zr-booking-fact-line{gap:6px;min-height:23px}
+    #existingBookingList .zr-booking-fact-label{min-width:58px}
     #existingBookingList .zr-customer-card-actions{gap:6px;margin-top:15px;padding-top:12px}
     #existingBookingList .zr-customer-card-actions-left{gap:5px}
     #existingBookingList .zr-customer-card-actions button{min-height:38px;padding:0 8px;font-size:10.5px;letter-spacing:-.2px}
@@ -80,6 +90,31 @@ function cancelButton(card){
     return /^(?:이\s*)?예약\s*취소하기$/.test(text)||text==='예약 내역 취소';
   })||null;
 }
+function decorateBookingFacts(card){
+  const walker=document.createTreeWalker(card,NodeFilter.SHOW_TEXT);
+  const targets=[];
+  let node;
+  while((node=walker.nextNode())){
+    const parent=node.parentElement;
+    if(!parent||parent.closest('button,.status,.zr-customer-card-actions,.zr-booking-fact-line,.zr-confirmed-emphasis,.zr-cancelled-emphasis'))continue;
+    const raw=String(node.nodeValue||'');
+    const match=raw.match(/^\s*(방문일|동물원|방문시간|식사|놀이터)\s+(.+?)\s*$/);
+    if(match)targets.push([node,match[1],match[2]]);
+  }
+  targets.forEach(([textNode,rawLabel,value])=>{
+    if(!textNode.parentNode)return;
+    const line=document.createElement('span');
+    line.className='zr-booking-fact-line';
+    const label=document.createElement('strong');
+    label.className='zr-booking-fact-label';
+    label.textContent=rawLabel==='동물원'?'방문시간':rawLabel;
+    const val=document.createElement('span');
+    val.className='zr-booking-fact-value';
+    val.textContent=value;
+    line.append(label,val);
+    textNode.parentNode.replaceChild(line,textNode);
+  });
+}
 function buildActionBar(card){
   let bar=card.querySelector(':scope > .zr-customer-card-actions');
   if(!bar){
@@ -111,6 +146,7 @@ function syncCardActions(){
       return;
     }
     card.classList.add('zr-has-info-tabs');
+    decorateBookingFacts(card);
     const bar=buildActionBar(card);
     placeCancelButton(card,bar);
   });
