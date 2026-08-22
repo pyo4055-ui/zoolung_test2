@@ -15,30 +15,35 @@ function injectStyle(){
   if($('zrAdminGroupSearchV1Style'))return;
   const s=document.createElement('style');s.id='zrAdminGroupSearchV1Style';s.textContent=`
   #tab-activity #zr11ActivityToolbar{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:10px 12px!important;align-items:end!important;margin:12px 0 10px!important}
-  #zr11ActivityToolbar .zr-act-start{grid-column:1/4;grid-row:1}
-  #zr11ActivityToolbar .zr-act-end{grid-column:4/7;grid-row:1}
-  #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/9;grid-row:1;min-width:0!important}
-  #zr11ActivityToolbar #zrActivityOrgSearchWrap{grid-column:9/13;grid-row:1}
-  #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/3;grid-row:2;justify-self:start}
-  #zr11ActivityToolbar .zr-act-today-btn{grid-column:3/5;grid-row:2;justify-self:start}
-  #zr11ActivityToolbar .zr-act-excel-btn{grid-column:5/8;grid-row:2;justify-self:start}
-  #zr11ActivityToolbar .zr-act-search-btn,#zr11ActivityToolbar .zr-act-today-btn,#zr11ActivityToolbar .zr-act-excel-btn{width:auto!important;min-width:112px;height:40px!important;margin:0!important}
-  #zr11ActivityToolbar .zr-act-excel-btn{min-width:142px}
+  #zr11ActivityToolbar .zr-act-start{grid-column:1/4;grid-row:1;min-width:0;margin:0!important}
+  #zr11ActivityToolbar .zr-act-end{grid-column:4/7;grid-row:1;min-width:0;margin:0!important}
+  #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/9;grid-row:1;min-width:0!important;margin:0!important}
+  #zr11ActivityToolbar #zrActivityOrgSearchWrap{grid-column:9/13;grid-row:1;min-width:0;margin:0!important}
+  #zr11ActivityToolbar #zrActivityOrgSearchHint{grid-column:1/7;grid-row:2;align-self:center;margin:0!important}
+  #zr11ActivityToolbar .zr-act-search-btn{grid-column:7/9;grid-row:2}
+  #zr11ActivityToolbar .zr-act-today-btn{grid-column:9/11;grid-row:2}
+  #zr11ActivityToolbar .zr-act-excel-btn{grid-column:11/13;grid-row:2}
+  #zr11ActivityToolbar .zr-act-search-btn,#zr11ActivityToolbar .zr-act-today-btn,#zr11ActivityToolbar .zr-act-excel-btn{width:100%!important;min-width:0!important;height:40px!important;margin:0!important;justify-self:stretch;align-self:end;white-space:nowrap}
+  #zr11ActivityToolbar input,#zr11ActivityToolbar select{width:100%!important;min-width:0!important;min-height:40px!important}
   .zr-admin-org-search{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0!important;font-size:12px;font-weight:700}
   .zr-admin-org-search input{width:100%;min-width:0;min-height:40px}
-  .zr-admin-org-search small{font-size:10px;font-weight:600;line-height:1.25;color:#7a847d}
-  #tab-outsourcing .zr-outsource-query-grid{grid-template-columns:minmax(140px,.8fr) minmax(175px,1fr) minmax(175px,1fr) minmax(220px,1.2fr)!important;gap:10px 12px!important;align-items:end}
+  .zr-admin-search-hint{font-size:11px;font-weight:600;line-height:1.45;color:#748078}
+  #tab-outsourcing .zr-outsource-query-grid{display:grid!important;grid-template-columns:minmax(150px,.8fr) minmax(180px,1fr) minmax(180px,1fr) minmax(220px,1.2fr)!important;gap:10px 12px!important;align-items:end}
+  #tab-outsourcing .zr-outsource-query-grid>div,#tab-outsourcing .zr-outsource-query-grid>label{min-width:0;margin:0!important}
+  #tab-outsourcing .zr-outsource-query-grid input,#tab-outsourcing .zr-outsource-query-grid select{width:100%!important;min-width:0!important;min-height:40px!important}
   #tab-outsourcing #zrOutsourceOrgSearchWrap{min-width:0}
+  #tab-outsourcing #zrOutsourceOrgSearchHint{margin:8px 0 0!important}
+  #tab-outsourcing .zr-outsource-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;margin-top:10px!important}
+  #tab-outsourcing .zr-outsource-actions button{margin:0!important;min-height:40px!important}
   @media(max-width:900px){
-    #tab-activity #zr11ActivityToolbar{grid-template-columns:repeat(12,minmax(0,1fr))!important}
     #zr11ActivityToolbar .zr-act-start{grid-column:1/7;grid-row:1}
     #zr11ActivityToolbar .zr-act-end{grid-column:7/13;grid-row:1}
     #zr11ActivityToolbar #activityDateBasisWrap{grid-column:1/5;grid-row:2}
     #zr11ActivityToolbar #zrActivityOrgSearchWrap{grid-column:5/13;grid-row:2}
-    #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/5;grid-row:3}
-    #zr11ActivityToolbar .zr-act-today-btn{grid-column:5/9;grid-row:3}
-    #zr11ActivityToolbar .zr-act-excel-btn{grid-column:9/13;grid-row:3}
-    #zr11ActivityToolbar .zr-act-search-btn,#zr11ActivityToolbar .zr-act-today-btn,#zr11ActivityToolbar .zr-act-excel-btn{width:100%!important;min-width:0}
+    #zr11ActivityToolbar #zrActivityOrgSearchHint{grid-column:1/13;grid-row:3}
+    #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/5;grid-row:4}
+    #zr11ActivityToolbar .zr-act-today-btn{grid-column:5/9;grid-row:4}
+    #zr11ActivityToolbar .zr-act-excel-btn{grid-column:9/13;grid-row:4}
     #tab-outsourcing .zr-outsource-query-grid{grid-template-columns:1fr 1fr!important}
   }
   @media(max-width:560px){
@@ -46,10 +51,12 @@ function injectStyle(){
     #zr11ActivityToolbar .zr-act-end{grid-column:1/13;grid-row:2}
     #zr11ActivityToolbar #activityDateBasisWrap{grid-column:1/13;grid-row:3}
     #zr11ActivityToolbar #zrActivityOrgSearchWrap{grid-column:1/13;grid-row:4}
-    #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/7;grid-row:5}
-    #zr11ActivityToolbar .zr-act-today-btn{grid-column:7/13;grid-row:5}
-    #zr11ActivityToolbar .zr-act-excel-btn{grid-column:1/13;grid-row:6}
+    #zr11ActivityToolbar #zrActivityOrgSearchHint{grid-column:1/13;grid-row:5}
+    #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/7;grid-row:6}
+    #zr11ActivityToolbar .zr-act-today-btn{grid-column:7/13;grid-row:6}
+    #zr11ActivityToolbar .zr-act-excel-btn{grid-column:1/13;grid-row:7}
     #tab-outsourcing .zr-outsource-query-grid{grid-template-columns:1fr!important}
+    #tab-outsourcing .zr-outsource-actions button{flex:1 1 130px}
   }
   `;document.head.appendChild(s);
 }
@@ -84,6 +91,15 @@ function withOrgScope(query,dateIds,fn,transform=null){
     try{if(binding.lexical)bookings=binding.lexical}catch{}
     dates.forEach(x=>x.el.value=x.value);
   }
+}
+function renderBinding(name){
+  let lexical=null;
+  try{
+    if(name==='activity'&&typeof renderActivity==='function')lexical=renderActivity;
+    if(name==='outsource'&&typeof renderOutsourcingPayments==='function')lexical=renderOutsourcingPayments;
+  }catch{}
+  const win=name==='activity'?window.renderActivity:window.renderOutsourcingPayments;
+  return {win:typeof win==='function'?win:null,lexical};
 }
 
 function activityQuery(){return $('zrActivityOrgSearch')?.value||''}
@@ -125,51 +141,76 @@ function activityExcelSearch(){
   return withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn,stripCafeItems);
 }
 
-function markActivityControls(tab,toolbar){
+function activityControls(tab){
   const start=$('activityStart')||$('activityStartDate'),end=$('activityEnd')||$('activityEndDate');
-  start?.closest('div')?.classList.add('zr-act-start');
-  end?.closest('div')?.classList.add('zr-act-end');
   const buttons=[...tab.querySelectorAll('button')];
-  buttons.find(b=>(b.textContent||'').trim()==='조회하기')?.classList.add('zr-act-search-btn');
-  buttons.find(b=>(b.textContent||'').trim()==='오늘')?.classList.add('zr-act-today-btn');
-  buttons.find(b=>(b.textContent||'').includes('엑셀'))?.classList.add('zr-act-excel-btn');
-  return {start,end,buttons};
-}
-function ensureActivityUi(){
-  const tab=$('tab-activity'),toolbar=$('zr11ActivityToolbar');if(!tab||!toolbar)return false;
-  const {buttons}=markActivityControls(tab,toolbar);
-  if(!$('zrActivityOrgSearchWrap')){
-    const wrap=document.createElement('label');wrap.id='zrActivityOrgSearchWrap';wrap.className='zr-admin-org-search';
-    wrap.innerHTML='<span>단체명 검색</span><input id="zrActivityOrgSearch" type="search" autocomplete="off" placeholder="단체명 일부 입력"><small>검색어가 있으면 조회 시작일·종료일을 무시합니다.</small>';
-    toolbar.appendChild(wrap);
-    $('zrActivityOrgSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();renderActivitySearch()}});
-  }
   const search=buttons.find(b=>(b.textContent||'').trim()==='조회하기');
   const today=buttons.find(b=>(b.textContent||'').trim()==='오늘');
   const excel=buttons.find(b=>(b.textContent||'').includes('엑셀'));
-  if(search&&!search.dataset.zrOrgSearchCapture){search.dataset.zrOrgSearchCapture='1'}
-  if(today&&!today.dataset.zrOrgSearchToday){today.dataset.zrOrgSearchToday='1';today.addEventListener('click',()=>{const q=$('zrActivityOrgSearch');if(q)q.value=''},true)}
-  if(excel&&!excel.dataset.zrOrgSearchExcel){excel.dataset.zrOrgSearchExcel='1'}
+  return {start,end,search,today,excel};
+}
+function makeActivityToolbar(tab,search){
+  let toolbar=$('zr11ActivityToolbar');if(toolbar)return toolbar;
+  toolbar=document.createElement('div');toolbar.id='zr11ActivityToolbar';toolbar.className='zr11-activity-toolbar';
+  const card=search?.closest('.card')||tab;
+  const firstHelp=[...card.querySelectorAll('.help')].find(x=>(x.textContent||'').includes('기준으로 조회'));
+  if(firstHelp)firstHelp.insertAdjacentElement('beforebegin',toolbar);else card.prepend(toolbar);
+  return toolbar;
+}
+function hideEmptyLegacyParent(parent,toolbar){
+  if(!parent||parent===toolbar||parent.contains(toolbar))return;
+  if(!parent.querySelector('input,select,button,textarea'))parent.style.display='none';
+}
+function ensureActivityUi(){
+  const tab=$('tab-activity');if(!tab)return false;
+  const {start,end,search,today,excel}=activityControls(tab);if(!start||!end||!search||!today)return false;
+  const toolbar=makeActivityToolbar(tab,search);if(!toolbar)return false;
+  const sp=start.closest('div'),ep=end.closest('div'),oldParents=new Set([sp?.parentElement,ep?.parentElement,search.parentElement,today.parentElement,excel?.parentElement].filter(Boolean));
+  sp?.classList.add('zr-act-start');ep?.classList.add('zr-act-end');
+  search.classList.add('zr-act-search-btn');today.classList.add('zr-act-today-btn');excel?.classList.add('zr-act-excel-btn');
+  if(sp&&sp.parentElement!==toolbar)toolbar.appendChild(sp);
+  if(ep&&ep.parentElement!==toolbar)toolbar.appendChild(ep);
+  const basis=$('activityDateBasisWrap');if(basis&&basis.parentElement!==toolbar)toolbar.appendChild(basis);
+  if(!$('zrActivityOrgSearchWrap')){
+    const wrap=document.createElement('label');wrap.id='zrActivityOrgSearchWrap';wrap.className='zr-admin-org-search';
+    wrap.innerHTML='<span>단체명 검색</span><input id="zrActivityOrgSearch" type="search" autocomplete="off" placeholder="단체명 일부 입력">';
+    toolbar.appendChild(wrap);
+    $('zrActivityOrgSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();renderActivitySearch()}});
+  }else if($('zrActivityOrgSearchWrap').parentElement!==toolbar)toolbar.appendChild($('zrActivityOrgSearchWrap'));
+  let hint=$('zrActivityOrgSearchHint');
+  if(!hint){hint=document.createElement('div');hint.id='zrActivityOrgSearchHint';hint.className='zr-admin-search-hint';hint.textContent='검색어가 있으면 조회 시작일·종료일을 무시합니다. 전체 예약에서 단체명을 찾습니다.';toolbar.appendChild(hint)}
+  if(search.parentElement!==toolbar)toolbar.appendChild(search);
+  if(today.parentElement!==toolbar)toolbar.appendChild(today);
+  if(excel&&excel.parentElement!==toolbar)toolbar.appendChild(excel);
+  oldParents.forEach(p=>hideEmptyLegacyParent(p,toolbar));
+  if(!today.dataset.zrOrgSearchToday){today.dataset.zrOrgSearchToday='1';today.addEventListener('click',()=>{const q=$('zrActivityOrgSearch');if(q)q.value=''},true)}
   return true;
 }
 function ensureOutsourceUi(){
   const tab=$('tab-outsourcing'),vendor=$('outsourceVendorFilter'),start=$('outsourceStart'),end=$('outsourceEnd'),search=$('outsourceSearch');
   if(!tab||!vendor||!start||!end||!search)return false;
-  const grid=vendor.closest('.grid3')||vendor.parentElement?.parentElement;grid?.classList.add('zr-outsource-query-grid');
+  const grid=vendor.closest('.grid3')||vendor.parentElement?.parentElement;if(!grid)return false;
+  grid.classList.add('zr-outsource-query-grid');
   if(!$('zrOutsourceOrgSearchWrap')){
     const wrap=document.createElement('label');wrap.id='zrOutsourceOrgSearchWrap';wrap.className='zr-admin-org-search';
-    wrap.innerHTML='<span>단체명 검색</span><input id="zrOutsourceOrgSearch" type="search" autocomplete="off" placeholder="단체명 일부 입력"><small>검색어가 있으면 방문일 시작·종료를 무시합니다.</small>';
-    grid?.appendChild(wrap);
+    wrap.innerHTML='<span>단체명 검색</span><input id="zrOutsourceOrgSearch" type="search" autocomplete="off" placeholder="단체명 일부 입력">';
+    grid.appendChild(wrap);
     $('zrOutsourceOrgSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();renderOutsourceSearch()}});
   }
+  let hint=$('zrOutsourceOrgSearchHint');
+  if(!hint){hint=document.createElement('div');hint.id='zrOutsourceOrgSearchHint';hint.className='zr-admin-search-hint';hint.textContent='검색어가 있으면 방문일 시작·종료를 무시합니다. 업체 조건은 그대로 적용됩니다.';grid.insertAdjacentElement('afterend',hint)}
+  const buttons=[...tab.querySelectorAll('button')],excel=buttons.find(b=>(b.textContent||'').includes('엑셀'));
+  const actions=search.parentElement;
+  if(actions&&actions!==grid){actions.classList.add('zr-outsource-actions');if(excel&&excel.parentElement!==actions)actions.appendChild(excel)}
   if(!vendor.dataset.zrOrgSearchVendor){vendor.dataset.zrOrgSearchVendor='1';vendor.addEventListener('change',()=>{if(norm(outsourceQuery()))setTimeout(renderOutsourceSearch,0)})}
   return true;
 }
 
 function installActivity(){
   if(installedActivity)return true;
-  if(!window.__ZR_ADMIN_OPS_V11_PATCH||typeof window.renderActivity!=='function'||!ensureActivityUi())return false;
-  activityBaseRender=window.renderActivity;
+  if(!window.__ZR_ADMIN_OPS_V10||!ensureActivityUi())return false;
+  const binding=renderBinding('activity'),base=binding.win||binding.lexical;if(typeof base!=='function')return false;
+  activityBaseRender=base;
   const wrapped=()=>renderActivitySearch();wrapped.__zrOrgSearchV1=true;
   window.renderActivity=wrapped;try{renderActivity=wrapped}catch{}
   installedActivity=true;
@@ -177,8 +218,9 @@ function installActivity(){
 }
 function installOutsource(){
   if(installedOutsource)return true;
-  if(!window.__ZR_ADMIN_OPS_V11_PATCH||typeof window.renderOutsourcingPayments!=='function'||!ensureOutsourceUi())return false;
-  outsourceBaseRender=window.renderOutsourcingPayments;
+  if(!window.__ZR_ADMIN_V9_INSTALLED||!ensureOutsourceUi())return false;
+  const binding=renderBinding('outsource'),base=binding.win||binding.lexical;if(typeof base!=='function')return false;
+  outsourceBaseRender=base;
   const wrapped=()=>renderOutsourceSearch();wrapped.__zrOrgSearchV1=true;
   window.renderOutsourcingPayments=wrapped;try{renderOutsourcingPayments=wrapped}catch{}
   installedOutsource=true;
@@ -188,7 +230,7 @@ function apply(){injectStyle();ensureActivityUi();ensureOutsourceUi();installAct
 
 function boot(){
   injectStyle();
-  const timer=setInterval(()=>{apply();if(installedActivity&&installedOutsource)clearInterval(timer)},250);setTimeout(()=>clearInterval(timer),20000);
+  const timer=setInterval(()=>{apply();if(installedActivity&&installedOutsource)clearInterval(timer)},250);setTimeout(()=>clearInterval(timer),30000);
   document.addEventListener('click',e=>{
     const btn=e.target?.closest?.('button');if(!btn)return;
     if(btn.classList.contains('zr-act-search-btn')&&norm(activityQuery())){
