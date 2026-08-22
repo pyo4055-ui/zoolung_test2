@@ -59,13 +59,20 @@ function getBookingsBinding(){
   try{if(typeof bookings==='function')lexical=bookings}catch{}
   return {win:typeof window.bookings==='function'?window.bookings:null,lexical};
 }
+function currentBookings(){
+  const binding=getBookingsBinding(),source=binding.win||binding.lexical;
+  if(typeof source!=='function')return [];
+  try{const out=source();return Array.isArray(out)?out:[]}catch{return []}
+}
 function dateInputs(ids){return ids.map(id=>$(id)).filter(Boolean)}
-function withOrgScope(query,dateIds,fn){
+function withOrgScope(query,dateIds,fn,transform=null){
   const q=norm(query);if(!q||typeof fn!=='function')return fn?.();
   const binding=getBookingsBinding(),source=binding.win||binding.lexical;
   if(typeof source!=='function')return fn();
   let all=[];try{const v=source();all=Array.isArray(v)?v:[]}catch{return fn()}
-  const scoped=all.filter(b=>matchesOrg(b,q)),temp=()=>scoped;
+  let scoped=all.filter(b=>matchesOrg(b,q));
+  if(typeof transform==='function')scoped=scoped.map(transform);
+  const temp=()=>scoped;
   const dates=dateInputs(dateIds).map(el=>({el,value:el.value}));
   try{
     dates.forEach(x=>x.el.value='');
@@ -86,15 +93,36 @@ function renderActivitySearch(){
   const q=activityQuery();
   return q?withOrgScope(q,['activityStart','activityEnd','activityStartDate','activityEndDate'],activityBaseRender):activityBaseRender();
 }
+function refreshOutsourcePeopleForSearch(){
+  const q=norm(outsourceQuery()),box=$('outsourceKpiPeopleBox');if(!q||!box)return;
+  const vendor=$('outsourceVendorFilter')?.value||'';
+  const list=currentBookings().filter(b=>{
+    if(!matchesOrg(b,q))return false;
+    const id=b?.settlement?.vendorId||b?.outsourcingVendorId||'';
+    if(!id||id==='self'||(vendor&&id!==vendor))return false;
+    return !!b?.settlement?.savedAt;
+  });
+  const sum=list.reduce((a,b)=>{
+    const st=b.settlement||{};
+    a.paid+=Math.max(0,Number(st.actualPaidCount||0));
+    a.paidChap+=Math.max(0,Number(st.actualPaidChaperone||0));
+    a.freeChap+=Math.max(0,Number(st.actualFreeChaperone||0));
+    return a;
+  },{paid:0,paidChap:0,freeChap:0});
+  box.innerHTML=`<span class="help">실제 인원</span><b id="outsourceKpiPeople" style="display:block;margin-top:4px;font-size:14px;line-height:1.55">유료인원 ${sum.paid}명<br>유료인솔자 ${sum.paidChap}명<br>무료 인솔자 ${sum.freeChap}명</b>`;
+}
 function renderOutsourceSearch(){
   if(typeof outsourceBaseRender!=='function')return;
   const q=outsourceQuery();
-  return q?withOrgScope(q,['outsourceStart','outsourceEnd'],outsourceBaseRender):outsourceBaseRender();
+  const out=q?withOrgScope(q,['outsourceStart','outsourceEnd'],outsourceBaseRender):outsourceBaseRender();
+  if(norm(q)){setTimeout(refreshOutsourcePeopleForSearch,10);setTimeout(refreshOutsourcePeopleForSearch,100)}
+  return out;
 }
 function activityExcelSearch(){
   const fn=window.downloadActivityExcelV11||window.downloadActivityExcelV10||window.downloadActivityExcel;
   if(typeof fn!=='function')return;
-  return withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn);
+  const stripCafeItems=b=>b?.cafe?{...b,cafe:{...b.cafe,items:[]}}:b;
+  return withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn,stripCafeItems);
 }
 
 function markActivityControls(tab,toolbar){
