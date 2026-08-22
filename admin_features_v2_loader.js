@@ -156,10 +156,11 @@ function loadParkingInfo(){
 
 function loadCustomerQuickTools(){
   const tools=[
-    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=2'],
+    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=3'],
     ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=4'],
     ['zrCustomerGuideMapAdminUiV2','./customer_guide_map_admin_ui_v2.js?v=1'],
-    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=1']
+    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=1'],
+    ['zrAdminCancelVisibilityV1','./admin_cancel_visibility_v1.js?v=1']
   ];
   for(const [id,src] of tools){
     if(document.getElementById(id))continue;
