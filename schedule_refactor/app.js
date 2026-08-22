@@ -1,0 +1,84 @@
+import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js';
+import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js';
+import {initDetail,openDetail,quickField,openCafe} from './detail.js';
+import {initContent,openContentEditor} from './content.js';
+
+let groupMemoGid="";
+function lockedMsg(){toast("상단에서 '수정 가능'을 먼저 켜주세요.")}
+function render(){renderView();document.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>state.editMode?openDetail(x.dataset.e):lockedMsg());document.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openGroupMemo(x.dataset.m)});document.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(!state.editMode)return lockedMsg();const g=state.data.groups.find(z=>z.id===x.dataset.id);if(!g)return;const field=x.dataset.c,old=g[field];g[field]=!g[field];render();try{await savePatch(g.id,{[field]:g[field]})}catch(e){g[field]=old;render();writeError(e)}});document.querySelectorAll("[data-seg]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();openContentEditor(x.dataset.g)});document.querySelectorAll("[data-cafe]").forEach(x=>x.onclick=e=>{e.stopPropagation();openCafe(x.dataset.cafe)});document.querySelectorAll("[data-loc]").forEach(x=>x.onclick=e=>{e.stopPropagation();if(!state.editMode)return lockedMsg();quickField(x.dataset.loc,"mealLoc")});document.querySelectorAll("[data-a]").forEach(x=>x.onclick=()=>{if(!state.editMode)return lockedMsg();quickField(x.dataset.a,"appearance")})}
+initDetail({render,lockedMsg});initContent({render});
+$("editLock").onclick=()=>{state.editMode=!state.editMode;render();toast(state.editMode?"수정 가능 상태입니다.":"수정을 잠갔습니다.")};
+
+// Realtime snapshots rebuild the list DOM. Keep quick-field taps/clicks stable by
+// handling them once on the persistent list container instead of rebinding each span.
+$("list").addEventListener("click",e=>{
+  const x=e.target?.closest?.("[data-q]");
+  if(!x||!$("list").contains(x))return;
+  e.preventDefault();
+  if(!state.editMode)return lockedMsg();
+  quickField(x.dataset.id,x.dataset.q);
+});
+
+function openGroupMemo(gid){
+  if(!state.editMode)return lockedMsg();
+  const g=state.data.groups.find(z=>String(z.id)===String(gid));if(!g)return;
+  groupMemoGid=String(g.id);
+  $("groupMemoTitle").textContent=(g.org||"단체")+" · 단체 메모";
+  $("groupMemoText").value=g.memo||"";
+  $("groupMemoModal").classList.remove("hidden");
+  setTimeout(()=>$("groupMemoText")?.focus(),80);
+}
+function closeGroupMemo(){
+  $("groupMemoModal").classList.add("hidden");
+  groupMemoGid="";
+}
+$("groupMemoClose").onclick=closeGroupMemo;
+$("groupMemoSave").onclick=async()=>{
+  if(!state.editMode)return lockedMsg();
+  const g=state.data.groups.find(z=>String(z.id)===String(groupMemoGid));if(!g)return;
+  const value=$("groupMemoText").value;
+  try{
+    await savePatch(g.id,{memo:value});
+    g.memo=value;
+    closeGroupMemo();render();toast("단체 메모를 저장했습니다.");
+  }catch(e){writeError(e)}
+};
+
+async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
+$("refreshBtn").onclick=refreshFromServer;
+
+async function openSharedMemo(){
+  const d=state.date;if(!d)return;
+  $("sharedMemoTitle").textContent="공용 메모";$("sharedMemoDate").textContent=d;
+  $("sharedMemoText").readOnly=false;$("sharedMemoSave").classList.remove("hidden");
+  $("sharedMemoHint").textContent="수정 잠금과 관계없이 공용 메모를 수정할 수 있습니다.";
+  $("sharedMemoModal").classList.remove("hidden");
+  if(!auth.currentUser)return;
+  try{const snap=await F.getDoc(F.doc(db,"scheduleSharedMemos",d));if(state.date===d)$("sharedMemoText").value=snap.exists()?(snap.data().text||""):""}
+  catch(e){console.debug("shared memo load",e)}
+}
+$("sharedMemoBtn").onclick=openSharedMemo;
+$("sharedMemoSave").onclick=async()=>{
+  const d=$("sharedMemoDate")?.textContent||state.date;
+  if(!d||!auth.currentUser)return toast("공용 DB 연결을 확인해주세요.");
+  const value=$("sharedMemoText").value.trim();
+  try{
+    setSync("저장 중","wait");
+    await F.setDoc(F.doc(db,"scheduleSharedMemos",d),{text:value,updatedAt:F.serverTimestamp()},{merge:true});
+    $("sharedMemoModal").classList.add("hidden");setSync("실시간 연결됨","ok");toast("공용 메모를 저장했습니다.");
+  }catch(e){
+    console.error("shared memo save",e);setSync("저장 오류","err");toast("공용 메모 저장에 실패했습니다.");
+  }
+};
+$("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");
+
+function stopListeners(){if(state.unsubGroups){state.unsubGroups();state.unsubGroups=null}if(state.unsubMemo){state.unsubMemo();state.unsubMemo=null}if(state.unsubCatalog){state.unsubCatalog();state.unsubCatalog=null}}
+function startListeners(){if(!auth.currentUser)return;stopListeners();setSync("연결 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date));state.unsubGroups=F.onSnapshot(q,snap=>{state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()}));setSync("실시간 연결됨","ok");render()},e=>writeError(e));state.unsubMemo=F.onSnapshot(F.doc(db,"scheduleSharedMemos",state.date),snap=>{state.data.sharedMemos[state.date]=snap.exists()?(snap.data().text||""):"";setSync("실시간 연결됨","ok")},e=>writeError(e));state.unsubCatalog=F.onSnapshot(F.doc(db,"scheduleGroups","__content_catalog__"),snap=>{state.catalog=new Map(Object.entries(DEFAULT_CATALOG));const list=snap.exists()&&Array.isArray(snap.data()?.catalog)?snap.data().catalog:[];list.forEach(x=>{if(x?.id)state.catalog.set(String(x.id),{name:String(x.name||x.id),color:x.color||"#edf0ed"})});scheduleEnhance()},e=>console.debug("schedule catalog",e))}
+function setdate(d){state.date=d;state.activeContentGid="";localSet(PK,state.date);render();if(auth.currentUser)startListeners()}
+$("date").onchange=()=>setdate($("date").value);$("prev").onclick=()=>setdate(shift(state.date,-1));$("next").onclick=()=>setdate(shift(state.date,1));$("today").onclick=()=>setdate(today());
+
+async function login(){const pw=$("pw").value;if(!pw)return;$("pwerr").classList.add("hidden");$("loginBtn").disabled=true;$("loginBtn").textContent="로그인 중...";try{await F.setPersistence(auth,F.browserLocalPersistence);await F.signInWithEmailAndPassword(auth,STAFF_EMAIL,pw);$("pw").value=""}catch(e){console.error(e);$("pwerr").textContent="로그인에 실패했습니다. 이메일/비밀번호 인증 설정을 확인해주세요.";$("pwerr").classList.remove("hidden")}finally{$("loginBtn").disabled=false;$("loginBtn").textContent="로그인"}}
+$("loginBtn").onclick=login;$("pw").onkeydown=e=>{if(e.key==="Enter")login()};
+F.onAuthStateChanged(auth,user=>{if(user&&String(user.email||"").toLowerCase()===STAFF_EMAIL.toLowerCase()){$("login").classList.add("hidden");startListeners()}else{stopListeners();state.data.groups=[];$("login").classList.remove("hidden");setSync("로그인 필요","wait");render()}});
+
+injectDisplayStyle();window.addEventListener("resize",scheduleEnhance);render();setInterval(render,60000);

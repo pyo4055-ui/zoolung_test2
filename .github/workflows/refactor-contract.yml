@@ -1,0 +1,38 @@
+name: Refactor contract check
+on:
+  pull_request:
+  push:
+    branches:
+      - refactor-preserve-behavior
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/refactor_contract_check.mjs
+      - name: Verify cancellation history visibility
+        run: node scripts/cancellation_contract_check.mjs
+      - name: Verify admin group search safety
+        run: node scripts/admin_group_search_contract_check.mjs
+      - name: Verify customer guide modal ordering
+        run: node scripts/customer_guide_transition_contract_check.mjs
+      - name: Verify customer reservation status clarity
+        run: node scripts/customer_status_banner_contract_check.mjs
+      - name: Verify onsite auth isolation
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('schedule_refactor/core.js','utf8');
+          if(!s.includes('initializeApp(firebaseConfig,"zrOnsiteSchedule")')){
+            console.error('Onsite Firebase Auth must use an isolated named app.');
+            process.exit(1);
+          }
+          if(s.includes('initializeApp(firebaseConfig);')){
+            console.error('Default Firebase app must not be used by onsite schedule.');
+            process.exit(1);
+          }
+          console.log('OK: onsite Firebase Auth is isolated from reservation admin tabs');
+          NODE

@@ -15,6 +15,7 @@
 
 .syncPill.ok{color:#2f6b4f;background:#e9f3ed;border-color:#c6decf}.syncPill.wait{color:#8a661f;background:#fff7e5;border-color:#ead8aa}.syncPill.err{color:#a33b3b;background:#fbecec;border-color:#e8c6c6}
 #nowtxt,#rangeTxt{display:none!important}
+.legend{display:none!important}
 .comparePreview{border-radius:11px;padding:7px 7px 3px;margin-bottom:7px}
 .comparePreview.original{background:#f5f6f5;border:1px solid #e0e4e1}
 .comparePreview.original .previewTimeline,.comparePreview.original .previewRuler{opacity:.68;filter:saturate(.62)}
@@ -86,6 +87,12 @@
   <div class="actions"><button class="primary save" id="cafeSave">저장</button></div>
 </div></div>
 
+<div class="modal hidden" id="groupMemoModal"><div class="sheet sharedMemoSheet"><div class="handle"></div><div class="titleRow"><h2 id="groupMemoTitle">단체 메모</h2><button class="gray" id="groupMemoClose">✕</button></div>
+  <textarea id="groupMemoText" class="sharedMemoText" placeholder="연합단체, 연령, 지연, 현장 요청 등"></textarea>
+  <div class="helpText">이 단체에만 보이는 현장 메모입니다. 저장 버튼을 눌러야 반영됩니다.</div>
+  <div class="actions"><button class="primary save" id="groupMemoSave">단체 메모 저장</button></div>
+</div></div>
+
 <div class="modal hidden" id="sharedMemoModal"><div class="sheet sharedMemoSheet"><div class="handle"></div><div class="titleRow"><h2 id="sharedMemoTitle">공용 메모</h2><button class="gray" id="sharedMemoClose">✕</button></div>
   <div class="sharedMemoDate" id="sharedMemoDate"></div>
   <textarea id="sharedMemoText" class="sharedMemoText" placeholder="오늘 전체 단체에 공통으로 공유할 내용, 직원 전달사항 등을 적어주세요."></textarea>
@@ -94,8 +101,6 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
-<script type="module" src="schedule_v6.js?v=8"></script>
-<script type="module" src="schedule_display_v8.js?v=12"></script>
-<script type="module" src="schedule_shared_memo_unlock_v10.js?v=1"></script>
+<script type="module" src="./schedule_refactor/app.js?v=1"></script>
 </body>
 </html>

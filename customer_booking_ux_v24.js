@@ -9,7 +9,7 @@ const PRIVACY_TEXT='단체예약 접수 및 관리, 예약 확인·변경·취�
 const SPECIAL_TEXT='간식시간 등 별도 시간 조정이 필요하거나, 예약 시 전달할 사항이 있다면 작성해주세요.';
 const SPECIAL_EXAMPLE='예) 14:00~14:30 간식시간 필요';
 const OLD_PROGRAM_TEXT='동물원 프로그램 시간은 방문 전주 스케줄을 통해 안내됩니다.';
-const NEW_PROGRAM_HTML='동물원 프로그램 일정 시간표는 <b>방문 전주 스케줄</b>을 통해 안내됩니다.';
+const NEW_PROGRAM_HTML='동물원 관람 및 체험 일정은 <b>방문 전주</b>에 예약확인 페이지에서 안내됩니다.';
 
 function phone(){return $('startContact')}
 function preparePhone(){
