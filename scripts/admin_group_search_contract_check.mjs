@@ -17,26 +17,27 @@ for(const needle of [
 
 for(const needle of [
   'zrActivityOrgSearch','zrOutsourceOrgSearch','단체명 검색',
-  "withOrgScope(q,['activityStart','activityEnd','activityStartDate','activityEndDate'],activityBaseRender)",
-  "withOrgScope(q,['outsourceStart','outsourceEnd'],outsourceBaseRender)",
-  "withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn,stripCafeItems)",
-  "dates.forEach(x=>x.el.value='')",
-  'dates.forEach(x=>x.el.value=x.value)',
-  'window.bookings=temp','if(binding.win)window.bookings=binding.win',
+  "withDatesIgnored(['activityStart','activityEnd','activityStartDate','activityEndDate'],activityBaseRender)",
+  "withDatesIgnored(['outsourceStart','outsourceEnd'],outsourceBaseRender)",
+  "saved.forEach(x=>x.el.value='')",
+  'saved.forEach(x=>x.el.value=x.value)',
+  "JSON.parse(localStorage.getItem('zr_bookings')||'[]')",
+  'filterActivityDom(q)','filterOutsourceDom(q)','refreshOutsourceKpiForSearch(q)',
+  'basis.disabled=active','zr-search-ignored',
   'window.renderActivity=wrapped','window.renderOutsourcingPayments=wrapped',
-  '!window.__ZR_ADMIN_OPS_V10','!window.__ZR_ADMIN_V9_INSTALLED',
-  'downloadActivityExcelV11','stripCafeItems',
-  'refreshOutsourcePeopleForSearch','actualPaidCount','actualPaidChaperone','actualFreeChaperone',
-  '검색어가 있으면 조회 시작일·종료일을 무시합니다.',
-  '검색어가 있으면 방문일 시작·종료를 무시합니다.',
+  '!window.__ZR_ADMIN_OPS_V11_PATCH',
+  'downloadActivityExcelV11','actualPaidCount','actualPaidChaperone','actualFreeChaperone',
+  '조회 시작일·종료일과 조회 기준을 모두 무시하고 전체 예약에서 찾습니다.',
+  '방문일 시작·종료를 무시합니다. 업체 조건만 그대로 적용됩니다.',
   'zr11ActivityToolbar','zr-outsource-query-grid','makeActivityToolbar','zr-outsource-actions'
 ])if(!search.includes(needle))fail(`admin group search contract missing: ${needle}`);
 
 for(const forbidden of [
-  "localStorage.setItem('zr_bookings'",'setStore(','setDoc(','getFirestore','firebase-firestore','reservationAvailability','scheduleGroups'
-])if(search.includes(forbidden))fail(`admin group search must stay display/filter-only: ${forbidden}`);
+  "localStorage.setItem('zr_bookings'",'setStore(','setDoc(','getFirestore','firebase-firestore','reservationAvailability','scheduleGroups',
+  'window.bookings=temp','bookings=temp'
+])if(search.includes(forbidden))fail(`admin group search must stay display/filter-only and avoid booking rebinding: ${forbidden}`);
 
-if(!search.includes('finally{'))fail('admin group search must restore temporary date/booking bindings in finally');
+if(!search.includes('finally{'))fail('admin group search must restore temporary date inputs in finally');
 if(fs.existsSync('scripts/inspect_admin_search_temp.mjs'))fail('temporary admin search inspector must be removed');
 
 if(failed){console.error('\nAdmin group search contract failed.');process.exit(1)}
