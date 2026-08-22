@@ -29,7 +29,7 @@ const frozen = {
   'customer_visit_guide_fix_v20.js':'ae24df945d6adfd21644f2d0442c4910238d9b28',
   'reservation_firebase_bridge.js':'45a64b680d371eca97026de652c30dce0940bf43',
   'reservation_staff_login_fix_v14.js':'d30e7203f2ed3b2e7ddb122cb6f665300cca70a2',
-  'parking_info_v31.js':'185b857d2369ae44bfbbd63bbd0c3e182ec0c472',
+  'parking_info_v31.js':'4d1309c5a5ab759be7a937431dfc7cdd639febd4',
   'schedule_v6.js':'fc7f94d1d237cbee78723f994665ba4903ae8767',
   'schedule_display_v8.js':'c7927cb4b2aeeb124fb39617b8215c1f1cdad1a3',
   'schedule_shared_memo_unlock_v10.js':'8a27ef346b36546a35455e04f70469777825dc3f',
@@ -65,8 +65,8 @@ const ordered=[
 let last=-1;
 for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
 for(const needle of [
-  'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1',
-  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=3','customer_parking_ui_v2.js?v=1','customer_time_guide_guard_v2.js?v=1','loadCustomerQuickTools()',
+  'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=32','admin_schedule_tab.js?v=1',
+  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=4','customer_time_guide_guard_v2.js?v=1','loadCustomerQuickTools()',
   "return el.id==='entryTime';",
   "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
@@ -74,6 +74,7 @@ for(const needle of [
   'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;',
   'zrRefactorBootShield',"document.getElementById('zrPreBootStyle')?.remove()","requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('zrPreBootStyle')?.remove();removeBootShield()}))"
 ])if(!loader.includes(needle))fail(`admin loader behavior transform missing: ${needle}`);
+if(loader.includes('customer_guide_map_v1.js')||loader.includes('customer_parking_ui_v2.js'))fail('duplicate customer guide/parking layers must not be loaded');
 
 const bridge=read('reservation_firebase_bridge.js');
 for(const needle of ["BOOKING_KEY='zr_bookings'","FULL_COLLECTION='reservations'","AVAIL_COLLECTION='reservationAvailability'","writeChain=Promise.resolve()","window.setStore=wrapped"]){if(!bridge.includes(needle))fail(`reservation DB contract missing: ${needle}`)}
@@ -98,22 +99,20 @@ for(const needle of ['3. 예약 취소하기','이 예약 취소하기','취소�
 
 const customerInfoTabs=read('customer_info_tabs_v1.js');
 textHealth('customer_info_tabs_v1.js',customerInfoTabs);syntax('customer_info_tabs_v1.js');
-for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=3','guideMapUrl()','bookingCardTarget()','zr-has-info-tabs',"const list=$('existingBookingList')",'if(!visible(list))'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','bookingCardTarget()','zr-has-info-tabs',"const list=$('existingBookingList')",'if(!visible(list))','zrCustomerGuideTabV1','zrCustomerParkingTabV1'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+for(const duplicate of ['customer_guide_map_v1.js','guideMapUrl()','openGuideQuick'])if(customerInfoTabs.includes(duplicate))fail(`customer info tabs must reuse shared guide map runtime: ${duplicate}`);
+if(fs.existsSync('customer_guide_map_v1.js'))fail('duplicate customer_guide_map_v1.js must stay removed');
+if(fs.existsSync('customer_parking_ui_v2.js'))fail('duplicate customer_parking_ui_v2.js must stay removed');
 
-const customerGuideMap=read('customer_guide_map_v1.js');
-textHealth('customer_guide_map_v1.js',customerGuideMap);syntax('customer_guide_map_v1.js');
+const parkingInfo=read('parking_info_v31.js');
+textHealth('parking_info_v31.js',parkingInfo);syntax('parking_info_v31.js');
 for(const needle of [
-  "COLLECTION='customerGuides'","DOC_ID='main'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL',
-  'F.serverTimestamp()','{merge:true}','zr:guide-map-updated','draftDirty=false','saving=false',
-  "$('zrGuideMapImageUrl').addEventListener('input',()=>{draftDirty=true;renderPreview()})",
-  'if(input&&!draftDirty&&!saving&&document.activeElement!==input&&input.value!==imageUrl)input.value=imageUrl',
-  'FS.getFirestore(app)','A.getApps().length?A.getApp():null'
-])if(!customerGuideMap.includes(needle))fail(`customer guide map contract missing: ${needle}`);
-if(customerGuideMap.includes("COLLECTION='reservationAvailability'")||customerGuideMap.includes("DOC_ID='__customer_guide__'"))fail('customer guide map must share customerGuides/main with active customer settings');
-
-const parkingUi=read('customer_parking_ui_v2.js');
-textHealth('customer_parking_ui_v2.js',parkingUi);syntax('customer_parking_ui_v2.js');
-for(const needle of ['zr-parking-dropoff','zr-parking-bus','zrParkingInfoCard','zrCustomerParkingQuickBody','zrFinalParkingV31','MutationObserver(decorate)'])if(!parkingUi.includes(needle))fail(`customer parking UI contract missing: ${needle}`);
+  "COLLECTION='customerGuides'","DOC_ID='main'",'guideMapImageUrl','readGuideMapUrl','findGuideMapControls','saveGuideMap','syncGuideMapAdmin',
+  'openGuideMap','isGuideMapCustomerButton','zrGuideMapModalV32',
+  '.zrpk31-row:first-of-type','.zrpk31-row:nth-of-type(2)',
+  '.zrfinal31-place:first-of-type','.zrfinal31-place:nth-of-type(2)',
+  'FS.setDoc(FS.doc(db,COLLECTION,DOC_ID)',"/^가이드맵(보기|확인)?$/"
+])if(!parkingInfo.includes(needle))fail(`parking/guide shared runtime contract missing: ${needle}`);
 
 const timeGuideGuard=read('customer_time_guide_guard_v2.js');
 textHealth('customer_time_guide_guard_v2.js',timeGuideGuard);syntax('customer_time_guide_guard_v2.js');
