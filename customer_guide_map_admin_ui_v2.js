@@ -5,6 +5,8 @@ window.__ZR_CUSTOMER_GUIDE_MAP_ADMIN_UI_V2=true;
 
 const $=id=>document.getElementById(id);
 const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
+let guideMapDraft='';
+let guideMapDirty=false;
 
 function injectStyle(){
   if($('zrGuideMapAdminUiV2Style'))return;
@@ -32,9 +34,35 @@ function renderPreview(){
     img.removeAttribute('src');img.dataset.url='';box.classList.remove('has-image');
   }
 }
+function rememberDraft(){
+  const input=$('zrGuideMapImageUrl');if(!input)return;
+  guideMapDraft=String(input.value||'');
+  guideMapDirty=true;
+  input.dataset.zrGuideMapDirty='1';
+  renderPreview();
+}
+function restoreDraft(){
+  if(!guideMapDirty)return;
+  const input=$('zrGuideMapImageUrl');if(!input)return;
+  if(input.value===guideMapDraft)return;
+  input.value=guideMapDraft;
+  renderPreview();
+}
 function syncSaveReady(){
   const btn=$('zrGuideMapSave');
   if(btn)btn.disabled=!window.__ZR_PARKING_INFO_V31;
+}
+function bindDraftProtection(){
+  const input=$('zrGuideMapImageUrl'),btn=$('zrGuideMapSave');
+  if(input&&input.dataset.zrDraftBound!=='1'){
+    input.dataset.zrDraftBound='1';
+    input.addEventListener('input',rememberDraft);
+    input.addEventListener('blur',()=>{queueMicrotask(restoreDraft);setTimeout(restoreDraft,0);setTimeout(restoreDraft,80)});
+  }
+  if(btn&&btn.dataset.zrDraftBound!=='1'){
+    btn.dataset.zrDraftBound='1';
+    btn.addEventListener('click',restoreDraft,true);
+  }
 }
 function ensureUi(){
   const sec=$('zrGuideAdminSection');if(!sec)return false;
@@ -46,7 +74,6 @@ function ensureUi(){
     else if(savebar)savebar.insertAdjacentElement('beforebegin',root);
     else sec.appendChild(root);
     root.innerHTML='<h3>가이드맵 이미지</h3><div class="zr-gmap-help">고객 예약확인 화면의 ‘가이드맵’ 버튼에 표시할 이미지 URL을 등록합니다.</div><div class="zr-gmap-row"><div><label for="zrGuideMapImageUrl">가이드맵 이미지 URL</label><input id="zrGuideMapImageUrl" type="url" placeholder="https://..." autocomplete="off"></div><button type="button" class="btn-primary" id="zrGuideMapSave">가이드맵 저장</button></div><div class="zr-gmap-preview" id="zrGuideMapPreview"><img id="zrGuideMapPreviewImage" alt="가이드맵 미리보기"><div class="zr-gmap-empty">등록된 가이드맵 이미지가 없습니다.</div></div>';
-    $('zrGuideMapImageUrl')?.addEventListener('input',renderPreview);
     $('zrGuideMapPreviewImage')?.addEventListener('error',()=>{
       const box=$('zrGuideMapPreview');if(box)box.classList.remove('has-image');
       const empty=box?.querySelector('.zr-gmap-empty');if(empty)empty.textContent='이미지를 불러오지 못했습니다. URL을 확인해주세요.';
@@ -55,7 +82,7 @@ function ensureUi(){
       const empty=$('zrGuideMapPreview')?.querySelector('.zr-gmap-empty');if(empty)empty.textContent='등록된 가이드맵 이미지가 없습니다.';
     });
   }
-  syncSaveReady();renderPreview();return true;
+  bindDraftProtection();syncSaveReady();restoreDraft();renderPreview();return true;
 }
 let pending=false;
 function sync(){
@@ -65,7 +92,7 @@ function sync(){
 function boot(){
   injectStyle();sync();
   new MutationObserver(sync).observe(document.body,{childList:true,subtree:true});
-  const timer=setInterval(()=>{syncSaveReady();renderPreview()},300);
+  const timer=setInterval(()=>{syncSaveReady();bindDraftProtection();restoreDraft();renderPreview()},100);
   setTimeout(()=>clearInterval(timer),30000);
   const tabTimer=setInterval(()=>{
     const tab=$('zrGuideAdminTab');if(!tab)return;
