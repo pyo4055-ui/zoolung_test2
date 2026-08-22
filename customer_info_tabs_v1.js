@@ -30,11 +30,14 @@ function injectStyle(){
   #existingBookingList .zr-customer-parking-action:hover{background:#fff4d7}
   #existingBookingList .zr-customer-action-cancel{min-height:40px!important}
   #existingBookingList .zr-action-origin-empty{display:none!important}
-  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type{background:#fff2cf!important;border-left-color:#dc8d00!important}
-  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type h4,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type h4{background:#ffd86f!important;color:#624000!important}
-  #customerView #zrParkingInfoCard .zrpk31-row:first-of-type .zrpk31-place,#zrCustomerParkingQuickBody .zrpk31-row:first-of-type .zrpk31-place{color:#3d2b00!important;font-weight:950!important}
-  .zrfinal31-place:first-of-type{background:#fff2cf!important;border-color:#e9c66f!important;border-left-color:#dc8d00!important}
-  .zrfinal31-place:first-of-type>b{background:#ffd86f!important;color:#624000!important}
+  #customerView #zrParkingInfoCard .zrpk31-row,#zrCustomerParkingQuickBody .zrpk31-row{background:#fff!important;border-left:0!important}
+  #customerView #zrParkingInfoCard .zrpk31-row+.zrpk31-row,#zrCustomerParkingQuickBody .zrpk31-row+.zrpk31-row{border-top:2px solid #d8dfda!important}
+  #customerView #zrParkingInfoCard .zrpk31-row h4,#zrCustomerParkingQuickBody .zrpk31-row h4{background:#e7f1eb!important;color:#24553f!important}
+  #customerView #zrParkingInfoCard .zrpk31-place,#zrCustomerParkingQuickBody .zrpk31-place{color:#111!important;font-weight:950!important}
+  #customerView #zrParkingInfoCard .zrpk31-address,#zrCustomerParkingQuickBody .zrpk31-address{color:#111!important;font-size:13.5px!important;font-weight:800!important}
+  #customerView #zrParkingInfoCard .zrpk31-notes,#customerView #zrParkingInfoCard .zrpk31-notes li,#zrCustomerParkingQuickBody .zrpk31-notes,#zrCustomerParkingQuickBody .zrpk31-notes li{color:#111!important}
+  .zrfinal31-place:first-of-type,.zrfinal31-place:nth-of-type(2){background:#fff!important;border-color:#d8dfda!important;border-left-color:#d8dfda!important}
+  .zrfinal31-place:first-of-type>b,.zrfinal31-place:nth-of-type(2)>b{background:#e7f1eb!important;color:#24553f!important}
   .zr-customer-info-modal{position:fixed;inset:0;z-index:10250;background:rgba(16,25,20,.58);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
   .zr-customer-info-modal.hidden{display:none!important}.zr-customer-info-sheet{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:17px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.26);-webkit-overflow-scrolling:touch}
   .zr-customer-info-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}.zr-customer-info-head h2{margin:0;flex:1;font-size:20px}.zr-customer-info-close{border:0;border-radius:9px;padding:8px 11px;background:#eef1ee;color:#4f5c54;font-weight:900;cursor:pointer}
