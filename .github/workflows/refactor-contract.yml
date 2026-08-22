@@ -13,6 +13,8 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/refactor_contract_check.mjs
+      - name: Temporary cancellation filter inspection
+        run: node scripts/inspect_cancel_temp.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
