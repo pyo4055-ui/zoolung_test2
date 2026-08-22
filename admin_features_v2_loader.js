@@ -85,7 +85,7 @@
         const p=document.createElement('script');
         p.id='zrParkingInfoV31';
         p.async=false;
-        p.src='./parking_info_v31.js?v=33';
+        p.src='./parking_info_v31.js?v=34';
         document.body.appendChild(p);
       }
 
