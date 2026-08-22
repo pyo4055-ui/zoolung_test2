@@ -66,7 +66,7 @@ let last=-1;
 for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
 for(const needle of [
   'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=32','admin_schedule_tab.js?v=1',
-  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=4','customer_time_guide_guard_v2.js?v=1','loadCustomerQuickTools()',
+  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=4','customer_guide_map_admin_ui_v2.js?v=1','customer_time_guide_guard_v2.js?v=1','loadCustomerQuickTools()',
   "return el.id==='entryTime';",
   "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
@@ -103,6 +103,11 @@ for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrp
 for(const duplicate of ['customer_guide_map_v1.js','guideMapUrl()','openGuideQuick'])if(customerInfoTabs.includes(duplicate))fail(`customer info tabs must reuse shared guide map runtime: ${duplicate}`);
 if(fs.existsSync('customer_guide_map_v1.js'))fail('duplicate customer_guide_map_v1.js must stay removed');
 if(fs.existsSync('customer_parking_ui_v2.js'))fail('duplicate customer_parking_ui_v2.js must stay removed');
+
+const guideMapAdminUi=read('customer_guide_map_admin_ui_v2.js');
+textHealth('customer_guide_map_admin_ui_v2.js',guideMapAdminUi);syntax('customer_guide_map_admin_ui_v2.js');
+for(const needle of ['zrGuideMapAdminSection','zrGuideMapImageUrl','zrGuideMapSave','zrGuideMapPreviewImage','가이드맵 이미지 URL','window.__ZR_PARKING_INFO_V31'])if(!guideMapAdminUi.includes(needle))fail(`guide map admin UI contract missing: ${needle}`);
+for(const forbidden of ['setDoc','getFirestore','onSnapshot','customerGuides','reservationAvailability','firebase-firestore'])if(guideMapAdminUi.includes(forbidden))fail(`guide map admin UI must not own persistence: ${forbidden}`);
 
 const parkingInfo=read('parking_info_v31.js');
 textHealth('parking_info_v31.js',parkingInfo);syntax('parking_info_v31.js');
