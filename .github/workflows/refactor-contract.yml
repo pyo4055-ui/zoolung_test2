@@ -21,6 +21,8 @@ jobs:
         run: node scripts/customer_guide_transition_contract_check.mjs
       - name: Verify customer reservation status clarity
         run: node scripts/customer_status_banner_contract_check.mjs
+      - name: Verify guide map URL draft protection
+        run: node scripts/guide_map_draft_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
