@@ -5,14 +5,14 @@ window.__ZR_CUSTOMER_GUIDE_MAP_V1=true;
 
 const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
-const COLLECTION='reservationAvailability';
-const DOC_ID='__customer_guide__';
+const COLLECTION='customerGuides';
+const DOC_ID='main';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toast=s=>{try{window.toast?.(s)}catch{}};
 const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
 
-let FS=null,db=null,unsub=null,imageUrl='',draftDirty=false,saving=false;
+let F=null,db=null,unsub=null,imageUrl='',draftDirty=false,saving=false;
 
 function bridge(){return window.zrReservationFirebase||null}
 function isStaff(){
@@ -24,10 +24,8 @@ function notify(){
   try{document.dispatchEvent(new CustomEvent('zr:guide-map-updated',{detail:{imageUrl}}))}catch{}
 }
 function expose(){
-  window.zrCustomerGuideMapV1={
-    get imageUrl(){return imageUrl},
-    refreshAdmin:renderAdmin
-  };
+  const api={get imageUrl(){return imageUrl},refreshAdmin:renderAdmin};
+  window.zrCustomerGuideMapV1=api;
 }
 function injectStyle(){
   if($('zrGuideMapV1Style'))return;
@@ -69,19 +67,17 @@ function renderAdmin(){
   return true;
 }
 async function saveGuideMap(){
-  const z=bridge();
-  if(!z?.db||!z?.auth||!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
-  if(!db||!FS)return toast('가이드맵 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
+  if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
+  if(!db||!F)return toast('가이드맵 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
   const input=$('zrGuideMapImageUrl'),raw=String(input?.value||'').trim(),url=safeUrl(raw);
   if(raw&&!url){toast('가이드맵 이미지는 http 또는 https URL로 입력해주세요.');input?.focus?.();return}
   const btn=$('zrGuideMapSave'),old=btn?.textContent||'가이드맵 저장';
   saving=true;
   if(btn){btn.disabled=true;btn.textContent='저장 중...'}
   try{
-    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{
-      kind:'customerGuide',ownerUid:z.auth.currentUser.uid,
-      date:'',status:'cancelled',playUse:'no',playStart:'',playEnd:'',
-      guideMapImageUrl:url,guideMapUpdatedAt:FS.serverTimestamp()
+    await F.setDoc(F.doc(db,COLLECTION,DOC_ID),{
+      guideMapImageUrl:url,
+      guideMapUpdatedAt:F.serverTimestamp()
     },{merge:true});
     imageUrl=url;draftDirty=false;expose();renderPreview();notify();toast('가이드맵 이미지를 저장했습니다.');
   }catch(e){
@@ -96,10 +92,15 @@ async function saveGuideMap(){
 }
 async function initDb(){
   try{
-    FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);
-    const z=bridge();if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;
+    const [A,FS]=await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${FV}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`)
+    ]);
+    const app=A.getApps().length?A.getApp():null;
+    if(!app)throw new Error('Firebase app unavailable');
+    F=FS;db=FS.getFirestore(app);
     if(unsub)unsub();
-    unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{
+    unsub=F.onSnapshot(F.doc(db,COLLECTION,DOC_ID),snap=>{
       imageUrl=safeUrl(snap.exists()?snap.data()?.guideMapImageUrl:'');
       expose();renderAdmin();notify();
     },e=>console.error('guide map read',e));
