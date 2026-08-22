@@ -66,7 +66,7 @@ let last=-1;
 for(const item of ordered){const at=loader.indexOf(item);if(at<0)fail(`admin loader missing ${item}`);else if(at<=last)fail(`admin loader order changed at ${item}`);last=at}
 for(const needle of [
   'customer_booking_ux_v24.js?v=31','customer_visit_guide_v16.js?v=31','customer_visit_guide_fix_v20.js?v=31','parking_info_v31.js?v=31','admin_schedule_tab.js?v=1',
-  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=2','loadCustomerQuickTools()',
+  'customer_lookup_actions_v1.js?v=2','customer_info_tabs_v1.js?v=3','customer_parking_ui_v2.js?v=1','customer_time_guide_guard_v2.js?v=1','loadCustomerQuickTools()',
   "return el.id==='entryTime';",
   "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
@@ -98,18 +98,27 @@ for(const needle of ['3. 예약 취소하기','이 예약 취소하기','취소�
 
 const customerInfoTabs=read('customer_info_tabs_v1.js');
 textHealth('customer_info_tabs_v1.js',customerInfoTabs);syntax('customer_info_tabs_v1.js');
-for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=2','guideMapUrl()','bookingCardTarget()','zr-has-info-tabs',"const list=$('existingBookingList')",'if(!visible(list))'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
+for(const needle of ['가이드맵','주차 및 인솔','zrParkingInfoCard','zrpk31-map','./customer_guide_map_v1.js?v=3','guideMapUrl()','bookingCardTarget()','zr-has-info-tabs',"const list=$('existingBookingList')",'if(!visible(list))'])if(!customerInfoTabs.includes(needle))fail(`customer info tabs contract missing: ${needle}`);
 
 const customerGuideMap=read('customer_guide_map_v1.js');
 textHealth('customer_guide_map_v1.js',customerGuideMap);syntax('customer_guide_map_v1.js');
 for(const needle of [
-  "COLLECTION='reservationAvailability'","DOC_ID='__customer_guide__'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL',
-  'FS.serverTimestamp()','{merge:true}','zr:guide-map-updated','draftDirty=false','saving=false',
+  "COLLECTION='customerGuides'","DOC_ID='main'",'guideMapImageUrl','zrGuideAdminSection','가이드맵 이미지 URL',
+  'F.serverTimestamp()','{merge:true}','zr:guide-map-updated','draftDirty=false','saving=false',
   "$('zrGuideMapImageUrl').addEventListener('input',()=>{draftDirty=true;renderPreview()})",
   'if(input&&!draftDirty&&!saving&&document.activeElement!==input&&input.value!==imageUrl)input.value=imageUrl',
-  "kind:'customerGuide'",'ownerUid:z.auth.currentUser.uid'
+  'FS.getFirestore(app)','A.getApps().length?A.getApp():null'
 ])if(!customerGuideMap.includes(needle))fail(`customer guide map contract missing: ${needle}`);
-if(customerGuideMap.includes("COLLECTION='customerGuides'")||customerGuideMap.includes("DOC_ID='main'"))fail('customer guide map must use existing customer guide storage path');
+if(customerGuideMap.includes("COLLECTION='reservationAvailability'")||customerGuideMap.includes("DOC_ID='__customer_guide__'"))fail('customer guide map must share customerGuides/main with active customer settings');
+
+const parkingUi=read('customer_parking_ui_v2.js');
+textHealth('customer_parking_ui_v2.js',parkingUi);syntax('customer_parking_ui_v2.js');
+for(const needle of ['zr-parking-dropoff','zr-parking-bus','zrParkingInfoCard','zrCustomerParkingQuickBody','zrFinalParkingV31','MutationObserver(decorate)'])if(!parkingUi.includes(needle))fail(`customer parking UI contract missing: ${needle}`);
+
+const timeGuideGuard=read('customer_time_guide_guard_v2.js');
+textHealth('customer_time_guide_guard_v2.js',timeGuideGuard);syntax('customer_time_guide_guard_v2.js');
+for(const needle of ["el?.id==='exitTime'",'exitGuardUntil','queueMicrotask(closeZooGuide)','zrGuideModal','MutationObserver(closeZooGuide)'])if(!timeGuideGuard.includes(needle))fail(`customer time guide guard contract missing: ${needle}`);
+for(const forbidden of ['stopPropagation','stopImmediatePropagation','preventDefault'])if(timeGuideGuard.includes(forbidden))fail(`exit time guard must not block existing booking behavior: ${forbidden}`);
 
 const scheduleHtml=read('schedule.html');
 if(!scheduleHtml.includes('./schedule_refactor/app.js?v=1'))fail('schedule.html is not using refactored runtime');
