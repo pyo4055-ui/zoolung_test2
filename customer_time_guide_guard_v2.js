@@ -17,16 +17,7 @@ function guardExit(){
   setTimeout(closeZooGuide,40);
   setTimeout(closeZooGuide,120);
 }
-function loadTransitionV3(){
-  if(document.getElementById('zrCustomerGuideTransitionV3'))return;
-  const s=document.createElement('script');
-  s.id='zrCustomerGuideTransitionV3';
-  s.async=false;
-  s.src='./customer_guide_transition_v3.js?v=3';
-  document.body.appendChild(s);
-}
 function boot(){
-  loadTransitionV3();
   for(const type of ['pointerdown','mousedown','touchstart','focusin','change']){
     document.addEventListener(type,e=>{if(isExit(e.target))guardExit()},true);
   }
