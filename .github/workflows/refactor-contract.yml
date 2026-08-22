@@ -15,8 +15,8 @@ jobs:
       - run: node scripts/refactor_contract_check.mjs
       - name: Verify cancellation history visibility
         run: node scripts/cancellation_contract_check.mjs
-      - name: Temporary admin search inspection
-        run: node scripts/inspect_admin_search_temp.mjs
+      - name: Verify admin group search safety
+        run: node scripts/admin_group_search_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
