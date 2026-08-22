@@ -121,8 +121,8 @@ function bindConfirmGuard(){
     err?.classList.remove('show');
     const id=cancelTargetId;
     persistCancelReason(id,reason);
-    setTimeout(()=>{cancelMode=false;decorateCancelSuccess();decorateList();renderCancelledRecords()},40);
-    setTimeout(()=>{decorateCancelSuccess();decorateList();renderCancelledRecords()},300);
+    setTimeout(()=>{cancelMode=false;decorateCancelSuccess();decorateList();renderCancelledRecords();syncLookupActions()},40);
+    setTimeout(()=>{decorateCancelSuccess();decorateList();renderCancelledRecords();syncLookupActions()},300);
   },true);
   return true;
 }
@@ -176,11 +176,12 @@ function renderCancelledRecords(){
     const text=String(card.textContent||'');
     return /취소/.test(text)&&text.includes(String(b.orgName||''))&&text.includes(String(b.date||''));
   }));
-  if(!shown.length){old?.remove();return}
+  if(!shown.length){old?.remove();list.classList.remove('hidden');return}
   const html=shown.sort((a,b)=>String(b.cancelledAt||b.createdAt||'').localeCompare(String(a.cancelledAt||a.createdAt||''))).map(cancelledRecordHtml).join('');
   let box=old;
   if(!box){box=document.createElement('div');box.id='zrCancelledBookingRecordsV2';box.className='zr-cancelled-records';list.appendChild(box)}
   if(box.innerHTML!==html)box.innerHTML=html;
+  list.classList.remove('hidden');
 }
 function decorateList(){
   const list=$('existingBookingList');if(!list)return;
@@ -192,14 +193,32 @@ function decorateList(){
     head.textContent='취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요. 취소 사유를 입력한 뒤 최종 취소됩니다.';
   }else list.querySelector('.zr-cancel-list-heading')?.remove();
 }
+function syncLookupActions(){
+  const all=customerBookings(true),active=cancellableCustomerBookings();
+  if(!all.length)return;
+  const existing=$('existingActions'),newActions=$('newBookingActions');
+  existing?.classList.remove('hidden');
+  if(active.length)newActions?.classList.add('hidden');else newActions?.classList.remove('hidden');
+  $('changeExisting')?.classList.toggle('hidden',active.length===0);
+  $('cancelExisting')?.classList.toggle('hidden',active.length===0);
+  if($('existingCount'))$('existingCount').textContent=`${all.length}건`;
+}
 
 function wrapActionButtons(){
+  const lookup=$('lookupBooking');
+  if(lookup&&lookup.dataset.zrCancelledLookupV2!=='1'){
+    lookup.dataset.zrCancelledLookupV2='1';
+    lookup.addEventListener('click',()=>{
+      cancelMode=false;
+      [0,80,220,600].forEach(ms=>setTimeout(syncLookupActions,ms));
+    });
+  }
   const check=$('checkExisting');
   if(check&&check.dataset.zrCancelModeV1!=='1'){
     check.dataset.zrCancelModeV1='1';
     check.addEventListener('click',()=>{
       cancelMode=false;
-      [0,100,300,800,1500].forEach(ms=>setTimeout(()=>{decorateList();renderCancelledRecords()},ms));
+      [0,100,300,800,1500].forEach(ms=>setTimeout(()=>{decorateList();renderCancelledRecords();syncLookupActions()},ms));
     });
   }
   const cancel=$('cancelExisting');
