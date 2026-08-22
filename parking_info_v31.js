@@ -9,7 +9,7 @@ const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const COLLECTION='customerGuides';
 const DOC_ID='main';
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
 const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
 const toast=s=>{try{window.toast?.(s)}catch{}};
@@ -28,7 +28,7 @@ const DEF={
 const FALLBACK_ZOO=['예약한 입장시간에 맞춰 방문해주세요.','동물 친구들은 눈으로만 만나주세요.'];
 const FALLBACK_PLAY=['예약한 놀이터 이용시간을 지켜주세요.','안전을 위해 놀이터 이용수칙을 지켜주세요.'];
 
-let FS=null,db=null,unsub=null,current=clone(DEF),guideDoc={},guideMapUrl='',guideMapDirty=false,submitBypass=false,pendingButton=null;
+let FS=null,db=null,unsub=null,current=clone(DEF),guideDoc={},guideMapUrl='',guideMapDraft='',guideMapDirty=false,submitBypass=false,pendingButton=null;
 
 function norm(raw){
   const s=raw&&typeof raw==='object'?raw:{};
@@ -96,9 +96,15 @@ function findGuideMapControls(button){
   return null;
 }
 function syncGuideMapAdmin(force=false){
-  if(!guideMapUrl)return;
   const c=findGuideMapControls();if(!c)return;
-  if(!force&&(guideMapDirty||document.activeElement===c.input))return;
+  if(guideMapDirty){
+    if(c.input.value!==guideMapDraft)c.input.value=guideMapDraft;
+    const draftUrl=safeUrl(guideMapDraft),img=c.scope.querySelector('img');
+    if(img&&draftUrl&&img.src!==draftUrl)img.src=draftUrl;
+    return;
+  }
+  if(!guideMapUrl)return;
+  if(!force&&document.activeElement===c.input)return;
   c.input.value=guideMapUrl;
   const img=c.scope.querySelector('img');if(img&&img.src!==guideMapUrl)img.src=guideMapUrl;
 }
@@ -106,12 +112,13 @@ async function saveGuideMap(button){
   const c=findGuideMapControls(button);if(!c)return;
   if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
   if(!FS||!db)return toast('가이드맵 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
-  const url=safeUrl(c.input.value);
+  const raw=guideMapDirty?guideMapDraft:c.input.value;
+  const url=safeUrl(raw);
   if(!url)return toast('가이드맵 이미지 URL을 https:// 주소로 입력해주세요.');
   const old=c.button.textContent;c.button.disabled=true;c.button.textContent='저장 중...';
   try{
     await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{guideMapImageUrl:url,updatedAtMs:Date.now()},{merge:true});
-    guideMapUrl=url;guideMapDirty=false;syncGuideMapAdmin(true);toast('가이드맵 이미지를 저장했습니다.');
+    guideMapUrl=url;guideMapDraft=url;guideMapDirty=false;syncGuideMapAdmin(true);toast('가이드맵 이미지를 저장했습니다.');
   }catch(e){
     const code=String(e?.code||e?.name||'unknown').replace(/^firestore\//,'');
     console.error('guide map v32 save',e);toast(`가이드맵 이미지 저장 실패 · ${code}`);
@@ -134,7 +141,16 @@ function isGuideMapCustomerButton(b){
 function bindGuideMap(){
   document.addEventListener('input',e=>{
     const c=findGuideMapControls();if(!c||e.target!==c.input)return;
-    guideMapDirty=true;
+    guideMapDraft=e.target.value;guideMapDirty=true;
+  },true);
+  document.addEventListener('change',e=>{
+    const c=findGuideMapControls();if(!c||e.target!==c.input||!guideMapDirty)return;
+    setTimeout(()=>syncGuideMapAdmin(true),0);
+  },true);
+  document.addEventListener('focusout',e=>{
+    const c=findGuideMapControls();if(!c||e.target!==c.input||!guideMapDirty)return;
+    setTimeout(()=>syncGuideMapAdmin(true),0);
+    setTimeout(()=>syncGuideMapAdmin(true),50);
   },true);
   document.addEventListener('click',e=>{
     const b=e.target?.closest?.('button,a,input[type="button"],input[type="submit"]');if(!b)return;
@@ -171,10 +187,10 @@ function bindFinal(){
   },true);
 }
 async function init(){
-  try{FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;if(unsub)unsub();unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{guideDoc=snap.exists()?snap.data()||{}:{};guideMapUrl=readGuideMapUrl(guideDoc);current=norm(guideDoc.parking);renderCard();syncGuideMapAdmin();if($('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden'))renderAdmin()},e=>console.error('parking v31 read',e))}catch(e){console.error('parking v31 init',e)}
+  try{FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;if(unsub)unsub();unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{guideDoc=snap.exists()?snap.data()||{}:{};guideMapUrl=readGuideMapUrl(guideDoc);if(!guideMapDirty)guideMapDraft=guideMapUrl;current=norm(guideDoc.parking);renderCard();syncGuideMapAdmin();if($('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden'))renderAdmin()},e=>console.error('parking v31 read',e))}catch(e){console.error('parking v31 init',e)}
 }
 function boot(){
-  injectStyle();const cardTimer=setInterval(()=>{if(renderCard())clearInterval(cardTimer)},200);setTimeout(()=>clearInterval(cardTimer),20000);const adminTimer=setInterval(()=>{const t=$('zrGuideAdminTab');if(!t)return;t.addEventListener('click',()=>setTimeout(()=>{guideMapDirty=false;renderAdmin();syncGuideMapAdmin(true)},80));clearInterval(adminTimer)},250);setTimeout(()=>clearInterval(adminTimer),20000);bindGuideMap();bindFinal();const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
+  injectStyle();const cardTimer=setInterval(()=>{if(renderCard())clearInterval(cardTimer)},200);setTimeout(()=>clearInterval(cardTimer),20000);const adminTimer=setInterval(()=>{const t=$('zrGuideAdminTab');if(!t)return;t.addEventListener('click',()=>setTimeout(()=>{guideMapDirty=false;guideMapDraft=guideMapUrl;renderAdmin();syncGuideMapAdmin(true)},80));clearInterval(adminTimer)},250);setTimeout(()=>clearInterval(adminTimer),20000);bindGuideMap();bindFinal();const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
