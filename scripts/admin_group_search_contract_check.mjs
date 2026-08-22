@@ -24,12 +24,12 @@ for(const needle of [
   'dates.forEach(x=>x.el.value=x.value)',
   'window.bookings=temp','if(binding.win)window.bookings=binding.win',
   'window.renderActivity=wrapped','window.renderOutsourcingPayments=wrapped',
-  '!window.__ZR_ADMIN_OPS_V11_PATCH',
+  '!window.__ZR_ADMIN_OPS_V10','!window.__ZR_ADMIN_V9_INSTALLED',
   'downloadActivityExcelV11','stripCafeItems',
   'refreshOutsourcePeopleForSearch','actualPaidCount','actualPaidChaperone','actualFreeChaperone',
   '검색어가 있으면 조회 시작일·종료일을 무시합니다.',
   '검색어가 있으면 방문일 시작·종료를 무시합니다.',
-  'zr11ActivityToolbar','zr-outsource-query-grid'
+  'zr11ActivityToolbar','zr-outsource-query-grid','makeActivityToolbar','zr-outsource-actions'
 ])if(!search.includes(needle))fail(`admin group search contract missing: ${needle}`);
 
 for(const forbidden of [
