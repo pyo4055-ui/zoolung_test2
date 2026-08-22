@@ -149,7 +149,7 @@ function installActivity(){
 }
 function installOutsource(){
   if(installedOutsource)return true;
-  if(typeof window.renderOutsourcingPayments!=='function'||!ensureOutsourceUi())return false;
+  if(!window.__ZR_ADMIN_OPS_V11_PATCH||typeof window.renderOutsourcingPayments!=='function'||!ensureOutsourceUi())return false;
   outsourceBaseRender=window.renderOutsourcingPayments;
   const wrapped=()=>renderOutsourceSearch();wrapped.__zrOrgSearchV1=true;
   window.renderOutsourcingPayments=wrapped;try{renderOutsourcingPayments=wrapped}catch{}
