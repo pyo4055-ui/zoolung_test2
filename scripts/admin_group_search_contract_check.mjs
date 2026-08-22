@@ -19,12 +19,15 @@ for(const needle of [
   'zrActivityOrgSearch','zrOutsourceOrgSearch','단체명 검색',
   "withOrgScope(q,['activityStart','activityEnd','activityStartDate','activityEndDate'],activityBaseRender)",
   "withOrgScope(q,['outsourceStart','outsourceEnd'],outsourceBaseRender)",
-  "withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn)",
+  "withOrgScope(activityQuery(),['activityStart','activityEnd','activityStartDate','activityEndDate'],fn,stripCafeItems)",
   "dates.forEach(x=>x.el.value='')",
   'dates.forEach(x=>x.el.value=x.value)',
   'window.bookings=temp','if(binding.win)window.bookings=binding.win',
   'window.renderActivity=wrapped','window.renderOutsourcingPayments=wrapped',
-  'downloadActivityExcelV11','검색어가 있으면 조회 시작일·종료일을 무시합니다.',
+  '!window.__ZR_ADMIN_OPS_V11_PATCH',
+  'downloadActivityExcelV11','stripCafeItems',
+  'refreshOutsourcePeopleForSearch','actualPaidCount','actualPaidChaperone','actualFreeChaperone',
+  '검색어가 있으면 조회 시작일·종료일을 무시합니다.',
   '검색어가 있으면 방문일 시작·종료를 무시합니다.',
   'zr11ActivityToolbar','zr-outsource-query-grid'
 ])if(!search.includes(needle))fail(`admin group search contract missing: ${needle}`);
