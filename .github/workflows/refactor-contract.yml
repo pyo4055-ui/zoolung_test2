@@ -27,6 +27,8 @@ jobs:
         run: node scripts/admin_tab_active_contract_check.mjs
       - name: Verify compact calendar status summary
         run: node scripts/admin_calendar_status_summary_contract_check.mjs
+      - name: Verify reservation activity date filtering
+        run: node scripts/admin_activity_filter_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
