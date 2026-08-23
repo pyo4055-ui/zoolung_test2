@@ -10,7 +10,9 @@ try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${
 
 for(const needle of [
   "let applied=null",
-  "function readControls(){return {start:$('activityStart')?.value||'',end:$('activityEnd')?.value||'',mode:controlBasis()}}",
+  "const startControl=()=>$('activityStart')||$('activityStartDate')",
+  "const endControl=()=>$('activityEnd')||$('activityEndDate')",
+  "function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis()}}",
   "mode==='reservation'?String(b?.date||''):seoulDate(b?.createdAt)",
   "timeZone:'Asia/Seoul'",
   "if(s.start&&key<s.start)return false",
@@ -19,7 +21,9 @@ for(const needle of [
   "applied={...next}",
   "window.activityFilteredBookings=()=>filterByState(applied||readControls())",
   "window.renderActivity=renderMain",
-  "basis.onchange=()=>localStorage.setItem(ACTIVITY_BASIS_KEY,controlBasis())",
+  "search.onclick=e=>",
+  "today.onclick=e=>",
+  "search.dataset.zrActivityDateOwner='1'",
   "e.stopImmediatePropagation();applyFromControls()",
   "e.stopImmediatePropagation();applyToday()",
   "zrActivityOrgModalBtn",
@@ -29,6 +33,7 @@ for(const needle of [
   "q.disabled=true",
   "basis.disabled=false",
   "zr-activity-inline-search-disabled",
+  "#zrActivityOrgSearchModal #zrActivityOrgModalClose{position:absolute;top:14px;right:14px",
   "list.filter(b=>b.status==='confirmed'&&!isSettled(b)).length",
   "list.filter(b=>b.status==='pending').length",
   "list.filter(b=>b.status==='cancelled'||b.status==='rejected').length",
@@ -50,7 +55,7 @@ for(const forbidden of [
 ])if(s.includes(forbidden))fail(`activity filter fix must stay isolated/display-only: ${forbidden}`);
 
 const loader=fs.readFileSync('admin_features_v2_loader.js','utf8');
-for(const needle of ['zrAdminActivityFilterFixV1','./admin_activity_filter_fix_v1.js?v=2'])if(!loader.includes(needle))fail(`activity filter loader missing: ${needle}`);
+for(const needle of ['zrAdminActivityFilterFixV1','./admin_activity_filter_fix_v1.js?v=3'])if(!loader.includes(needle))fail(`activity filter loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('activity date filters are applied only on query action and group-name search is isolated in a modal');
+ok('activity date filters own the query buttons and group-name search stays isolated in a modal');
