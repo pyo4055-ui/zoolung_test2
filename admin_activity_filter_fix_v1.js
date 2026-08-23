@@ -82,7 +82,7 @@ function setKpis(list){
   set('activityKpiTotal',list.length);
   set('activityKpiConfirmed',list.filter(b=>b.status==='confirmed'&&!isSettled(b)).length);
   set('activityKpiPending',list.filter(b=>b.status==='pending').length);
-  set('activityKpiCancelled',list.filter(b=>b.status==='cancelled'||b.status==='rejected').length);
+  set('activityKpiCancelled',list.filter(b=>b.status==='cancelled').length);
   set('activityKpiCompleted',settled);
 }
 function renderDateFiltered(){
