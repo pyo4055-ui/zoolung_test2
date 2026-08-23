@@ -15,6 +15,18 @@ function loadCalendarSummary(){
   s.src='./admin_calendar_status_summary_v1.js?v=2';
   document.body.appendChild(s);
 }
+function loadActivityOrgDetailFix(){
+  if(document.getElementById('zrAdminActivityOrgDetailModalFixV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminActivityOrgDetailModalFixV1';
+  s.async=false;
+  s.src='./admin_activity_org_detail_modal_fix_v1.js?v=1';
+  document.body.appendChild(s);
+}
+function loadUiFixes(){
+  loadCalendarSummary();
+  loadActivityOrgDetailFix();
+}
 
 document.addEventListener('click',e=>{
   const clicked=e.target?.closest?.('#adminView .admin-tabs button');
@@ -23,6 +35,6 @@ document.addEventListener('click',e=>{
   if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');
 },true);
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadCalendarSummary,{once:true});
-else loadCalendarSummary();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
+else loadUiFixes();
 })();
