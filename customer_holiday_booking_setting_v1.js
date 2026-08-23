@@ -77,6 +77,9 @@ function hookVisitDays(){
     if(customerVisible())setTimeout(applyCustomerHolidayAvailability,0);
     return out;
   };
+  for(const key of Object.keys(base)){
+    try{wrapped[key]=base[key]}catch{}
+  }
   wrapped.__zrHolidayBookingSetting=true;
   wrappedRender=wrapped;
   window.renderVisitDays=wrapped;
