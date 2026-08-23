@@ -29,6 +29,9 @@ for(const needle of [
   "wrapped[key]=base[key]",
   "wrapped.__zrHolidayBookingSetting=true",
   "window.renderVisitDays=wrapped",
+  "const hooked=hookVisitDays()",
+  "setInterval(refreshHooks,500)",
+  "if(e.target?.id==='visitMonth')",
   "o.dataset.zrHolidayWasDisabled=o.disabled?'1':'0'",
   "o.disabled=o.dataset.zrHolidayWasDisabled==='1'",
   "HOLIDAY_SUFFIX=' (공휴일 예약 불가)'",
@@ -36,6 +39,9 @@ for(const needle of [
 ])if(!s.includes(needle))fail(`holiday booking contract missing: ${needle}`);
 
 for(const forbidden of [
+  'MutationObserver',
+  'setInterval(apply,',
+  "id==='visitDay')setTimeout(applyCustomerHolidayAvailability",
   'setStore(',
   'setDoc(',
   'updateDoc(',
@@ -45,7 +51,7 @@ for(const forbidden of [
   'scheduleGroups',
   "localStorage.setItem('zr_bookings'",
   'openAdminQuickBooking=function'
-])if(s.includes(forbidden))fail(`holiday booking setting must stay isolated from booking/schedule writes: ${forbidden}`);
+])if(s.includes(forbidden))fail(`holiday booking setting performance/safety contract violated: ${forbidden}`);
 
 const loader=fs.readFileSync('admin_features_v2_loader.js','utf8');
 if(!loader.includes("['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=1']"))fail('holiday booking setting is not loaded by active loader');
@@ -56,4 +62,4 @@ for(const date of ['2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-
 }
 
 if(failed)process.exit(1);
-ok('configurable holiday booking stays customer-date-only and preserves pre-existing disabled dates');
+ok('configurable holiday booking stays customer-date-only, preserves disabled dates, and avoids continuous DOM rescans');
