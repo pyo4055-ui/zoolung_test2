@@ -31,6 +31,8 @@ jobs:
         run: node scripts/admin_activity_filter_contract_check.mjs
       - name: Verify playground booking order and guidance
         run: node scripts/customer_playground_booking_guard_contract_check.mjs
+      - name: Verify configurable holiday booking
+        run: node scripts/customer_holiday_booking_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
