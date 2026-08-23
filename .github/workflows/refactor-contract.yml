@@ -23,6 +23,8 @@ jobs:
         run: node scripts/customer_status_banner_contract_check.mjs
       - name: Verify guide map URL draft protection
         run: node scripts/guide_map_draft_contract_check.mjs
+      - name: Verify admin tab active cleanup
+        run: node scripts/admin_tab_active_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
