@@ -86,11 +86,11 @@ function durationAvailability(){
 }
 function syncHelp(){
   if(!customerVisible())return;
+  if(!playRequested()){setHelp('', 'ok');return}
   if(!visitDate()){
     setHelp('방문 희망일을 먼저 선택하면 놀이터 예약 가능 시간을 확인할 수 있습니다.','lock');
     return;
   }
-  if(!playRequested()){setHelp('', 'ok');return}
   if(!String(playStart()?.value||'').trim()){
     setHelp('놀이터 입장시간을 선택하면 가능한 이용시간이 표시됩니다.','ok');
     return;
