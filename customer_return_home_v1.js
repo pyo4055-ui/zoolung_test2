@@ -5,6 +5,14 @@ window.__ZR_CUSTOMER_RETURN_HOME_V1=true;
 
 const $=id=>document.getElementById(id);
 
+function ensureModalUxConsistency(){
+  if(document.getElementById('zrModalUxConsistencyV1')||window.__ZR_MODAL_UX_CONSISTENCY_V1)return;
+  const s=document.createElement('script');
+  s.id='zrModalUxConsistencyV1';
+  s.async=false;
+  s.src='./modal_ux_consistency_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function customerVisible(){
   const v=$('customerView');
   return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
@@ -84,6 +92,7 @@ function ensureButton(){
 }
 function ensure(){ensureStyle();ensureModal();ensureButton()}
 function boot(){
+  ensureModalUxConsistency();
   ensure();
   const timer=setInterval(ensure,350);setTimeout(()=>clearInterval(timer),15000);
   document.addEventListener('click',()=>setTimeout(ensureButton,0),true);
