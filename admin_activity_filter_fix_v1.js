@@ -12,6 +12,9 @@ const SELF_COLOR='#ECEFF1';
 let installed=false;
 let applied=null;
 
+const startControl=()=>$('activityStart')||$('activityStartDate');
+const endControl=()=>$('activityEnd')||$('activityEndDate');
+
 function readBookings(){
   try{
     const list=typeof window.bookings==='function'?window.bookings():(typeof bookings==='function'?bookings():[]);
@@ -33,11 +36,8 @@ function seoulDate(value){
   const m=raw.match(/\d{4}-\d{2}-\d{2}/);return m?m[0]:'';
 }
 function todaySeoul(){return seoulDate(new Date().toISOString())}
-function controlBasis(){
-  const v=$('activityDateBasis')?.value;
-  return v==='reservation'?'reservation':'reception';
-}
-function readControls(){return {start:$('activityStart')?.value||'',end:$('activityEnd')?.value||'',mode:controlBasis()}}
+function controlBasis(){return $('activityDateBasis')?.value==='reservation'?'reservation':'reception'}
+function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis()}}
 function validateState(s){return !(s.start&&s.end&&s.start>s.end)}
 function keyFor(b,mode){return mode==='reservation'?String(b?.date||''):seoulDate(b?.createdAt)}
 function filterByState(state){
@@ -110,7 +110,7 @@ function applyFromControls(){
   return true;
 }
 function applyToday(){
-  const d=todaySeoul();if($('activityStart'))$('activityStart').value=d;if($('activityEnd'))$('activityEnd').value=d;
+  const d=todaySeoul(),s=startControl(),e=endControl();if(s)s.value=d;if(e)e.value=d;
   applyFromControls();
 }
 function mainSearchButton(){
@@ -126,16 +126,31 @@ function neutralizeInlineOrgSearch(){
   $('zrActivityOrgSearchWrap')?.classList.add('zr-activity-inline-search-disabled');
   $('zrActivityOrgSearchHint')?.classList.add('zr-activity-inline-search-disabled');
   const basis=$('activityDateBasis');if(basis){basis.disabled=false;basis.onchange=()=>localStorage.setItem(ACTIVITY_BASIS_KEY,controlBasis())}
-  for(const el of [$('activityStart'),$('activityEnd')]){if(el){el.disabled=false;el.closest('div')?.classList.remove('zr-search-ignored')}}
+  for(const el of [startControl(),endControl()]){if(el){el.disabled=false;el.closest('div')?.classList.remove('zr-search-ignored')}}
   $('activityDateBasisWrap')?.classList.remove('zr-search-ignored');
+}
+function bindMainControls(){
+  const search=mainSearchButton(),today=todayButton(),basis=$('activityDateBasis'),start=startControl(),end=endControl();
+  if(search){
+    search.dataset.zrActivityDateOwner='1';
+    search.onclick=e=>{e?.preventDefault?.();e?.stopPropagation?.();applyFromControls();return false};
+  }
+  if(today){
+    today.dataset.zrActivityDateOwner='1';
+    today.onclick=e=>{e?.preventDefault?.();e?.stopPropagation?.();applyToday();return false};
+  }
+  if(basis){basis.disabled=false;basis.onchange=()=>localStorage.setItem(ACTIVITY_BASIS_KEY,controlBasis())}
+  if(start)start.disabled=false;if(end)end.disabled=false;
 }
 function injectUi(){
   if(!$('zrActivityFilterFixStyle')){
     const style=document.createElement('style');style.id='zrActivityFilterFixStyle';style.textContent=`
       #tab-activity .zr-activity-inline-search-disabled{display:none!important}
       #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:9/13;grid-row:1;width:100%!important;min-height:40px!important;margin:0!important}
-      #zrActivityOrgSearchModal .modal-card{width:min(760px,calc(100vw - 28px));max-height:82vh;overflow:auto}
-      #zrActivityOrgSearchModal .zr-org-search-row{display:flex;gap:8px;margin:12px 0;align-items:center}
+      #zrActivityOrgSearchModal .modal-card{position:relative;width:min(760px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding-top:24px}
+      #zrActivityOrgSearchModal .zr-org-modal-head{padding-right:86px}
+      #zrActivityOrgSearchModal #zrActivityOrgModalClose{position:absolute;top:14px;right:14px;z-index:2;min-width:68px;margin:0}
+      #zrActivityOrgSearchModal .zr-org-search-row{display:flex;gap:8px;margin:16px 0 12px;align-items:center}
       #zrActivityOrgSearchModal .zr-org-search-row input{flex:1;min-width:0}
       #zrActivityOrgSearchModal .zr-org-search-results{display:flex;flex-direction:column;gap:10px}
       @media(max-width:900px){#zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/13;grid-row:3}#zr11ActivityToolbar #zrActivityOrgSearchHint{display:none!important}}
@@ -149,18 +164,18 @@ function injectUi(){
   }
   if(!$('zrActivityOrgSearchModal')){
     const modal=document.createElement('div');modal.id='zrActivityOrgSearchModal';modal.className='modal hidden';
-    modal.innerHTML=`<div class="modal-card"><div class="row"><div><h2 style="margin:0">단체명 검색</h2><div class="help" style="margin-top:4px">날짜 조회와 별개로 전체 예약에서 단체명을 찾습니다.</div></div><button type="button" class="btn-gray" id="zrActivityOrgModalClose">닫기</button></div><div class="zr-org-search-row"><input id="zrActivityOrgModalInput" type="search" autocomplete="off" placeholder="단체명 일부 입력"><button type="button" class="btn-primary" id="zrActivityOrgModalSearch">검색</button></div><div id="zrActivityOrgModalCount" class="help" style="margin-bottom:10px">단체명을 입력해주세요.</div><div id="zrActivityOrgModalResults" class="zr-org-search-results"></div></div>`;
+    modal.innerHTML=`<div class="modal-card"><button type="button" class="btn-gray" id="zrActivityOrgModalClose">닫기</button><div class="zr-org-modal-head"><h2 style="margin:0">단체명 검색</h2><div class="help" style="margin-top:4px">날짜 조회와 별개로 전체 예약에서 단체명을 찾습니다.</div></div><div class="zr-org-search-row"><input id="zrActivityOrgModalInput" type="search" autocomplete="off" placeholder="단체명 일부 입력"><button type="button" class="btn-primary" id="zrActivityOrgModalSearch">검색</button></div><div id="zrActivityOrgModalCount" class="help" style="margin-bottom:10px">단체명을 입력해주세요.</div><div id="zrActivityOrgModalResults" class="zr-org-search-results"></div></div>`;
     document.body.appendChild(modal);
   }
 }
 function openOrgModal(){
-  neutralizeInlineOrgSearch();injectUi();
+  neutralizeInlineOrgSearch();bindMainControls();injectUi();
   const modal=$('zrActivityOrgSearchModal');modal?.classList.remove('hidden');
   const input=$('zrActivityOrgModalInput');if(input){input.value='';setTimeout(()=>input.focus(),0)}
   if($('zrActivityOrgModalCount'))$('zrActivityOrgModalCount').textContent='단체명을 입력해주세요.';
   if($('zrActivityOrgModalResults'))$('zrActivityOrgModalResults').innerHTML='';
 }
-function closeOrgModal(){$('zrActivityOrgSearchModal')?.classList.add('hidden')}
+function closeOrgModal(){$('zrActivityOrgSearchModal')?.classList.add('hidden');bindMainControls()}
 function renderOrgModal(){
   const input=$('zrActivityOrgModalInput'),q=String(input?.value||'').trim(),root=$('zrActivityOrgModalResults'),count=$('zrActivityOrgModalCount');if(!root||!count)return;
   if(!q){count.textContent='단체명을 입력해주세요.';root.innerHTML='';return}
@@ -169,20 +184,20 @@ function renderOrgModal(){
   root.innerHTML=list.length?list.map(bookingCard).join(''):'<div class="help">해당 단체명을 포함한 예약이 없습니다.</div>';
 }
 function bindUi(){
-  injectUi();neutralizeInlineOrgSearch();
+  injectUi();neutralizeInlineOrgSearch();bindMainControls();
   const input=$('zrActivityOrgModalInput');if(input&&!input.dataset.zrBound){input.dataset.zrBound='1';input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();renderOrgModal()}})}
   const modal=$('zrActivityOrgSearchModal');if(modal&&!modal.dataset.zrBackdrop){modal.dataset.zrBackdrop='1';modal.addEventListener('click',e=>{if(e.target===modal)closeOrgModal()})}
 }
 function install(){
   if(installed){bindUi();return true}
-  const ready=window.__ZR_ADMIN_OPS_V11_PATCH&&$('tab-activity')&&$('activityDateBasis')&&typeof window.renderActivity==='function'&&window.renderActivity.__zrOrgSearchV2;
+  const ready=window.__ZR_ADMIN_OPS_V11_PATCH&&$('tab-activity')&&$('activityDateBasis')&&startControl()&&endControl()&&typeof window.renderActivity==='function'&&window.renderActivity.__zrOrgSearchV2;
   if(!ready)return false;
   const saved=localStorage.getItem(ACTIVITY_BASIS_KEY);if(saved==='reservation'||saved==='reception')$('activityDateBasis').value=saved;
   neutralizeInlineOrgSearch();bindUi();
   applied=readControls();
   window.activityFilteredBookings=()=>filterByState(applied||readControls());try{activityFilteredBookings=window.activityFilteredBookings}catch{}
   window.renderActivity=renderMain;try{renderActivity=renderMain}catch{}
-  installed=true;
+  bindMainControls();installed=true;
   if(!$('tab-activity')?.classList.contains('hidden'))renderMain();
   return true;
 }
@@ -191,15 +206,15 @@ function boot(){
   document.addEventListener('click',e=>{
     const target=e.target;
     if(target?.closest?.('#zrActivityOrgModalBtn')){e.preventDefault();e.stopImmediatePropagation();openOrgModal();return}
-    if(target?.closest?.('#zrActivityOrgModalClose')){e.preventDefault();closeOrgModal();return}
-    if(target?.closest?.('#zrActivityOrgModalSearch')){e.preventDefault();renderOrgModal();return}
+    if(target?.closest?.('#zrActivityOrgModalClose')){e.preventDefault();e.stopImmediatePropagation();closeOrgModal();return}
+    if(target?.closest?.('#zrActivityOrgModalSearch')){e.preventDefault();e.stopImmediatePropagation();renderOrgModal();return}
     if(!installed)return;
-    const search=mainSearchButton(),today=todayButton();
-    if(search&&target?.closest?.('button')===search){e.preventDefault();e.stopImmediatePropagation();applyFromControls();return}
-    if(today&&target?.closest?.('button')===today){e.preventDefault();e.stopImmediatePropagation();applyToday();return}
+    const search=mainSearchButton(),today=todayButton(),button=target?.closest?.('button');
+    if(search&&button===search){e.preventDefault();e.stopImmediatePropagation();applyFromControls();return}
+    if(today&&button===today){e.preventDefault();e.stopImmediatePropagation();applyToday();return}
     const tab=target?.closest?.('#adminView .admin-tabs button,[data-tab]');if(tab)setTimeout(()=>{bindUi();if(!$('tab-activity')?.classList.contains('hidden'))renderMain()},80);
   },true);
-  const root=$('adminView')||document.body;new MutationObserver(()=>{if(installed){neutralizeInlineOrgSearch();injectUi()}else install()}).observe(root,{childList:true,subtree:true});
+  const root=$('adminView')||document.body;new MutationObserver(()=>{if(installed){neutralizeInlineOrgSearch();injectUi();bindMainControls()}else install()}).observe(root,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
