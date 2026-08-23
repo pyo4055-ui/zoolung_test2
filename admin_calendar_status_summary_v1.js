@@ -21,13 +21,19 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrAdminCalendarStatusSummaryV1Style';
   s.textContent=`
-  #adminCalendar .meta.zr-cal-meta{display:flex!important;align-items:center;justify-content:space-between;gap:5px;min-width:0}
-  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;justify-content:flex-end;gap:3px;min-width:0;margin-left:auto;white-space:nowrap;font-size:9.4px;font-weight:900;letter-spacing:-.55px;line-height:1.15}
+  #adminCalendar .day{min-height:132px!important;box-sizing:border-box;display:flex!important;flex-direction:column!important}
+  #adminCalendar .day>.meta{flex:0 0 auto}
+  #adminCalendar .day>.btn-soft{margin-top:auto!important;flex:0 0 auto}
+  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;align-content:flex-start;gap:2px 4px;flex-wrap:wrap;min-height:16px;max-height:31px;margin:3px 0 4px;overflow:hidden;font-size:10px;font-weight:900;letter-spacing:-.45px;line-height:1.25}
   #adminCalendar .zr-cal-status-summary .pending{color:#a76600}
+  #adminCalendar .zr-cal-status-summary .confirmed{color:#2f6b9a}
   #adminCalendar .zr-cal-status-summary .completed{color:#2f6b4f}
   #adminCalendar .zr-cal-status-summary .cancelled{color:#a33b3b}
   #adminCalendar .zr-cal-status-summary .sep{color:#aeb6b0;font-weight:700}
-  @media(max-width:720px){#adminCalendar .meta.zr-cal-meta{gap:3px}#adminCalendar .zr-cal-status-summary{gap:2px;font-size:8.8px;letter-spacing:-.65px}}
+  @media(max-width:720px){
+    #adminCalendar .day{min-height:128px!important}
+    #adminCalendar .zr-cal-status-summary{gap:2px 3px;font-size:9.4px;letter-spacing:-.55px}
+  }
   `;
   document.head.appendChild(s);
 }
@@ -37,9 +43,10 @@ function dateOf(day){
   const m=String(first?.textContent||'').match(/(\d{1,2})일/);
   return m?`${renderedYm}-${pad(Number(m[1]))}`:'';
 }
-function summaryHtml(pending,completed,cancelled){
+function summaryHtml(pending,confirmed,completed,cancelled){
   const items=[];
   if(pending)items.push(`<span class="pending">접수 ${pending}</span>`);
+  if(confirmed)items.push(`<span class="confirmed">확정 ${confirmed}</span>`);
   if(completed)items.push(`<span class="completed">완료 ${completed}</span>`);
   if(cancelled)items.push(`<span class="cancelled">취소 ${cancelled}</span>`);
   return items.join('<span class="sep">·</span>');
@@ -49,21 +56,25 @@ function patchDay(day,bookings){
   const list=bookings.filter(b=>b&&!b.__availabilityOnly&&b.date===date);
   const pending=list.filter(b=>b.status==='pending').length;
   const completed=list.filter(isComplete).length;
+  const confirmed=list.filter(b=>b.status==='confirmed'&&!isComplete(b)).length;
   const cancelled=list.filter(b=>b.status==='cancelled').length;
 
   const top=day.querySelector(':scope > .num');if(!top)return;
   top.querySelectorAll('.status.pending').forEach(x=>{
     if(/^접수\s*\d+건$/.test(String(x.textContent||'').replace(/\s+/g,' ').trim()))x.remove();
   });
-  day.querySelector(':scope > .zr-cal-status-summary')?.remove();
 
   const meta=day.querySelector(':scope > .meta');if(!meta)return;
-  meta.classList.add('zr-cal-meta');
-  let summary=meta.querySelector(':scope > .zr-cal-status-summary');
-  const html=summaryHtml(pending,completed,cancelled);
-  if(!html){summary?.remove();return}
-  if(!summary){summary=document.createElement('span');summary.className='zr-cal-status-summary';meta.appendChild(summary)}
-  if(summary.innerHTML!==html)summary.innerHTML=html;
+  meta.classList.remove('zr-cal-meta');
+  meta.querySelector(':scope > .zr-cal-status-summary')?.remove();
+  day.querySelector(':scope > .zr-cal-status-summary')?.remove();
+
+  const html=summaryHtml(pending,confirmed,completed,cancelled);
+  if(!html)return;
+  const summary=document.createElement('div');
+  summary.className='zr-cal-status-summary';
+  summary.innerHTML=html;
+  meta.insertAdjacentElement('afterend',summary);
 }
 function isCalendarRenderMutation(record){
   const cal=$('adminCalendar');
