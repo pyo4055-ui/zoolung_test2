@@ -18,8 +18,15 @@ for(const needle of [
   '완료 ${completed}',
   '취소 ${cancelled}',
   '.status.pending',
-  'zr-cal-status-summary'
+  'zr-cal-status-summary',
+  "day.querySelector(':scope > .meta')",
+  "meta.classList.add('zr-cal-meta')",
+  "let renderedYm=''",
+  'isCalendarRenderMutation',
+  'if(records.some(isCalendarRenderMutation))renderedYm=selectedYm()'
 ])if(!s.includes(needle))fail(`calendar summary contract missing: ${needle}`);
+if(s.includes("$('adminMonth')?.addEventListener('change'"))fail('changing month select alone must not rewrite visible calendar summaries');
+if(s.includes("top.insertAdjacentElement('afterend'"))fail('calendar status summary must not add a new vertical row');
 if(s.includes('dayDetailContent')||s.includes('openDay('))fail('calendar summary must not modify day detail rendering');
 
 const tabFix=read('admin_tab_active_fix_v1.js');
@@ -27,4 +34,4 @@ syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminCalendarStatusSummaryV1','./admin_calendar_status_summary_v1.js?v=1'])if(!tabFix.includes(needle))fail(`calendar summary loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('compact calendar status summary preserves detail view');
+ok('compact calendar status summary follows the rendered month and preserves detail view');
