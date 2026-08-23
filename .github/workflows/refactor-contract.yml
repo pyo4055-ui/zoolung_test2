@@ -33,6 +33,8 @@ jobs:
         run: node scripts/customer_playground_booking_guard_contract_check.mjs
       - name: Verify configurable holiday booking
         run: node scripts/customer_holiday_booking_contract_check.mjs
+      - name: Verify customer return-home confirmation
+        run: node scripts/customer_return_home_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
