@@ -19,6 +19,7 @@ for(const needle of [
   "입력한 예약정보가 초기화됩니다.",
   "zrCustomerReturnHomeNo",
   "zrCustomerReturnHomeYes",
+  "wrap.querySelector('#zrCustomerReturnHomeBtn')?.addEventListener('click',openModal)",
   "window.location.reload()",
   "e.key!=='Escape'",
   "e.preventDefault();e.stopImmediatePropagation();",
