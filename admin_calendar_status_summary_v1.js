@@ -5,32 +5,37 @@ window.__ZR_ADMIN_CALENDAR_STATUS_SUMMARY_V1=true;
 
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
+let renderedYm='';
 
 function allBookings(){
   try{return typeof window.bookings==='function'?(window.bookings()||[]):[]}
   catch{return []}
 }
 function isComplete(b){return !!(b&&b.status==='confirmed'&&b.settlement&&b.settlement.savedAt)}
+function selectedYm(){
+  const ym=String($('adminMonth')?.value||'');
+  return /^\d{4}-\d{2}$/.test(ym)?ym:'';
+}
 function injectStyle(){
   if($('zrAdminCalendarStatusSummaryV1Style'))return;
   const s=document.createElement('style');
   s.id='zrAdminCalendarStatusSummaryV1Style';
   s.textContent=`
-  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;gap:4px;min-height:18px;margin:4px 0 1px;white-space:nowrap;font-size:10.5px;font-weight:900;letter-spacing:-.35px;line-height:1.25}
+  #adminCalendar .meta.zr-cal-meta{display:flex!important;align-items:center;justify-content:space-between;gap:5px;min-width:0}
+  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;justify-content:flex-end;gap:3px;min-width:0;margin-left:auto;white-space:nowrap;font-size:9.4px;font-weight:900;letter-spacing:-.55px;line-height:1.15}
   #adminCalendar .zr-cal-status-summary .pending{color:#a76600}
   #adminCalendar .zr-cal-status-summary .completed{color:#2f6b4f}
   #adminCalendar .zr-cal-status-summary .cancelled{color:#a33b3b}
   #adminCalendar .zr-cal-status-summary .sep{color:#aeb6b0;font-weight:700}
-  @media(max-width:720px){#adminCalendar .zr-cal-status-summary{gap:3px;font-size:10px;letter-spacing:-.45px}}
+  @media(max-width:720px){#adminCalendar .meta.zr-cal-meta{gap:3px}#adminCalendar .zr-cal-status-summary{gap:2px;font-size:8.8px;letter-spacing:-.65px}}
   `;
   document.head.appendChild(s);
 }
 function dateOf(day){
-  const ym=String($('adminMonth')?.value||'');
-  if(!/^\d{4}-\d{2}$/.test(ym))return '';
+  if(!/^\d{4}-\d{2}$/.test(renderedYm))return '';
   const first=day.querySelector(':scope > .num > span');
   const m=String(first?.textContent||'').match(/(\d{1,2})일/);
-  return m?`${ym}-${pad(Number(m[1]))}`:'';
+  return m?`${renderedYm}-${pad(Number(m[1]))}`:'';
 }
 function summaryHtml(pending,completed,cancelled){
   const items=[];
@@ -50,12 +55,21 @@ function patchDay(day,bookings){
   top.querySelectorAll('.status.pending').forEach(x=>{
     if(/^접수\s*\d+건$/.test(String(x.textContent||'').replace(/\s+/g,' ').trim()))x.remove();
   });
+  day.querySelector(':scope > .zr-cal-status-summary')?.remove();
 
-  let row=day.querySelector(':scope > .zr-cal-status-summary');
+  const meta=day.querySelector(':scope > .meta');if(!meta)return;
+  meta.classList.add('zr-cal-meta');
+  let summary=meta.querySelector(':scope > .zr-cal-status-summary');
   const html=summaryHtml(pending,completed,cancelled);
-  if(!html){row?.remove();return}
-  if(!row){row=document.createElement('div');row.className='zr-cal-status-summary';top.insertAdjacentElement('afterend',row)}
-  if(row.innerHTML!==html)row.innerHTML=html;
+  if(!html){summary?.remove();return}
+  if(!summary){summary=document.createElement('span');summary.className='zr-cal-status-summary';meta.appendChild(summary)}
+  if(summary.innerHTML!==html)summary.innerHTML=html;
+}
+function isCalendarRenderMutation(record){
+  const cal=$('adminCalendar');
+  if(!cal||record.target!==cal)return false;
+  const hasCalendarNode=node=>node?.nodeType===1&&(node.matches?.('.day,.weekday')||node.querySelector?.('.day,.weekday'));
+  return [...record.addedNodes,...record.removedNodes].some(hasCalendarNode);
 }
 let pendingPatch=false;
 function patch(){
@@ -69,11 +83,20 @@ function patch(){
   });
 }
 function boot(){
-  injectStyle();patch();
+  injectStyle();renderedYm=selectedYm();patch();
   const cal=$('adminCalendar');
-  if(cal)new MutationObserver(patch).observe(cal,{childList:true,subtree:true});
-  else new MutationObserver(()=>{if($('adminCalendar'))patch()}).observe(document.body,{childList:true,subtree:true});
-  $('adminMonth')?.addEventListener('change',()=>setTimeout(patch,0));
+  if(cal){
+    new MutationObserver(records=>{
+      if(records.some(isCalendarRenderMutation))renderedYm=selectedYm();
+      patch();
+    }).observe(cal,{childList:true,subtree:true});
+  }else{
+    new MutationObserver(()=>{
+      if(!$('adminCalendar'))return;
+      if(!renderedYm)renderedYm=selectedYm();
+      patch();
+    }).observe(document.body,{childList:true,subtree:true});
+  }
   document.addEventListener('click',e=>{
     if(e.target?.closest?.('#adminView .admin-tabs button,#adminCalendar button'))setTimeout(patch,0);
   });
