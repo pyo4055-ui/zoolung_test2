@@ -12,11 +12,18 @@ for(const needle of [
   "let applied=null",
   "const startControl=()=>$('activityStart')||$('activityStartDate')",
   "const endControl=()=>$('activityEnd')||$('activityEndDate')",
-  "function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis()}}",
+  "const statusControl=()=>$('zrActivityStatusFilter')",
+  "const ACTIVITY_STATUS_KEY='zr_activity_status_filter_v1'",
+  "function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis(),status:controlStatus()}}",
   "mode==='reservation'?String(b?.date||''):seoulDate(b?.createdAt)",
   "timeZone:'Asia/Seoul'",
   "if(s.start&&key<s.start)return false",
   "if(s.end&&key>s.end)return false",
+  "if(!matchesStatus(b,s.status))return false",
+  "if(status==='confirmed')return b?.status==='confirmed'&&!isSettled(b)",
+  "if(status==='pending')return b?.status==='pending'",
+  "if(status==='cancelled')return b?.status==='cancelled'||b?.status==='rejected'",
+  "if(status==='completed')return isSettled(b)",
   "function applyFromControls()",
   "applied={...next}",
   "window.activityFilteredBookings=()=>filterByState(applied||readControls())",
@@ -26,6 +33,16 @@ for(const needle of [
   "search.dataset.zrActivityDateOwner='1'",
   "e.stopImmediatePropagation();applyFromControls()",
   "e.stopImmediatePropagation();applyToday()",
+  "zrActivityStatusWrap",
+  "<span>처리 상태</span>",
+  "<option value=\"all\">전체 조회</option>",
+  "<option value=\"confirmed\">확정</option>",
+  "<option value=\"pending\">접수 대기</option>",
+  "<option value=\"cancelled\">취소</option>",
+  "<option value=\"completed\">완료</option>",
+  "#tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/9!important;grid-row:1!important}",
+  "#tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:9/11!important;grid-row:1!important",
+  "#tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:11/13!important;grid-row:1!important",
   "zrActivityOrgModalBtn",
   "zrActivityOrgSearchModal",
   "날짜 조회와 별개로 전체 예약에서 단체명을 찾습니다.",
@@ -58,4 +75,4 @@ const loader=fs.readFileSync('admin_features_v2_loader.js','utf8');
 for(const needle of ['zrAdminActivityFilterFixV1','./admin_activity_filter_fix_v1.js?v=3'])if(!loader.includes(needle))fail(`activity filter loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('activity date filters own the query buttons and group-name search stays isolated in a modal');
+ok('activity date/status filters own the query buttons, toolbar stays ordered, and group-name search stays isolated in a modal');
