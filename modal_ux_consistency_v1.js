@@ -38,7 +38,6 @@ function decorateClose(btn){
   if(/^[×✕✖xX]$/.test(textOf(btn)))btn.classList.add('zr-modal-ux-close-icon');
   shell.classList.add('zr-modal-ux-shell');
   const title=shell.querySelector('h1,h2,h3');if(title)title.classList.add('zr-modal-ux-title');
-  if(btn.parentElement&&btn.parentElement!==shell)btn.parentElement.classList.add('zr-modal-ux-close-parent');
 }
 function scanCloseButtons(){
   scanQueued=false;
@@ -58,8 +57,7 @@ function injectStyle(){
   s.textContent=`
     .zr-modal-ux-shell{position:relative!important}
     .zr-modal-ux-shell .zr-modal-ux-title{padding-right:82px!important}
-    .zr-modal-ux-close-parent{position:static!important}
-    .zr-modal-ux-close{position:absolute!important;top:14px!important;right:14px!important;z-index:60!important;margin:0!important;min-width:64px!important;min-height:36px!important;padding:7px 11px!important;border-radius:9px!important;line-height:1.2!important;white-space:nowrap!important}
+    .zr-modal-ux-close{position:absolute!important;top:14px!important;right:14px!important;bottom:auto!important;left:auto!important;z-index:60!important;margin:0!important;transform:none!important;float:none!important;min-width:64px!important;min-height:36px!important;padding:7px 11px!important;border-radius:9px!important;line-height:1.2!important;white-space:nowrap!important}
     .zr-modal-ux-close.zr-modal-ux-close-icon{width:38px!important;min-width:38px!important;padding:0!important}
   `;
   document.head.appendChild(s);
