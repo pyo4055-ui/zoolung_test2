@@ -7,6 +7,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
 const ACTIVITY_BASIS_KEY='zr_activity_date_basis_v10';
+const ACTIVITY_STATUS_KEY='zr_activity_status_filter_v1';
 const VENDOR_COLOR_KEY='zr_vendor_colors';
 const SELF_COLOR='#ECEFF1';
 let installed=false;
@@ -14,6 +15,7 @@ let applied=null;
 
 const startControl=()=>$('activityStart')||$('activityStartDate');
 const endControl=()=>$('activityEnd')||$('activityEndDate');
+const statusControl=()=>$('zrActivityStatusFilter');
 
 function readBookings(){
   try{
@@ -37,22 +39,34 @@ function seoulDate(value){
 }
 function todaySeoul(){return seoulDate(new Date().toISOString())}
 function controlBasis(){return $('activityDateBasis')?.value==='reservation'?'reservation':'reception'}
-function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis()}}
+function controlStatus(){
+  const v=statusControl()?.value||'all';
+  return ['confirmed','pending','cancelled','completed'].includes(v)?v:'all';
+}
+function readControls(){return {start:startControl()?.value||'',end:endControl()?.value||'',mode:controlBasis(),status:controlStatus()}}
 function validateState(s){return !(s.start&&s.end&&s.start>s.end)}
 function keyFor(b,mode){return mode==='reservation'?String(b?.date||''):seoulDate(b?.createdAt)}
+function isSettled(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
+function matchesStatus(b,status){
+  if(status==='confirmed')return b?.status==='confirmed'&&!isSettled(b);
+  if(status==='pending')return b?.status==='pending';
+  if(status==='cancelled')return b?.status==='cancelled'||b?.status==='rejected';
+  if(status==='completed')return isSettled(b);
+  return true;
+}
 function filterByState(state){
   const s=state||readControls();
   return readBookings().filter(b=>{
     const key=keyFor(b,s.mode);if(!key)return false;
     if(s.start&&key<s.start)return false;
     if(s.end&&key>s.end)return false;
+    if(!matchesStatus(b,s.status))return false;
     return true;
   }).sort((a,b)=>{
     const ak=keyFor(a,s.mode),bk=keyFor(b,s.mode);
     return bk.localeCompare(ak)||String(b.createdAt||'').localeCompare(String(a.createdAt||''));
   });
 }
-function isSettled(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
 function statusBadge(b){
   if(isSettled(b))return '<span class="status zr4-complete">정산완료</span>';
   if(b?.status==='pending')return '<span class="status pending">접수 대기</span>';
@@ -106,6 +120,7 @@ function applyFromControls(){
   if(!validateState(next)){try{toast('조회 시작일은 종료일보다 늦을 수 없습니다.')}catch{}return false}
   applied={...next};
   localStorage.setItem(ACTIVITY_BASIS_KEY,applied.mode);
+  localStorage.setItem(ACTIVITY_STATUS_KEY,applied.status);
   renderMain();
   return true;
 }
@@ -130,7 +145,7 @@ function neutralizeInlineOrgSearch(){
   $('activityDateBasisWrap')?.classList.remove('zr-search-ignored');
 }
 function bindMainControls(){
-  const search=mainSearchButton(),today=todayButton(),basis=$('activityDateBasis'),start=startControl(),end=endControl();
+  const search=mainSearchButton(),today=todayButton(),basis=$('activityDateBasis'),status=statusControl(),start=startControl(),end=endControl();
   if(search){
     search.dataset.zrActivityDateOwner='1';
     search.onclick=e=>{e?.preventDefault?.();e?.stopPropagation?.();applyFromControls();return false};
@@ -140,28 +155,64 @@ function bindMainControls(){
     today.onclick=e=>{e?.preventDefault?.();e?.stopPropagation?.();applyToday();return false};
   }
   if(basis){basis.disabled=false;basis.onchange=()=>localStorage.setItem(ACTIVITY_BASIS_KEY,controlBasis())}
+  if(status){status.disabled=false;status.onchange=()=>localStorage.setItem(ACTIVITY_STATUS_KEY,controlStatus())}
   if(start)start.disabled=false;if(end)end.disabled=false;
 }
 function injectUi(){
   if(!$('zrActivityFilterFixStyle')){
     const style=document.createElement('style');style.id='zrActivityFilterFixStyle';style.textContent=`
       #tab-activity .zr-activity-inline-search-disabled{display:none!important}
-      #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:9/13;grid-row:1;width:100%!important;min-height:40px!important;margin:0!important}
+      #tab-activity #zr11ActivityToolbar{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:10px 12px!important;align-items:end!important}
+      #tab-activity #zr11ActivityToolbar .zr-act-start{grid-column:1/4!important;grid-row:1!important}
+      #tab-activity #zr11ActivityToolbar .zr-act-end{grid-column:4/7!important;grid-row:1!important}
+      #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/9!important;grid-row:1!important}
+      #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:9/11!important;grid-row:1!important;display:flex;flex-direction:column;gap:5px;min-width:0;margin:0!important;font-size:12px;font-weight:700}
+      #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:11/13!important;grid-row:1!important;width:100%!important;min-height:40px!important;margin:0!important}
+      #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:7/9!important;grid-row:2!important}
+      #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:9/11!important;grid-row:2!important}
+      #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:11/13!important;grid-row:2!important}
+      #tab-activity #zrActivityStatusWrap select{width:100%!important;min-width:0!important;min-height:40px!important}
       #zrActivityOrgSearchModal .modal-card{position:relative;width:min(760px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding-top:24px}
       #zrActivityOrgSearchModal .zr-org-modal-head{padding-right:86px}
       #zrActivityOrgSearchModal #zrActivityOrgModalClose{position:absolute;top:14px;right:14px;z-index:2;min-width:68px;margin:0}
       #zrActivityOrgSearchModal .zr-org-search-row{display:flex;gap:8px;margin:16px 0 12px;align-items:center}
       #zrActivityOrgSearchModal .zr-org-search-row input{flex:1;min-width:0}
       #zrActivityOrgSearchModal .zr-org-search-results{display:flex;flex-direction:column;gap:10px}
-      @media(max-width:900px){#zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/13;grid-row:3}#zr11ActivityToolbar #zrActivityOrgSearchHint{display:none!important}}
-      @media(max-width:560px){#zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/13;grid-row:5}}
+      @media(max-width:900px){
+        #tab-activity #zr11ActivityToolbar .zr-act-start{grid-column:1/7!important;grid-row:1!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-end{grid-column:7/13!important;grid-row:1!important}
+        #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:1/5!important;grid-row:2!important}
+        #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:5/9!important;grid-row:2!important}
+        #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:9/13!important;grid-row:2!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/5!important;grid-row:3!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:5/9!important;grid-row:3!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:9/13!important;grid-row:3!important}
+      }
+      @media(max-width:560px){
+        #tab-activity #zr11ActivityToolbar .zr-act-start{grid-column:1/13!important;grid-row:1!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-end{grid-column:1/13!important;grid-row:2!important}
+        #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:1/7!important;grid-row:3!important}
+        #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:7/13!important;grid-row:3!important}
+        #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/13!important;grid-row:4!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:1/7!important;grid-row:5!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:7/13!important;grid-row:5!important}
+        #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:1/13!important;grid-row:6!important}
+      }
     `;document.head.appendChild(style);
   }
   const tab=$('tab-activity'),toolbar=$('zr11ActivityToolbar');
+  if(tab&&!$('zrActivityStatusWrap')){
+    const wrap=document.createElement('label');wrap.id='zrActivityStatusWrap';
+    wrap.innerHTML='<span>처리 상태</span><select id="zrActivityStatusFilter"><option value="all">전체 조회</option><option value="confirmed">확정</option><option value="pending">접수 대기</option><option value="cancelled">취소</option><option value="completed">완료</option></select>';
+    const basis=$('activityDateBasisWrap');
+    if(toolbar)toolbar.appendChild(wrap);else if(basis)basis.insertAdjacentElement('afterend',wrap);else tab.prepend(wrap);
+    const saved=localStorage.getItem(ACTIVITY_STATUS_KEY);if(['all','confirmed','pending','cancelled','completed'].includes(saved))statusControl().value=saved;
+  }
   if(tab&&!$('zrActivityOrgModalBtn')){
     const btn=document.createElement('button');btn.type='button';btn.id='zrActivityOrgModalBtn';btn.className='btn-soft';btn.textContent='단체명 검색';
     (toolbar||mainSearchButton()?.parentElement||tab).appendChild(btn);
-  }
+  }else if(toolbar&&$('zrActivityOrgModalBtn')?.parentElement!==toolbar)toolbar.appendChild($('zrActivityOrgModalBtn'));
+  if(toolbar&&$('zrActivityStatusWrap')?.parentElement!==toolbar)toolbar.appendChild($('zrActivityStatusWrap'));
   if(!$('zrActivityOrgSearchModal')){
     const modal=document.createElement('div');modal.id='zrActivityOrgSearchModal';modal.className='modal hidden';
     modal.innerHTML=`<div class="modal-card"><button type="button" class="btn-gray" id="zrActivityOrgModalClose">닫기</button><div class="zr-org-modal-head"><h2 style="margin:0">단체명 검색</h2><div class="help" style="margin-top:4px">날짜 조회와 별개로 전체 예약에서 단체명을 찾습니다.</div></div><div class="zr-org-search-row"><input id="zrActivityOrgModalInput" type="search" autocomplete="off" placeholder="단체명 일부 입력"><button type="button" class="btn-primary" id="zrActivityOrgModalSearch">검색</button></div><div id="zrActivityOrgModalCount" class="help" style="margin-bottom:10px">단체명을 입력해주세요.</div><div id="zrActivityOrgModalResults" class="zr-org-search-results"></div></div>`;
@@ -192,9 +243,10 @@ function install(){
   if(installed){bindUi();return true}
   const ready=window.__ZR_ADMIN_OPS_V11_PATCH&&$('tab-activity')&&$('activityDateBasis')&&startControl()&&endControl()&&typeof window.renderActivity==='function'&&window.renderActivity.__zrOrgSearchV2;
   if(!ready)return false;
-  const saved=localStorage.getItem(ACTIVITY_BASIS_KEY);if(saved==='reservation'||saved==='reception')$('activityDateBasis').value=saved;
-  neutralizeInlineOrgSearch();bindUi();
-  applied=readControls();
+  const savedBasis=localStorage.getItem(ACTIVITY_BASIS_KEY);if(savedBasis==='reservation'||savedBasis==='reception')$('activityDateBasis').value=savedBasis;
+  neutralizeInlineOrgSearch();injectUi();
+  const savedStatus=localStorage.getItem(ACTIVITY_STATUS_KEY);if(statusControl()&&['all','confirmed','pending','cancelled','completed'].includes(savedStatus))statusControl().value=savedStatus;
+  bindUi();applied=readControls();
   window.activityFilteredBookings=()=>filterByState(applied||readControls());try{activityFilteredBookings=window.activityFilteredBookings}catch{}
   window.renderActivity=renderMain;try{renderActivity=renderMain}catch{}
   bindMainControls();installed=true;
