@@ -76,7 +76,7 @@ function ensureButton(){
     wrap=document.createElement('div');
     wrap.id='zrCustomerReturnHomeWrap';
     wrap.innerHTML='<button type="button" id="zrCustomerReturnHomeBtn">처음 화면으로 돌아가기</button>';
-    $('zrCustomerReturnHomeBtn')?.addEventListener('click',openModal);
+    wrap.querySelector('#zrCustomerReturnHomeBtn')?.addEventListener('click',openModal);
   }
   const anchor=submit.closest('.actions,.button-row,.btn-row')||submit.parentElement||submit;
   if(anchor.nextElementSibling!==wrap)anchor.insertAdjacentElement('afterend',wrap);
