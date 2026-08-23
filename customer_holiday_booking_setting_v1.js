@@ -12,7 +12,6 @@ const KR_HOLIDAYS_2026=new Set([
 ]);
 const FIXED_HOLIDAY_MD=new Set(['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25']);
 let adminDirty=false;
-let observedDay=null,dayObserver=null;
 let wrappedRender=null;
 
 function isHoliday(date){
@@ -70,7 +69,8 @@ function applyCustomerHolidayAvailability(){
 }
 function hookVisitDays(){
   const fn=typeof window.renderVisitDays==='function'?window.renderVisitDays:null;
-  if(!fn||fn===wrappedRender||fn.__zrHolidayBookingSetting)return false;
+  if(!fn||fn===wrappedRender)return false;
+  if(fn.__zrHolidayBookingSetting){wrappedRender=fn;return false}
   const base=fn;
   const wrapped=function(){
     const out=base.apply(this,arguments);
@@ -85,13 +85,6 @@ function hookVisitDays(){
   window.renderVisitDays=wrapped;
   try{renderVisitDays=wrapped}catch{}
   return true;
-}
-function watchVisitDay(){
-  const day=$('visitDay');
-  if(!day||day===observedDay)return;
-  dayObserver?.disconnect();observedDay=day;
-  dayObserver=new MutationObserver(()=>setTimeout(applyCustomerHolidayAvailability,0));
-  dayObserver.observe(day,{childList:true,subtree:true});
 }
 function adminVisible(){const v=$('adminView');return !!v&&getComputedStyle(v).display!=='none'}
 function ensureAdminUi(){
@@ -126,17 +119,22 @@ function ensureAdminUi(){
   }
   return true;
 }
-function apply(){
-  hookVisitDays();watchVisitDay();
-  if(customerVisible())applyCustomerHolidayAvailability();
+function refreshHooks(){
+  const hooked=hookVisitDays();
+  if(hooked&&customerVisible())setTimeout(applyCustomerHolidayAvailability,0);
   if(adminVisible())ensureAdminUi();
 }
 function boot(){
-  apply();
-  const t=setInterval(apply,300);setTimeout(()=>clearInterval(t),30000);
+  refreshHooks();
+  if(customerVisible())applyCustomerHolidayAvailability();
+
+  // Other customer/admin patches can replace renderVisitDays during startup.
+  // Poll only the function reference briefly; never rescan or observe the date DOM continuously.
+  const t=setInterval(refreshHooks,500);
+  setTimeout(()=>clearInterval(t),30000);
+
   document.addEventListener('change',e=>{
-    const id=e.target?.id||'';
-    if(id==='visitMonth'||id==='visitDay')setTimeout(applyCustomerHolidayAvailability,0);
+    if(e.target?.id==='visitMonth')setTimeout(applyCustomerHolidayAvailability,0);
   },true);
   document.addEventListener('click',e=>{
     if(!customerVisible()||holidayAllowed())return;
@@ -149,8 +147,6 @@ function boot(){
       try{window.toast?.('공휴일 예약이 현재 설정에서 허용되지 않습니다.')}catch{}
     }
   },true);
-  const root=document.body;
-  new MutationObserver(()=>setTimeout(apply,0)).observe(root,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
