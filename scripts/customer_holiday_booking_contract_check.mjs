@@ -25,6 +25,8 @@ for(const needle of [
   "$('saveBookingPeriod')",
   "holidayBookingAllowed:sel.value!=='no'",
   "writeSettings(s)",
+  "for(const key of Object.keys(base))",
+  "wrapped[key]=base[key]",
   "wrapped.__zrHolidayBookingSetting=true",
   "window.renderVisitDays=wrapped",
   "o.dataset.zrHolidayWasDisabled=o.disabled?'1':'0'",
