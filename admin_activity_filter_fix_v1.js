@@ -9,12 +9,12 @@ const norm=s=>String(s??'').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'')
 const ACTIVITY_BASIS_KEY='zr_activity_date_basis_v10';
 const VENDOR_COLOR_KEY='zr_vendor_colors';
 const SELF_COLOR='#ECEFF1';
-let orgSearchRender=null;
 let installed=false;
+let applied=null;
 
 function readBookings(){
   try{
-    const list=typeof window.bookings==='function'?window.bookings():(typeof bookings==='function'?bookings():[]);
+    const list=JSON.parse(localStorage.getItem('zr_bookings')||'[]');
     return Array.isArray(list)?list.filter(b=>b&&!b.__availabilityOnly):[];
   }catch{return []}
 }
@@ -32,26 +32,38 @@ function seoulDate(value){
   }
   const m=raw.match(/\d{4}-\d{2}-\d{2}/);return m?m[0]:'';
 }
-function basis(){
+function selectedBasis(){
   const v=$('activityDateBasis')?.value;
   if(v==='reservation'||v==='reception')return v;
   return localStorage.getItem(ACTIVITY_BASIS_KEY)==='reservation'?'reservation':'reception';
 }
+function currentControls(){
+  return {
+    start:$('activityStart')?.value||'',
+    end:$('activityEnd')?.value||'',
+    basis:selectedBasis()
+  };
+}
 function orgQuery(){return String($('zrActivityOrgSearch')?.value||'').trim()}
-function filteredBookings(){
-  const q=orgQuery();
-  if(q)return readBookings().filter(b=>norm(b.orgName).includes(norm(q)));
-  const start=$('activityStart')?.value||'',end=$('activityEnd')?.value||'',mode=basis();
-  return readBookings().filter(b=>{
-    const key=mode==='reservation'?String(b.date||''):seoulDate(b.createdAt);
-    if(start&&key<start)return false;
-    if(end&&key>end)return false;
-    return true;
-  }).sort((a,b)=>{
-    const ak=mode==='reservation'?String(a.date||''):seoulDate(a.createdAt);
-    const bk=mode==='reservation'?String(b.date||''):seoulDate(b.createdAt);
-    return bk.localeCompare(ak)||String(b.createdAt||'').localeCompare(String(a.createdAt||''));
+function keyFor(b,mode){return mode==='reservation'?String(b?.date||''):seoulDate(b?.createdAt)}
+function sortByBasis(list,mode){
+  return list.sort((a,b)=>{
+    const ak=keyFor(a,mode),bk=keyFor(b,mode);
+    return bk.localeCompare(ak)||String(b?.createdAt||'').localeCompare(String(a?.createdAt||''));
   });
+}
+function listForApplied(){
+  const q=orgQuery();
+  if(q){
+    return readBookings().filter(b=>norm(b?.orgName).includes(norm(q))).sort((a,b)=>String(b?.date||'').localeCompare(String(a?.date||''))||String(b?.createdAt||'').localeCompare(String(a?.createdAt||'')));
+  }
+  const state=applied||currentControls();
+  return sortByBasis(readBookings().filter(b=>{
+    const key=keyFor(b,state.basis);
+    if(state.start&&key<state.start)return false;
+    if(state.end&&key>state.end)return false;
+    return true;
+  }),state.basis);
 }
 function isSettled(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
 function statusBadge(b){
@@ -85,11 +97,14 @@ function setKpis(list){
   set('activityKpiCancelled',list.filter(b=>b.status==='cancelled').length);
   set('activityKpiCompleted',settled);
 }
-function renderDateFiltered(){
-  if(orgQuery()&&typeof orgSearchRender==='function')return orgSearchRender();
+function searchNote(list){
+  const q=orgQuery();if(!q)return '';
+  return `<div class="zr-search-result-note">단체명 ‘${esc(q)}’ 검색 결과 ${list.length}건 · 조회 시작일·종료일·조회 기준은 적용하지 않았습니다.</div>`;
+}
+function renderActivityOwned(){
   const root=$('activityList');if(!root)return;
-  const list=filteredBookings();setKpis(list);
-  root.innerHTML=list.length?list.map(b=>{
+  const list=listForApplied();setKpis(list);
+  const cards=list.map(b=>{
     const st=b.settlement||{};
     return `<div class="booking-item">
       <div class="zr4-badges">${statusBadge(b)}${vendorBadge(b)}</div>
@@ -102,36 +117,84 @@ function renderDateFiltered(){
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn-soft" onclick="openAdminBookingDetail('${esc(b.id)}')">자세히</button></div>
     </div>`;
-  }).join(''):'<div class="help">선택한 조회 조건에 예약 내역이 없습니다.</div>';
+  }).join('');
+  root.innerHTML=searchNote(list)+(cards||'<div class="help">선택한 조회 조건에 예약 내역이 없습니다.</div>');
 }
-function bindControls(){
+function applyFromControls(){
+  const next=currentControls();
+  if(next.start&&next.end&&next.start>next.end){
+    try{if(typeof toast==='function')toast('조회 시작일은 조회 종료일보다 늦을 수 없습니다.')}catch{}
+    return false;
+  }
+  applied={...next};
+  localStorage.setItem(ACTIVITY_BASIS_KEY,next.basis);
+  renderActivityOwned();
+  return true;
+}
+function applyToday(){
+  const q=$('zrActivityOrgSearch');if(q)q.value='';
+  const today=seoulDate(new Date().toISOString());
+  if($('activityStart'))$('activityStart').value=today;
+  if($('activityEnd'))$('activityEnd').value=today;
+  applyFromControls();
+}
+function ownLegacyHandlers(){
   const tab=$('tab-activity');if(!tab)return;
-  const search=[...tab.querySelectorAll('button')].find(b=>(b.textContent||'').trim()==='조회하기');
-  const today=[...tab.querySelectorAll('button')].find(b=>(b.textContent||'').trim()==='오늘');
-  const after=()=>setTimeout(renderDateFiltered,0);
-  const bind=(el,key,event='click')=>{if(!el||el.dataset[key])return;el.dataset[key]='1';el.addEventListener(event,after)};
-  bind(search,'zrActivityFilterFix','click');
-  bind(today,'zrActivityFilterFix','click');
-  bind($('activityDateBasis'),'zrActivityFilterFix','change');
-  bind($('zrActivityOrgSearch'),'zrActivityFilterFix','input');
+  const buttons=[...tab.querySelectorAll('button')];
+  const search=buttons.find(b=>(b.textContent||'').trim()==='조회하기');
+  const today=buttons.find(b=>(b.textContent||'').trim()==='오늘');
+  if(search)search.onclick=null;
+  if(today)today.onclick=null;
+  const basis=$('activityDateBasis');
+  if(basis)basis.onchange=null;
 }
 function install(){
   if(installed)return true;
-  const ready=window.__ZR_ADMIN_OPS_V11_PATCH&&$('tab-activity')&&$('activityDateBasis')&&$('zrActivityOrgSearch')&&typeof window.renderActivity==='function'&&window.renderActivity.__zrOrgSearchV2;
+  const ready=$('tab-activity')&&$('activityStart')&&$('activityEnd')&&$('activityDateBasis')&&$('activityList')&&typeof window.renderActivity==='function';
   if(!ready)return false;
-  orgSearchRender=window.renderActivity;
-  window.activityFilteredBookings=filteredBookings;try{activityFilteredBookings=filteredBookings}catch{}
-  window.renderActivity=renderDateFiltered;try{renderActivity=renderDateFiltered}catch{}
-  bindControls();installed=true;
-  if(!$('tab-activity')?.classList.contains('hidden'))renderDateFiltered();
+  applied=currentControls();
+  window.activityFilteredBookings=()=>listForApplied();try{activityFilteredBookings=window.activityFilteredBookings}catch{}
+  window.renderActivity=renderActivityOwned;try{renderActivity=renderActivityOwned}catch{}
+  ownLegacyHandlers();
+  installed=true;
+  if(!$('tab-activity')?.classList.contains('hidden'))renderActivityOwned();
   return true;
 }
 function boot(){
-  const timer=setInterval(()=>{if(install()){clearInterval(timer);return}bindControls()},120);
+  const timer=setInterval(()=>{if(install()){clearInterval(timer);return}ownLegacyHandlers()},120);
   setTimeout(()=>clearInterval(timer),20000);
+
+  document.addEventListener('change',e=>{
+    if(e.target?.id!=='activityDateBasis')return;
+    const v=e.target.value==='reservation'?'reservation':'reception';
+    localStorage.setItem(ACTIVITY_BASIS_KEY,v);
+    e.stopImmediatePropagation();
+  },true);
+
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#tab-activity button');if(!btn)return;
+    const text=(btn.textContent||'').trim();
+    if(text==='조회하기'){
+      if(norm(orgQuery()))return;
+      e.preventDefault();e.stopImmediatePropagation();
+      install();ownLegacyHandlers();applyFromControls();
+      return;
+    }
+    if(text==='오늘'){
+      e.preventDefault();e.stopImmediatePropagation();
+      install();ownLegacyHandlers();applyToday();
+    }
+  },true);
+
+  document.addEventListener('keydown',e=>{
+    if(e.target?.id!=='zrActivityOrgSearch'||e.key!=='Enter'||norm(e.target.value))return;
+    e.preventDefault();e.stopImmediatePropagation();
+    install();applyFromControls();
+  },true);
+
   document.addEventListener('click',e=>{
     const tab=e.target?.closest?.('#adminView .admin-tabs button,[data-tab]');
-    if(tab)setTimeout(()=>{install();bindControls();if(installed&&!$('tab-activity')?.classList.contains('hidden'))renderDateFiltered()},80);
+    if(tab)setTimeout(()=>{install();ownLegacyHandlers();if(installed&&!$('tab-activity')?.classList.contains('hidden'))renderActivityOwned()},80);
   },true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
