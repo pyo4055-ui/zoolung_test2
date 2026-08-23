@@ -9,11 +9,16 @@ function injectStyle(){
   s.id='zrAdminMobileDateInputFixV1Style';
   s.textContent=`
     @media(max-width:720px){
+      #adminView :where(div,label):has(> input[type="date"]),
+      #adminView :where(div,label):has(> :where(div,label) > input[type="date"]){
+        min-width:0!important;
+        max-width:100%!important;
+        box-sizing:border-box!important;
+      }
       #adminView input[type="date"]{
         display:block!important;
         width:100%!important;
-        width:-webkit-fill-available!important;
-        inline-size:-webkit-fill-available!important;
+        inline-size:100%!important;
         max-width:100%!important;
         max-inline-size:100%!important;
         min-width:0!important;
@@ -21,7 +26,6 @@ function injectStyle(){
         box-sizing:border-box!important;
         margin-left:0!important;
         margin-right:0!important;
-        overflow:hidden!important;
         justify-self:stretch!important;
       }
       #adminView input[type="date"]::-webkit-date-and-time-value{
