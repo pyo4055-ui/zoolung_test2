@@ -23,9 +23,18 @@ function loadActivityOrgDetailFix(){
   s.src='./admin_activity_org_detail_modal_fix_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadMobileDateInputFix(){
+  if(document.getElementById('zrAdminMobileDateInputFixV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminMobileDateInputFixV1';
+  s.async=false;
+  s.src='./admin_mobile_date_input_fix_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
+  loadMobileDateInputFix();
 }
 
 document.addEventListener('click',e=>{
