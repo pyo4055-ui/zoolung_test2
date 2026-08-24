@@ -16,6 +16,7 @@ for(const needle of [
   "$('paidCount')",
   "$('chaperoneCount')",
   "$('peopleCalc')",
+  "$('finalReview')",
   'function counts(paidValue,chapValue)',
   'const shortage=Math.max(0,MIN_PAID-paid)',
   'const requiredPaidChaperone=Math.min(chaperone,shortage)',
@@ -25,11 +26,13 @@ for(const needle of [
   'b.entryAmount=c.totalPaid*PRICE',
   'b.totalAmount=b.entryAmount+extras',
   "closest?.('#submitBooking')",
+  '유료 관람인원과 유료 인솔자를 합산해 15명 이상',
   '단체예약은 유료인원 합계 15명부터 가능합니다.',
   '유료 15명 충족 후, 유료인원 5명당 인솔자 1명이 무료입니다.',
   '15명이 부족한 경우 인솔자 일부가 유료로 적용될 수 있습니다.',
   '예약 가능 · 유료',
-  '예약 불가 · 현재 유료인원'
+  '예약 불가 · 현재 유료인원',
+  '유료 관람 ${c.paid}명 / 인솔자 ${c.chaperone}명'
 ])if(!s.includes(needle))fail(`minimum group rule missing: ${needle}`);
 
 for(const forbidden of [
@@ -72,4 +75,4 @@ for(const [paid,chap,want] of cases){
 }
 
 if(failed)process.exit(1);
-ok('customer minimum paid group rule preserves existing booking fields, totals, and clear guidance');
+ok('customer minimum paid group rule preserves existing booking fields, totals, final review, and clear guidance');
