@@ -55,6 +55,14 @@ function loadBookingHoldQueryFix(){
   s.src='./admin_booking_hold_query_fix_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadCalendarStatusSelect(){
+  if(document.getElementById('zrAdminCalendarStatusSelectV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminCalendarStatusSelectV1';
+  s.async=false;
+  s.src='./admin_calendar_status_select_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
@@ -62,6 +70,7 @@ function loadUiFixes(){
   loadScheduleCustomerNotify();
   loadBookingHold();
   loadBookingHoldQueryFix();
+  loadCalendarStatusSelect();
 }
 
 document.addEventListener('click',e=>{
