@@ -15,7 +15,7 @@ function byId(id){return full().find(b=>String(b.id)===String(id))||null}
 function save(list){if(typeof window.setStore==='function')window.setStore(KEY,list);else localStorage.setItem(KEY,JSON.stringify(list))}
 function msg(s){try{window.toast?.(s)}catch{}}
 function complete(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
-function adminOk(){try{return !!window.adminGuard?.(false)}catch{return !!window.zrReservationFirebase?.isStaff?.()}}
+function adminOk(){try{if(typeof window.adminGuard==='function')return !!window.adminGuard(false)}catch{}return !!window.zrReservationFirebase?.isStaff?.()}
 function seoulDate(v=new Date()){
   try{const p=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(v instanceof Date?v:new Date(v));const g=t=>p.find(x=>x.type===t)?.value||'';return `${g('year')}-${g('month')}-${g('day')}`}catch{return String(v||'').slice(0,10)}
 }
