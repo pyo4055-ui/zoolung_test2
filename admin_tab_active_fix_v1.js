@@ -71,6 +71,14 @@ function loadCustomerGroupMinimum(){
   s.src='./customer_group_minimum_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadUnsavedChangesGuard(){
+  if(document.getElementById('zrAdminUnsavedChangesGuardV1')||window.__ZR_ADMIN_UNSAVED_CHANGES_GUARD_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminUnsavedChangesGuardV1';
+  s.async=false;
+  s.src='./admin_unsaved_changes_guard_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
@@ -80,6 +88,7 @@ function loadUiFixes(){
   loadBookingHoldQueryFix();
   loadCalendarStatusSelect();
   loadCustomerGroupMinimum();
+  loadUnsavedChangesGuard();
 }
 
 document.addEventListener('click',e=>{
