@@ -7,7 +7,7 @@ const ok=m=>console.log('OK:',m);
 const file='admin_unsaved_changes_guard_v1.js';
 const s=fs.readFileSync(file,'utf8');
 
-for(const f of [file,'admin_features_v9_patch.js']){
+for(const f of [file,'admin_tab_active_fix_v1.js']){
   try{execFileSync(process.execPath,['--check',f],{stdio:'pipe'});ok(`syntax ${f}`)}
   catch(e){fail(`syntax ${f}: ${e.stderr?.toString()||e.message}`)}
 }
@@ -30,8 +30,8 @@ for(const needle of [
   'saveDirtySchedules()',
   "card?.querySelector('[data-apply]')",
   "runBypass(()=>btn.click())",
-  'serialize($(\'zr2EditBody\'))',
-  'serialize($(\'zr2QuickBody\'))'
+  "serialize($('zr2EditBody'))",
+  "serialize($('zr2QuickBody'))"
 ])if(!s.includes(needle))fail(`unsaved changes contract missing: ${needle}`);
 
 for(const forbidden of [
@@ -45,8 +45,13 @@ for(const forbidden of [
   'firebase-firestore'
 ])if(s.includes(forbidden))fail(`unsaved guard must reuse existing save actions only: ${forbidden}`);
 
-const loader=fs.readFileSync('admin_features_v9_patch.js','utf8');
-if(!loader.includes("addScript('zrAdminUnsavedChangesGuardV1','./admin_unsaved_changes_guard_v1.js?v=1')"))fail('unsaved changes guard is not loaded by active admin patch chain');
+const loader=fs.readFileSync('admin_tab_active_fix_v1.js','utf8');
+for(const needle of [
+  'function loadUnsavedChangesGuard()',
+  "s.id='zrAdminUnsavedChangesGuardV1'",
+  "s.src='./admin_unsaved_changes_guard_v1.js?v=1'",
+  'loadUnsavedChangesGuard();'
+])if(!loader.includes(needle))fail(`unsaved changes loader missing: ${needle}`);
 
 if(failed)process.exit(1);
 ok('admin unsaved-change warning reuses existing reservation and schedule save controls without touching data contracts');
