@@ -40,6 +40,7 @@ function injectStyle(){
   #dayDetailContent .zr-cal-state-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
   #dayDetailContent .zr-cal-state-row select{flex:1 1 170px;max-width:240px;min-width:150px;min-height:40px}
   #dayDetailContent .zr-cal-state-row button{min-height:40px}
+  #dayDetailContent .zr-cal-booking-date{margin-bottom:2px;font-weight:800}
   #dayDetailContent .status.zr-hold-status{background:#f1ebff!important;border-color:#d7c7f5!important;color:#65459a!important;font-weight:900!important}
   @media(max-width:560px){
     #dayDetailContent .zr-cal-state-row select{max-width:none;min-width:0;flex:1 1 calc(100% - 82px)}
@@ -109,12 +110,20 @@ function actionRow(b){
   }
   return row;
 }
+function decorateBookingDate(card,b){
+  const grid=card.querySelector(':scope > .detail-grid'),zoo=grid?.children?.[1];
+  if(!zoo)return;
+  let line=zoo.querySelector(':scope > .zr-cal-booking-date');
+  if(!line){line=document.createElement('div');line.className='zr-cal-booking-date';zoo.prepend(line)}
+  line.textContent=`예약일 ${b.date||'-'}`;
+}
 function decorateDay(date=lastDate){
   injectStyle();lastDate=String(date||lastDate||'');
   const root=$('dayDetailContent');if(!root||!lastDate)return;
   const list=all().filter(b=>String(b.date||'')===lastDate),cards=[...root.querySelectorAll(':scope > .booking-item')];
   cards.forEach((card,i)=>{
     const b=list[i];if(!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
+    decorateBookingDate(card,b);
     if(b.status===HOLD){const badge=card.querySelector(':scope > .row .status');if(badge){badge.textContent='보류';badge.className='status zr-hold-status'}}
     card.querySelectorAll(':scope > .zr-cal-state-row').forEach(x=>x.remove());
     const old=card.querySelector(':scope > .top-actions');if(old)old.remove();
