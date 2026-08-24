@@ -110,6 +110,17 @@ function waitScheduleSave(id,btn){
     setTimeout(()=>{if(!btn.disabled&&!started&&btn.isConnected)finish(false)},180);
   });
 }
+function watchManualScheduleSave(id,btn){
+  let started=false,enabledSince=0,done=false;
+  const finish=saved=>{if(done)return;done=true;clearInterval(watch);clearTimeout(timeout);if(saved)dirtySchedule.delete(String(id))};
+  const watch=setInterval(()=>{
+    if(!btn.isConnected&&started){finish(true);return}
+    if(btn.disabled){started=true;enabledSince=0;return}
+    if(started){if(!enabledSince)enabledSince=Date.now();if(Date.now()-enabledSince>1200)finish(false)}
+  },40);
+  const timeout=setTimeout(()=>finish(false),7000);
+  setTimeout(()=>{if(!btn.disabled&&!started&&btn.isConnected)finish(false)},180);
+}
 async function saveDirtySchedules(){
   const ids=[...dirtySchedule];
   for(const id of ids){
@@ -146,6 +157,10 @@ function interceptClick(e){
   if(t.matches('#tab-schedule [data-content]'))contentBookingId=String(t.dataset.content||'');
   if(t.id==='zr14SaveSettings'&&contentBookingId)dirtySchedule.add(contentBookingId);
   if(t.matches('#tab-schedule [data-custom-delete]'))markScheduleCard(t);
+
+  const manualApply=t.matches('#tab-schedule [data-apply]');
+  const publishApply=t.matches('#tab-schedule [data-publish]')&&!/확정됨/.test(String(t.textContent||''));
+  if(manualApply||publishApply){const card=t.closest('.zrsc-card[data-booking]'),id=String(card?.dataset.booking||'');if(id&&dirtySchedule.has(id))watchManualScheduleSave(id,t)}
 
   if(!scheduleDirty())return;
   const isOtherTab=t.matches('#adminView .admin-tabs button')&&t.id!=='zrScheduleTabBtn';
