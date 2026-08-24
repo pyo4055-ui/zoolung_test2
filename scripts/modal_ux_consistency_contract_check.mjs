@@ -21,6 +21,16 @@ for(const needle of [
   'e.stopImmediatePropagation();',
   "document.addEventListener('pointerdown',blockBackdrop,true)",
   "document.addEventListener('click',blockBackdrop,true)",
+  'overscroll-behavior:contain!important',
+  'overscroll-behavior-y:contain!important',
+  'function overlayForTarget(target)',
+  'function scrollContainerFor(target,overlay,deltaY=0)',
+  'function guardTouchStart(e)',
+  'function guardTouchMove(e)',
+  'function guardWheel(e)',
+  "document.addEventListener('touchstart',guardTouchStart,{capture:true,passive:true})",
+  "document.addEventListener('touchmove',guardTouchMove,{capture:true,passive:false})",
+  "document.addEventListener('wheel',guardWheel,{capture:true,passive:false})",
   "text==='닫기'",
   'function isCloseControl(el)',
   "!/(cancel|취소|back|뒤로|다시)/i.test(meta)",
@@ -31,6 +41,7 @@ for(const needle of [
 ])if(!s.includes(needle))fail(`modal UX contract missing: ${needle}`);
 
 for(const forbidden of [
+  'MutationObserver',
   'setStore(',
   'setDoc(',
   'updateDoc(',
@@ -52,4 +63,4 @@ for(const needle of [
 ])if(!bootstrap.includes(needle))fail(`modal UX bootstrap missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('modal backdrop dismissal is blocked and close controls are standardized without touching action logic');
+ok('modal backdrop dismissal and background scroll chaining are blocked while popup content remains independently scrollable');
