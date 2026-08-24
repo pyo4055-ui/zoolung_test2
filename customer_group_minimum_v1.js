@@ -62,6 +62,8 @@ function ensurePaidOptions(){
 function ensureRuleHelp(){
   const sel=$('paidCount');if(!sel)return;
   const holder=sel.parentElement;if(!holder)return;
+  const label=holder.querySelector('label');
+  if(label&&/유료인원/.test((label.textContent||'').replace(/\s+/g,'')))label.textContent='유료 관람인원';
   let help=$('zrGroupMinimumRuleV1');
   if(!help){
     const old=[...holder.querySelectorAll('.help,small')].find(x=>/15명|유료인원/.test((x.textContent||'')));
