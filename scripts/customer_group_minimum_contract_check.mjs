@@ -12,6 +12,7 @@ const s=read(file);syntax(file);
 
 for(const needle of [
   'const MIN_PAID=15',
+  'const PRICE=15000',
   "$('paidCount')",
   "$('chaperoneCount')",
   "$('peopleCalc')",
@@ -21,6 +22,9 @@ for(const needle of [
   'const freeQuota=Math.floor(basePaid/5)',
   'b.freeChaperone=c.freeChaperone',
   'b.paidChaperone=c.paidChaperone',
+  'b.entryAmount=c.totalPaid*PRICE',
+  'b.totalAmount=b.entryAmount+extras',
+  "closest?.('#submitBooking')",
   '단체예약은 유료인원 합계 15명부터 가능합니다.',
   '유료 15명 충족 후, 유료인원 5명당 인솔자 1명이 무료입니다.',
   '15명이 부족한 경우 인솔자 일부가 유료로 적용될 수 있습니다.',
@@ -68,4 +72,4 @@ for(const [paid,chap,want] of cases){
 }
 
 if(failed)process.exit(1);
-ok('customer minimum paid group rule preserves existing booking fields and clear guidance');
+ok('customer minimum paid group rule preserves existing booking fields, totals, and clear guidance');
