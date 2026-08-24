@@ -37,6 +37,8 @@ jobs:
         run: node scripts/customer_return_home_contract_check.mjs
       - name: Verify modal interaction consistency
         run: node scripts/modal_ux_consistency_contract_check.mjs
+      - name: Verify manual schedule customer notification
+        run: node scripts/admin_schedule_customer_notify_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
