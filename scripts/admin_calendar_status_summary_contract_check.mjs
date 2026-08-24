@@ -33,9 +33,40 @@ for(const needle of [
 if(s.includes("$('adminMonth')?.addEventListener('change'"))fail('changing month select alone must not rewrite visible calendar summaries');
 if(s.includes('dayDetailContent')||s.includes('openDay('))fail('calendar summary must not modify day detail rendering');
 
+const todayFile='admin_today_group_summary_v1.js';
+const today=read(todayFile);
+syntax(todayFile);
+for(const needle of [
+  "timeZone:'Asia/Seoul'",
+  "typeof window.bookings==='function'",
+  "b.date===date&&(b.status==='pending'||b.status==='confirmed')",
+  'b.paidCount',
+  'b.entryTime',
+  'b.exitTime',
+  'b.mealType',
+  'b.playUse',
+  '오늘 단체 요약',
+  '예상 유료인원',
+  '첫 입장',
+  '마지막 퇴장',
+  '식사 ${meal} · 놀이터 ${play}',
+  'data-booking-id',
+  "typeof window.openAdminBookingDetail==='function'",
+  "cal.parentElement?.insertBefore(root,cal)"
+])if(!today.includes(needle))fail(`today group summary contract missing: ${needle}`);
+for(const forbidden of ['setDoc(','updateDoc(','addDoc(','deleteDoc(','localStorage.setItem(','sessionStorage.setItem(']){
+  if(today.includes(forbidden))fail(`today group summary must remain display-only: ${forbidden}`);
+}
+if(today.includes('window.setStore')||today.includes('reservationAvailability')||today.includes('scheduleGroups'))fail('today group summary must not own reservation or schedule persistence');
+
 const tabFix=read('admin_tab_active_fix_v1.js');
 syntax('admin_tab_active_fix_v1.js');
-for(const needle of ['zrAdminCalendarStatusSummaryV1','./admin_calendar_status_summary_v1.js?v=2'])if(!tabFix.includes(needle))fail(`calendar summary loader missing: ${needle}`);
+for(const needle of [
+  'zrAdminCalendarStatusSummaryV1',
+  './admin_calendar_status_summary_v1.js?v=2',
+  'zrAdminTodayGroupSummaryV1Script',
+  './admin_today_group_summary_v1.js?v=1'
+])if(!tabFix.includes(needle))fail(`calendar summary loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('calendar status summary shows pending/confirmed/completed/cancelled without duplicate confirmed counts');
+ok('calendar status summary and read-only today group summary preserve existing booking behavior');
