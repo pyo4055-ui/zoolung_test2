@@ -160,6 +160,7 @@
     });
     addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=14');
     addScript('zrAdminOpsV10','./admin_ops_v10.js?v=10',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=12'));
+    addScript('zrAdminUnsavedChangesGuardV1','./admin_unsaved_changes_guard_v1.js?v=1');
     loadAdminScheduleTab();
   },0);
 })();
