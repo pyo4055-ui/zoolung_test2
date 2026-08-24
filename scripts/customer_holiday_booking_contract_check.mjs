@@ -35,6 +35,12 @@ for(const needle of [
   "o.dataset.zrHolidayWasDisabled=o.disabled?'1':'0'",
   "o.disabled=o.dataset.zrHolidayWasDisabled==='1'",
   "HOLIDAY_SUFFIX=' (공휴일 예약 불가)'",
+  "function localToday()",
+  "function isPastOrToday(date)",
+  "function removePastAndTodayOptions(day)",
+  "value<=td)o.remove()",
+  "const removedSelected=removePastAndTodayOptions(day)",
+  "당일 예약은 불가합니다. 익일부터 예약해주세요.",
   "공휴일 예약이 현재 설정에서 허용되지 않습니다."
 ])if(!s.includes(needle))fail(`holiday booking contract missing: ${needle}`);
 
@@ -62,4 +68,4 @@ for(const date of ['2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-
 }
 
 if(failed)process.exit(1);
-ok('configurable holiday booking stays customer-date-only, preserves disabled dates, and avoids continuous DOM rescans');
+ok('customer booking hides today/past dates, keeps configurable holiday behavior, preserves disabled dates, and avoids continuous DOM rescans');
