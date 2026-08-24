@@ -31,10 +31,19 @@ function loadMobileDateInputFix(){
   s.src='./admin_mobile_date_input_fix_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadScheduleCustomerNotify(){
+  if(document.getElementById('zrAdminScheduleCustomerNotifyV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminScheduleCustomerNotifyV1';
+  s.async=false;
+  s.src='./admin_schedule_customer_notify_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
+  loadScheduleCustomerNotify();
 }
 
 document.addEventListener('click',e=>{
