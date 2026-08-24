@@ -187,7 +187,6 @@ function loadCustomerQuickTools(){
     ['zrCustomerStatusBannerV1','./customer_status_banner_v1.js?v=1'],
     ['zrCustomerGuideMapAdminUiV2','./customer_guide_map_admin_ui_v2.js?v=1'],
     ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=1'],
-    ['zrCustomerPaidChaperoneRuleV1','./customer_paid_chaperone_rule_v1.js?v=1'],
     ['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=1'],
     ['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=1'],
     ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=1'],
