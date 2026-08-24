@@ -12,7 +12,7 @@ function loadCalendarSummary(){
   const s=document.createElement('script');
   s.id='zrAdminCalendarStatusSummaryV1';
   s.async=false;
-  s.src='./admin_calendar_status_summary_v1.js?v=2';
+  s.src='./admin_calendar_status_summary_v1.js?v=3';
   document.body.appendChild(s);
 }
 function loadActivityOrgDetailFix(){
@@ -39,11 +39,20 @@ function loadScheduleCustomerNotify(){
   s.src='./admin_schedule_customer_notify_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadBookingHold(){
+  if(document.getElementById('zrAdminBookingHoldV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminBookingHoldV1';
+  s.async=false;
+  s.src='./admin_booking_hold_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
   loadScheduleCustomerNotify();
+  loadBookingHold();
 }
 
 document.addEventListener('click',e=>{
