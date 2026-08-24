@@ -81,6 +81,7 @@ function saveModalAndContinue(modalId,saveId,onSuccess){
   const m=$(modalId),b=$(saveId);if(!m||!b)return false;
   runBypass(()=>b.click());
   setTimeout(()=>{
+    decision=null;
     if(visible(m))return;
     if(modalId==='zr2EditModal')editBaseline='';else quickBaseline='';
     onSuccess?.();
@@ -91,14 +92,22 @@ function saveModalAndContinue(modalId,saveId,onSuccess){
 function markScheduleCard(el){const card=el?.closest?.('#tab-schedule .zrsc-card[data-booking]');if(card?.dataset.booking)dirtySchedule.add(String(card.dataset.booking))}
 function waitScheduleSave(id,btn){
   return new Promise(resolve=>{
-    let done=false,started=false;
+    let done=false,started=false,enabledSince=0;
     const finish=v=>{if(done)return;done=true;clearTimeout(timeout);clearInterval(watch);document.removeEventListener('zr:schedule-apply-success',onSuccess);resolve(v)};
-    const onSuccess=e=>{if(String(e.detail?.id||'')===String(id))finish(true)};
+    const success=()=>{dirtySchedule.delete(String(id));finish(true)};
+    const onSuccess=e=>{if(String(e.detail?.id||'')===String(id))success()};
     document.addEventListener('zr:schedule-apply-success',onSuccess);
-    const watch=setInterval(()=>{if(btn.disabled)started=true;else if(started&&!dirtySchedule.has(String(id)))finish(true)},40);
+    const watch=setInterval(()=>{
+      if(!btn.isConnected&&started){success();return}
+      if(btn.disabled){started=true;enabledSince=0;return}
+      if(started){
+        if(!enabledSince)enabledSince=Date.now();
+        if(Date.now()-enabledSince>1200)finish(false);
+      }
+    },40);
     const timeout=setTimeout(()=>finish(false),7000);
     runBypass(()=>btn.click());
-    setTimeout(()=>{if(!btn.disabled&&!started&&dirtySchedule.has(String(id)))finish(false)},180);
+    setTimeout(()=>{if(!btn.disabled&&!started&&btn.isConnected)finish(false)},180);
   });
 }
 async function saveDirtySchedules(){
