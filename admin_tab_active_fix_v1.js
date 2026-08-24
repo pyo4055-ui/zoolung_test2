@@ -15,6 +15,14 @@ function loadCalendarSummary(){
   s.src='./admin_calendar_status_summary_v1.js?v=2';
   document.body.appendChild(s);
 }
+function loadTodayGroupSummary(){
+  if(document.getElementById('zrAdminTodayGroupSummaryV1Script'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminTodayGroupSummaryV1Script';
+  s.async=false;
+  s.src='./admin_today_group_summary_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadActivityOrgDetailFix(){
   if(document.getElementById('zrAdminActivityOrgDetailModalFixV1'))return;
   const s=document.createElement('script');
@@ -33,6 +41,7 @@ function loadMobileDateInputFix(){
 }
 function loadUiFixes(){
   loadCalendarSummary();
+  loadTodayGroupSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
 }
