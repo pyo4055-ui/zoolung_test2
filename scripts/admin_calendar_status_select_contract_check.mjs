@@ -27,7 +27,10 @@ for(const needle of [
   'delete b.cancelledAt',
   'delete b.cancelledBy',
   'wrapped.__zrCalendarStatusSelect=true',
-  "badge.textContent='보류'"
+  "badge.textContent='보류'",
+  'function decorateBookingDate(card,b)',
+  'zr-cal-booking-date',
+  '예약일 ${b.date'
 ])if(!s.includes(needle))fail(`calendar status selector missing: ${needle}`);
 
 for(const forbidden of [
