@@ -21,17 +21,18 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrAdminCalendarStatusSummaryV1Style';
   s.textContent=`
-  #adminCalendar .day{min-height:132px!important;box-sizing:border-box;display:flex!important;flex-direction:column!important}
+  #adminCalendar .day{min-height:142px!important;box-sizing:border-box;display:flex!important;flex-direction:column!important}
   #adminCalendar .day>.meta{flex:0 0 auto}
   #adminCalendar .day>.btn-soft{margin-top:auto!important;flex:0 0 auto}
-  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;align-content:flex-start;gap:2px 4px;flex-wrap:wrap;min-height:16px;max-height:31px;margin:3px 0 4px;overflow:hidden;font-size:10px;font-weight:900;letter-spacing:-.45px;line-height:1.25}
+  #adminCalendar .zr-cal-status-summary{display:flex;align-items:center;align-content:flex-start;gap:2px 4px;flex-wrap:wrap;min-height:16px;max-height:46px;margin:3px 0 4px;overflow:hidden;font-size:10px;font-weight:900;letter-spacing:-.45px;line-height:1.25}
   #adminCalendar .zr-cal-status-summary .pending{color:#a76600}
+  #adminCalendar .zr-cal-status-summary .hold{color:#7657a8}
   #adminCalendar .zr-cal-status-summary .confirmed{color:#2f6b9a}
   #adminCalendar .zr-cal-status-summary .completed{color:#2f6b4f}
   #adminCalendar .zr-cal-status-summary .cancelled{color:#a33b3b}
   #adminCalendar .zr-cal-status-summary .sep{color:#aeb6b0;font-weight:700}
   @media(max-width:720px){
-    #adminCalendar .day{min-height:128px!important}
+    #adminCalendar .day{min-height:138px!important}
     #adminCalendar .zr-cal-status-summary{gap:2px 3px;font-size:9.4px;letter-spacing:-.55px}
   }
   `;
@@ -43,9 +44,10 @@ function dateOf(day){
   const m=String(first?.textContent||'').match(/(\d{1,2})일/);
   return m?`${renderedYm}-${pad(Number(m[1]))}`:'';
 }
-function summaryHtml(pending,confirmed,completed,cancelled){
+function summaryHtml(pending,hold,confirmed,completed,cancelled){
   const items=[];
   if(pending)items.push(`<span class="pending">접수 ${pending}</span>`);
+  if(hold)items.push(`<span class="hold">보류 ${hold}</span>`);
   if(confirmed)items.push(`<span class="confirmed">확정 ${confirmed}</span>`);
   if(completed)items.push(`<span class="completed">완료 ${completed}</span>`);
   if(cancelled)items.push(`<span class="cancelled">취소 ${cancelled}</span>`);
@@ -55,6 +57,7 @@ function patchDay(day,bookings){
   const date=dateOf(day);if(!date)return;
   const list=bookings.filter(b=>b&&!b.__availabilityOnly&&b.date===date);
   const pending=list.filter(b=>b.status==='pending').length;
+  const hold=list.filter(b=>b.status==='hold').length;
   const completed=list.filter(isComplete).length;
   const confirmed=list.filter(b=>b.status==='confirmed'&&!isComplete(b)).length;
   const cancelled=list.filter(b=>b.status==='cancelled').length;
@@ -69,7 +72,7 @@ function patchDay(day,bookings){
   meta.querySelector(':scope > .zr-cal-status-summary')?.remove();
   day.querySelector(':scope > .zr-cal-status-summary')?.remove();
 
-  const html=summaryHtml(pending,confirmed,completed,cancelled);
+  const html=summaryHtml(pending,hold,confirmed,completed,cancelled);
   if(!html)return;
   const summary=document.createElement('div');
   summary.className='zr-cal-status-summary';
