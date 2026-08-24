@@ -40,8 +40,10 @@ for(const needle of [
 for(const needle of [
   '@media(max-width:720px)',
   '#adminView input[type="date"]',
-  'width:100%!important',
-  'max-width:100%!important',
+  'width:calc(100% - 12px)!important',
+  'max-width:calc(100% - 12px)!important',
+  'margin-left:auto!important',
+  'margin-right:auto!important',
   'min-width:0!important',
   'box-sizing:border-box!important'
 ])if(!mobileDate.includes(needle))fail(`mobile admin date containment missing: ${needle}`);
