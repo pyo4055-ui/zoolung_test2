@@ -34,6 +34,7 @@ function injectStyle(){
   #dayDetailContent .zr-cal-state-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
   #dayDetailContent .zr-cal-state-row select{flex:1 1 170px;max-width:240px;min-width:150px;min-height:40px}
   #dayDetailContent .zr-cal-state-row button{min-height:40px}
+  #dayDetailContent .status.zr-hold-status{background:#f1ebff!important;border-color:#d7c7f5!important;color:#65459a!important;font-weight:900!important}
   @media(max-width:560px){
     #dayDetailContent .zr-cal-state-row select{max-width:none;min-width:0;flex:1 1 calc(100% - 82px)}
     #dayDetailContent .zr-cal-state-row .zr-cal-edit{flex-basis:100%;width:100%}
@@ -101,6 +102,7 @@ function decorateDay(date=lastDate){
   const list=all().filter(b=>String(b.date||'')===lastDate),cards=[...root.querySelectorAll(':scope > .booking-item')];
   cards.forEach((card,i)=>{
     const b=list[i];if(!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
+    if(b.status===HOLD){const badge=card.querySelector(':scope > .row .status');if(badge){badge.textContent='보류';badge.className='status zr-hold-status'}}
     card.querySelectorAll(':scope > .zr-cal-state-row').forEach(x=>x.remove());
     const old=card.querySelector(':scope > .top-actions');
     if(old)old.remove();
