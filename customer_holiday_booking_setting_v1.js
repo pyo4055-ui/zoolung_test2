@@ -14,6 +14,14 @@ const FIXED_HOLIDAY_MD=new Set(['01-01','03-01','05-05','06-06','08-15','10-03',
 let adminDirty=false;
 let wrappedRender=null;
 
+function localToday(){
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function isPastOrToday(date){
+  const v=String(date||'');
+  return /^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=localToday();
+}
 function isHoliday(date){
   const v=String(date||'');
   return KR_HOLIDAYS_2026.has(v)||FIXED_HOLIDAY_MD.has(v.slice(5));
@@ -54,15 +62,26 @@ function blockOption(o){
   const base=optionBaseText(o);
   if(!base.includes('공휴일 예약 불가'))o.textContent=base+HOLIDAY_SUFFIX;
 }
+function removePastAndTodayOptions(day){
+  const selected=String(day.value||'');
+  const selectedWasBlocked=isPastOrToday(selected);
+  const td=localToday();
+  [...day.options].forEach(o=>{
+    const value=String(o.value||'');
+    if(/^\d{4}-\d{2}-\d{2}$/.test(value)&&value<=td)o.remove();
+  });
+  return selectedWasBlocked;
+}
 function applyCustomerHolidayAvailability(){
   const day=$('visitDay');if(!day)return;
+  const removedSelected=removePastAndTodayOptions(day);
   const allowed=holidayAllowed();
   [...day.options].forEach(o=>{
     const value=String(o.value||'');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(value)){restoreOption(o);return}
     if(!allowed&&isHoliday(value))blockOption(o);else restoreOption(o);
   });
-  if(!allowed&&isHoliday(day.value)){
+  if(removedSelected||(!allowed&&isHoliday(day.value))){
     day.value='';
     try{day.dispatchEvent(new Event('change',{bubbles:true}))}catch{}
   }
@@ -124,6 +143,12 @@ function refreshHooks(){
   if(hooked&&customerVisible())setTimeout(applyCustomerHolidayAvailability,0);
   if(adminVisible())ensureAdminUi();
 }
+function bookingActionButton(target){
+  const btn=target?.closest?.('button,input[type="submit"]');if(!btn)return null;
+  const txt=(btn.textContent||btn.value||'').replace(/\s+/g,'');
+  if(!/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(txt)||/예약확인|추가예약/.test(txt))return null;
+  return btn;
+}
 function boot(){
   refreshHooks();
   if(customerVisible())applyCustomerHolidayAvailability();
@@ -137,12 +162,14 @@ function boot(){
     if(e.target?.id==='visitMonth')setTimeout(applyCustomerHolidayAvailability,0);
   },true);
   document.addEventListener('click',e=>{
-    if(!customerVisible()||holidayAllowed())return;
-    const btn=e.target?.closest?.('button,input[type="submit"]');if(!btn)return;
-    const txt=(btn.textContent||btn.value||'').replace(/\s+/g,'');
-    if(!/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(txt)||/예약확인|추가예약/.test(txt))return;
-    const day=$('visitDay');
-    if(day&&isHoliday(day.value)){
+    if(!customerVisible()||!bookingActionButton(e.target))return;
+    const day=$('visitDay'),value=String(day?.value||'');
+    if(isPastOrToday(value)){
+      e.preventDefault();e.stopImmediatePropagation();
+      try{window.toast?.('당일 예약은 불가합니다. 익일부터 예약해주세요.')}catch{}
+      return;
+    }
+    if(!holidayAllowed()&&isHoliday(value)){
       e.preventDefault();e.stopImmediatePropagation();
       try{window.toast?.('공휴일 예약이 현재 설정에서 허용되지 않습니다.')}catch{}
     }
