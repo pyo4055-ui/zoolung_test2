@@ -39,11 +39,6 @@ function customerFormVisible(){
   const v=$('customerView');
   return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
 }
-function isBookingButton(b){
-  if(!b||b.closest('#adminView'))return false;
-  const t=(b.textContent||b.value||'').replace(/\s+/g,'');
-  return /(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t);
-}
 
 function ensurePaidOptions(){
   const sel=$('paidCount');if(!sel)return false;
@@ -91,11 +86,18 @@ function renderPeopleGuide(){
 
   const sum=$('sumPeople');
   if(sum)sum.textContent=`유료 ${c.totalPaid}명 / 무료 인솔 ${c.freeChaperone}명`;
+}
 
-  const cafeText=String($('cafeAmount')?.textContent||'').replace(/[^0-9]/g,'');
-  const cafe=Math.max(0,Number(cafeText||0));
-  const total=$('sumTotal');
-  if(total)total.textContent=money(c.totalPaid*PRICE+cafe);
+function legacyTotalPaid(c){
+  const oldFree=Math.min(Math.floor(Math.max(0,c.paid)/5),Math.max(0,c.chaperone));
+  return c.paid+(c.chaperone-oldFree);
+}
+function adjustVisibleTotal(){
+  const c=currentCounts(),total=$('sumTotal');if(!c||!total)return;
+  const baseAmount=Number(String(total.textContent||'').replace(/[^0-9]/g,''));
+  if(!Number.isFinite(baseAmount))return;
+  const delta=c.totalPaid-legacyTotalPaid(c);
+  if(delta)total.textContent=money(Math.max(0,baseAmount+delta*PRICE));
 }
 
 function patchBookingData(){
@@ -107,8 +109,13 @@ function patchBookingData(){
     const b=base.apply(this,arguments);
     if(!b||typeof b!=='object')return b;
     const c=counts(b.paidCount,b.chaperoneCount);
+    const oldEntry=Number(b.entryAmount);
+    const oldTotal=Number(b.totalAmount);
+    const extras=Number.isFinite(oldEntry)&&Number.isFinite(oldTotal)?Math.max(0,oldTotal-oldEntry):Math.max(0,Number(b.cafe?.amount||0));
     b.freeChaperone=c.freeChaperone;
     b.paidChaperone=c.paidChaperone;
+    b.entryAmount=c.totalPaid*PRICE;
+    b.totalAmount=b.entryAmount+extras;
     return b;
   };
   wrapped.__zrGroupMinimumV1=true;wrapped.__zrBase=base;
@@ -143,7 +150,7 @@ function patchRefreshSummary(){
   if(typeof cur!=='function')return false;
   if(cur.__zrGroupMinimumV1)return true;
   const base=cur;
-  const wrapped=function(){const out=base.apply(this,arguments);renderPeopleGuide();return out};
+  const wrapped=function(){const out=base.apply(this,arguments);renderPeopleGuide();adjustVisibleTotal();return out};
   wrapped.__zrGroupMinimumV1=true;wrapped.__zrBase=base;
   window.refreshSummary=wrapped;try{refreshSummary=wrapped}catch{}
   return true;
@@ -161,8 +168,7 @@ function boot(){
   },true);
   window.addEventListener('click',e=>{
     if(!customerFormVisible())return;
-    const b=e.target?.closest?.('button,input[type="submit"],input[type="button"],a');
-    if(!isBookingButton(b))return;
+    const b=e.target?.closest?.('#submitBooking');if(!b)return;
     const c=currentCounts();
     if(c.eligible)return;
     e.preventDefault();e.stopImmediatePropagation();
