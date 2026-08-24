@@ -12,17 +12,19 @@ const s=read(file);
 syntax(file);
 for(const needle of [
   "b.status==='pending'",
+  "b.status==='hold'",
   "b.status==='confirmed'&&b.settlement&&b.settlement.savedAt",
   "b.status==='confirmed'&&!isComplete(b)",
   "b.status==='cancelled'",
   '접수 ${pending}',
+  '보류 ${hold}',
   '확정 ${confirmed}',
   '완료 ${completed}',
   '취소 ${cancelled}',
   '.status.pending',
   'zr-cal-status-summary',
-  'min-height:132px!important',
-  'max-height:31px',
+  'min-height:142px!important',
+  'max-height:46px',
   'flex-wrap:wrap',
   "day.querySelector(':scope > .meta')",
   "meta.insertAdjacentElement('afterend',summary)",
@@ -35,7 +37,7 @@ if(s.includes('dayDetailContent')||s.includes('openDay('))fail('calendar summary
 
 const tabFix=read('admin_tab_active_fix_v1.js');
 syntax('admin_tab_active_fix_v1.js');
-for(const needle of ['zrAdminCalendarStatusSummaryV1','./admin_calendar_status_summary_v1.js?v=2'])if(!tabFix.includes(needle))fail(`calendar summary loader missing: ${needle}`);
+for(const needle of ['zrAdminCalendarStatusSummaryV1','./admin_calendar_status_summary_v1.js?v=3'])if(!tabFix.includes(needle))fail(`calendar summary loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('calendar status summary shows pending/confirmed/completed/cancelled without duplicate confirmed counts');
+ok('calendar status summary shows pending/hold/confirmed/completed/cancelled without duplicate confirmed counts');
