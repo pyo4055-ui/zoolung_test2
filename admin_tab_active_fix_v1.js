@@ -47,12 +47,21 @@ function loadBookingHold(){
   s.src='./admin_booking_hold_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadBookingHoldQueryFix(){
+  if(document.getElementById('zrAdminBookingHoldQueryFixV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminBookingHoldQueryFixV1';
+  s.async=false;
+  s.src='./admin_booking_hold_query_fix_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadUiFixes(){
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
   loadScheduleCustomerNotify();
   loadBookingHold();
+  loadBookingHoldQueryFix();
 }
 
 document.addEventListener('click',e=>{
