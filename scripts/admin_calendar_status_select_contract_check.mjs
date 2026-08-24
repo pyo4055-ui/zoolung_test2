@@ -17,15 +17,17 @@ for(const needle of [
   '<option value="cancelled">예약 취소</option>',
   "saveBtn.textContent='저장'",
   "edit.textContent='예약 수정'",
+  'function directHold(id)',
+  'function directConfirmed(id)',
+  "window.setBookingStatus==='function'",
   "fn(id,'cancelled')",
-  'window.zrRequestBookingHold(id)',
-  'window.zrConfirmHeldBooking(id)',
   "restoreCancelled(id,'confirmed')",
   'restoreCancelled(id,HOLD)',
   'delete b.cancelReason',
   'delete b.cancelledAt',
   'delete b.cancelledBy',
-  'wrapped.__zrCalendarStatusSelect=true'
+  'wrapped.__zrCalendarStatusSelect=true',
+  "badge.textContent='보류'"
 ])if(!s.includes(needle))fail(`calendar status selector missing: ${needle}`);
 
 for(const forbidden of [
