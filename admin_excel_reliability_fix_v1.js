@@ -4,6 +4,7 @@ if(window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1)return;
 window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1=true;
 
 const NativeBlob=window.Blob;
+const MEAL_BODY_STYLE=3;
 const td=new TextDecoder('utf-8');
 const te=new TextEncoder();
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
@@ -72,12 +73,36 @@ function borderMealSpacerRows(sheet,styleId){
     return `<row r="${row}" ht="7" customHeight="1">${cells}</row>`;
   });
 }
+function fillMealMergedCells(sheet){
+  const byRow=new Map();
+  sheet.replace(/<mergeCell ref="([A-C])(\d+):\1(\d+)"\/>/g,(all,col,start,end)=>{
+    start=Number(start);end=Number(end);
+    for(let row=start+1;row<=end;row++){
+      if(!byRow.has(row))byRow.set(row,new Set());
+      byRow.get(row).add(col);
+    }
+    return all;
+  });
+  if(!byRow.size)return sheet;
+  return sheet.replace(/<row r="(\d+)"([^>]*)>([\s\S]*?)<\/row>/g,(all,row,attrs,inner)=>{
+    const cols=byRow.get(Number(row));if(!cols)return all;
+    let add='';
+    [...cols].sort().forEach(col=>{
+      const ref=`${col}${row}`;
+      const exists=new RegExp(`<c\\b[^>]*\\br="${ref}"(?:\\s|/|>)`).test(inner);
+      if(!exists)add+=`<c r="${ref}" s="${MEAL_BODY_STYLE}"/>`;
+    });
+    return add?`<row r="${row}"${attrs}>${add}${inner}</row>`:all;
+  });
+}
 function repairMealXlsx(input){
   const files=parseStoredZip(input);if(!files)return input;
   const stylesFile=files.find(f=>f.name==='xl/styles.xml'),sheetFile=files.find(f=>f.name==='xl/worksheets/sheet1.xml');
   if(!stylesFile||!sheetFile)return input;
   const styled=addMealSpacerStyle(td.decode(stylesFile.data));if(!styled)return input;
-  const originalSheet=td.decode(sheetFile.data),fixedSheet=borderMealSpacerRows(originalSheet,styled.styleId);
+  const originalSheet=td.decode(sheetFile.data);
+  let fixedSheet=borderMealSpacerRows(originalSheet,styled.styleId);
+  fixedSheet=fillMealMergedCells(fixedSheet);
   if(fixedSheet===originalSheet)return input;
   stylesFile.data=te.encode(styled.styles);
   sheetFile.data=te.encode(fixedSheet);
