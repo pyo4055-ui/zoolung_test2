@@ -22,8 +22,8 @@ function installStyle(){
   style.id='zrInquiryVisitStyleV2';
   style.textContent=`
     #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:max-content max-content;gap:12px;margin-bottom:12px;align-items:start}
-    #zrInquiryVisitFields #inqVisitDate{width:170px;height:48px;min-height:48px;max-width:100%;box-sizing:border-box}
-    #zrInquiryVisitFields #inqVisitTime{width:140px;height:48px;min-height:48px;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields #inqVisitDate{width:170px;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields #inqVisitTime{width:140px;max-width:100%;box-sizing:border-box}
     #zrInquiryVisitFields .zr-inquiry-people{width:calc(50% - 6px);margin-bottom:12px}
     #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email";gap:12px}
     #inquiryModal .zr-inquiry-name{grid-area:name}
@@ -121,7 +121,18 @@ function install(){
   const visitTime=document.getElementById('inqVisitTime');
   const people=document.getElementById('inqPeople');
   const peopleLabel=document.getElementById('inqPeopleLabel');
-  if(!type||!visitDate||!visitTime||!people||!peopleLabel||!org)return false;
+  if(!type||!visitDate||!visitTime||!people||!peopleLabel||!org||!name)return false;
+
+  function syncVisitFieldHeight(){
+    const refHeight=Math.round(name.getBoundingClientRect().height);
+    if(!refHeight)return;
+    for(const el of [visitDate,visitTime]){
+      el.style.setProperty('height',`${refHeight}px`,'important');
+      el.style.setProperty('min-height',`${refHeight}px`,'important');
+      el.style.setProperty('max-height',`${refHeight}px`,'important');
+      el.style.setProperty('box-sizing','border-box','important');
+    }
+  }
 
   function updatePeopleLabel(){
     peopleLabel.textContent=type.value==='preview'?'사전답사 인원':type.value==='group'?'단체 인원':'인원';
@@ -135,6 +146,7 @@ function install(){
     org.value='';
     visitDate.min=localToday();
     updatePeopleLabel();
+    requestAnimationFrame(syncVisitFieldHeight);
   }
 
   function setGroupInquiry(){
@@ -144,6 +156,11 @@ function install(){
   }
 
   visitDate.min=localToday();
+  requestAnimationFrame(syncVisitFieldHeight);
+  if(!window.__ZR_INQUIRY_VISIT_HEIGHT_SYNC_V1){
+    window.__ZR_INQUIRY_VISIT_HEIGHT_SYNC_V1=true;
+    window.addEventListener('resize',()=>requestAnimationFrame(syncVisitFieldHeight),{passive:true});
+  }
   if(type.dataset.zrInquiryVisitBound!=='1'){
     type.dataset.zrInquiryVisitBound='1';
     type.addEventListener('change',updatePeopleLabel);
