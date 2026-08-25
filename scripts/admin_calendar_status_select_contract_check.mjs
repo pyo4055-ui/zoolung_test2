@@ -11,6 +11,7 @@ const file='admin_calendar_status_select_v1.js';
 const s=read(file);syntax(file);
 for(const needle of [
   "$('dayDetailContent')",
+  "$('adminBookingDetailContent')",
   'zr-cal-state-select',
   '<option value="confirmed">예약 확정</option>',
   '<option value="hold">예약 보류</option>',
@@ -27,22 +28,30 @@ for(const needle of [
   'delete b.cancelledAt',
   'delete b.cancelledBy',
   'wrapped.__zrCalendarStatusSelect=true',
+  'wrapped.__zrReservationDetailStatusSelect=true',
+  "wrapped.__zrHold=true",
   "badge.textContent='보류'",
   'function decorateBookingDate(card,b)',
+  'function detailActionRow(root,b)',
+  'function decorateDetail(id=lastDetailId)',
+  'function wrapOpenDetail()',
+  "$('adminBookingDetailModal')",
+  "row.dataset.zrStatusScope='detail'",
+  "['예약 확정','예약 보류','예약 취소 처리','취소 처리','거절','예약 수정']",
   'zr-cal-booking-date',
   '예약일 ${b.date'
-])if(!s.includes(needle))fail(`calendar status selector missing: ${needle}`);
+])if(!s.includes(needle))fail(`shared status selector missing: ${needle}`);
 
 for(const forbidden of [
-  'adminBookingDetailContent','activityList','existingBookingList',
+  'activityList','existingBookingList',
   'setDoc(','updateDoc(','addDoc(','deleteDoc(',
   'reservationAvailability','scheduleGroups','schedulePublished=','customerSchedule='
-])if(s.includes(forbidden))fail(`calendar status selector must stay calendar-only / indirect DB: ${forbidden}`);
+])if(s.includes(forbidden))fail(`shared status selector must stay scoped / indirect DB: ${forbidden}`);
 
 const loader=read('admin_tab_active_fix_v1.js');syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminCalendarStatusSelectV1','./admin_calendar_status_select_v1.js?v=1','loadCalendarStatusSelect()']){
-  if(!loader.includes(needle))fail(`calendar status selector loader missing: ${needle}`);
+  if(!loader.includes(needle))fail(`shared status selector loader missing: ${needle}`);
 }
 
 if(failed)process.exit(1);
-ok('calendar-only booking status selector keeps other admin/customer screens unchanged');
+ok('calendar and reservation-detail status selectors share confirmed/hold/cancelled behavior without touching customer screens');
