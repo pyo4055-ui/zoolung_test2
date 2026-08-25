@@ -22,8 +22,8 @@ function installStyle(){
   style.id='zrInquiryVisitStyleV2';
   style.textContent=`
     #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:max-content max-content;gap:12px;margin-bottom:12px;align-items:start}
-    #zrInquiryVisitFields #inqVisitDate{width:170px;max-width:100%;box-sizing:border-box}
-    #zrInquiryVisitFields #inqVisitTime{width:140px;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields #inqVisitDate{width:170px;height:48px;min-height:48px;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields #inqVisitTime{width:140px;height:48px;min-height:48px;max-width:100%;box-sizing:border-box}
     #zrInquiryVisitFields .zr-inquiry-people{width:calc(50% - 6px);margin-bottom:12px}
     #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email";gap:12px}
     #inquiryModal .zr-inquiry-name{grid-area:name}
