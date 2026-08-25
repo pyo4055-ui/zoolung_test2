@@ -12,6 +12,14 @@ function renameSettingsTab(){
     if(btn.textContent.trim()==='설정')btn.textContent='예약설정';
   });
 }
+function loadCustomerInquiryVisit(){
+  if(document.getElementById('zrCustomerInquiryVisitV1')||window.__ZR_CUSTOMER_INQUIRY_VISIT_V1)return;
+  const s=document.createElement('script');
+  s.id='zrCustomerInquiryVisitV1';
+  s.async=false;
+  s.src='./customer_inquiry_visit_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadCalendarSummary(){
   if(document.getElementById('zrAdminCalendarStatusSummaryV1'))return;
   const s=document.createElement('script');
@@ -110,6 +118,7 @@ function loadExcelReliabilityFix(){
 }
 function loadUiFixes(){
   renameSettingsTab();
+  loadCustomerInquiryVisit();
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
@@ -131,10 +140,11 @@ document.addEventListener('click',e=>{
   if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');
 },true);
 
+document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
