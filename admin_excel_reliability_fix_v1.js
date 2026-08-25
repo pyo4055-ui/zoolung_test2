@@ -4,7 +4,6 @@ if(window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1)return;
 window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1=true;
 
 const NativeBlob=window.Blob;
-const MEAL_BODY_STYLE=3;
 const td=new TextDecoder('utf-8');
 const te=new TextEncoder();
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
@@ -73,26 +72,45 @@ function borderMealSpacerRows(sheet,styleId){
     return `<row r="${row}" ht="7" customHeight="1">${cells}</row>`;
   });
 }
-function fillMealMergedCells(sheet){
-  const byRow=new Map();
-  sheet.replace(/<mergeCell ref="([A-C])(\d+):\1(\d+)"\/>/g,(all,col,start,end)=>{
-    start=Number(start);end=Number(end);
-    for(let row=start+1;row<=end;row++){
-      if(!byRow.has(row))byRow.set(row,new Set());
-      byRow.get(row).add(col);
+function mealColNumber(col){let n=0;for(const ch of String(col||''))n=n*26+(ch.charCodeAt(0)-64);return n;}
+function mealColName(n){let s='';while(n>0){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26);}return s;}
+function insertMealStyledCell(inner,row,col,styleId){
+  const ref=`${col}${row}`;
+  if(new RegExp(`<c\\b[^>]*\\br="${ref}"(?:\\s|/|>)`).test(inner))return inner;
+  const target=mealColNumber(col),cell=`<c r="${ref}" s="${styleId}"/>`;
+  let inserted=false;
+  const out=inner.replace(/<c\b[^>]*\br="([A-Z]+)\d+"[^>]*(?:\/>|>[\s\S]*?<\/c>)/g,(all,existingCol)=>{
+    if(!inserted&&mealColNumber(existingCol)>target){inserted=true;return cell+all;}
+    return all;
+  });
+  return inserted?out:out+cell;
+}
+function fillMealMergedRangeCells(sheet){
+  const needsByRow=new Map();
+  sheet.replace(/<mergeCell ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"\/>/g,(all,startCol,startRow,endCol,endRow)=>{
+    startRow=Number(startRow);endRow=Number(endRow);
+    const anchor=`${startCol}${startRow}`;
+    const styleMatch=sheet.match(new RegExp(`<c\\b[^>]*\\br="${anchor}"[^>]*\\bs="(\\d+)"`));
+    if(!styleMatch)return all;
+    const styleId=Number(styleMatch[1]),from=mealColNumber(startCol),to=mealColNumber(endCol);
+    for(let row=startRow;row<=endRow;row++){
+      if(!needsByRow.has(row))needsByRow.set(row,new Map());
+      const needs=needsByRow.get(row);
+      for(let c=from;c<=to;c++){
+        const col=mealColName(c),ref=`${col}${row}`;
+        if(ref!==anchor)needs.set(col,styleId);
+      }
     }
     return all;
   });
-  if(!byRow.size)return sheet;
+  if(!needsByRow.size)return sheet;
   return sheet.replace(/<row r="(\d+)"([^>]*)>([\s\S]*?)<\/row>/g,(all,row,attrs,inner)=>{
-    const cols=byRow.get(Number(row));if(!cols)return all;
-    let add='';
-    [...cols].sort().forEach(col=>{
-      const ref=`${col}${row}`;
-      const exists=new RegExp(`<c\\b[^>]*\\br="${ref}"(?:\\s|/|>)`).test(inner);
-      if(!exists)add+=`<c r="${ref}" s="${MEAL_BODY_STYLE}"/>`;
+    const needs=needsByRow.get(Number(row));if(!needs)return all;
+    let fixed=inner;
+    [...needs.entries()].sort((a,b)=>mealColNumber(a[0])-mealColNumber(b[0])).forEach(([col,styleId])=>{
+      fixed=insertMealStyledCell(fixed,row,col,styleId);
     });
-    return add?`<row r="${row}"${attrs}>${add}${inner}</row>`:all;
+    return `<row r="${row}"${attrs}>${fixed}</row>`;
   });
 }
 function repairMealXlsx(input){
@@ -102,7 +120,7 @@ function repairMealXlsx(input){
   const styled=addMealSpacerStyle(td.decode(stylesFile.data));if(!styled)return input;
   const originalSheet=td.decode(sheetFile.data);
   let fixedSheet=borderMealSpacerRows(originalSheet,styled.styleId);
-  fixedSheet=fillMealMergedCells(fixedSheet);
+  fixedSheet=fillMealMergedRangeCells(fixedSheet);
   if(fixedSheet===originalSheet)return input;
   stylesFile.data=te.encode(styled.styles);
   sheetFile.data=te.encode(fixedSheet);
