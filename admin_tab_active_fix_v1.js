@@ -84,7 +84,7 @@ function loadExcelReliabilityFix(){
   const s=document.createElement('script');
   s.id='zrAdminExcelReliabilityFixV1';
   s.async=false;
-  s.src='./admin_excel_reliability_fix_v1.js?v=4';
+  s.src='./admin_excel_reliability_fix_v1.js?v=3';
   document.body.appendChild(s);
 }
 function loadUiFixes(){
