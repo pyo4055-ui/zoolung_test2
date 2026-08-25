@@ -20,12 +20,20 @@ function loadCustomerInquiryVisit(){
   s.src='./customer_inquiry_visit_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadAdminPreviewVisit(){
+  if(document.getElementById('zrAdminPreviewVisitV1')||window.__ZR_ADMIN_PREVIEW_VISIT_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminPreviewVisitV1';
+  s.async=false;
+  s.src='./admin_preview_visit_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadCalendarSummary(){
   if(document.getElementById('zrAdminCalendarStatusSummaryV1'))return;
   const s=document.createElement('script');
   s.id='zrAdminCalendarStatusSummaryV1';
   s.async=false;
-  s.src='./admin_calendar_status_summary_v1.js?v=3';
+  s.src='./admin_calendar_status_summary_v1.js?v=4';
   document.body.appendChild(s);
 }
 function loadActivityOrgDetailFix(){
@@ -119,6 +127,7 @@ function loadExcelReliabilityFix(){
 function loadUiFixes(){
   renameSettingsTab();
   loadCustomerInquiryVisit();
+  loadAdminPreviewVisit();
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
@@ -138,13 +147,15 @@ document.addEventListener('click',e=>{
   if(!clicked)return;
   if(clicked.id!=='zrScheduleTabBtn')gray('zrScheduleTabBtn');
   if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');
+  if(clicked.id!=='zrPreviewVisitTabBtn')gray('zrPreviewVisitTabBtn');
 },true);
 
 document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{once:true});
+document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisit,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
