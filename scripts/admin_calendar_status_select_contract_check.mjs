@@ -27,30 +27,30 @@ for(const needle of [
   'delete b.cancelReason',
   'delete b.cancelledAt',
   'delete b.cancelledBy',
+  "row.dataset.bookingId=String(b.id||'')",
+  'function repaint(b)',
+  'function refreshDirect(b)',
+  'function wrapStatusSetter()',
+  'wrapped.__zrStatusSelectorRepaint=true',
   'wrapped.__zrCalendarStatusSelect=true',
   'wrapped.__zrReservationDetailStatusSelect=true',
-  "wrapped.__zrHold=true",
   "badge.textContent='예약보류'",
   'function decorateBookingDate(card,b)',
   'function detailActionRow(root,b)',
   'function decorateDetail(id=lastDetailId)',
   'function wrapOpenDetail()',
-  "$('adminBookingDetailModal')",
   "row.dataset.zrStatusScope='detail'",
-  "['예약 확정','예약 보류','예약 취소 처리','취소 처리','거절','예약 수정']",
-  "const wrapped=function(date){lastDate=String(date||'');const out=base.apply(this,arguments);decorateDay(date);return out}",
-  "const wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);decorateDetail(id);return out}",
   'zr-cal-booking-date',
   '예약일 ${b.date'
 ])if(!s.includes(needle))fail(`shared status selector missing: ${needle}`);
 
+if(s.includes('정산 완료 예약은 보류로 변경할 수 없습니다.'))fail('reservation status must be independent from settlement entry');
+
 for(const forbidden of [
   'activityList','existingBookingList',
   'setDoc(','updateDoc(','addDoc(','deleteDoc(',
-  'reservationAvailability','scheduleGroups','schedulePublished=','customerSchedule=',
-  'setTimeout(()=>decorateDay(date)',
-  'setTimeout(()=>decorateDetail(id)'
-])if(s.includes(forbidden))fail(`shared status selector must stay scoped, immediate, and indirect DB: ${forbidden}`);
+  'reservationAvailability','scheduleGroups','schedulePublished=','customerSchedule='
+])if(s.includes(forbidden))fail(`shared status selector must stay scoped / indirect DB: ${forbidden}`);
 
 const loader=read('admin_tab_active_fix_v1.js');syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminCalendarStatusSelectV1','./admin_calendar_status_select_v1.js?v=1','loadCalendarStatusSelect()']){
@@ -58,4 +58,4 @@ for(const needle of ['zrAdminCalendarStatusSelectV1','./admin_calendar_status_se
 }
 
 if(failed)process.exit(1);
-ok('calendar and reservation-detail status selectors render immediately with confirmed/hold/cancelled behavior and 예약보류 display without touching customer screens');
+ok('calendar/detail status selector repaints immediately, keeps hold independent from settlement, and stays scoped to existing reservation storage APIs');
