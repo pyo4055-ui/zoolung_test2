@@ -5,7 +5,7 @@ window.__ZR_ADMIN_CALENDAR_STATUS_SELECT_V1=true;
 
 const HOLD='hold',KEY='zr_bookings';
 const $=id=>document.getElementById(id);
-let lastDate='';
+let lastDate='',lastDetailId='';
 
 function all(){
   try{
@@ -31,20 +31,23 @@ function settled(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
 function refreshDirect(b){
   try{window.renderAdmin?.()}catch{}
   try{window.renderActivity?.()}catch{}
-  const date=String(b?.date||lastDate||'');
-  setTimeout(()=>{if(date&&$('dayDetailModal')&&!$('dayDetailModal').classList.contains('hidden'))window.openDay?.(date)},40);
+  const date=String(b?.date||lastDate||''),id=String(b?.id||lastDetailId||'');
+  setTimeout(()=>{
+    if(date&&$('dayDetailModal')&&!$('dayDetailModal').classList.contains('hidden'))window.openDay?.(date);
+    if(id&&$('adminBookingDetailModal')&&!$('adminBookingDetailModal').classList.contains('hidden'))window.openAdminBookingDetail?.(id);
+  },40);
 }
 function injectStyle(){
   if($('zrAdminCalendarStatusSelectV1Style'))return;
   const s=document.createElement('style');s.id='zrAdminCalendarStatusSelectV1Style';s.textContent=`
-  #dayDetailContent .zr-cal-state-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
-  #dayDetailContent .zr-cal-state-row select{flex:1 1 170px;max-width:240px;min-width:150px;min-height:40px}
-  #dayDetailContent .zr-cal-state-row button{min-height:40px}
+  #dayDetailContent .zr-cal-state-row,#adminBookingDetailContent .zr-cal-state-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+  #dayDetailContent .zr-cal-state-row select,#adminBookingDetailContent .zr-cal-state-row select{flex:1 1 170px;max-width:240px;min-width:150px;min-height:40px}
+  #dayDetailContent .zr-cal-state-row button,#adminBookingDetailContent .zr-cal-state-row button{min-height:40px}
   #dayDetailContent .zr-cal-booking-date{margin-bottom:2px;font-weight:800}
-  #dayDetailContent .status.zr-hold-status{background:#f1ebff!important;border-color:#d7c7f5!important;color:#65459a!important;font-weight:900!important}
+  #dayDetailContent .status.zr-hold-status,#adminBookingDetailContent .status.zr-hold-status{background:#f1ebff!important;border-color:#d7c7f5!important;color:#65459a!important;font-weight:900!important}
   @media(max-width:560px){
-    #dayDetailContent .zr-cal-state-row select{max-width:none;min-width:0;flex:1 1 calc(100% - 82px)}
-    #dayDetailContent .zr-cal-state-row .zr-cal-edit{flex-basis:100%;width:100%}
+    #dayDetailContent .zr-cal-state-row select,#adminBookingDetailContent .zr-cal-state-row select{max-width:none;min-width:0;flex:1 1 calc(100% - 82px)}
+    #dayDetailContent .zr-cal-state-row .zr-cal-edit,#adminBookingDetailContent .zr-cal-state-row .zr-cal-edit{flex-basis:100%;width:100%}
   }`;
   document.head.appendChild(s);
 }
@@ -131,6 +134,23 @@ function decorateDay(date=lastDate){
     const row=actionRow(b);settlement?card.insertBefore(row,settlement):card.appendChild(row);
   });
 }
+function detailActionRow(root,b){
+  root.querySelectorAll(':scope > .zr-cal-state-row').forEach(x=>x.remove());
+  [...root.querySelectorAll(':scope > .top-actions')].forEach(actions=>{
+    const labels=[...actions.querySelectorAll('button')].map(x=>String(x.textContent||'').trim());
+    if(labels.some(t=>['예약 확정','예약 보류','예약 취소 처리','취소 처리','거절','예약 수정'].includes(t)))actions.remove();
+  });
+  const settlement=root.querySelector(':scope > .zr2-settle,:scope > .zr-settlement-editor');
+  const row=actionRow(b);row.dataset.zrStatusScope='detail';
+  settlement?root.insertBefore(row,settlement):root.appendChild(row);
+}
+function decorateDetail(id=lastDetailId){
+  injectStyle();lastDetailId=String(id||lastDetailId||'');
+  const root=$('adminBookingDetailContent'),b=byId(lastDetailId);
+  if(!root||!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
+  if(b.status===HOLD){const badge=root.querySelector(':scope > .row .status');if(badge){badge.textContent='보류';badge.className='status zr-hold-status'}}
+  detailActionRow(root,b);
+}
 function wrapOpenDay(){
   const current=window.openDay;
   if(typeof current!=='function')return false;
@@ -142,10 +162,21 @@ function wrapOpenDay(){
   window.openDay=wrapped;try{openDay=wrapped}catch{}
   return true;
 }
+function wrapOpenDetail(){
+  const current=window.openAdminBookingDetail;
+  if(typeof current!=='function')return false;
+  if(current.__zrReservationDetailStatusSelect)return true;
+  if(typeof window.zrRequestBookingHold!=='function')return false;
+  const base=current;
+  const wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);setTimeout(()=>decorateDetail(id),80);return out};
+  wrapped.__zrReservationDetailStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;
+  window.openAdminBookingDetail=wrapped;try{openAdminBookingDetail=wrapped}catch{}
+  return true;
+}
 function boot(){
   injectStyle();
-  const timer=setInterval(()=>{if(wrapOpenDay())clearInterval(timer)},120);
-  setTimeout(()=>clearInterval(timer),20000);setTimeout(()=>wrapOpenDay(),0);
+  const timer=setInterval(()=>{if(wrapOpenDay()&&wrapOpenDetail())clearInterval(timer)},120);
+  setTimeout(()=>clearInterval(timer),20000);setTimeout(()=>{wrapOpenDay();wrapOpenDetail()},0);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
