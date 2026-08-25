@@ -16,7 +16,15 @@ for(const f of [file,'admin_tab_active_fix_v1.js','admin_features_v6_patch.js'])
 for(const needle of [
   'MEAL_SPACER',
   'ss:Height="8"',
-  "p.split(MEAL_SPACER).join('')",
+  'MEAL_GROUP_STYLES',
+  'ss:ID="GroupCell"',
+  'ss:ID="GroupMoney"',
+  'ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"',
+  'function emphasizeMealGroups(xml)',
+  'const parts=out.split(MEAL_SPACER)',
+  'ss:StyleID="GroupCell"',
+  'ss:StyleID="GroupMoney"',
+  "}).join('')",
   'function repairOutsourceXlsx(input)',
   '/^xl\\/worksheets\\/sheet\\d+\\.xml$/.test(name)',
   "xml.replace(/(<mergeCells\\b[^>]*>[\\s\\S]*?<\\/mergeCells>)(<autoFilter\\b[^>]*\\/>)/,'$2$1')",
@@ -48,4 +56,4 @@ else ok('worksheet XML order repair puts autoFilter before mergeCells');
 if(!outsource.includes('<sheetData>${xmlRows.join(\'\')}</sheetData><mergeCells count="1"><mergeCell ref="A1:I1"/></mergeCells><autoFilter ref="A2:I${r}"/>'))fail('outsource source signature changed; review whether runtime XML repair is still needed');
 
 if(failed)process.exit(1);
-ok('meal spacer is removed at download time and outsource worksheet XML order is repaired without changing reservation data');
+ok('meal spacer is removed with thick group-start borders and outsource worksheet XML order is repaired without changing reservation data');
