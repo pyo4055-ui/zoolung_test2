@@ -23,7 +23,7 @@ function installStyle(){
   style.textContent=`
     #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:max-content max-content;gap:12px;margin-bottom:12px;align-items:start}
     #zrInquiryVisitFields #inqVisitDate{width:170px;max-width:100%;box-sizing:border-box}
-    #zrInquiryVisitFields #inqVisitTime{width:160px;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields #inqVisitTime{width:175px;max-width:100%;box-sizing:border-box}
     #zrInquiryVisitFields .zr-inquiry-people{width:calc(50% - 6px);margin-bottom:12px}
     #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email";gap:12px}
     #inquiryModal .zr-inquiry-name{grid-area:name}
@@ -33,14 +33,14 @@ function installStyle(){
     @media(max-width:800px){
       #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:max-content max-content;gap:10px}
       #zrInquiryVisitFields #inqVisitDate{width:155px}
-      #zrInquiryVisitFields #inqVisitTime{width:145px}
+      #zrInquiryVisitFields #inqVisitTime{width:160px}
       #zrInquiryVisitFields .zr-inquiry-people{width:100%}
       #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email"}
     }
     @media(max-width:360px){
       #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr}
       #zrInquiryVisitFields #inqVisitDate{width:155px}
-      #zrInquiryVisitFields #inqVisitTime{width:145px}
+      #zrInquiryVisitFields #inqVisitTime{width:160px}
     }`;
   document.head.appendChild(style);
 }
