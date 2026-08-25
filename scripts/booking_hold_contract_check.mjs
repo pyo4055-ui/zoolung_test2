@@ -19,12 +19,17 @@ for(const needle of [
   "existingStatus(id,'confirmed')",
   "existingStatus(id,'cancelled')",
   '예약 보류',
+  '예약보류',
   '본 예약은 보류 상태입니다.',
   "b.status===HOLD",
   'all().filter(b=>b.status===HOLD)',
   'window.activeBookings=w',
   "filterSelect()?.value===HOLD",
-  "o.value=HOLD;o.textContent='보류'"
+  "o.value=HOLD;o.textContent='예약보류'",
+  "root.querySelector(':scope > .zr-cal-state-row')",
+  'function decorateActivityHoldBadges()',
+  "badge.textContent='예약보류'",
+  "'<span class=\"status zr-hold-status\">예약보류</span>'"
 ])if(!s.includes(needle))fail(`booking hold contract missing: ${needle}`);
 
 for(const forbidden of ['setDoc(','updateDoc(','addDoc(','deleteDoc(','schedulePublished=','customerSchedule=','delete b.schedulePublished','delete b.customerSchedule','scheduleGroups','reservationAvailability']){
@@ -41,7 +46,8 @@ for(const needle of [
   "window.addEventListener('click',intercept,true)",
   'e.stopImmediatePropagation()',
   'renderHeld()',
-  "localStorage.setItem(FILTER_KEY,HOLD)"
+  "localStorage.setItem(FILTER_KEY,HOLD)",
+  '<span class="status zr-hold-status">예약보류</span>'
 ])if(!q.includes(needle))fail(`booking hold query guard missing: ${needle}`);
 for(const forbidden of ['setDoc(','updateDoc(','addDoc(','deleteDoc(','schedulePublished=','customerSchedule=','scheduleGroups','reservationAvailability']){
   if(q.includes(forbidden))fail(`booking hold query guard must remain display-only: ${forbidden}`);
@@ -66,4 +72,4 @@ for(const needle of [
 }
 
 if(failed)process.exit(1);
-ok('booking hold preserves reservation/schedule data, occupies availability, hides customer schedule through confirmed-only display, and owns hold-only activity queries before legacy handlers');
+ok('booking hold preserves reservation/schedule data, renders 예약보류 in light-purple UI, defers detail actions to the shared selector, and owns hold-only activity queries before legacy handlers');
