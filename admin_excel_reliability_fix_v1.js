@@ -3,10 +3,7 @@
 if(window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1)return;
 window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1=true;
 
-const $=id=>document.getElementById(id);
 const NativeBlob=window.Blob;
-const MEAL_SPACER='<Row ss:Height="8"><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/></Row>';
-const MEAL_GROUP_STYLES='<Style ss:ID="GroupMerged"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style><Style ss:ID="GroupTop"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style><Style ss:ID="GroupTopMoney"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style><Style ss:ID="GroupBottom"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style><Style ss:ID="GroupBottomMoney"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders></Style><Style ss:ID="GroupSingle"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style><Style ss:ID="GroupSingleMoney"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>';
 const td=new TextDecoder('utf-8');
 const te=new TextEncoder();
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
@@ -14,6 +11,9 @@ const crc32=bytes=>{let c=0xFFFFFFFF;for(const b of bytes)c=crcTable[(c^b)&0xFF]
 const read16=(a,i)=>a[i]|(a[i+1]<<8);
 const read32=(a,i)=>(a[i]|(a[i+1]<<8)|(a[i+2]<<16)|(a[i+3]<<24))>>>0;
 const put32=(a,i,n)=>{a[i]=n&255;a[i+1]=(n>>>8)&255;a[i+2]=(n>>>16)&255;a[i+3]=(n>>>24)&255};
+const u16=n=>[n&255,(n>>>8)&255];
+const u32=n=>[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255];
+function concatBytes(parts){const len=parts.reduce((s,p)=>s+p.length,0),out=new Uint8Array(len);let o=0;for(const p of parts){out.set(p,o);o+=p.length;}return out;}
 
 function withBlobTransform(transform,run){
   const Prev=window.Blob;
@@ -21,44 +21,73 @@ function withBlobTransform(transform,run){
   PatchedBlob.prototype=NativeBlob.prototype;
   try{window.Blob=PatchedBlob;return run()}finally{window.Blob=Prev}
 }
-function styleMealRow(row,kind){
-  const total=(row.match(/ss:StyleID="(?:Cell|Money)"/g)||[]).length;
-  let seen=0;
-  const merged=kind==='top'&&row.includes('ss:MergeDown=');
-  return row.replace(/ss:StyleID="(Cell|Money)"/g,(all,base)=>{
-    const index=seen++;
-    if(kind==='single')return `ss:StyleID="${base==='Money'?'GroupSingleMoney':'GroupSingle'}"`;
-    if(kind==='top'){
-      if(merged&&index<3)return 'ss:StyleID="GroupMerged"';
-      return `ss:StyleID="${base==='Money'?'GroupTopMoney':'GroupTop'}"`;
-    }
-    if(kind==='bottom')return `ss:StyleID="${base==='Money'?'GroupBottomMoney':'GroupBottom'}"`;
-    return all;
+
+function parseStoredZip(input){
+  if(!(input instanceof Uint8Array)||input.length<30)return null;
+  const a=input,files=[];let i=0;
+  while(i+30<=a.length&&read32(a,i)===0x04034b50){
+    const method=read16(a,i+8),size=read32(a,i+18),nameLen=read16(a,i+26),extraLen=read16(a,i+28);
+    if(method!==0)return null;
+    const nameStart=i+30,dataStart=nameStart+nameLen+extraLen,dataEnd=dataStart+size;
+    if(dataEnd>a.length)return null;
+    const name=td.decode(a.subarray(nameStart,nameStart+nameLen));
+    files.push({name,data:a.slice(dataStart,dataEnd)});
+    i=dataEnd;
+  }
+  return files.length?files:null;
+}
+function zipStore(files){
+  const locals=[],centrals=[];let offset=0;
+  for(const f of files){
+    const name=te.encode(f.name),data=f.data instanceof Uint8Array?f.data:te.encode(String(f.data??'')),crc=crc32(data),flags=0x0800;
+    const local=new Uint8Array([0x50,0x4b,0x03,0x04,...u16(20),...u16(flags),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);
+    locals.push(local,data);
+    const central=new Uint8Array([0x50,0x4b,0x01,0x02,...u16(20),...u16(20),...u16(flags),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name]);
+    centrals.push(central);offset+=local.length+data.length;
+  }
+  const centralSize=centrals.reduce((s,p)=>s+p.length,0);
+  const eocd=new Uint8Array([0x50,0x4b,0x05,0x06,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(centralSize),...u32(offset),...u16(0)]);
+  return concatBytes([...locals,...centrals,eocd]);
+}
+
+function addMealSpacerStyle(styles){
+  let borderId=-1,styleId=-1;
+  styles=styles.replace(/<borders count="(\d+)">([\s\S]*?)<\/borders>/,(all,count,body)=>{
+    borderId=Number(count);
+    const border='<border><left/><right/><top style="medium"><color auto="1"/></top><bottom style="medium"><color auto="1"/></bottom><diagonal/></border>';
+    return `<borders count="${borderId+1}">${body}${border}</borders>`;
+  });
+  if(borderId<0)return null;
+  styles=styles.replace(/<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/,(all,count,body)=>{
+    styleId=Number(count);
+    const xf=`<xf numFmtId="0" fontId="0" fillId="0" borderId="${borderId}" xfId="0" applyBorder="1"/>`;
+    return `<cellXfs count="${styleId+1}">${body}${xf}</cellXfs>`;
+  });
+  return styleId<0?null:{styles,styleId};
+}
+function borderMealSpacerRows(sheet,styleId){
+  return sheet.replace(/<row r="(\d+)" ht="7" customHeight="1">\s*<\/row>/g,(all,row)=>{
+    let cells='';
+    for(let c=65;c<=71;c++)cells+=`<c r="${String.fromCharCode(c)}${row}" s="${styleId}"/>`;
+    return `<row r="${row}" ht="7" customHeight="1">${cells}</row>`;
   });
 }
-function outlineMealGroups(xml){
-  if(typeof xml!=='string'||!xml.includes(MEAL_SPACER))return xml;
-  let out=xml.includes('ss:ID="GroupMerged"')?xml:xml.replace('</Styles>',MEAL_GROUP_STYLES+'</Styles>');
-  const chunks=out.split(MEAL_SPACER);
-  return chunks.map(chunk=>{
-    const rows=chunk.match(/<Row ss:Height="24">[\s\S]*?<\/Row>/g)||[];
-    if(!rows.length)return chunk;
-    let i=0;
-    return chunk.replace(/<Row ss:Height="24">[\s\S]*?<\/Row>/g,row=>{
-      const first=i===0,last=i===rows.length-1;i++;
-      if(first&&last)return styleMealRow(row,'single');
-      if(first)return styleMealRow(row,'top');
-      if(last)return styleMealRow(row,'bottom');
-      return row;
-    });
-  }).join(MEAL_SPACER);
+function repairMealXlsx(input){
+  const files=parseStoredZip(input);if(!files)return input;
+  const stylesFile=files.find(f=>f.name==='xl/styles.xml'),sheetFile=files.find(f=>f.name==='xl/worksheets/sheet1.xml');
+  if(!stylesFile||!sheetFile)return input;
+  const styled=addMealSpacerStyle(td.decode(stylesFile.data));if(!styled)return input;
+  const originalSheet=td.decode(sheetFile.data),fixedSheet=borderMealSpacerRows(originalSheet,styled.styleId);
+  if(fixedSheet===originalSheet)return input;
+  stylesFile.data=te.encode(styled.styles);
+  sheetFile.data=te.encode(fixedSheet);
+  return zipStore(files);
 }
-function mealParts(parts){return parts.map(p=>typeof p==='string'?outlineMealGroups(p):p)}
+function mealParts(parts){return parts.map(p=>p instanceof Uint8Array?repairMealXlsx(p):p)}
 
 function repairOutsourceXlsx(input){
   if(!(input instanceof Uint8Array)||input.length<30)return input;
-  const a=new Uint8Array(input),crcByName=new Map();
-  let i=0;
+  const a=new Uint8Array(input),crcByName=new Map();let i=0;
   while(i+30<=a.length){
     const sig=read32(a,i);
     if(sig===0x04034b50){
@@ -89,44 +118,27 @@ function repairOutsourceXlsx(input){
   }
   return a;
 }
-function outsourceParts(parts){return parts.map(repairOutsourceXlsx)}
+function outsourceParts(parts){return parts.map(p=>p instanceof Uint8Array?repairOutsourceXlsx(p):p)}
 
-const baseMeal=window.downloadMealExcelV3;
-const baseOutsource=window.downloadOutsourceExcel;
-function mealDownload(){
-  if(typeof baseMeal!=='function')return;
-  const self=this,args=arguments;
-  return withBlobTransform(mealParts,()=>baseMeal.apply(self,args));
-}
-function outsourceDownload(){
-  if(typeof baseOutsource!=='function')return;
-  const self=this,args=arguments;
-  return withBlobTransform(outsourceParts,()=>baseOutsource.apply(self,args));
-}
-function bind(){
-  if(typeof baseMeal==='function')window.downloadMealExcelV3=mealDownload;
-  if(typeof baseOutsource==='function'){
-    window.downloadOutsourceExcel=outsourceDownload;
-    try{downloadOutsourceExcel=outsourceDownload}catch{}
-    const b=$('outsourceExcel');if(b){b.onclick=outsourceDownload;b.textContent='엑셀 내려받기'}
-  }
-}
-const renderOut=window.renderOutsourcingPayments;
-if(typeof renderOut==='function'&&!renderOut.__zrExcelReliabilityFixV1){
-  const wrapped=function(){const out=renderOut.apply(this,arguments);setTimeout(bind,0);return out};
-  wrapped.__zrExcelReliabilityFixV1=true;
-  window.renderOutsourcingPayments=wrapped;
-  try{renderOutsourcingPayments=wrapped}catch{}
-}
 document.addEventListener('click',e=>{
   const mealBtn=e.target?.closest?.('#downloadMealExcelV3');
-  if(mealBtn&&typeof baseMeal==='function'){
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    mealDownload.call(mealBtn,e);
-    return;
+  if(mealBtn){
+    const fn=window.downloadMealExcelV3;
+    if(typeof fn==='function'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      withBlobTransform(mealParts,()=>fn.call(mealBtn,e));
+      return;
+    }
   }
-  if(e.target?.closest?.('[data-tab],#outsourceTabBtn'))setTimeout(bind,30);
+  const outsourceBtn=e.target?.closest?.('#outsourceExcel');
+  if(outsourceBtn){
+    const fn=window.downloadOutsourceExcel;
+    if(typeof fn==='function'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      withBlobTransform(outsourceParts,()=>fn.call(outsourceBtn,e));
+    }
+  }
 },true);
-bind();
 })();
