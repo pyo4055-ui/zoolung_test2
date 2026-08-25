@@ -5,6 +5,9 @@ window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
 const NativeBlob=window.Blob;
+const MEAL_SPACER='<Row ss:Height="8"><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/></Row>';
+const MEAL_SPACER_STYLE='<Style ss:ID="GroupSpacer"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>';
+const MEAL_BORDERED_SPACER='<Row ss:Height="8"><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/><Cell ss:StyleID="GroupSpacer"/></Row>';
 const td=new TextDecoder('utf-8');
 const te=new TextEncoder();
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
@@ -19,6 +22,13 @@ function withBlobTransform(transform,run){
   PatchedBlob.prototype=NativeBlob.prototype;
   try{window.Blob=PatchedBlob;return run()}finally{window.Blob=Prev}
 }
+function borderMealSpacers(xml){
+  if(typeof xml!=='string'||!xml.includes(MEAL_SPACER))return xml;
+  let out=xml.includes('ss:ID="GroupSpacer"')?xml:xml.replace('</Styles>',MEAL_SPACER_STYLE+'</Styles>');
+  return out.split(MEAL_SPACER).join(MEAL_BORDERED_SPACER);
+}
+function mealParts(parts){return parts.map(p=>typeof p==='string'?borderMealSpacers(p):p)}
+
 function repairOutsourceXlsx(input){
   if(!(input instanceof Uint8Array)||input.length<30)return input;
   const a=new Uint8Array(input),crcByName=new Map();
@@ -55,13 +65,20 @@ function repairOutsourceXlsx(input){
 }
 function outsourceParts(parts){return parts.map(repairOutsourceXlsx)}
 
+const baseMeal=window.downloadMealExcelV3;
 const baseOutsource=window.downloadOutsourceExcel;
+function mealDownload(){
+  if(typeof baseMeal!=='function')return;
+  const self=this,args=arguments;
+  return withBlobTransform(mealParts,()=>baseMeal.apply(self,args));
+}
 function outsourceDownload(){
   if(typeof baseOutsource!=='function')return;
   const self=this,args=arguments;
   return withBlobTransform(outsourceParts,()=>baseOutsource.apply(self,args));
 }
 function bind(){
+  if(typeof baseMeal==='function')window.downloadMealExcelV3=mealDownload;
   if(typeof baseOutsource==='function'){
     window.downloadOutsourceExcel=outsourceDownload;
     try{downloadOutsourceExcel=outsourceDownload}catch{}
@@ -75,6 +92,15 @@ if(typeof renderOut==='function'&&!renderOut.__zrExcelReliabilityFixV1){
   window.renderOutsourcingPayments=wrapped;
   try{renderOutsourcingPayments=wrapped}catch{}
 }
-document.addEventListener('click',e=>{if(e.target?.closest?.('[data-tab],#outsourceTabBtn'))setTimeout(bind,30)},false);
+document.addEventListener('click',e=>{
+  const mealBtn=e.target?.closest?.('#downloadMealExcelV3');
+  if(mealBtn&&typeof baseMeal==='function'){
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    mealDownload.call(mealBtn,e);
+    return;
+  }
+  if(e.target?.closest?.('[data-tab],#outsourceTabBtn'))setTimeout(bind,30);
+},true);
 bind();
 })();
