@@ -16,13 +16,38 @@ function showToast(message){
   alert(message);
 }
 
+function installStyle(){
+  if(document.getElementById('zrInquiryVisitStyleV2'))return;
+  const style=document.createElement('style');
+  style.id='zrInquiryVisitStyleV2';
+  style.textContent=`
+    #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
+    #zrInquiryVisitFields .zr-inquiry-people{width:calc(50% - 6px);margin-bottom:12px}
+    #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email";gap:12px}
+    #inquiryModal .zr-inquiry-name{grid-area:name}
+    #inquiryModal .zr-inquiry-phone{grid-area:phone}
+    #inquiryModal .zr-inquiry-org{grid-area:org}
+    #inquiryModal .zr-inquiry-email{grid-area:email}
+    @media(max-width:800px){
+      #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr}
+      #zrInquiryVisitFields .zr-inquiry-people{width:100%}
+      #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email"}
+    }`;
+  document.head.appendChild(style);
+}
+
 function install(){
   const modal=document.getElementById('inquiryModal');
   const submit=document.getElementById('submitInquiry');
   const content=document.getElementById('inqContent');
   if(!modal||!submit||!content)return false;
 
+  installStyle();
+
   let fields=document.getElementById('zrInquiryVisitFields');
+  const contactGrid=modal.querySelector('.modal-card > .grid2');
+  if(!contactGrid)return false;
+
   if(!fields){
     fields=document.createElement('div');
     fields.id='zrInquiryVisitFields';
@@ -35,7 +60,7 @@ function install(){
           <option value="group">단체 문의</option>
         </select>
       </div>
-      <div class="grid3" style="margin-bottom:12px">
+      <div class="zr-inquiry-visit-grid">
         <div>
           <label class="req">방문 희망일</label>
           <input id="inqVisitDate" type="date">
@@ -45,18 +70,41 @@ function install(){
           <input id="inqVisitTime" type="time" step="1800">
           <div class="help">30분 단위로 입력해주세요.</div>
         </div>
-        <div>
-          <label class="req" id="inqPeopleLabel">인원</label>
-          <input id="inqPeople" type="number" min="1" step="1" inputmode="numeric" placeholder="ex) 3">
-        </div>
+      </div>
+      <div class="zr-inquiry-people">
+        <label class="req" id="inqPeopleLabel">인원</label>
+        <input id="inqPeople" type="number" min="1" step="1" inputmode="numeric" placeholder="ex) 3">
       </div>`;
-
-    const contactGrid=modal.querySelector('.modal-card > .grid2');
-    if(!contactGrid)return false;
     contactGrid.before(fields);
 
     const intro=modal.querySelector('.modal-card > h2 + .help');
     if(intro)intro.textContent='사전답사 또는 단체 관련 문의를 남겨주세요.';
+  }
+
+  contactGrid.classList.add('zr-inquiry-contact-grid');
+  const name=document.getElementById('inqName');
+  const phone=document.getElementById('inqPhone');
+  const email=document.getElementById('inqEmail');
+  const nameWrap=name?.parentElement;
+  const phoneWrap=phone?.parentElement;
+  const emailWrap=email?.parentElement;
+  if(nameWrap)nameWrap.classList.add('zr-inquiry-name');
+  if(phoneWrap)phoneWrap.classList.add('zr-inquiry-phone');
+  if(emailWrap){
+    emailWrap.classList.add('zr-inquiry-email');
+    const label=emailWrap.querySelector('label');
+    if(label){label.classList.remove('req');label.textContent='이메일 (선택)';}
+    email.required=false;
+    email.removeAttribute('aria-required');
+  }
+
+  let org=document.getElementById('inqOrgName');
+  if(!org){
+    const wrap=document.createElement('div');
+    wrap.className='zr-inquiry-org';
+    wrap.innerHTML='<label class="req">단체명</label><input id="inqOrgName" placeholder="ex) 주렁유치원">';
+    contactGrid.appendChild(wrap);
+    org=wrap.querySelector('#inqOrgName');
   }
 
   const type=document.getElementById('inqType');
@@ -64,7 +112,7 @@ function install(){
   const visitTime=document.getElementById('inqVisitTime');
   const people=document.getElementById('inqPeople');
   const peopleLabel=document.getElementById('inqPeopleLabel');
-  if(!type||!visitDate||!visitTime||!people||!peopleLabel)return false;
+  if(!type||!visitDate||!visitTime||!people||!peopleLabel||!org)return false;
 
   function updatePeopleLabel(){
     peopleLabel.textContent=type.value==='preview'?'사전답사 인원':type.value==='group'?'단체 인원':'인원';
@@ -75,6 +123,7 @@ function install(){
     visitDate.value='';
     visitTime.value='';
     people.value='';
+    org.value='';
     visitDate.min=localToday();
     updatePeopleLabel();
   }
@@ -96,14 +145,15 @@ function install(){
     submit.dataset.zrInquiryVisitBound='1';
     submit.addEventListener('click',e=>{
       const inquiryType=type.value;
+      const orgName=org.value.trim();
       const date=visitDate.value;
       const time=visitTime.value;
       const count=Math.trunc(Number(people.value));
 
-      if(!inquiryType||!date||!time||!Number.isFinite(count)||count<1){
+      if(!inquiryType||!orgName||!date||!time||!Number.isFinite(count)||count<1){
         e.preventDefault();
         e.stopImmediatePropagation();
-        showToast('문의 유형, 방문일, 방문시간, 인원을 확인해주세요.');
+        showToast('문의 유형, 단체명, 방문일, 방문시간, 인원을 확인해주세요.');
         return;
       }
 
@@ -118,7 +168,7 @@ function install(){
       const original=content.value;
       const typeLabel=inquiryType==='preview'?'사전답사 문의':'단체 문의';
       const countLabel=inquiryType==='preview'?'사전답사 인원':'단체 인원';
-      const prefix=`[${typeLabel}]\n방문 희망일: ${date}\n방문 희망시간: ${time}\n${countLabel}: ${count}명`;
+      const prefix=`[${typeLabel}]\n단체명: ${orgName}\n방문 희망일: ${date}\n방문 희망시간: ${time}\n${countLabel}: ${count}명`;
       content.value=`${prefix}\n\n${original}`;
 
       setTimeout(()=>{
