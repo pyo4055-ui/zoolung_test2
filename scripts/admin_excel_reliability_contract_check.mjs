@@ -17,12 +17,17 @@ for(const f of [file,'admin_tab_active_fix_v1.js','admin_features_v4_patch.js','
 }
 
 for(const needle of [
+  'const MEAL_BODY_STYLE=3',
   'function parseStoredZip(input)',
   'function zipStore(files)',
   'function addMealSpacerStyle(styles)',
   'function borderMealSpacerRows(sheet,styleId)',
+  'function fillMealMergedCells(sheet)',
   'style="medium"',
   'ht="7" customHeight="1"',
+  '<mergeCell ref="([A-C])(\\d+):\\1(\\d+)"\\/>',
+  'if(!exists)add+=`<c r="${ref}" s="${MEAL_BODY_STYLE}"/>`',
+  'fixedSheet=fillMealMergedCells(fixedSheet)',
   'function repairMealXlsx(input)',
   "f.name==='xl/styles.xml'",
   "f.name==='xl/worksheets/sheet1.xml'",
@@ -47,7 +52,7 @@ for(const forbidden of [
 
 for(const needle of [
   'function loadExcelReliabilityFix()',
-  "s.src='./admin_excel_reliability_fix_v1.js?v=2'",
+  "s.src='./admin_excel_reliability_fix_v1.js?v=3'",
   'loadExcelReliabilityFix();',
   "document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true})"
 ])if(!loader.includes(needle))fail(`Excel reliability loader missing: ${needle}`);
@@ -61,7 +66,8 @@ for(const needle of [
   "a.download=`주렁주렁_${month}월_단체식사주문내역.xlsx`",
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'ht="7" customHeight="1"></row>',
-  'btn.onclick=downloadMealXlsxV4'
+  'btn.onclick=downloadMealXlsxV4',
+  'merges.push(`A${start}:A${end}`,`B${start}:B${end}`,`C${start}:C${end}`)'
 ])if(!mealXlsx.includes(needle))fail(`frozen meal XLSX generator signature changed: ${needle}`);
 else ok(`meal XLSX source keeps expected signature: ${needle}`);
 
@@ -84,9 +90,35 @@ if(borderId!==2||styleId!==8||!styles.includes('count="3"')||!styles.includes('c
   fail('meal XLSX spacer border transformation sanity check failed');
 }else ok('meal XLSX spacer row receives a real medium border style across A:G');
 
+function fillMergedSample(sheetXml){
+  const byRow=new Map();
+  sheetXml.replace(/<mergeCell ref="([A-C])(\d+):\1(\d+)"\/>/g,(all,col,start,end)=>{
+    start=Number(start);end=Number(end);
+    for(let row=start+1;row<=end;row++){
+      if(!byRow.has(row))byRow.set(row,new Set());
+      byRow.get(row).add(col);
+    }
+    return all;
+  });
+  return sheetXml.replace(/<row r="(\d+)"([^>]*)>([\s\S]*?)<\/row>/g,(all,row,attrs,inner)=>{
+    const cols=byRow.get(Number(row));if(!cols)return all;
+    let add='';
+    [...cols].sort().forEach(col=>{
+      const ref=`${col}${row}`;
+      if(!new RegExp(`<c\\b[^>]*\\br="${ref}"(?:\\s|/|>)`).test(inner))add+=`<c r="${ref}" s="3"/>`;
+    });
+    return add?`<row r="${row}"${attrs}>${add}${inner}</row>`:all;
+  });
+}
+const mergedSample='<worksheet><sheetData><row r="5"><c r="A5" s="3"/><c r="B5" s="3"/><c r="C5" s="3"/><c r="D5" s="3"/></row><row r="6"><c r="D6" s="3"/></row><row r="7"><c r="D7" s="3"/></row></sheetData><mergeCells><mergeCell ref="A5:A7"/><mergeCell ref="B5:B7"/><mergeCell ref="C5:C7"/></mergeCells></worksheet>';
+const mergedFixed=fillMergedSample(mergedSample);
+for(const ref of ['A6','B6','C6','A7','B7','C7'])if(!mergedFixed.includes(`<c r="${ref}" s="3"/>`))fail(`meal merged-border repair missing continuation cell ${ref}`);
+if((mergedFixed.match(/<c r="D6"/g)||[]).length!==1)fail('meal merged-border repair must not duplicate existing menu cells');
+else ok('meal vertical merged cells A:C receive continuation cells so thin borders render continuously');
+
 if(!outsource.includes("<sheetData>${xmlRows.join('')}</sheetData><mergeCells count=\"1\"><mergeCell ref=\"A1:I1\"/></mergeCells><autoFilter ref=\"A2:I${r}\"/>")){
   fail('outsource source signature changed; review whether worksheet XML repair is still needed');
 }
 
 if(failed)process.exit(1);
-ok('meal XLSX border repair and outsource worksheet repair are isolated from reservation data');
+ok('meal XLSX separator and merged-cell border repairs stay isolated from reservation data');
