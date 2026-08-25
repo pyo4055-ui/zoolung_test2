@@ -81,11 +81,10 @@ function loadUnsavedChangesGuard(){
 }
 function loadExcelReliabilityFix(){
   if(document.getElementById('zrAdminExcelReliabilityFixV1')||window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1)return;
-  if(typeof window.downloadMealExcelV3!=='function'||typeof window.downloadOutsourceExcel!=='function')return;
   const s=document.createElement('script');
   s.id='zrAdminExcelReliabilityFixV1';
   s.async=false;
-  s.src='./admin_excel_reliability_fix_v1.js?v=1';
+  s.src='./admin_excel_reliability_fix_v1.js?v=2';
   document.body.appendChild(s);
 }
 function loadUiFixes(){
@@ -98,6 +97,7 @@ function loadUiFixes(){
   loadCalendarStatusSelect();
   loadCustomerGroupMinimum();
   loadUnsavedChangesGuard();
+  loadExcelReliabilityFix();
 }
 
 document.addEventListener('click',e=>{
