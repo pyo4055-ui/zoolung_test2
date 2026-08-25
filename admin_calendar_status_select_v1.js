@@ -127,7 +127,7 @@ function decorateDay(date=lastDate){
   cards.forEach((card,i)=>{
     const b=list[i];if(!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
     decorateBookingDate(card,b);
-    if(b.status===HOLD){const badge=card.querySelector(':scope > .row .status');if(badge){badge.textContent='보류';badge.className='status zr-hold-status'}}
+    if(b.status===HOLD){const badge=card.querySelector(':scope > .row .status');if(badge){badge.textContent='예약보류';badge.className='status zr-hold-status'}}
     card.querySelectorAll(':scope > .zr-cal-state-row').forEach(x=>x.remove());
     const old=card.querySelector(':scope > .top-actions');if(old)old.remove();
     const settlement=card.querySelector(':scope > .zr2-settle,:scope > .zr-settlement-editor');
@@ -148,7 +148,7 @@ function decorateDetail(id=lastDetailId){
   injectStyle();lastDetailId=String(id||lastDetailId||'');
   const root=$('adminBookingDetailContent'),b=byId(lastDetailId);
   if(!root||!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
-  if(b.status===HOLD){const badge=root.querySelector(':scope > .row .status');if(badge){badge.textContent='보류';badge.className='status zr-hold-status'}}
+  if(b.status===HOLD){const badge=root.querySelector(':scope > .row .status');if(badge){badge.textContent='예약보류';badge.className='status zr-hold-status'}}
   detailActionRow(root,b);
 }
 function wrapOpenDay(){
@@ -157,7 +157,7 @@ function wrapOpenDay(){
   if(current.__zrCalendarStatusSelect)return true;
   if(typeof window.zrRequestBookingHold!=='function')return false;
   const base=current;
-  const wrapped=function(date){lastDate=String(date||'');const out=base.apply(this,arguments);setTimeout(()=>decorateDay(date),80);return out};
+  const wrapped=function(date){lastDate=String(date||'');const out=base.apply(this,arguments);decorateDay(date);return out};
   wrapped.__zrCalendarStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;
   window.openDay=wrapped;try{openDay=wrapped}catch{}
   return true;
@@ -168,7 +168,7 @@ function wrapOpenDetail(){
   if(current.__zrReservationDetailStatusSelect)return true;
   if(typeof window.zrRequestBookingHold!=='function')return false;
   const base=current;
-  const wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);setTimeout(()=>decorateDetail(id),80);return out};
+  const wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);decorateDetail(id);return out};
   wrapped.__zrReservationDetailStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;
   window.openAdminBookingDetail=wrapped;try{openAdminBookingDetail=wrapped}catch{}
   return true;
