@@ -5,7 +5,7 @@ window.__ZR_ADMIN_CALENDAR_STATUS_SELECT_V1=true;
 
 const HOLD='hold',KEY='zr_bookings';
 const $=id=>document.getElementById(id);
-let lastDate='',lastDetailId='';
+let lastDate='',lastDetailId='',statusSetterWrap=null;
 
 function all(){
   try{
@@ -27,15 +27,18 @@ function adminOk(){
   }catch{}
   return !!window.zrReservationFirebase?.isStaff?.();
 }
-function settled(b){return !!(b?.status==='confirmed'&&b?.settlement?.savedAt)}
-function refreshDirect(b){
+function repaint(b){
+  if(!b)return;
   try{window.renderAdmin?.()}catch{}
   try{window.renderActivity?.()}catch{}
-  const date=String(b?.date||lastDate||''),id=String(b?.id||lastDetailId||'');
-  setTimeout(()=>{
-    if(date&&$('dayDetailModal')&&!$('dayDetailModal').classList.contains('hidden'))window.openDay?.(date);
-    if(id&&$('adminBookingDetailModal')&&!$('adminBookingDetailModal').classList.contains('hidden'))window.openAdminBookingDetail?.(id);
-  },40);
+  const date=String(b.date||lastDate||''),id=String(b.id||lastDetailId||'');
+  if(date&&$('dayDetailModal')&&!$('dayDetailModal').classList.contains('hidden'))try{window.openDay?.(date)}catch{}
+  if(id&&$('adminBookingDetailModal')&&!$('adminBookingDetailModal').classList.contains('hidden'))try{window.openAdminBookingDetail?.(id)}catch{}
+}
+function refreshDirect(b){
+  const id=String(b?.id||lastDetailId||'');
+  repaint(b||byId(id));
+  [80,350].forEach(ms=>setTimeout(()=>repaint(byId(id)||b),ms));
 }
 function injectStyle(){
   if($('zrAdminCalendarStatusSelectV1Style'))return;
@@ -55,7 +58,6 @@ function directHold(id){
   if(!adminOk())return;
   const list=all(),b=list.find(x=>String(x.id)===String(id));
   if(!b)return msg('예약 정보를 찾지 못했습니다.');
-  if(settled(b))return msg('정산 완료 예약은 보류로 변경할 수 없습니다.');
   if(!['pending','confirmed'].includes(b.status))return msg('접수 또는 확정 예약만 보류로 변경할 수 있습니다.');
   b.status=HOLD;b.statusUpdatedAt=new Date().toISOString();save(list);
   try{window.addActivity?.('hold',b,'예약 보류')}catch{}
@@ -63,9 +65,13 @@ function directHold(id){
 }
 function directConfirmed(id){
   const fn=typeof window.setBookingStatus==='function'?window.setBookingStatus:(typeof setBookingStatus==='function'?setBookingStatus:null);
-  if(typeof fn==='function')return fn(id,'confirmed');
+  if(typeof fn==='function'){
+    const out=fn(id,'confirmed');if(!fn.__zrStatusSelectorRepaint)refreshDirect(byId(id)||{id,date:lastDate,status:'confirmed'});return out;
+  }
   const fallback=typeof window.requestBookingStatus==='function'?window.requestBookingStatus:(typeof requestBookingStatus==='function'?requestBookingStatus:null);
-  if(typeof fallback==='function')return fallback(id,'confirmed');
+  if(typeof fallback==='function'){
+    const out=fallback(id,'confirmed');setTimeout(()=>refreshDirect(byId(id)||{id,date:lastDate}),0);return out;
+  }
   msg('예약 확정 기능을 불러오지 못했습니다.');
 }
 function restoreCancelled(id,target){
@@ -87,14 +93,8 @@ function applyStatus(id,select){
   const target=String(select?.value||'');
   if(!target)return msg('변경할 상태를 선택해주세요.');
   if(target===b.status)return msg('현재 상태와 동일합니다.');
-  if(target===HOLD){
-    if(b.status==='cancelled')return restoreCancelled(id,HOLD);
-    return directHold(id);
-  }
-  if(target==='confirmed'){
-    if(b.status==='cancelled')return restoreCancelled(id,'confirmed');
-    return directConfirmed(id);
-  }
+  if(target===HOLD){if(b.status==='cancelled')return restoreCancelled(id,HOLD);return directHold(id)}
+  if(target==='confirmed'){if(b.status==='cancelled')return restoreCancelled(id,'confirmed');return directConfirmed(id)}
   if(target==='cancelled'){
     const fn=typeof window.requestBookingStatus==='function'?window.requestBookingStatus:(typeof requestBookingStatus==='function'?requestBookingStatus:null);
     if(typeof fn==='function')return fn(id,'cancelled');
@@ -102,7 +102,7 @@ function applyStatus(id,select){
   }
 }
 function actionRow(b){
-  const row=document.createElement('div');row.className='top-actions zr-cal-state-row';
+  const row=document.createElement('div');row.className='top-actions zr-cal-state-row';row.dataset.bookingId=String(b.id||'');
   const select=document.createElement('select');select.className='zr-cal-state-select';select.setAttribute('aria-label','예약 상태 변경');
   select.innerHTML='<option value="">상태 선택</option><option value="confirmed">예약 확정</option><option value="hold">예약 보류</option><option value="cancelled">예약 취소</option>';
   if(['confirmed',HOLD,'cancelled'].includes(b.status))select.value=b.status;
@@ -114,11 +114,14 @@ function actionRow(b){
   return row;
 }
 function decorateBookingDate(card,b){
-  const grid=card.querySelector(':scope > .detail-grid'),zoo=grid?.children?.[1];
-  if(!zoo)return;
-  let line=zoo.querySelector(':scope > .zr-cal-booking-date');
-  if(!line){line=document.createElement('div');line.className='zr-cal-booking-date';zoo.prepend(line)}
+  const grid=card.querySelector(':scope > .detail-grid'),zoo=grid?.children?.[1];if(!zoo)return;
+  let line=zoo.querySelector(':scope > .zr-cal-booking-date');if(!line){line=document.createElement('div');line.className='zr-cal-booking-date';zoo.prepend(line)}
   line.textContent=`예약일 ${b.date||'-'}`;
+}
+function holdBadge(root,b){
+  const badge=root?.querySelector(':scope > .row .status');
+  if(!badge)return;
+  if(b.status===HOLD){badge.textContent='예약보류';badge.className='status zr-hold-status'}
 }
 function decorateDay(date=lastDate){
   injectStyle();lastDate=String(date||lastDate||'');
@@ -126,8 +129,7 @@ function decorateDay(date=lastDate){
   const list=all().filter(b=>String(b.date||'')===lastDate),cards=[...root.querySelectorAll(':scope > .booking-item')];
   cards.forEach((card,i)=>{
     const b=list[i];if(!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
-    decorateBookingDate(card,b);
-    if(b.status===HOLD){const badge=card.querySelector(':scope > .row .status');if(badge){badge.textContent='예약보류';badge.className='status zr-hold-status'}}
+    decorateBookingDate(card,b);holdBadge(card,b);
     card.querySelectorAll(':scope > .zr-cal-state-row').forEach(x=>x.remove());
     const old=card.querySelector(':scope > .top-actions');if(old)old.remove();
     const settlement=card.querySelector(':scope > .zr2-settle,:scope > .zr-settlement-editor');
@@ -141,42 +143,32 @@ function detailActionRow(root,b){
     if(labels.some(t=>['예약 확정','예약 보류','예약 취소 처리','취소 처리','거절','예약 수정'].includes(t)))actions.remove();
   });
   const settlement=root.querySelector(':scope > .zr2-settle,:scope > .zr-settlement-editor');
-  const row=actionRow(b);row.dataset.zrStatusScope='detail';
-  settlement?root.insertBefore(row,settlement):root.appendChild(row);
+  const row=actionRow(b);row.dataset.zrStatusScope='detail';settlement?root.insertBefore(row,settlement):root.appendChild(row);
 }
 function decorateDetail(id=lastDetailId){
   injectStyle();lastDetailId=String(id||lastDetailId||'');
-  const root=$('adminBookingDetailContent'),b=byId(lastDetailId);
-  if(!root||!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
-  if(b.status===HOLD){const badge=root.querySelector(':scope > .row .status');if(badge){badge.textContent='예약보류';badge.className='status zr-hold-status'}}
-  detailActionRow(root,b);
+  const root=$('adminBookingDetailContent'),b=byId(lastDetailId);if(!root||!b||!['pending','confirmed',HOLD,'cancelled'].includes(b.status))return;
+  holdBadge(root,b);detailActionRow(root,b);
 }
 function wrapOpenDay(){
-  const current=window.openDay;
-  if(typeof current!=='function')return false;
-  if(current.__zrCalendarStatusSelect)return true;
-  if(typeof window.zrRequestBookingHold!=='function')return false;
-  const base=current;
-  const wrapped=function(date){lastDate=String(date||'');const out=base.apply(this,arguments);decorateDay(date);return out};
-  wrapped.__zrCalendarStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;
-  window.openDay=wrapped;try{openDay=wrapped}catch{}
-  return true;
+  const current=window.openDay;if(typeof current!=='function')return false;if(current.__zrCalendarStatusSelect)return true;if(typeof window.zrRequestBookingHold!=='function')return false;
+  const base=current,wrapped=function(date){lastDate=String(date||'');const out=base.apply(this,arguments);decorateDay(date);return out};
+  wrapped.__zrCalendarStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;window.openDay=wrapped;try{openDay=wrapped}catch{}return true;
 }
 function wrapOpenDetail(){
-  const current=window.openAdminBookingDetail;
-  if(typeof current!=='function')return false;
-  if(current.__zrReservationDetailStatusSelect)return true;
-  if(typeof window.zrRequestBookingHold!=='function')return false;
-  const base=current;
-  const wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);decorateDetail(id);return out};
-  wrapped.__zrReservationDetailStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;
-  window.openAdminBookingDetail=wrapped;try{openAdminBookingDetail=wrapped}catch{}
-  return true;
+  const current=window.openAdminBookingDetail;if(typeof current!=='function')return false;if(current.__zrReservationDetailStatusSelect)return true;if(typeof window.zrRequestBookingHold!=='function')return false;
+  const base=current,wrapped=function(id){lastDetailId=String(id||'');const out=base.apply(this,arguments);decorateDetail(id);return out};
+  wrapped.__zrReservationDetailStatusSelect=true;wrapped.__zrHold=true;wrapped.__zrBase=base;window.openAdminBookingDetail=wrapped;try{openAdminBookingDetail=wrapped}catch{}return true;
+}
+function wrapStatusSetter(){
+  const current=window.setBookingStatus;if(typeof current!=='function')return false;if(current.__zrStatusSelectorRepaint)return true;if(current===statusSetterWrap)return true;
+  const base=current,wrapped=function(id,status){const out=base.apply(this,arguments);const b=byId(id);if(b)refreshDirect(b);return out};
+  wrapped.__zrStatusSelectorRepaint=true;wrapped.__zrBase=base;window.setBookingStatus=wrapped;try{setBookingStatus=wrapped}catch{}statusSetterWrap=wrapped;return true;
 }
 function boot(){
   injectStyle();
-  const timer=setInterval(()=>{if(wrapOpenDay()&&wrapOpenDetail())clearInterval(timer)},120);
-  setTimeout(()=>clearInterval(timer),20000);setTimeout(()=>{wrapOpenDay();wrapOpenDetail()},0);
+  const timer=setInterval(()=>{wrapOpenDay();wrapOpenDetail();wrapStatusSetter()},120);
+  setTimeout(()=>clearInterval(timer),20000);setTimeout(()=>{wrapOpenDay();wrapOpenDetail();wrapStatusSetter()},0);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
