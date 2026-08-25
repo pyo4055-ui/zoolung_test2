@@ -71,6 +71,14 @@ function loadSettlementWorkspace(){
   s.src='./admin_settlement_workspace_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadSettlementUiStability(){
+  if(document.getElementById('zrAdminSettlementUiStabilityV1')||window.__ZR_ADMIN_SETTLEMENT_UI_STABILITY_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminSettlementUiStabilityV1';
+  s.async=false;
+  s.src='./admin_settlement_ui_stability_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadCustomerGroupMinimum(){
   if(document.getElementById('zrCustomerGroupMinimumV1'))return;
   const s=document.createElement('script');
@@ -104,6 +112,7 @@ function loadUiFixes(){
   loadBookingHoldQueryFix();
   loadCalendarStatusSelect();
   loadSettlementWorkspace();
+  loadSettlementUiStability();
   loadCustomerGroupMinimum();
   loadUnsavedChangesGuard();
   loadExcelReliabilityFix();
@@ -118,7 +127,8 @@ document.addEventListener('click',e=>{
 
 document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);}
+document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
