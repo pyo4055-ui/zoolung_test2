@@ -61,7 +61,7 @@ function renderHeld(){
   const list=heldBookings();
   setKpis(list.length);
   root.innerHTML=list.length?list.map(b=>`<div class="booking-item">
-    <div class="zr4-badges"><span class="status zr-hold-status">보류</span></div>
+    <div class="zr4-badges"><span class="status zr-hold-status">예약보류</span></div>
     <div class="row" style="margin-top:7px"><div><b>${esc(b.orgName)}</b><div class="help">접수 ${esc(seoulDate(b.createdAt)||'-')} · 예약일 ${esc(b.date||'-')}</div></div></div>
     <div class="detail-grid">
       <div><b>예약자</b><br>${esc(b.managerName||'-')}</div><div><b>연락처</b><br>${esc(b.contact||'-')}</div>
