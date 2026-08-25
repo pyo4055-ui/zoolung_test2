@@ -6,6 +6,7 @@ window.__ZR_ADMIN_EXCEL_RELIABILITY_FIX_V1=true;
 const $=id=>document.getElementById(id);
 const NativeBlob=window.Blob;
 const MEAL_SPACER='<Row ss:Height="8"><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/><Cell/></Row>';
+const MEAL_GROUP_STYLES='<Style ss:ID="GroupCell"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style><Style ss:ID="GroupMoney"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="#,##0"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/></Borders></Style>';
 const td=new TextDecoder('utf-8');
 const te=new TextEncoder();
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
@@ -20,8 +21,17 @@ function withBlobTransform(transform,run){
   PatchedBlob.prototype=NativeBlob.prototype;
   try{window.Blob=PatchedBlob;return run()}finally{window.Blob=Prev}
 }
+function emphasizeMealGroups(xml){
+  if(typeof xml!=='string'||!xml.includes(MEAL_SPACER))return xml;
+  let out=xml.includes('ss:ID="GroupCell"')?xml:xml.replace('</Styles>',MEAL_GROUP_STYLES+'</Styles>');
+  const parts=out.split(MEAL_SPACER);
+  return parts.map((part,index)=>{
+    if(index===0)return part;
+    return part.replace(/<Row ss:Height="24">[\s\S]*?<\/Row>/,row=>row.replace(/ss:StyleID="Cell"/g,'ss:StyleID="GroupCell"').replace(/ss:StyleID="Money"/g,'ss:StyleID="GroupMoney"'));
+  }).join('');
+}
 function mealParts(parts){
-  return parts.map(p=>typeof p==='string'?p.split(MEAL_SPACER).join(''):p);
+  return parts.map(p=>typeof p==='string'?emphasizeMealGroups(p):p);
 }
 function repairOutsourceXlsx(input){
   if(!(input instanceof Uint8Array)||input.length<30)return input;
