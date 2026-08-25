@@ -41,6 +41,8 @@ jobs:
         run: node scripts/customer_holiday_booking_contract_check.mjs
       - name: Verify customer return-home confirmation
         run: node scripts/customer_return_home_contract_check.mjs
+      - name: Verify inquiry visit details
+        run: node scripts/customer_inquiry_visit_contract_check.mjs
       - name: Verify minimum paid group booking rule
         run: node scripts/customer_group_minimum_contract_check.mjs
       - name: Verify modal interaction consistency
