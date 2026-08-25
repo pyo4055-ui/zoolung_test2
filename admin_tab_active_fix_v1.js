@@ -7,6 +7,11 @@ function gray(id){
   const btn=document.getElementById(id);
   if(btn)btn.className='btn-gray';
 }
+function renameSettingsTab(){
+  document.querySelectorAll('#adminView .admin-tabs button').forEach(btn=>{
+    if(btn.textContent.trim()==='설정')btn.textContent='예약설정';
+  });
+}
 function loadCalendarSummary(){
   if(document.getElementById('zrAdminCalendarStatusSummaryV1'))return;
   const s=document.createElement('script');
@@ -104,6 +109,7 @@ function loadExcelReliabilityFix(){
   document.body.appendChild(s);
 }
 function loadUiFixes(){
+  renameSettingsTab();
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
