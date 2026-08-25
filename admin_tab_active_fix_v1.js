@@ -33,7 +33,7 @@ function loadCalendarSummary(){
   const s=document.createElement('script');
   s.id='zrAdminCalendarStatusSummaryV1';
   s.async=false;
-  s.src='./admin_calendar_status_summary_v1.js?v=4';
+  s.src='./admin_calendar_status_summary_v1.js?v=3';
   document.body.appendChild(s);
 }
 function loadActivityOrgDetailFix(){
