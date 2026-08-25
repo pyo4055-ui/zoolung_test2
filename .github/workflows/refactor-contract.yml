@@ -31,6 +31,8 @@ jobs:
         run: node scripts/admin_calendar_status_select_contract_check.mjs
       - name: Verify separate actual-payment workspace
         run: node scripts/admin_settlement_workspace_contract_check.mjs
+      - name: Verify settlement action survives rerenders
+        run: node scripts/admin_settlement_ui_stability_contract_check.mjs
       - name: Verify reservation activity date filtering
         run: node scripts/admin_activity_filter_contract_check.mjs
       - name: Verify playground booking order and guidance
