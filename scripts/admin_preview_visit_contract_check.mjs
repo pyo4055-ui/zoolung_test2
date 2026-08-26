@@ -41,20 +41,30 @@ for(const needle of [
 ])if(!queryUi.includes(needle))fail(`preview visit query UI missing: ${needle}`);
 if(queryUi.includes('MutationObserver'))fail('preview visit query UI must not add a broad MutationObserver');
 
+const content=read('admin_preview_visit_content_v1.js');
+syntax('admin_preview_visit_content_v1.js');
+for(const needle of [
+  "const INQUIRY_KEY='zr_inquiries'",'const PREVIEW_LIMIT=20','function shortText(value)','data-pv-content','zr-pv-content-preview',
+  'zrPreviewVisitContentModal','zrPreviewVisitContentFull','<h2>문의내용</h2>','>닫기</button>','white-space:pre-wrap','actions.insertBefore(btn,actions.firstChild)',
+  "document.addEventListener('zr:preview-visits-changed',schedule)"
+])if(!content.includes(needle))fail(`preview inquiry content UI missing: ${needle}`);
+if(content.includes('MutationObserver'))fail('preview inquiry content helper must not add a broad MutationObserver');
+
 const notify=read('admin_preview_visit_notify_v1.js');
 syntax('admin_preview_visit_notify_v1.js');
 for(const needle of [
   "const INQUIRY_KEY='zr_inquiries'",
   "const TEMPLATE_KEY='zr_preview_confirm_templates_v1'",
   'zrPreviewNotifyInnerTabs','사전답사 현황','확정문자 예시','확정문자 예시 관리',
-  'zrPreviewNotifyTemplateTitle','zrPreviewNotifyTemplateText','예시 저장','수정 저장','삭제',
-  '{단체명}','{방문일}','{방문시간}','{인원}','applyVars(text,p)',
-  'zrPreviewNotifyModal','사전답사 확정 안내','확정문자 예시 불러오기','확정 내용 확인','수신번호','방문 일정','수정하기','보내기',
+  'zrPreviewNotifyTemplateTitle','zrPreviewNotifyTemplateText','예시 저장','수정 저장','삭제','안내멘트',
+  '단체명·방문일시·방문인원은 확정된 사전답사 데이터가 문자 아래에 자동으로 붙습니다.',
+  'function fixedDetails(p)','단체명: ${p.orgName}','방문일시: ${p.date} ${p.time}','방문인원: ${p.people}명','function buildSms(intro,p)',
+  'zrPreviewNotifyModal','사전답사 확정 안내','확정문자 예시 불러오기','문자 고정정보','확정 내용 확인','수신번호','수정하기','보내기',
   "e.target?.closest?.('[data-pv-confirm]')",'e.stopImmediatePropagation()','openNotify(Number(btn.dataset.pvConfirm))',
   "item[contentKey(item)]=buildPreview(p,p.body,true)","document.dispatchEvent(new CustomEvent('zr:preview-visits-changed'))",'window.renderAdmin?.()',
   'sms:','body=${body}','[주렁주렁 동탄점]','navigator.clipboard?.writeText'
 ])if(!notify.includes(needle))fail(`preview confirmation SMS contract missing: ${needle}`);
-for(const forbidden of ["setStore('zr_bookings'",'reservationAvailability','scheduleGroups','MutationObserver','collection(','setDoc('])if(notify.includes(forbidden))fail(`preview confirmation SMS helper must not touch protected reservation/schedule contracts: ${forbidden}`);
+for(const forbidden of ['applyVars(text,p)','{단체명}','{방문일}','{방문시간}','{인원}',"setStore('zr_bookings'",'reservationAvailability','scheduleGroups','MutationObserver','collection(','setDoc('])if(notify.includes(forbidden))fail(`preview confirmation SMS helper must not contain protected/legacy behavior: ${forbidden}`);
 
 const cal=read('admin_calendar_status_summary_v1.js');
 syntax('admin_calendar_status_summary_v1.js');
@@ -66,8 +76,9 @@ syntax('admin_tab_active_fix_v1.js');
 for(const needle of [
   'zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()',
   'zrAdminPreviewVisitQueryUiV1','./admin_preview_visit_query_ui_v1.js?v=1','loadAdminPreviewVisitQueryUi()',
-  'zrAdminPreviewVisitNotifyV1','./admin_preview_visit_notify_v1.js?v=1','loadAdminPreviewVisitNotify()'
+  'zrAdminPreviewVisitNotifyV1','./admin_preview_visit_notify_v1.js?v=1','loadAdminPreviewVisitNotify()',
+  'zrAdminPreviewVisitContentV1','./admin_preview_visit_content_v1.js?v=1','loadAdminPreviewVisitContent()'
 ])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit management aligns the toolbar, supports reception/visit date filtering, keeps compact cards, and adds configurable confirmation SMS templates plus two-step SMS handoff without changing reservation data');
+ok('preview visit management supports compact inquiry previews with a full-content modal and confirmation SMS templates where only the intro is editable while org/date-time/people are always generated from current preview data');
