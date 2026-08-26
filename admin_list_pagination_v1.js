@@ -6,7 +6,7 @@ window.__ZR_ADMIN_LIST_PAGINATION_V1=true;
 const $=id=>document.getElementById(id);
 const configs={
   activity:{rootId:'activityList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true,nativePaginationSelector:'.zr-activity-pagination'},
-  outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8},
+  outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true},
   inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15,alwaysControls:true},
   preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15,alwaysControls:true}
 };
