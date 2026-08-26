@@ -71,7 +71,11 @@ for(const needle of [
   '>답변예시<',
   "setSubtab('examples')",
   '@media(min-width:721px)',
-  '.zr-ir-field.status{position:relative!important;top:4px!important}'
+  '.zr-ir-field.status{position:relative!important;top:4px!important}',
+  'background:#eef3ef',
+  'border:1px solid #d7e1da',
+  'button.btn-primary{background:#fff!important;color:#2f6b4f!important',
+  "nav.setAttribute('aria-label','1:1 문의 내부 메뉴')"
 ])if(!layout.includes(needle))fail(`nested inquiry reply layout missing: ${needle}`);
 if(layout.includes('MutationObserver'))fail('inquiry reply layout must not add a broad MutationObserver');
 
@@ -87,4 +91,4 @@ for(const needle of [
 ])if(!loader.includes(needle))fail(`inquiry reply loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('1:1 inquiry management supports receipt-date filtering, reply status, two-step SMS handoff, multiple titled reply examples, and nested inquiry/example subtabs while keeping preview visits and reservation data separate');
+ok('1:1 inquiry management supports receipt-date filtering, reply status, two-step SMS handoff, multiple titled reply examples, and visually distinct nested inquiry/example subtabs while keeping preview visits and reservation data separate');
