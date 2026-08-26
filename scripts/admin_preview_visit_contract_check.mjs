@@ -25,13 +25,18 @@ for(const needle of [
   "['00','30'].includes",
   '확정완료',
   'zrPreviewStatusFilter',
-  'zrPreviewDateFilter',
+  'zrPreviewStartDateFilter',
+  'zrPreviewEndDateFilter',
+  '조회 시작일',
+  '조회 종료일',
   '<option value="all">전체</option>',
   '<option value="received">접수</option>',
   '<option value="confirmed">확정</option>',
-  "status==='received'&&p.confirmed",
-  "status==='confirmed'&&!p.confirmed",
-  'date&&p.date!==date',
+  "f.status==='received'&&p.confirmed",
+  "f.status==='confirmed'&&!p.confirmed",
+  'f.start&&p.date<f.start',
+  'f.end&&p.date>f.end',
+  '조회 시작일은 종료일보다 늦을 수 없습니다.',
   'zr-pv-info',
   '<b>방문</b>',
   '<b>인원</b>',
@@ -42,6 +47,7 @@ for(const needle of [
   'window.zrPreviewVisitConfirmedByDate=confirmedByDate',
   'window.renderAdmin?.()'
 ])if(!s.includes(needle))fail(`preview visit contract missing: ${needle}`);
+if(s.includes('zrPreviewDateFilter'))fail('single-day preview visit filter must not remain after date-range conversion');
 if(s.includes("setStore('zr_bookings'")||s.includes('setStore("zr_bookings"'))fail('preview visits must not write into reservation bookings');
 if(/collection\s*\(/.test(s)||s.includes('firebase'))fail('preview visit helper must not introduce a new Firestore collection');
 if(s.includes('MutationObserver'))fail('preview visit tab must not add a broad MutationObserver');
@@ -60,4 +66,4 @@ syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()'])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit management keeps compact one-line cards, supports all/received/confirmed and date filtering, and confirmed visits remain separate from reservation counts');
+ok('preview visit management keeps compact one-line cards, supports all/received/confirmed plus start/end visit-date filtering, and confirmed visits remain separate from reservation counts');
