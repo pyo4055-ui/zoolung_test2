@@ -3,7 +3,10 @@
 if(window.__ZR_ADMIN_INQUIRY_REPLY_LAYOUT_V1)return;
 window.__ZR_ADMIN_INQUIRY_REPLY_LAYOUT_V1=true;
 
+const INQUIRY_KEY='zr_inquiries';
+const PREVIEW_LIMIT=20;
 const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let installed=false;
 
 function installStyle(){
@@ -19,9 +22,20 @@ function installStyle(){
     #zrInquiryReplyInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}
     #tab-inquiry-reply-v1>#tab-inquiry-reply-examples{margin:0!important}
     #tab-inquiry-reply-v1>#tab-inquiry-reply-examples>.zr-ir-panel{margin-top:12px!important}
+    #tab-inquiry-reply-v1 .zr-ir-line2{display:flex!important;align-items:center;gap:8px;min-width:0}
+    #tab-inquiry-reply-v1 .zr-ir-content-btn{flex:0 0 auto;height:28px;padding:0 9px;border:1px solid #cddbd1;border-radius:8px;background:#f4f8f5;color:#2f6b4f;font-size:11px;font-weight:900;line-height:26px;cursor:pointer}
+    #tab-inquiry-reply-v1 .zr-ir-content-btn:hover{background:#e9f3ed;border-color:#b8cfbf}
+    #tab-inquiry-reply-v1 .zr-ir-content-preview{display:block;min-width:0;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#69766e}
+    #zrInquiryContentModal .modal-card{width:min(680px,100%);max-height:min(82vh,720px);display:flex;flex-direction:column}
+    #zrInquiryContentModal h2{margin:0 0 14px}
+    #zrInquiryContentModal .zr-ir-content-full{min-height:120px;max-height:56vh;overflow:auto;border:1px solid var(--line,#dfe5df);border-radius:13px;background:#fafcf9;padding:16px;font-size:14px;line-height:1.7;color:var(--text,#1f2a23);white-space:pre-wrap;word-break:break-word}
+    #zrInquiryContentModal .modal-actions{display:flex;justify-content:flex-end;margin-top:16px}
+    #zrInquiryContentModal .modal-actions button{min-width:84px}
     @media(max-width:720px){
       #zrInquiryReplyInnerTabs{display:grid;grid-template-columns:1fr 1fr;width:100%;box-sizing:border-box}
       #zrInquiryReplyInnerTabs button{width:100%;min-width:0}
+      #tab-inquiry-reply-v1 .zr-ir-content-preview{max-width:190px}
+      #zrInquiryContentModal .zr-ir-content-full{max-height:58vh;padding:14px}
     }
   `;
   document.head.appendChild(style);
@@ -30,6 +44,39 @@ function installStyle(){
 function directPanel(main){
   return [...main.children].find(el=>el.classList?.contains('zr-ir-panel'))||null;
 }
+function previewText(value){
+  const oneLine=String(value||'').replace(/\s+/g,' ').trim();
+  const chars=Array.from(oneLine);
+  return chars.length>PREVIEW_LIMIT?`${chars.slice(0,PREVIEW_LIMIT).join('')}…`:oneLine;
+}
+function ensureContentModal(){
+  if($('zrInquiryContentModal'))return;
+  const modal=document.createElement('div');
+  modal.id='zrInquiryContentModal';
+  modal.className='modal hidden';
+  modal.innerHTML=`<div class="modal-card"><h2>문의내용</h2><div class="zr-ir-content-full" id="zrInquiryContentFull"></div><div class="modal-actions"><button type="button" class="btn-gray" id="zrInquiryContentClose">닫기</button></div></div>`;
+  document.body.appendChild(modal);
+  $('zrInquiryContentClose').onclick=closeContentModal;
+}
+function openContentModal(content){
+  ensureContentModal();
+  const body=$('zrInquiryContentFull');if(body)body.textContent=String(content||'문의내용 없음');
+  $('zrInquiryContentModal')?.classList.remove('hidden');
+  $('zrInquiryContentModal')?.querySelector('.modal-card')?.scrollTo?.({top:0});
+}
+function closeContentModal(){$('zrInquiryContentModal')?.classList.add('hidden')}
+function decorateInquiryCards(){
+  const main=$('tab-inquiry-reply-v1');if(!main)return;
+  main.querySelectorAll('.zr-ir-card .zr-ir-line2').forEach(line=>{
+    if(line.dataset.zrContentDecorated==='1')return;
+    const raw=(line.getAttribute('title')||line.textContent.replace(/^\s*문의내용\s*/,'')).trim()||'문의내용 없음';
+    line.dataset.zrContentDecorated='1';
+    line.dataset.zrFullContent=raw;
+    line.removeAttribute('title');
+    line.innerHTML=`<button type="button" class="zr-ir-content-btn" data-ir-content>문의내용</button><span class="zr-ir-content-preview">${esc(previewText(raw))}</span>`;
+  });
+}
+function scheduleDecorate(){setTimeout(decorateInquiryCards,0)}
 function setSubtab(mode){
   const main=$('tab-inquiry-reply-v1'),examples=$('tab-inquiry-reply-examples');
   if(!main||!examples)return;
@@ -41,7 +88,7 @@ function setSubtab(mode){
   if(exampleBtn)exampleBtn.className=examplesOpen?'btn-primary':'btn-gray';
   if(examplesOpen){
     try{document.getElementById('zrInquiryTemplateList')?.scrollIntoView?.({block:'nearest'})}catch{}
-  }
+  }else scheduleDecorate();
 }
 
 function install(){
@@ -49,6 +96,7 @@ function install(){
   const main=$('tab-inquiry-reply-v1'),examples=$('tab-inquiry-reply-examples');
   if(!main||!examples)return false;
   installStyle();
+  ensureContentModal();
 
   $('zrInquiryReplyExampleTabBtn')?.remove();
   if(examples.parentElement!==main)main.appendChild(examples);
@@ -64,13 +112,30 @@ function install(){
   $('zrInquiryReplyInquirySubtab').onclick=()=>setSubtab('inquiry');
   $('zrInquiryReplyExampleSubtab').onclick=()=>setSubtab('examples');
 
+  if(main.dataset.zrInquiryContentBound!=='1'){
+    main.dataset.zrInquiryContentBound='1';
+    main.addEventListener('click',e=>{
+      const contentBtn=e.target?.closest?.('[data-ir-content]');
+      if(contentBtn){
+        e.preventDefault();e.stopPropagation();
+        const line=contentBtn.closest('.zr-ir-line2');
+        openContentModal(line?.dataset.zrFullContent||'문의내용 없음');
+        return;
+      }
+      if(e.target?.closest?.('#zrInquiryApply'))scheduleDecorate();
+    },true);
+  }
+
   document.addEventListener('click',e=>{
     const btn=e.target?.closest?.('#adminView .admin-tabs button');
     if(!btn)return;
-    if((btn.textContent||'').trim()==='1:1 문의')setTimeout(()=>setSubtab('inquiry'),0);
+    if((btn.textContent||'').trim()==='1:1 문의'){setTimeout(()=>setSubtab('inquiry'),0);scheduleDecorate()}
   },true);
+  document.addEventListener('zr:inquiry-replies-changed',scheduleDecorate);
+  window.addEventListener('storage',e=>{if(e.key===INQUIRY_KEY)scheduleDecorate()});
 
   setSubtab('inquiry');
+  scheduleDecorate();
   installed=true;
   return true;
 }
