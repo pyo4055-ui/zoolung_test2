@@ -22,10 +22,10 @@ function installStyle(){
     #zrInquiryReplyInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}
     #tab-inquiry-reply-v1>#tab-inquiry-reply-examples{margin:0!important}
     #tab-inquiry-reply-v1>#tab-inquiry-reply-examples>.zr-ir-panel{margin-top:12px!important}
-    #tab-inquiry-reply-v1 .zr-ir-line2{display:flex!important;align-items:center;gap:8px;min-width:0}
-    #tab-inquiry-reply-v1 .zr-ir-content-btn{flex:0 0 auto;height:28px;padding:0 9px;border:1px solid #cddbd1;border-radius:8px;background:#f4f8f5;color:#2f6b4f;font-size:11px;font-weight:900;line-height:26px;cursor:pointer}
-    #tab-inquiry-reply-v1 .zr-ir-content-btn:hover{background:#e9f3ed;border-color:#b8cfbf}
+    #tab-inquiry-reply-v1 .zr-ir-line2{display:flex!important;align-items:center;gap:7px;min-width:0}
     #tab-inquiry-reply-v1 .zr-ir-content-preview{display:block;min-width:0;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#69766e}
+    #tab-inquiry-reply-v1 .zr-ir-actions{gap:8px}
+    #tab-inquiry-reply-v1 .zr-ir-actions .zr-ir-content-btn{min-width:78px}
     #zrInquiryContentModal .modal-card{width:min(680px,100%);max-height:min(82vh,720px);display:flex;flex-direction:column}
     #zrInquiryContentModal h2{margin:0 0 14px}
     #zrInquiryContentModal .zr-ir-content-full{min-height:120px;max-height:56vh;overflow:auto;border:1px solid var(--line,#dfe5df);border-radius:13px;background:#fafcf9;padding:16px;font-size:14px;line-height:1.7;color:var(--text,#1f2a23);white-space:pre-wrap;word-break:break-word}
@@ -35,6 +35,7 @@ function installStyle(){
       #zrInquiryReplyInnerTabs{display:grid;grid-template-columns:1fr 1fr;width:100%;box-sizing:border-box}
       #zrInquiryReplyInnerTabs button{width:100%;min-width:0}
       #tab-inquiry-reply-v1 .zr-ir-content-preview{max-width:190px}
+      #tab-inquiry-reply-v1 .zr-ir-actions{gap:6px}
       #zrInquiryContentModal .zr-ir-content-full{max-height:58vh;padding:14px}
     }
   `;
@@ -67,13 +68,22 @@ function openContentModal(content){
 function closeContentModal(){$('zrInquiryContentModal')?.classList.add('hidden')}
 function decorateInquiryCards(){
   const main=$('tab-inquiry-reply-v1');if(!main)return;
-  main.querySelectorAll('.zr-ir-card .zr-ir-line2').forEach(line=>{
-    if(line.dataset.zrContentDecorated==='1')return;
+  main.querySelectorAll('.zr-ir-card').forEach(card=>{
+    const line=card.querySelector('.zr-ir-line2');if(!line||line.dataset.zrContentDecorated==='1')return;
     const raw=(line.getAttribute('title')||line.textContent.replace(/^\s*문의내용\s*/,'')).trim()||'문의내용 없음';
     line.dataset.zrContentDecorated='1';
     line.dataset.zrFullContent=raw;
     line.removeAttribute('title');
-    line.innerHTML=`<button type="button" class="zr-ir-content-btn" data-ir-content>문의내용</button><span class="zr-ir-content-preview">${esc(previewText(raw))}</span>`;
+    line.innerHTML=`<b>문의내용</b><span class="zr-ir-content-preview">${esc(previewText(raw))}</span>`;
+
+    let actions=card.querySelector('.zr-ir-actions');
+    if(!actions){actions=document.createElement('div');actions.className='zr-ir-actions';card.appendChild(actions)}
+    if(!actions.querySelector('[data-ir-content]')){
+      const btn=document.createElement('button');
+      btn.type='button';btn.className='btn-gray zr-ir-content-btn';btn.setAttribute('data-ir-content','');btn.textContent='문의내용';
+      const reply=actions.querySelector('[data-ir-reply]');
+      if(reply)actions.insertBefore(btn,reply);else actions.appendChild(btn);
+    }
   });
 }
 function scheduleDecorate(){setTimeout(decorateInquiryCards,0)}
@@ -118,7 +128,7 @@ function install(){
       const contentBtn=e.target?.closest?.('[data-ir-content]');
       if(contentBtn){
         e.preventDefault();e.stopPropagation();
-        const line=contentBtn.closest('.zr-ir-line2');
+        const card=contentBtn.closest('.zr-ir-card'),line=card?.querySelector('.zr-ir-line2');
         openContentModal(line?.dataset.zrFullContent||'문의내용 없음');
         return;
       }
