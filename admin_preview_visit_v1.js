@@ -46,7 +46,7 @@ function parsePreview(content){
   return {confirmed:m[1]==='사전답사 확정',orgName:m[2].trim(),date:m[3],time:m[4],people:Number(m[5]||0),body:text.slice(m[0].length)};
 }
 function buildPreview(p,body,confirmed){
-  return `[${confirmed?'사전답사 확정':'사전답사 문의'}]\n단체명: ${String(p.orgName||'').trim()}\n방문 희망일: ${p.date}\n방문 희망시간: ${p.time}\n사전답사 인원: ${Math.max(1,Math.trunc(Number(p.people)||1))}명\n\n${String(body||'').trim()}`.trimEnd();
+  return `[${confirmed?'사전답사 확정':'사전답사 문의'}]\n단체명: ${String(p.orgName||'').trim()}\n방문 희망일: ${p.date}\n방문 희망시간: ${p.time}\n사전답사 인원: ${Math.max(1,Math.trunc(Number(p.people)||1)}명\n\n${String(body||'').trim()}`.trimEnd();
 }
 function previewRows(){
   return readInquiries().map((item,index)=>({item,index,p:parsePreview(contentOf(item))})).filter(x=>x.p);
@@ -57,15 +57,21 @@ window.zrPreviewVisitConfirmedByDate=confirmedByDate;
 function installStyle(){
   if($('zrPreviewVisitStyleV1'))return;
   const s=document.createElement('style');s.id='zrPreviewVisitStyleV1';s.textContent=`
-  #tab-preview-visit .zr-pv-head{display:flex;gap:10px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
-  #tab-preview-visit .zr-pv-filterbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#f8faf8}
-  #tab-preview-visit .zr-pv-filterfield{display:grid;gap:5px}
-  #tab-preview-visit .zr-pv-filterfield label{margin:0;font-size:11px;color:var(--muted);font-weight:800}
-  #tab-preview-visit .zr-pv-filterfield select,#tab-preview-visit .zr-pv-filterfield input{height:40px;min-height:40px;padding:0 10px}
-  #tab-preview-visit .zr-pv-filterfield.status select{width:120px}
-  #tab-preview-visit .zr-pv-filterfield.date input{width:170px}
-  #tab-preview-visit .zr-pv-filter-actions{display:flex;gap:7px;align-items:center}
-  #tab-preview-visit .zr-pv-filter-actions button{height:40px;padding:0 13px}
+  #tab-preview-visit .zr-pv-panel{padding:20px 22px 18px}
+  #tab-preview-visit .zr-pv-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:22px}
+  #tab-preview-visit .zr-pv-head h2{margin:0;font-size:22px;line-height:1.25}
+  #tab-preview-visit .zr-pv-count{align-self:center;color:var(--muted);font-size:12px;white-space:nowrap}
+  #tab-preview-visit .zr-pv-filterbar{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px 12px;align-items:end;margin:0}
+  #tab-preview-visit .zr-pv-filterfield{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0}
+  #tab-preview-visit .zr-pv-filterfield label{display:block;margin:0;font-size:12px;line-height:1.2;color:var(--text);font-weight:800}
+  #tab-preview-visit .zr-pv-filterfield input,#tab-preview-visit .zr-pv-filterfield select{width:100%;height:44px;min-height:44px;box-sizing:border-box;margin:0;padding:0 12px}
+  #tab-preview-visit .zr-pv-filterfield.start{grid-column:1/4;grid-row:1}
+  #tab-preview-visit .zr-pv-filterfield.end{grid-column:4/7;grid-row:1}
+  #tab-preview-visit .zr-pv-filterfield.status{grid-column:7/10;grid-row:1}
+  #tab-preview-visit .zr-pv-filter-actions{display:contents}
+  #tab-preview-visit #zrPreviewApplyFilter{grid-column:7/10;grid-row:2;width:100%;height:44px;min-height:44px;margin:0}
+  #tab-preview-visit #zrPreviewResetFilter{grid-column:10/13;grid-row:2;width:100%;height:44px;min-height:44px;margin:0}
+  #tab-preview-visit .zr-pv-query-help{margin:12px 0 18px;font-size:12px;line-height:1.55;color:var(--muted)}
   #tab-preview-visit .zr-pv-list{display:grid;gap:8px}
   #tab-preview-visit .zr-pv-card{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:14px;row-gap:7px;border:1px solid var(--line);border-radius:14px;padding:11px 13px;background:#fff;box-shadow:0 2px 8px rgba(30,50,36,.035)}
   #tab-preview-visit .zr-pv-summary{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
@@ -84,19 +90,29 @@ function installStyle(){
   #zrPreviewEditModal textarea{min-height:120px;resize:vertical}
   #zrPreviewEditModal .zr-pv-readonly{background:#f7f8f6;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;color:var(--muted)}
   @media(max-width:900px){
+    #tab-preview-visit .zr-pv-filterfield.start{grid-column:1/7;grid-row:1}
+    #tab-preview-visit .zr-pv-filterfield.end{grid-column:7/13;grid-row:1}
+    #tab-preview-visit .zr-pv-filterfield.status{grid-column:1/7;grid-row:2}
+    #tab-preview-visit #zrPreviewApplyFilter{grid-column:1/7;grid-row:3}
+    #tab-preview-visit #zrPreviewResetFilter{grid-column:7/13;grid-row:3}
     #tab-preview-visit .zr-pv-summary{gap:6px;overflow-x:auto;scrollbar-width:none}
     #tab-preview-visit .zr-pv-summary::-webkit-scrollbar{display:none}
     #tab-preview-visit .zr-pv-created{display:none}
     #tab-preview-visit .zr-pv-org{min-width:110px;max-width:160px}
   }
   @media(max-width:720px){
+    #tab-preview-visit .zr-pv-panel{padding:16px 14px}
+    #tab-preview-visit .zr-pv-head{margin-bottom:16px}
+    #tab-preview-visit .zr-pv-head h2{font-size:20px}
+    #tab-preview-visit .zr-pv-filterfield.start{grid-column:1/13;grid-row:1}
+    #tab-preview-visit .zr-pv-filterfield.end{grid-column:1/13;grid-row:2}
+    #tab-preview-visit .zr-pv-filterfield.status{grid-column:1/13;grid-row:3}
+    #tab-preview-visit #zrPreviewApplyFilter{grid-column:1/7;grid-row:4}
+    #tab-preview-visit #zrPreviewResetFilter{grid-column:7/13;grid-row:4}
     #zrPreviewEditModal .zr-pv-edit-grid{grid-template-columns:1fr}
     #tab-preview-visit .zr-pv-card{padding:10px 11px;column-gap:8px}
     #tab-preview-visit .zr-pv-info{padding:5px 7px}
     #tab-preview-visit .zr-pv-actions button{min-width:50px;padding:8px 10px}
-    #tab-preview-visit .zr-pv-filterbar{gap:8px}
-    #tab-preview-visit .zr-pv-filterfield.status select{width:105px}
-    #tab-preview-visit .zr-pv-filterfield.date input{width:145px}
   }
   `;document.head.appendChild(s);
 }
@@ -200,7 +216,7 @@ function resetFilters(){
 function installTab(){
   if(installed)return true;const tabs=document.querySelector('#adminView .admin-tabs'),admin=$('adminView');if(!tabs||!admin)return false;installStyle();ensureModal();
   let btn=$('zrPreviewVisitTabBtn');if(!btn){btn=document.createElement('button');btn.id='zrPreviewVisitTabBtn';btn.className='btn-gray';btn.textContent='사전답사 관리';tabs.appendChild(btn)}
-  let sec=$('tab-preview-visit');if(!sec){sec=document.createElement('section');sec.id='tab-preview-visit';sec.className='hidden';sec.innerHTML=`<div class="card" style="margin-top:14px"><div class="zr-pv-head"><div><h2 style="margin:0 0 4px">사전답사 관리</h2><div class="help">1:1 문의로 접수된 사전답사를 확인하고, 전화 확인 후 내용을 수정·확정할 수 있습니다.</div></div><div class="help" id="zrPreviewVisitCount"></div></div><div class="zr-pv-filterbar"><div class="zr-pv-filterfield date"><label>조회 시작일</label><input type="date" id="zrPreviewStartDateFilter"></div><div class="zr-pv-filterfield date"><label>조회 종료일</label><input type="date" id="zrPreviewEndDateFilter"></div><div class="zr-pv-filterfield status"><label>상태</label><select id="zrPreviewStatusFilter"><option value="all">전체</option><option value="received">접수</option><option value="confirmed">확정</option></select></div><div class="zr-pv-filter-actions"><button type="button" class="btn-primary" id="zrPreviewApplyFilter">조회</button><button type="button" class="btn-gray" id="zrPreviewResetFilter">초기화</button></div></div><div class="zr-pv-list" id="zrPreviewVisitList"></div></div>`;admin.appendChild(sec)}
+  let sec=$('tab-preview-visit');if(!sec){sec=document.createElement('section');sec.id='tab-preview-visit';sec.className='hidden';sec.innerHTML=`<div class="card zr-pv-panel" style="margin-top:14px"><div class="zr-pv-head"><h2>사전답사 현황 조회</h2><div class="zr-pv-count" id="zrPreviewVisitCount"></div></div><div class="zr-pv-filterbar"><div class="zr-pv-filterfield start"><label>조회 시작일</label><input type="date" id="zrPreviewStartDateFilter"></div><div class="zr-pv-filterfield end"><label>조회 종료일</label><input type="date" id="zrPreviewEndDateFilter"></div><div class="zr-pv-filterfield status"><label>처리 상태</label><select id="zrPreviewStatusFilter"><option value="all">전체 조회</option><option value="received">접수</option><option value="confirmed">확정</option></select></div><div class="zr-pv-filter-actions"><button type="button" class="btn-primary" id="zrPreviewApplyFilter">조회하기</button><button type="button" class="btn-soft" id="zrPreviewResetFilter">초기화</button></div></div><div class="zr-pv-query-help">방문일 기준으로 조회합니다. 1:1 문의로 접수된 사전답사를 확인하고, 전화 확인 후 내용을 수정·확정할 수 있습니다.</div><div class="zr-pv-list" id="zrPreviewVisitList"></div></div>`;admin.appendChild(sec)}
   btn.onclick=openTab;
   $('zrPreviewApplyFilter').onclick=applyFilters;$('zrPreviewResetFilter').onclick=resetFilters;
   sec.addEventListener('click',e=>{const edit=e.target.closest('[data-pv-edit]'),ok=e.target.closest('[data-pv-confirm]');if(edit)openEdit(Number(edit.dataset.pvEdit));if(ok&&!ok.disabled)confirmPreview(Number(ok.dataset.pvConfirm))});
