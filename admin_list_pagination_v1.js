@@ -5,11 +5,12 @@ window.__ZR_ADMIN_LIST_PAGINATION_V1=true;
 
 const $=id=>document.getElementById(id);
 const configs={
+  activity:{rootId:'activityList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true,nativePaginationSelector:'.zr-activity-pagination'},
   outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8},
-  inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15},
-  preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15}
+  inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15,alwaysControls:true},
+  preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15,alwaysControls:true}
 };
-const state={outsourcing:1,inquiry:1,preview:1};
+const state={activity:1,outsourcing:1,inquiry:1,preview:1};
 const observers=new Map();
 const timers=new Map();
 
@@ -47,6 +48,7 @@ function paginate(key){
   installStyle();
   root.querySelector(`.zr-admin-list-pagination[data-zr-pagination-key="${key}"]`)?.remove();
   restorePageHidden(root);
+  if(cfg.nativePaginationSelector&&root.querySelector(`:scope > ${cfg.nativePaginationSelector}`))return true;
   const all=[...root.querySelectorAll(`:scope > ${cfg.itemSelector}`)];
   const eligible=all.filter(el=>el.style.display!=='none');
   const pages=Math.max(1,Math.ceil(eligible.length/cfg.pageSize));
@@ -57,7 +59,7 @@ function paginate(key){
     if(i>=start&&i<start+cfg.pageSize)return;
     el.dataset.zrListPageHidden='1';el.dataset.zrListPageDisplay=el.style.display||'';el.style.display='none';
   });
-  if(pages>1)root.insertAdjacentHTML('beforeend',controlsHtml(key,state[key],pages));
+  if(pages>1||cfg.alwaysControls)root.insertAdjacentHTML('beforeend',controlsHtml(key,state[key],pages));
   return true;
 }
 function schedule(key,{reset=false,delay=0}={}){
@@ -71,12 +73,13 @@ function bindRoot(key){
   observers.get(key)?.observer?.disconnect?.();
   const observer=new MutationObserver(mutations=>{
     const itemChanged=mutations.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n?.nodeType===1&&n.matches?.(cfg.itemSelector)));
-    if(itemChanged)schedule(key,{delay:0});
+    if(itemChanged)paginate(key);
   });
   observer.observe(root,{childList:true});observers.set(key,{root,observer});return true;
 }
 function scrollRoot(key){try{$(configs[key].rootId)?.scrollIntoView?.({block:'start'})}catch{}}
 function keyFromPagination(el){return el?.closest?.('[data-zr-pagination-key]')?.dataset?.zrPaginationKey||''}
+function isOutsourceFilterControl(target){return ['outsourceStart','outsourceEnd','outsourceVendorFilter'].includes(target?.id||'')}
 
 function installEvents(){
   document.addEventListener('click',e=>{
@@ -86,22 +89,25 @@ function installEvents(){
       e.preventDefault();e.stopPropagation();state[key]=Math.max(1,Number(pageBtn.dataset.zrListPage)||1);paginate(key);scrollRoot(key);return;
     }
     const target=e.target;
-    if(target?.closest?.('#outsourceSearch'))schedule('outsourcing',{reset:true,delay:0});
+    const activityButton=target?.closest?.('#tab-activity button');
+    if(activityButton&&['조회하기','오늘'].includes((activityButton.textContent||'').trim()))state.activity=1;
+    if(target?.closest?.('#outsourceSearch'))state.outsourcing=1;
     if(target?.closest?.('#outsourceTabBtn'))schedule('outsourcing',{reset:true,delay:80});
-    if(target?.closest?.('#zrInquiryApply'))schedule('inquiry',{reset:true,delay:0});
+    if(target?.closest?.('#zrInquiryApply'))state.inquiry=1;
     const adminTab=target?.closest?.('#adminView .admin-tabs button');
     if(adminTab&&(adminTab.textContent||'').trim()==='1:1 문의')schedule('inquiry',{reset:true,delay:40});
-    if(target?.closest?.('#zrPreviewApplyFilter'))schedule('preview',{reset:true,delay:0});
+    if(target?.closest?.('#zrPreviewApplyFilter'))state.preview=1;
     if(target?.closest?.('#zrPreviewVisitTabBtn'))schedule('preview',{reset:true,delay:40});
   },true);
   document.addEventListener('change',e=>{
-    if(e.target?.id==='outsourceVendorFilter')schedule('outsourcing',{reset:true,delay:0});
+    if(!isOutsourceFilterControl(e.target))return;
+    e.stopImmediatePropagation();
   },true);
   document.addEventListener('zr:inquiry-replies-changed',()=>schedule('inquiry',{delay:0}));
   document.addEventListener('zr:preview-visits-changed',()=>schedule('preview',{delay:20}));
   window.addEventListener('storage',e=>{
     if(e.key==='zr_inquiries'){schedule('inquiry',{delay:20});schedule('preview',{delay:40})}
-    if(e.key==='zr_bookings')schedule('outsourcing',{delay:40});
+    if(e.key==='zr_bookings'){schedule('activity',{delay:20});schedule('outsourcing',{delay:40})}
   });
 }
 function boot(){
