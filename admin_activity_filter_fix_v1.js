@@ -4,7 +4,7 @@ if(window.__ZR_ADMIN_ACTIVITY_FILTER_FIX_V1)return;
 window.__ZR_ADMIN_ACTIVITY_FILTER_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
 const ACTIVITY_BASIS_KEY='zr_activity_date_basis_v10';
 const ACTIVITY_STATUS_KEY='zr_activity_status_filter_v1';
