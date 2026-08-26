@@ -92,6 +92,14 @@ function loadAdminListPagination(){
   if(document.getElementById('zrAdminListPaginationV1')||window.__ZR_ADMIN_LIST_PAGINATION_V1)return;
   const s=document.createElement('script');s.id='zrAdminListPaginationV1';s.async=false;s.src='./admin_list_pagination_v1.js?v=1';document.body.appendChild(s);
 }
+function loadCustomerViewTracking(){
+  if(document.getElementById('zrCustomerViewTrackingV1')||window.__ZR_CUSTOMER_VIEW_TRACKING_V1)return;
+  const s=document.createElement('script');s.id='zrCustomerViewTrackingV1';s.async=false;s.src='./customer_view_tracking_v1.js?v=1';document.body.appendChild(s);
+}
+function loadAdminToday(){
+  if(document.getElementById('zrAdminTodayTabV1')||window.__ZR_ADMIN_TODAY_TAB_V1)return;
+  const s=document.createElement('script');s.id='zrAdminTodayTabV1';s.async=false;s.src='./admin_today_tab_v1.js?v=1';document.body.appendChild(s);
+}
 function loadUiFixes(){
   renameSettingsTab();
   loadCustomerInquiryVisit();
@@ -114,6 +122,8 @@ function loadUiFixes(){
   loadUnsavedChangesGuard();
   loadExcelReliabilityFix();
   loadAdminListPagination();
+  loadCustomerViewTracking();
+  loadAdminToday();
 }
 
 document.addEventListener('click',e=>{
@@ -135,7 +145,9 @@ document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminListPagination,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminPreviewVisitNotify,0);setTimeout(loadAdminPreviewVisitContent,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);setTimeout(loadAdminListPagination,0);}
+document.addEventListener('zr:admin-runtime-ready',loadCustomerViewTracking,{once:true});
+document.addEventListener('zr:admin-runtime-ready',loadAdminToday,{once:true});
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminPreviewVisitNotify,0);setTimeout(loadAdminPreviewVisitContent,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);setTimeout(loadAdminListPagination,0);setTimeout(loadCustomerViewTracking,0);setTimeout(loadAdminToday,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
