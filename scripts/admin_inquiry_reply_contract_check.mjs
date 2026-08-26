@@ -75,7 +75,17 @@ for(const needle of [
   'background:#eef3ef',
   'border:1px solid #d7e1da',
   'button.btn-primary{background:#fff!important;color:#2f6b4f!important',
-  "nav.setAttribute('aria-label','1:1 문의 내부 메뉴')"
+  "nav.setAttribute('aria-label','1:1 문의 내부 메뉴')",
+  'const PREVIEW_LIMIT=20',
+  'function decorateInquiryCards()',
+  'data-ir-content',
+  'zr-ir-content-preview',
+  'zrInquiryContentModal',
+  'zrInquiryContentFull',
+  '<h2>문의내용</h2>',
+  '>닫기</button>',
+  'white-space:pre-wrap',
+  'line.dataset.zrFullContent=raw'
 ])if(!layout.includes(needle))fail(`nested inquiry reply layout missing: ${needle}`);
 if(layout.includes('MutationObserver'))fail('inquiry reply layout must not add a broad MutationObserver');
 
@@ -91,4 +101,4 @@ for(const needle of [
 ])if(!loader.includes(needle))fail(`inquiry reply loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('1:1 inquiry management supports receipt-date filtering, reply status, two-step SMS handoff, multiple titled reply examples, and visually distinct nested inquiry/example subtabs while keeping preview visits and reservation data separate');
+ok('1:1 inquiry management supports receipt-date filtering, reply status, two-step SMS handoff, multiple titled reply examples, distinct nested subtabs, and 20-character inquiry previews with a full-content modal while keeping preview visits and reservation data separate');
