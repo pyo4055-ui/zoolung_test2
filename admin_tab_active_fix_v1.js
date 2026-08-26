@@ -132,6 +132,7 @@ document.addEventListener('click',e=>{
   if(clicked.id!=='zrScheduleTabBtn')gray('zrScheduleTabBtn');
   if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');
   if(clicked.id!=='zrPreviewVisitTabBtn')gray('zrPreviewVisitTabBtn');
+  if(clicked.id!=='zrTodayTabBtn')gray('zrTodayTabBtn');
 },true);
 
 document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{once:true});
