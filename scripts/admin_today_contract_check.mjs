@@ -45,16 +45,21 @@ for(const needle of [
   "parking:'customerViewedParkingAt'",
   "schedule:'customerViewedScheduleAt'",
   'window.setStore(KEY,list)',
-  "card.querySelector('.zr-customer-guide-action')",
-  "card.querySelector('.zr-customer-parking-action')",
+  "card.querySelector('.zr-customer-guide-action'),FIELDS.guide",
+  "card.querySelector('.zr-customer-parking-action'),FIELDS.parking",
   "'zrGuideMapModalV32'",
   "'zrCustomerParkingQuickV1'",
   'IntersectionObserver',
   "#zrCustomerScheduleBox .zr-customer-schedule",
+  "entry.intersectionRatio<0.15",
+  "{threshold:[0.15]}",
+  "persistFirstView(id,FIELDS.schedule)",
   'listObserver.observe(list,{childList:true,subtree:true})'
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
+  "bindAction(card.querySelector('.zr-customer-guide-action'),'guide'",
+  "bindAction(card.querySelector('.zr-customer-parking-action'),'parking'",
   'setDoc(', 'updateDoc(', 'deleteDoc(', 'localStorage.setItem(',
   'reservationAvailability', 'scheduleGroups', 'scheduleSharedMemos',
   'observe(document.body', "document.addEventListener('click'"
