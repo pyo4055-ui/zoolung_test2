@@ -35,8 +35,6 @@ for(const needle of [
   '<option value="received">접수</option>',
   '<option value="confirmed">확정</option>',
   'grid-template-columns:repeat(12,minmax(0,1fr))',
-  '#zrPreviewApplyFilter{grid-column:7/10;grid-row:2',
-  '#zrPreviewResetFilter{grid-column:10/13;grid-row:2',
   '방문일 기준으로 조회합니다.',
   "f.status==='received'&&p.confirmed",
   "f.status==='confirmed'&&!p.confirmed",
@@ -58,6 +56,18 @@ if(s.includes("setStore('zr_bookings'")||s.includes('setStore("zr_bookings"'))fa
 if(/collection\s*\(/.test(s)||s.includes('firebase'))fail('preview visit helper must not introduce a new Firestore collection');
 if(s.includes('MutationObserver'))fail('preview visit tab must not add a broad MutationObserver');
 
+const queryUi=read('admin_preview_visit_query_ui_v1.js');
+syntax('admin_preview_visit_query_ui_v1.js');
+for(const needle of [
+  "timeZone:'Asia/Seoul'",
+  "start.value=`${today.slice(0,8)}01`",
+  'end.value=today',
+  "$('zrPreviewResetFilter')?.remove()",
+  '#zrPreviewApplyFilter{grid-column:10/13!important;grid-row:1!important',
+  '#tab-preview-visit .zr-pv-filterfield.status{grid-column:7/10!important;grid-row:1!important'
+])if(!queryUi.includes(needle))fail(`preview visit query UI missing: ${needle}`);
+if(queryUi.includes('MutationObserver'))fail('preview visit query UI must not add a broad MutationObserver');
+
 const cal=read('admin_calendar_status_summary_v1.js');
 syntax('admin_calendar_status_summary_v1.js');
 for(const needle of [
@@ -69,7 +79,10 @@ for(const needle of [
 
 const loader=read('admin_tab_active_fix_v1.js');
 syntax('admin_tab_active_fix_v1.js');
-for(const needle of ['zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()'])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
+for(const needle of [
+  'zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()',
+  'zrAdminPreviewVisitQueryUiV1','./admin_preview_visit_query_ui_v1.js?v=1','loadAdminPreviewVisitQueryUi()'
+])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit management matches the reservation-style toolbar, keeps compact one-line cards, supports all/received/confirmed plus start/end visit-date filtering, and confirmed visits remain separate from reservation counts');
+ok('preview visit management matches the reservation-style toolbar, defaults to current-month start through today, removes reset, keeps compact one-line cards, and preserves date/status filtering');
