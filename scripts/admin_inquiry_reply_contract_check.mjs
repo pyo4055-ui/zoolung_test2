@@ -1,0 +1,68 @@
+import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+
+let failed=false;
+const fail=m=>{failed=true;console.error('FAIL:',m)};
+const ok=m=>console.log('OK:',m);
+const read=p=>fs.readFileSync(p,'utf8');
+const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}};
+
+const file='admin_inquiry_reply_v1.js';
+const s=read(file);
+syntax(file);
+for(const needle of [
+  "const INQUIRY_KEY='zr_inquiries'",
+  "const TEMPLATE_KEY='zr_inquiry_reply_templates_v1'",
+  "const REPLY_MARKER='\\n\\n[관리자 답변]\\n'",
+  '1:1 문의 현황 조회',
+  '조회 시작일',
+  '조회 종료일',
+  '처리 상태',
+  '<option value="pending">미답변</option>',
+  '<option value="done">답변완료</option>',
+  '접수일 기준으로 조회합니다.',
+  "isPreviewInquiry(item)",
+  '사전답사 문의',
+  '사전답사 확정',
+  'data-ir-reply',
+  '답변하기',
+  '답변 내용 확인',
+  '수신번호',
+  '수정하기',
+  '보내기',
+  'sms:',
+  'body=${body}',
+  "['mobile','mobilePhone','cellphone','cellPhone','hp','inqMobile','contact']",
+  '답변일:',
+  '답변내용:',
+  "btn.textContent='답변예시'",
+  '답변예시 관리',
+  '답변예시 불러오기',
+  'zrInquiryReplyTemplate',
+  '예시 저장',
+  '수정 저장',
+  '삭제',
+  "timeZone:'Asia/Seoul'",
+  "start.value=`${today.slice(0,8)}01`",
+  'end.value=today'
+])if(!s.includes(needle))fail(`inquiry reply contract missing: ${needle}`);
+
+for(const forbidden of [
+  "setStore('zr_bookings'",
+  'setDoc(',
+  'collection(',
+  'reservationAvailability',
+  'scheduleGroups',
+  'MutationObserver'
+])if(s.includes(forbidden))fail(`inquiry reply helper must not touch protected reservation/schedule contracts: ${forbidden}`);
+
+const loader=read('admin_tab_active_fix_v1.js');
+syntax('admin_tab_active_fix_v1.js');
+for(const needle of [
+  'loadAdminInquiryReply()',
+  "s.id='zrAdminInquiryReplyV1'",
+  "s.src='./admin_inquiry_reply_v1.js?v=1'"
+])if(!loader.includes(needle))fail(`inquiry reply loader missing: ${needle}`);
+
+if(failed)process.exit(1);
+ok('1:1 inquiry management supports receipt-date range/status filtering, two-step SMS reply handoff, and reusable reply examples while keeping preview visits and reservation data separate');
