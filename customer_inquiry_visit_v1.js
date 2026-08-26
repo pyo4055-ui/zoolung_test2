@@ -196,6 +196,12 @@ function install(){
   if(nameWrap)nameWrap.classList.add('zr-inquiry-name');
   if(phoneWrap)phoneWrap.classList.add('zr-inquiry-phone');
   if(mobileWrap)mobileWrap.classList.add('zr-inquiry-mobile');
+  if(mobile){
+    mobile.setAttribute('inputmode','numeric');
+    mobile.setAttribute('maxlength','11');
+    mobile.setAttribute('pattern','010[0-9]{8}');
+    mobile.setAttribute('placeholder','01012345678');
+  }
   if(emailWrap){
     emailWrap.classList.add('zr-inquiry-email');
     const label=emailWrap.querySelector('label');
@@ -295,6 +301,9 @@ function install(){
     const person=name.value.trim(),mobileNo=mobile.value.trim(),phoneNo=phone?.value?.trim()||'',emailValue=email.value.trim(),body=content.value.trim();
     if(!inquiryType||!orgName||!date||!time||!Number.isFinite(count)||count<1||!person||!mobileNo||!body||!privacy.checked){
       showToast('필수 입력 항목과 개인정보 수집·이용 동의를 확인해주세요.');return null;
+    }
+    if(!/^010[0-9]{8}$/.test(mobileNo)){
+      showToast('휴대폰번호는 010으로 시작하는 숫자 11자리로 입력해주세요.');mobile.focus();return null;
     }
     if(!validTime(time,inquiryType)){showToast(inquiryType==='group'?'단체 방문시간은 10:30~18:00 중 30분 단위로 선택해주세요.':'사전답사 방문시간은 11:00~18:00 중 30분 단위로 선택해주세요.');return null}
     if(emailValue&&!email.validity.valid){showToast('이메일 주소 형식을 확인해주세요.');email.focus();return null}
