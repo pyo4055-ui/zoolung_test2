@@ -36,6 +36,14 @@ function loadAdminPreviewVisitQueryUi(){
   s.src='./admin_preview_visit_query_ui_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadAdminInquiryReply(){
+  if(document.getElementById('zrAdminInquiryReplyV1')||window.__ZR_ADMIN_INQUIRY_REPLY_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminInquiryReplyV1';
+  s.async=false;
+  s.src='./admin_inquiry_reply_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadCalendarSummary(){
   if(document.getElementById('zrAdminCalendarStatusSummaryV1'))return;
   const s=document.createElement('script');
@@ -137,6 +145,7 @@ function loadUiFixes(){
   loadCustomerInquiryVisit();
   loadAdminPreviewVisit();
   loadAdminPreviewVisitQueryUi();
+  loadAdminInquiryReply();
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
@@ -162,10 +171,11 @@ document.addEventListener('click',e=>{
 document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisit,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisitQueryUi,{once:true});
+document.addEventListener('zr:admin-runtime-ready',loadAdminInquiryReply,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
