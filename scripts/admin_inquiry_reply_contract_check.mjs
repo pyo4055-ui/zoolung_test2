@@ -35,13 +35,16 @@ for(const needle of [
   "['mobile','mobilePhone','cellphone','cellPhone','hp','inqMobile','contact']",
   '답변일:',
   '답변내용:',
-  "btn.textContent='답변예시'",
   '답변예시 관리',
   '답변예시 불러오기',
   'zrInquiryReplyTemplate',
+  'zrInquiryTemplateTitle',
+  'zrInquiryTemplateText',
   '예시 저장',
   '수정 저장',
   '삭제',
+  'list.push({id:`tpl_',
+  "templates.map(t=>`<option value=",
   "timeZone:'Asia/Seoul'",
   "start.value=`${today.slice(0,8)}01`",
   'end.value=today'
@@ -56,13 +59,32 @@ for(const forbidden of [
   'MutationObserver'
 ])if(s.includes(forbidden))fail(`inquiry reply helper must not touch protected reservation/schedule contracts: ${forbidden}`);
 
+const layout=read('admin_inquiry_reply_layout_v1.js');
+syntax('admin_inquiry_reply_layout_v1.js');
+for(const needle of [
+  "$('zrInquiryReplyExampleTabBtn')?.remove()",
+  'if(examples.parentElement!==main)main.appendChild(examples)',
+  'zrInquiryReplyInnerTabs',
+  'zrInquiryReplyInquirySubtab',
+  'zrInquiryReplyExampleSubtab',
+  '>문의현황<',
+  '>답변예시<',
+  "setSubtab('examples')",
+  '@media(min-width:721px)',
+  '.zr-ir-field.status{position:relative!important;top:4px!important}'
+])if(!layout.includes(needle))fail(`nested inquiry reply layout missing: ${needle}`);
+if(layout.includes('MutationObserver'))fail('inquiry reply layout must not add a broad MutationObserver');
+
 const loader=read('admin_tab_active_fix_v1.js');
 syntax('admin_tab_active_fix_v1.js');
 for(const needle of [
   'loadAdminInquiryReply()',
   "s.id='zrAdminInquiryReplyV1'",
-  "s.src='./admin_inquiry_reply_v1.js?v=1'"
+  "s.src='./admin_inquiry_reply_v1.js?v=1'",
+  'loadAdminInquiryReplyLayout()',
+  "s.id='zrAdminInquiryReplyLayoutV1'",
+  "s.src='./admin_inquiry_reply_layout_v1.js?v=1'"
 ])if(!loader.includes(needle))fail(`inquiry reply loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('1:1 inquiry management supports receipt-date range/status filtering, two-step SMS reply handoff, and reusable reply examples while keeping preview visits and reservation data separate');
+ok('1:1 inquiry management supports receipt-date filtering, reply status, two-step SMS handoff, multiple titled reply examples, and nested inquiry/example subtabs while keeping preview visits and reservation data separate');
