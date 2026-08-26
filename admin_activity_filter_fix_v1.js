@@ -4,14 +4,16 @@ if(window.__ZR_ADMIN_ACTIVITY_FILTER_FIX_V1)return;
 window.__ZR_ADMIN_ACTIVITY_FILTER_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
 const ACTIVITY_BASIS_KEY='zr_activity_date_basis_v10';
 const ACTIVITY_STATUS_KEY='zr_activity_status_filter_v1';
 const VENDOR_COLOR_KEY='zr_vendor_colors';
 const SELF_COLOR='#ECEFF1';
+const ACTIVITY_PAGE_SIZE=8;
 let installed=false;
 let applied=null;
+let activityPage=1;
 
 const startControl=()=>$('activityStart')||$('activityStartDate');
 const endControl=()=>$('activityEnd')||$('activityEndDate');
@@ -110,15 +112,40 @@ function bookingCard(b){
     <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn-soft" onclick="openAdminBookingDetail('${esc(b.id)}')">자세히</button></div>
   </div>`;
 }
+function paginationHtml(total){
+  const pages=Math.max(1,Math.ceil(total/ACTIVITY_PAGE_SIZE));
+  if(pages<=1)return '';
+  const button=(label,page,disabled=false,active=false)=>`<button type="button" class="${active?'btn-primary':'btn-soft'} zr-activity-page-btn" data-zr-activity-page="${page}"${disabled?' disabled':''}${active?' aria-current="page"':''}>${label}</button>`;
+  const numbers=[];
+  if(pages<=7){for(let p=1;p<=pages;p++)numbers.push(p)}
+  else{
+    const keep=new Set([1,pages,activityPage-1,activityPage,activityPage+1]);
+    const valid=[...keep].filter(p=>p>=1&&p<=pages).sort((a,b)=>a-b);
+    let prev=0;
+    for(const p of valid){if(prev&&p-prev>1)numbers.push('…');numbers.push(p);prev=p}
+  }
+  return `<div class="zr-activity-pagination">${button('이전',Math.max(1,activityPage-1),activityPage<=1)}${numbers.map(p=>p==='…'?'<span class="zr-activity-page-gap">…</span>':button(String(p),p,false,p===activityPage)).join('')}${button('다음',Math.min(pages,activityPage+1),activityPage>=pages)}</div>`;
+}
 function renderMain(){
   const root=$('activityList');if(!root)return;
   const state=applied||readControls(),list=filterByState(state);setKpis(list);
-  root.innerHTML=list.length?list.map(bookingCard).join(''):'<div class="help">선택한 조회 조건에 예약 내역이 없습니다.</div>';
+  const pages=Math.max(1,Math.ceil(list.length/ACTIVITY_PAGE_SIZE));
+  activityPage=Math.max(1,Math.min(activityPage,pages));
+  const start=(activityPage-1)*ACTIVITY_PAGE_SIZE,pageItems=list.slice(start,start+ACTIVITY_PAGE_SIZE);
+  root.innerHTML=list.length?pageItems.map(bookingCard).join('')+paginationHtml(list.length):'<div class="help">선택한 조회 조건에 예약 내역이 없습니다.</div>';
+}
+function goPage(page){
+  const list=filterByState(applied||readControls()),pages=Math.max(1,Math.ceil(list.length/ACTIVITY_PAGE_SIZE));
+  const next=Math.max(1,Math.min(Number(page)||1,pages));
+  if(next===activityPage)return;
+  activityPage=next;renderMain();
+  const root=$('activityList');if(root)setTimeout(()=>root.scrollIntoView({block:'start'}),0);
 }
 function applyFromControls(){
   const next=readControls();
   if(!validateState(next)){try{toast('조회 시작일은 종료일보다 늦을 수 없습니다.')}catch{}return false}
   applied={...next};
+  activityPage=1;
   localStorage.setItem(ACTIVITY_BASIS_KEY,applied.mode);
   localStorage.setItem(ACTIVITY_STATUS_KEY,applied.status);
   renderMain();
@@ -172,6 +199,9 @@ function injectUi(){
       #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:9/11!important;grid-row:2!important}
       #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:11/13!important;grid-row:2!important}
       #tab-activity #zrActivityStatusWrap select{width:100%!important;min-width:0!important;min-height:40px!important}
+      #tab-activity .zr-activity-pagination{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px;margin:16px 0 2px}
+      #tab-activity .zr-activity-page-btn{min-width:40px;min-height:36px;padding:7px 10px}
+      #tab-activity .zr-activity-page-gap{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:36px;color:#6b7280;font-weight:700}
       #zrActivityOrgSearchModal .modal-card{position:relative;width:min(760px,calc(100vw - 28px));max-height:82vh;overflow:auto;padding-top:24px}
       #zrActivityOrgSearchModal .zr-org-modal-head{padding-right:86px}
       #zrActivityOrgSearchModal #zrActivityOrgModalClose{position:absolute;top:14px;right:14px;z-index:2;min-width:68px;margin:0}
@@ -257,6 +287,8 @@ function boot(){
   const timer=setInterval(()=>{install();bindUi();if(installed)clearInterval(timer)},120);setTimeout(()=>clearInterval(timer),20000);
   document.addEventListener('click',e=>{
     const target=e.target;
+    const pageButton=target?.closest?.('[data-zr-activity-page]');
+    if(pageButton){e.preventDefault();e.stopImmediatePropagation();goPage(pageButton.dataset.zrActivityPage);return}
     if(target?.closest?.('#zrActivityOrgModalBtn')){e.preventDefault();e.stopImmediatePropagation();openOrgModal();return}
     if(target?.closest?.('#zrActivityOrgModalClose')){e.preventDefault();e.stopImmediatePropagation();closeOrgModal();return}
     if(target?.closest?.('#zrActivityOrgModalSearch')){e.preventDefault();e.stopImmediatePropagation();renderOrgModal();return}
