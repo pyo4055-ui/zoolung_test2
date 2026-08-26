@@ -80,6 +80,10 @@ function bindRoot(key){
 function scrollRoot(key){try{$(configs[key].rootId)?.scrollIntoView?.({block:'start'})}catch{}}
 function keyFromPagination(el){return el?.closest?.('[data-zr-pagination-key]')?.dataset?.zrPaginationKey||''}
 function isOutsourceFilterControl(target){return ['outsourceStart','outsourceEnd','outsourceVendorFilter'].includes(target?.id||'')}
+function loadOutsourcePeopleStability(){
+  if(document.getElementById('zrAdminOutsourcePeopleStabilityV1')||window.__ZR_ADMIN_OUTSOURCE_PEOPLE_STABILITY_V1)return;
+  const s=document.createElement('script');s.id='zrAdminOutsourcePeopleStabilityV1';s.async=false;s.src='./admin_outsource_people_stability_v1.js?v=1';document.body.appendChild(s);
+}
 
 function installEvents(){
   document.addEventListener('click',e=>{
@@ -111,7 +115,7 @@ function installEvents(){
   });
 }
 function boot(){
-  installStyle();installEvents();
+  installStyle();installEvents();loadOutsourcePeopleStability();
   const started=Date.now();
   const timer=setInterval(()=>{
     for(const key of Object.keys(configs)){if(bindRoot(key))schedule(key,{delay:0})}
