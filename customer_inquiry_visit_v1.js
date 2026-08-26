@@ -3,6 +3,8 @@
 if(window.__ZR_CUSTOMER_INQUIRY_VISIT_V1)return;
 window.__ZR_CUSTOMER_INQUIRY_VISIT_V1=true;
 
+const BOOKING_PRIVACY_TEXT='단체예약 접수 및 관리, 예약 확인·변경·취소, 이용 안내를 위해 단체명, 예약자명, 연락처, 이메일(선택), 예약 관련 요청사항 등 예약 과정에서 입력한 정보를 수집·이용합니다. 수집된 개인정보는 이용 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 안전하게 보관합니다.';
+
 function localToday(){
   const d=new Date();
   const p=n=>String(n).padStart(2,'0');
@@ -21,21 +23,21 @@ function installStyle(){
   const style=document.createElement('style');
   style.id='zrInquiryVisitStyleV2';
   style.textContent=`
-    #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:max-content max-content;gap:12px;margin-bottom:12px;align-items:start}
-    #zrInquiryVisitFields #inqVisitDate{width:170px;max-width:100%;box-sizing:border-box}
-    #zrInquiryVisitFields #inqVisitTime{width:175px;max-width:100%;box-sizing:border-box}
-    #zrInquiryVisitFields .zr-inquiry-people{width:calc(50% - 6px);margin-bottom:12px}
-    #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email";gap:12px}
+    #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;align-items:start;width:100%}
+    #zrInquiryVisitFields #inqVisitDate,#zrInquiryVisitFields #inqVisitTime{width:100%;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields .zr-inquiry-people{width:100%;margin-bottom:12px}
+    #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email" "mobile mobile";gap:12px}
     #inquiryModal .zr-inquiry-name{grid-area:name}
     #inquiryModal .zr-inquiry-phone{grid-area:phone}
     #inquiryModal .zr-inquiry-org{grid-area:org}
     #inquiryModal .zr-inquiry-email{grid-area:email}
+    #inquiryModal .zr-inquiry-mobile{grid-area:mobile}
     @media(max-width:800px){
-      #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:max-content max-content;gap:10px}
+      #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:max-content max-content;gap:10px;width:auto}
       #zrInquiryVisitFields #inqVisitDate{width:155px}
       #zrInquiryVisitFields #inqVisitTime{width:160px}
       #zrInquiryVisitFields .zr-inquiry-people{width:100%}
-      #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email"}
+      #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email" "mobile"}
     }
     @media(max-width:360px){
       #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr}
@@ -45,6 +47,13 @@ function installStyle(){
   document.head.appendChild(style);
 }
 
+function applyInquiryPrivacyText(modal){
+  const heading=[...modal.querySelectorAll('b,strong,h3,h4')].find(el=>(el.textContent||'').trim()==='개인정보 수집 및 이용 안내');
+  const scope=heading?.closest('.calc')||document.getElementById('inqPrivacy')?.closest('.calc');
+  const help=scope?.querySelector('.help');
+  if(help&&help.textContent!==BOOKING_PRIVACY_TEXT)help.textContent=BOOKING_PRIVACY_TEXT;
+}
+
 function install(){
   const modal=document.getElementById('inquiryModal');
   const submit=document.getElementById('submitInquiry');
@@ -52,6 +61,7 @@ function install(){
   if(!modal||!submit||!content)return false;
 
   installStyle();
+  applyInquiryPrivacyText(modal);
 
   let fields=document.getElementById('zrInquiryVisitFields');
   const contactGrid=modal.querySelector('.modal-card > .grid2');
@@ -93,12 +103,15 @@ function install(){
   contactGrid.classList.add('zr-inquiry-contact-grid');
   const name=document.getElementById('inqName');
   const phone=document.getElementById('inqPhone');
+  const mobile=document.getElementById('inqMobile');
   const email=document.getElementById('inqEmail');
   const nameWrap=name?.parentElement;
   const phoneWrap=phone?.parentElement;
+  const mobileWrap=mobile?.parentElement;
   const emailWrap=email?.parentElement;
   if(nameWrap)nameWrap.classList.add('zr-inquiry-name');
   if(phoneWrap)phoneWrap.classList.add('zr-inquiry-phone');
+  if(mobileWrap)mobileWrap.classList.add('zr-inquiry-mobile');
   if(emailWrap){
     emailWrap.classList.add('zr-inquiry-email');
     const label=emailWrap.querySelector('label');
