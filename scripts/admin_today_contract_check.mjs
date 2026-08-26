@@ -44,7 +44,9 @@ for(const needle of [
   "guide:'customerViewedGuideMapAt'",
   "parking:'customerViewedParkingAt'",
   "schedule:'customerViewedScheduleAt'",
+  'const ALLOWED_FIELDS=new Set(Object.values(FIELDS))',
   'window.setStore(KEY,list)',
+  "FS.updateDoc(FS.doc(db,'reservations',String(id)),{[field]:stamp})",
   "card.querySelector('.zr-customer-guide-action'),FIELDS.guide",
   "card.querySelector('.zr-customer-parking-action'),FIELDS.parking",
   "'zrGuideMapModalV32'",
@@ -54,16 +56,18 @@ for(const needle of [
   "entry.intersectionRatio<0.15",
   "{threshold:[0.15]}",
   "persistFirstView(id,FIELDS.schedule)",
-  'listObserver.observe(list,{childList:true,subtree:true})'
+  'listObserver.observe(list,{childList:true,subtree:true})',
+  "toastSafe('확인 기록 완료')",
+  "toastSafe('확인 기록 권한 확인 필요')"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
   "bindAction(card.querySelector('.zr-customer-guide-action'),'guide'",
   "bindAction(card.querySelector('.zr-customer-parking-action'),'parking'",
-  'setDoc(', 'updateDoc(', 'deleteDoc(', 'localStorage.setItem(',
+  'FS.setDoc(', 'FS.deleteDoc(', 'localStorage.setItem(',
   'reservationAvailability', 'scheduleGroups', 'scheduleSharedMemos',
   'observe(document.body', "document.addEventListener('click'"
-])if(tracking.includes(forbidden))fail(`customer view tracking must use reservation bridge only: ${forbidden}`);
+])if(tracking.includes(forbidden))fail(`customer view tracking must stay receipt-only/narrow: ${forbidden}`);
 
 for(const needle of [
   'loadCustomerViewTracking()',
