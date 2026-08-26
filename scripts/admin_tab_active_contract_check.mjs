@@ -57,7 +57,7 @@ for(const forbidden of ['setStore(','setDoc(','localStorage.setItem(','reservati
 
 for(const needle of [
   "activity:{rootId:'activityList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true,nativePaginationSelector:'.zr-activity-pagination'}",
-  "outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8}",
+  "outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true}",
   "inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15,alwaysControls:true}",
   "preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15,alwaysControls:true}",
   "data-zr-list-page",
