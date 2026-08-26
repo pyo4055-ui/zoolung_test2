@@ -3,18 +3,25 @@
 if(window.__ZR_CUSTOMER_VIEW_TRACKING_V1)return;
 window.__ZR_CUSTOMER_VIEW_TRACKING_V1=true;
 
+const FV='12.17.1';
 const KEY='zr_bookings';
 const FIELDS={
   guide:'customerViewedGuideMapAt',
   parking:'customerViewedParkingAt',
   schedule:'customerViewedScheduleAt'
 };
+const ALLOWED_FIELDS=new Set(Object.values(FIELDS));
 const $=id=>document.getElementById(id);
 const tel=s=>String(s||'').replace(/\D/g,'');
 let listObserver=null;
 let scheduleObserver=null;
 let syncQueued=false;
+let FS=null,db=null;
+const inflight=new Set();
+const remoteDone=new Set();
+const failureShown=new Set();
 
+function toastSafe(msg){try{if(typeof window.toast==='function')window.toast(msg)}catch{}}
 function customerVisible(){
   const v=$('customerView');
   return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
@@ -43,20 +50,53 @@ function resolveCardBooking(card){
   if(b)card.dataset.zrBookingId=String(b.id);
   return b;
 }
+async function ensureDirectDb(){
+  if(FS&&db)return true;
+  const z=window.zrReservationFirebase;
+  if(!z?.db)return false;
+  try{
+    FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);
+    db=z.db;
+    return true;
+  }catch(e){console.debug('customer view tracking firebase',e);return false}
+}
+async function writeRemoteView(id,field,stamp){
+  if(!id||!ALLOWED_FIELDS.has(field))return false;
+  const key=`${id}:${field}`;
+  if(remoteDone.has(key)||inflight.has(key))return true;
+  inflight.add(key);
+  try{
+    if(!(await ensureDirectDb()))throw new Error('firebase-unavailable');
+    await FS.updateDoc(FS.doc(db,'reservations',String(id)),{[field]:stamp});
+    remoteDone.add(key);
+    failureShown.delete(key);
+    toastSafe('확인 기록 완료');
+    document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:String(id),field,remote:true}}));
+    return true;
+  }catch(e){
+    console.warn('customer view receipt write failed',id,field,e);
+    if(!failureShown.has(key)){
+      failureShown.add(key);
+      toastSafe('확인 기록 권한 확인 필요');
+    }
+    return false;
+  }finally{inflight.delete(key)}
+}
 function persistFirstView(id,field,retry=0){
-  if(!customerVisible()||!id||!field)return;
+  if(!customerVisible()||!id||!ALLOWED_FIELDS.has(field))return;
   const list=readBookings();
   const b=list.find(x=>String(x?.id||'')===String(id));
-  if(!b||b.__availabilityOnly||['cancelled','rejected'].includes(String(b.status||''))||b[field])return;
-  if(typeof window.setStore!=='function'){
-    if(retry<12)setTimeout(()=>persistFirstView(id,field,retry+1),250);
-    return;
+  if(!b||b.__availabilityOnly||['cancelled','rejected'].includes(String(b.status||'')))return;
+  const stamp=String(b[field]||'').trim()||new Date().toISOString();
+  if(!b[field]){
+    if(typeof window.setStore!=='function'){
+      if(retry<12)setTimeout(()=>persistFirstView(id,field,retry+1),250);
+      return;
+    }
+    b[field]=stamp;
+    try{window.setStore(KEY,list)}catch(e){console.debug('customer view local tracking',e)}
   }
-  b[field]=new Date().toISOString();
-  try{
-    window.setStore(KEY,list);
-    document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:String(id),field}}));
-  }catch(e){console.debug('customer view tracking',e)}
+  void writeRemoteView(id,field,stamp);
 }
 function modalOpen(id){
   const m=$(id);return !!m&&!m.classList.contains('hidden')&&getComputedStyle(m).display!=='none';
