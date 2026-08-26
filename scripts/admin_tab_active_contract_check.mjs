@@ -5,7 +5,7 @@ let failed=false;
 const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 
-for(const file of ['admin_tab_active_fix_v1.js','admin_activity_org_detail_modal_fix_v1.js','admin_mobile_date_input_fix_v1.js','admin_list_pagination_v1.js','admin_features_v2_loader.js']){
+for(const file of ['admin_tab_active_fix_v1.js','admin_activity_org_detail_modal_fix_v1.js','admin_mobile_date_input_fix_v1.js','admin_list_pagination_v1.js','admin_outsource_people_stability_v1.js','admin_features_v2_loader.js']){
   try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}
   catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}
 }
@@ -14,6 +14,7 @@ const fix=read('admin_tab_active_fix_v1.js');
 const orgDetail=read('admin_activity_org_detail_modal_fix_v1.js');
 const mobileDate=read('admin_mobile_date_input_fix_v1.js');
 const pagination=read('admin_list_pagination_v1.js');
+const outsourcePeople=read('admin_outsource_people_stability_v1.js');
 const loader=read('admin_features_v2_loader.js');
 
 for(const needle of [
@@ -72,11 +73,26 @@ for(const needle of [
   "isOutsourceFilterControl",
   "['outsourceStart','outsourceEnd','outsourceVendorFilter']",
   "e.stopImmediatePropagation()",
+  "loadOutsourcePeopleStability()",
+  "s.src='./admin_outsource_people_stability_v1.js?v=1'",
   "zr:inquiry-replies-changed",
   "zr:preview-visits-changed"
 ])if(!pagination.includes(needle))fail(`admin list pagination missing: ${needle}`);
 for(const forbidden of ['setStore(','setDoc(','updateDoc(','deleteDoc(','localStorage.setItem(','reservationAvailability','scheduleGroups']){
   if(pagination.includes(forbidden))fail(`admin list pagination must stay display-only: ${forbidden}`);
+}
+
+for(const needle of [
+  'window.__ZR_ADMIN_OUTSOURCE_PEOPLE_STABILITY_V1=true',
+  "window.__ZR_ADMIN_OPS_V10",
+  "const old=$('outsourceSearch')",
+  'old.cloneNode(true)',
+  "next.dataset.zrOutsourcePeopleStable='1'",
+  'old.replaceWith(next)',
+  'window.renderOutsourcingPayments()'
+])if(!outsourcePeople.includes(needle))fail(`outsourcing people stability missing: ${needle}`);
+for(const forbidden of ['MutationObserver','setStore(','setDoc(','updateDoc(','deleteDoc(','localStorage.setItem(','reservationAvailability','scheduleGroups']){
+  if(outsourcePeople.includes(forbidden))fail(`outsourcing people stability must only remove legacy search listeners: ${forbidden}`);
 }
 
 if(!loader.includes("['zrAdminTabActiveFixV1','./admin_tab_active_fix_v1.js?v=1']"))fail('admin tab active fix is not loaded by active admin loader');
