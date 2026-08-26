@@ -46,7 +46,7 @@ function parsePreview(content){
   return {confirmed:m[1]==='사전답사 확정',orgName:m[2].trim(),date:m[3],time:m[4],people:Number(m[5]||0),body:text.slice(m[0].length)};
 }
 function buildPreview(p,body,confirmed){
-  return `[${confirmed?'사전답사 확정':'사전답사 문의'}]\n단체명: ${String(p.orgName||'').trim()}\n방문 희망일: ${p.date}\n방문 희망시간: ${p.time}\n사전답사 인원: ${Math.max(1,Math.trunc(Number(p.people)||1)}명\n\n${String(body||'').trim()}`.trimEnd();
+  return `[${confirmed?'사전답사 확정':'사전답사 문의'}]\n단체명: ${String(p.orgName||'').trim()}\n방문 희망일: ${p.date}\n방문 희망시간: ${p.time}\n사전답사 인원: ${Math.max(1,Math.trunc(Number(p.people)||1))}명\n\n${String(body||'').trim()}`.trimEnd();
 }
 function previewRows(){
   return readInquiries().map((item,index)=>({item,index,p:parsePreview(contentOf(item))})).filter(x=>x.p);
