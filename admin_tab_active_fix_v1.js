@@ -44,6 +44,14 @@ function loadAdminInquiryReply(){
   s.src='./admin_inquiry_reply_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadAdminInquiryReplyLayout(){
+  if(document.getElementById('zrAdminInquiryReplyLayoutV1')||window.__ZR_ADMIN_INQUIRY_REPLY_LAYOUT_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminInquiryReplyLayoutV1';
+  s.async=false;
+  s.src='./admin_inquiry_reply_layout_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function loadCalendarSummary(){
   if(document.getElementById('zrAdminCalendarStatusSummaryV1'))return;
   const s=document.createElement('script');
@@ -146,6 +154,7 @@ function loadUiFixes(){
   loadAdminPreviewVisit();
   loadAdminPreviewVisitQueryUi();
   loadAdminInquiryReply();
+  loadAdminInquiryReplyLayout();
   loadCalendarSummary();
   loadActivityOrgDetailFix();
   loadMobileDateInputFix();
@@ -172,10 +181,11 @@ document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{onc
 document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisit,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisitQueryUi,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminInquiryReply,{once:true});
+document.addEventListener('zr:admin-runtime-ready',loadAdminInquiryReplyLayout,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
