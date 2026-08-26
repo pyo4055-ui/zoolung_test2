@@ -39,6 +39,12 @@ const required=[
   "n<=18*60",
   "'단체 10:30~18:00 · 30분 단위'",
   "'사전답사 11:00~18:00 · 30분 단위'",
+  "mobile.setAttribute('inputmode','numeric')",
+  "mobile.setAttribute('maxlength','11')",
+  "mobile.setAttribute('pattern','010[0-9]{8}')",
+  "mobile.setAttribute('placeholder','01012345678')",
+  "if(!/^010[0-9]{8}$/.test(mobileNo))",
+  '휴대폰번호는 010으로 시작하는 숫자 11자리로 입력해주세요.',
   'zrInquiryReviewStage',
   '문의 내용 확인',
   '수정하기',
@@ -83,4 +89,4 @@ if(!loader.includes("./customer_inquiry_visit_v1.js?v=1")){
   process.exit(1);
 }
 
-console.log('OK: inquiry uses booking-style month/day/time selects, type-specific 30-minute time ranges, section spacing, review flow and zr_inquiries compatibility.');
+console.log('OK: inquiry uses booking-style month/day/time selects, strict 010 + 11-digit mobile validation, section spacing, review flow and zr_inquiries compatibility.');
