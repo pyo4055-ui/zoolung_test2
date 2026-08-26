@@ -81,8 +81,8 @@ function bindCustomerCards(){
     if(card.classList.contains('zr-cancelled-record'))return;
     const b=resolveCardBooking(card);
     if(b)card.dataset.zrBookingId=String(b.id);
-    bindAction(card.querySelector('.zr-customer-guide-action'),'guide','zrGuideMapModalV32');
-    bindAction(card.querySelector('.zr-customer-parking-action'),'parking','zrCustomerParkingQuickV1');
+    bindAction(card.querySelector('.zr-customer-guide-action'),FIELDS.guide,'zrGuideMapModalV32');
+    bindAction(card.querySelector('.zr-customer-parking-action'),FIELDS.parking,'zrCustomerParkingQuickV1');
   });
 }
 function bindScheduleCards(){
@@ -92,6 +92,11 @@ function bindScheduleCards(){
     if(!id)return;
     card.dataset.zrViewTracking='1';
     card.dataset.zrBookingId=String(id);
+    const zoom=card.querySelector('[data-zr-zoom]');
+    if(zoom){
+      zoom.addEventListener('pointerdown',()=>persistFirstView(id,FIELDS.schedule),{passive:true});
+      zoom.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')persistFirstView(id,FIELDS.schedule)});
+    }
     if(scheduleObserver)scheduleObserver.observe(card);
     else card.addEventListener('click',()=>persistFirstView(id,FIELDS.schedule),{once:true});
   });
@@ -118,12 +123,12 @@ function boot(){
   if('IntersectionObserver' in window){
     scheduleObserver=new IntersectionObserver(entries=>{
       entries.forEach(entry=>{
-        if(!entry.isIntersecting||entry.intersectionRatio<0.55)return;
+        if(!entry.isIntersecting||entry.intersectionRatio<0.15)return;
         const id=entry.target.dataset.zrBookingId||entry.target.querySelector('[data-zr-zoom]')?.dataset?.zrZoom||'';
         if(id)persistFirstView(id,FIELDS.schedule);
         scheduleObserver.unobserve(entry.target);
       });
-    },{threshold:[0.55]});
+    },{threshold:[0.15]});
   }
   hookLookupButtons();installListObserver();sync();
   let tries=0;
