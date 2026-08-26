@@ -47,23 +47,23 @@ for(const needle of [
   'const ALLOWED_FIELDS=new Set(Object.values(FIELDS))',
   'window.setStore(KEY,list)',
   "FS.updateDoc(FS.doc(db,'reservations',String(id)),{[field]:stamp})",
-  "card.querySelector('.zr-customer-guide-action'),FIELDS.guide",
-  "card.querySelector('.zr-customer-parking-action'),FIELDS.parking",
-  "'zrGuideMapModalV32'",
-  "'zrCustomerParkingQuickV1'",
+  "list.addEventListener('click',e=>{",
+  "e.target?.closest?.('.zr-customer-guide-action')",
+  "e.target?.closest?.('.zr-customer-parking-action')",
+  "trackCardAction(guide,FIELDS.guide)",
+  "trackCardAction(parking,FIELDS.parking)",
   'IntersectionObserver',
   "#zrCustomerScheduleBox .zr-customer-schedule",
   "entry.intersectionRatio<0.15",
   "{threshold:[0.15]}",
   "persistFirstView(id,FIELDS.schedule)",
   'listObserver.observe(list,{childList:true,subtree:true})',
-  "toastSafe('확인 기록 완료')",
-  "toastSafe('확인 기록 권한 확인 필요')"
+  "notice(`${label} 확인 기록 완료`,'ok')",
+  "notice(`${label} 기록 실패 · ${code}`,'err')",
+  "notice(`${LABELS[field]||'확인'} · 예약 식별 실패`,'err')"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
-  "bindAction(card.querySelector('.zr-customer-guide-action'),'guide'",
-  "bindAction(card.querySelector('.zr-customer-parking-action'),'parking'",
   'FS.setDoc(', 'FS.deleteDoc(', 'localStorage.setItem(',
   'reservationAvailability', 'scheduleGroups', 'scheduleSharedMemos',
   'observe(document.body', "document.addEventListener('click'"
