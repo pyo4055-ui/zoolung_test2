@@ -11,7 +11,7 @@ function installStyle(){
   const style=document.createElement('style');
   style.id='zrInquiryReplyLayoutStyleV1';
   style.textContent=`
-    #tab-inquiry-reply-v1 .zr-ir-field.status{position:relative!important;top:4px!important}
+    @media(min-width:721px){#tab-inquiry-reply-v1 .zr-ir-field.status{position:relative!important;top:4px!important}}
     #zrInquiryReplyInnerTabs{display:flex;gap:8px;margin:14px 0 0}
     #zrInquiryReplyInnerTabs button{min-width:96px}
     #tab-inquiry-reply-v1>#tab-inquiry-reply-examples{margin:0!important}
