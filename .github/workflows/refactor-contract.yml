@@ -45,6 +45,8 @@ jobs:
         run: node scripts/customer_inquiry_visit_contract_check.mjs
       - name: Verify preview visit management
         run: node scripts/admin_preview_visit_contract_check.mjs
+      - name: Verify 1:1 inquiry reply management
+        run: node scripts/admin_inquiry_reply_contract_check.mjs
       - name: Verify minimum paid group booking rule
         run: node scripts/customer_group_minimum_contract_check.mjs
       - name: Verify modal interaction consistency
