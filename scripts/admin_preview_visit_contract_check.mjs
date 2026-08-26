@@ -29,9 +29,15 @@ for(const needle of [
   'zrPreviewEndDateFilter',
   '조회 시작일',
   '조회 종료일',
-  '<option value="all">전체</option>',
+  '처리 상태',
+  '사전답사 현황 조회',
+  '<option value="all">전체 조회</option>',
   '<option value="received">접수</option>',
   '<option value="confirmed">확정</option>',
+  'grid-template-columns:repeat(12,minmax(0,1fr))',
+  '#zrPreviewApplyFilter{grid-column:7/10;grid-row:2',
+  '#zrPreviewResetFilter{grid-column:10/13;grid-row:2',
+  '방문일 기준으로 조회합니다.',
   "f.status==='received'&&p.confirmed",
   "f.status==='confirmed'&&!p.confirmed",
   'f.start&&p.date<f.start',
@@ -66,4 +72,4 @@ syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()'])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit management keeps compact one-line cards, supports all/received/confirmed plus start/end visit-date filtering, and confirmed visits remain separate from reservation counts');
+ok('preview visit management matches the reservation-style toolbar, keeps compact one-line cards, supports all/received/confirmed plus start/end visit-date filtering, and confirmed visits remain separate from reservation counts');
