@@ -56,15 +56,22 @@ for(const forbidden of ['setStore(','setDoc(','localStorage.setItem(','reservati
 }
 
 for(const needle of [
+  "activity:{rootId:'activityList',itemSelector:'.booking-item',pageSize:8,alwaysControls:true,nativePaginationSelector:'.zr-activity-pagination'}",
   "outsourcing:{rootId:'outsourceList',itemSelector:'.booking-item',pageSize:8}",
-  "inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15}",
-  "preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15}",
+  "inquiry:{rootId:'zrInquiryReplyList',itemSelector:'.zr-ir-card',pageSize:15,alwaysControls:true}",
+  "preview:{rootId:'zrPreviewVisitList',itemSelector:'.zr-pv-card',pageSize:15,alwaysControls:true}",
   "data-zr-list-page",
   "data-zr-list-page-hidden",
   "observer.observe(root,{childList:true})",
+  "if(itemChanged)paginate(key)",
+  "cfg.nativePaginationSelector",
+  "pages>1||cfg.alwaysControls",
   "#outsourceSearch",
   "#zrInquiryApply",
   "#zrPreviewApplyFilter",
+  "isOutsourceFilterControl",
+  "['outsourceStart','outsourceEnd','outsourceVendorFilter']",
+  "e.stopImmediatePropagation()",
   "zr:inquiry-replies-changed",
   "zr:preview-visits-changed"
 ])if(!pagination.includes(needle))fail(`admin list pagination missing: ${needle}`);
