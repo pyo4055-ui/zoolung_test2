@@ -24,6 +24,20 @@ for(const needle of [
   '수정 저장',
   "['00','30'].includes",
   '확정완료',
+  'zrPreviewStatusFilter',
+  'zrPreviewDateFilter',
+  '<option value="all">전체</option>',
+  '<option value="received">접수</option>',
+  '<option value="confirmed">확정</option>',
+  "status==='received'&&p.confirmed",
+  "status==='confirmed'&&!p.confirmed",
+  'date&&p.date!==date',
+  'zr-pv-info',
+  '<b>방문</b>',
+  '<b>인원</b>',
+  '<b>문의자</b>',
+  '<b>연락처</b>',
+  '<b>문의내용</b>',
   "document.dispatchEvent(new CustomEvent('zr:preview-visits-changed'))",
   'window.zrPreviewVisitConfirmedByDate=confirmedByDate',
   'window.renderAdmin?.()'
@@ -46,4 +60,4 @@ syntax('admin_tab_active_fix_v1.js');
 for(const needle of ['zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()'])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit inquiries can be reviewed, edited and confirmed without altering reservation counts, and confirmed visits appear as small calendar markers');
+ok('preview visit management keeps compact one-line cards, supports all/received/confirmed and date filtering, and confirmed visits remain separate from reservation counts');
