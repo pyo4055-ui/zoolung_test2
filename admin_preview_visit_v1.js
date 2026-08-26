@@ -5,7 +5,7 @@ window.__ZR_ADMIN_PREVIEW_VISIT_V1=true;
 
 const STORE_KEY='zr_inquiries';
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
 let installed=false,editIndex=-1;
 
@@ -58,19 +58,46 @@ function installStyle(){
   if($('zrPreviewVisitStyleV1'))return;
   const s=document.createElement('style');s.id='zrPreviewVisitStyleV1';s.textContent=`
   #tab-preview-visit .zr-pv-head{display:flex;gap:10px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
-  #tab-preview-visit .zr-pv-list{display:grid;gap:10px}
-  #tab-preview-visit .zr-pv-card{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:#fff;box-shadow:0 2px 8px rgba(30,50,36,.035)}
-  #tab-preview-visit .zr-pv-line1{display:flex;gap:7px 10px;align-items:center;flex-wrap:wrap;font-size:13px;line-height:1.5}
-  #tab-preview-visit .zr-pv-org{font-size:15px;font-weight:900;color:var(--text)}
-  #tab-preview-visit .zr-pv-status{font-size:11px;font-weight:900;padding:4px 7px;border-radius:999px;background:#fff4df;color:#956200;border:1px solid #ead4a5}
+  #tab-preview-visit .zr-pv-filterbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#f8faf8}
+  #tab-preview-visit .zr-pv-filterfield{display:grid;gap:5px}
+  #tab-preview-visit .zr-pv-filterfield label{margin:0;font-size:11px;color:var(--muted);font-weight:800}
+  #tab-preview-visit .zr-pv-filterfield select,#tab-preview-visit .zr-pv-filterfield input{height:40px;min-height:40px;padding:0 10px}
+  #tab-preview-visit .zr-pv-filterfield.status select{width:120px}
+  #tab-preview-visit .zr-pv-filterfield.date input{width:170px}
+  #tab-preview-visit .zr-pv-filter-actions{display:flex;gap:7px;align-items:center}
+  #tab-preview-visit .zr-pv-filter-actions button{height:40px;padding:0 13px}
+  #tab-preview-visit .zr-pv-list{display:grid;gap:8px}
+  #tab-preview-visit .zr-pv-card{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:14px;row-gap:7px;border:1px solid var(--line);border-radius:14px;padding:11px 13px;background:#fff;box-shadow:0 2px 8px rgba(30,50,36,.035)}
+  #tab-preview-visit .zr-pv-summary{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+  #tab-preview-visit .zr-pv-status{flex:0 0 auto;font-size:11px;font-weight:900;padding:4px 7px;border-radius:999px;background:#fff4df;color:#956200;border:1px solid #ead4a5}
   #tab-preview-visit .zr-pv-status.confirmed{background:#eee9f8;color:#6b50a0;border-color:#d9cdef}
-  #tab-preview-visit .zr-pv-line2{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #tab-preview-visit .zr-pv-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}
+  #tab-preview-visit .zr-pv-org{flex:0 1 auto;min-width:90px;max-width:180px;font-size:15px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #tab-preview-visit .zr-pv-info{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;padding:5px 8px;border-radius:9px;background:#f6f8f6;border:1px solid #e2e8e3;font-size:12px;line-height:1;color:#46544c;white-space:nowrap}
+  #tab-preview-visit .zr-pv-info b{font-size:10px;color:#7b8780;font-weight:800}
+  #tab-preview-visit .zr-pv-created{margin-left:auto;flex:0 0 auto;font-size:11px;color:var(--muted);white-space:nowrap}
+  #tab-preview-visit .zr-pv-line2{min-width:0;color:var(--muted);font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:1px}
+  #tab-preview-visit .zr-pv-line2 b{color:#56645c;margin-right:7px;font-size:11px}
+  #tab-preview-visit .zr-pv-actions{grid-column:2;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:7px;align-self:center}
+  #tab-preview-visit .zr-pv-actions button{min-width:54px;padding:9px 12px}
   #tab-preview-visit .zr-pv-empty{padding:32px 12px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;background:#fafbf9}
   #zrPreviewEditModal .zr-pv-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   #zrPreviewEditModal textarea{min-height:120px;resize:vertical}
   #zrPreviewEditModal .zr-pv-readonly{background:#f7f8f6;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;color:var(--muted)}
-  @media(max-width:720px){#zrPreviewEditModal .zr-pv-edit-grid{grid-template-columns:1fr}#tab-preview-visit .zr-pv-card{padding:12px}#tab-preview-visit .zr-pv-line1{gap:5px 8px}}
+  @media(max-width:900px){
+    #tab-preview-visit .zr-pv-summary{gap:6px;overflow-x:auto;scrollbar-width:none}
+    #tab-preview-visit .zr-pv-summary::-webkit-scrollbar{display:none}
+    #tab-preview-visit .zr-pv-created{display:none}
+    #tab-preview-visit .zr-pv-org{min-width:110px;max-width:160px}
+  }
+  @media(max-width:720px){
+    #zrPreviewEditModal .zr-pv-edit-grid{grid-template-columns:1fr}
+    #tab-preview-visit .zr-pv-card{padding:10px 11px;column-gap:8px}
+    #tab-preview-visit .zr-pv-info{padding:5px 7px}
+    #tab-preview-visit .zr-pv-actions button{min-width:50px;padding:8px 10px}
+    #tab-preview-visit .zr-pv-filterbar{gap:8px}
+    #tab-preview-visit .zr-pv-filterfield.status select{width:105px}
+    #tab-preview-visit .zr-pv-filterfield.date input{width:150px}
+  }
   `;document.head.appendChild(s);
 }
 function ensureModal(){
@@ -101,16 +128,35 @@ function formatCreated(v){
   if(!v)return'';const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);
   return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+function filteredRows(){
+  const status=$('zrPreviewStatusFilter')?.value||'all';
+  const date=$('zrPreviewDateFilter')?.value||'';
+  return previewRows().filter(({p})=>{
+    if(status==='received'&&p.confirmed)return false;
+    if(status==='confirmed'&&!p.confirmed)return false;
+    if(date&&p.date!==date)return false;
+    return true;
+  });
+}
 function render(){
   const list=$('zrPreviewVisitList');if(!list)return;
-  const rows=previewRows().sort((a,b)=>Number(a.p.confirmed)-Number(b.p.confirmed)||String(a.p.date).localeCompare(String(b.p.date))||String(a.p.time).localeCompare(String(b.p.time)));
-  $('zrPreviewVisitCount').textContent=`총 ${rows.length}건 · 미확정 ${rows.filter(x=>!x.p.confirmed).length}건`;
-  if(!rows.length){list.innerHTML='<div class="zr-pv-empty">사전답사 문의가 아직 없습니다.</div>';return}
+  const all=previewRows();
+  const rows=filteredRows().sort((a,b)=>Number(a.p.confirmed)-Number(b.p.confirmed)||String(a.p.date).localeCompare(String(b.p.date))||String(a.p.time).localeCompare(String(b.p.time)));
+  $('zrPreviewVisitCount').textContent=`조회 ${rows.length}건 · 전체 ${all.length}건 · 미확정 ${all.filter(x=>!x.p.confirmed).length}건`;
+  if(!rows.length){list.innerHTML='<div class="zr-pv-empty">조건에 맞는 사전답사 내역이 없습니다.</div>';return}
   list.innerHTML=rows.map(({item,index,p})=>{
     const name=nameOf(item)||'문의자 미입력',contact=contactOf(item)||'연락처 미입력',body=p.body.replace(/\s+/g,' ').trim()||'문의내용 없음',created=formatCreated(createdOf(item));
     return `<article class="zr-pv-card" data-index="${index}">
-      <div class="zr-pv-line1"><span class="zr-pv-status ${p.confirmed?'confirmed':''}">${p.confirmed?'확정':'문의접수'}</span><span class="zr-pv-org">${esc(p.orgName)}</span><b>${esc(p.date)} ${esc(p.time)}</b><span>${p.people}명</span><span>${esc(name)}</span><span>${esc(contact)}</span>${created?`<span style="color:var(--muted)">${esc(created)}</span>`:''}</div>
-      <div class="zr-pv-line2" title="${esc(body)}">${esc(body)}</div>
+      <div class="zr-pv-summary">
+        <span class="zr-pv-status ${p.confirmed?'confirmed':''}">${p.confirmed?'확정':'문의접수'}</span>
+        <span class="zr-pv-org" title="${esc(p.orgName)}">${esc(p.orgName)}</span>
+        <span class="zr-pv-info"><b>방문</b>${esc(p.date)} ${esc(p.time)}</span>
+        <span class="zr-pv-info"><b>인원</b>${p.people}명</span>
+        <span class="zr-pv-info"><b>문의자</b>${esc(name)}</span>
+        <span class="zr-pv-info"><b>연락처</b>${esc(contact)}</span>
+        ${created?`<span class="zr-pv-created">접수 ${esc(created)}</span>`:''}
+      </div>
+      <div class="zr-pv-line2" title="${esc(body)}"><b>문의내용</b>${esc(body)}</div>
       <div class="zr-pv-actions"><button type="button" class="btn-gray" data-pv-edit="${index}">수정</button><button type="button" class="${p.confirmed?'btn-gray':'btn-primary'}" data-pv-confirm="${index}" ${p.confirmed?'disabled':''}>${p.confirmed?'확정완료':'확정'}</button></div>
     </article>`;
   }).join('');
@@ -136,11 +182,17 @@ function confirmPreview(index){
   if(!confirm(`${p.orgName} · ${p.date} ${p.time}\n사전답사를 확정할까요?`))return;
   item[contentKey(item)]=buildPreview(p,p.body,true);writeInquiries(list);render();try{window.renderAdmin?.()}catch{};toastSafe('사전답사를 확정했습니다.');
 }
+function resetFilters(){
+  const status=$('zrPreviewStatusFilter'),date=$('zrPreviewDateFilter');
+  if(status)status.value='all';if(date)date.value='';render();
+}
 function installTab(){
   if(installed)return true;const tabs=document.querySelector('#adminView .admin-tabs'),admin=$('adminView');if(!tabs||!admin)return false;installStyle();ensureModal();
   let btn=$('zrPreviewVisitTabBtn');if(!btn){btn=document.createElement('button');btn.id='zrPreviewVisitTabBtn';btn.className='btn-gray';btn.textContent='사전답사 관리';tabs.appendChild(btn)}
-  let sec=$('tab-preview-visit');if(!sec){sec=document.createElement('section');sec.id='tab-preview-visit';sec.className='hidden';sec.innerHTML=`<div class="card" style="margin-top:14px"><div class="zr-pv-head"><div><h2 style="margin:0 0 4px">사전답사 관리</h2><div class="help">1:1 문의로 접수된 사전답사를 확인하고, 전화 확인 후 내용을 수정·확정할 수 있습니다.</div></div><div class="help" id="zrPreviewVisitCount"></div></div><div class="zr-pv-list" id="zrPreviewVisitList"></div></div>`;admin.appendChild(sec)}
+  let sec=$('tab-preview-visit');if(!sec){sec=document.createElement('section');sec.id='tab-preview-visit';sec.className='hidden';sec.innerHTML=`<div class="card" style="margin-top:14px"><div class="zr-pv-head"><div><h2 style="margin:0 0 4px">사전답사 관리</h2><div class="help">1:1 문의로 접수된 사전답사를 확인하고, 전화 확인 후 내용을 수정·확정할 수 있습니다.</div></div><div class="help" id="zrPreviewVisitCount"></div></div><div class="zr-pv-filterbar"><div class="zr-pv-filterfield status"><label>상태</label><select id="zrPreviewStatusFilter"><option value="all">전체</option><option value="received">접수</option><option value="confirmed">확정</option></select></div><div class="zr-pv-filterfield date"><label>방문일</label><input type="date" id="zrPreviewDateFilter"></div><div class="zr-pv-filter-actions"><button type="button" class="btn-primary" id="zrPreviewApplyFilter">조회</button><button type="button" class="btn-gray" id="zrPreviewResetFilter">초기화</button></div></div><div class="zr-pv-list" id="zrPreviewVisitList"></div></div>`;admin.appendChild(sec)}
   btn.onclick=openTab;
+  $('zrPreviewApplyFilter').onclick=render;$('zrPreviewResetFilter').onclick=resetFilters;
+  $('zrPreviewStatusFilter').addEventListener('change',render);
   sec.addEventListener('click',e=>{const edit=e.target.closest('[data-pv-edit]'),ok=e.target.closest('[data-pv-confirm]');if(edit)openEdit(Number(edit.dataset.pvEdit));if(ok&&!ok.disabled)confirmPreview(Number(ok.dataset.pvConfirm))});
   document.addEventListener('click',e=>{const b=e.target?.closest?.('#adminView .admin-tabs button');if(b&&b.id!=='zrPreviewVisitTabBtn')sec.classList.add('hidden')},true);
   document.addEventListener('zr:preview-visits-changed',()=>{if(!sec.classList.contains('hidden'))render()});
