@@ -41,6 +41,21 @@ for(const needle of [
 ])if(!queryUi.includes(needle))fail(`preview visit query UI missing: ${needle}`);
 if(queryUi.includes('MutationObserver'))fail('preview visit query UI must not add a broad MutationObserver');
 
+const notify=read('admin_preview_visit_notify_v1.js');
+syntax('admin_preview_visit_notify_v1.js');
+for(const needle of [
+  "const INQUIRY_KEY='zr_inquiries'",
+  "const TEMPLATE_KEY='zr_preview_confirm_templates_v1'",
+  'zrPreviewNotifyInnerTabs','사전답사 현황','확정문자 예시','확정문자 예시 관리',
+  'zrPreviewNotifyTemplateTitle','zrPreviewNotifyTemplateText','예시 저장','수정 저장','삭제',
+  '{단체명}','{방문일}','{방문시간}','{인원}','applyVars(text,p)',
+  'zrPreviewNotifyModal','사전답사 확정 안내','확정문자 예시 불러오기','확정 내용 확인','수신번호','방문 일정','수정하기','보내기',
+  "e.target?.closest?.('[data-pv-confirm]')",'e.stopImmediatePropagation()','openNotify(Number(btn.dataset.pvConfirm))',
+  "item[contentKey(item)]=buildPreview(p,p.body,true)","document.dispatchEvent(new CustomEvent('zr:preview-visits-changed'))",'window.renderAdmin?.()',
+  'sms:','body=${body}','[주렁주렁 동탄점]','navigator.clipboard?.writeText'
+])if(!notify.includes(needle))fail(`preview confirmation SMS contract missing: ${needle}`);
+for(const forbidden of ["setStore('zr_bookings'",'reservationAvailability','scheduleGroups','MutationObserver','collection(','setDoc('])if(notify.includes(forbidden))fail(`preview confirmation SMS helper must not touch protected reservation/schedule contracts: ${forbidden}`);
+
 const cal=read('admin_calendar_status_summary_v1.js');
 syntax('admin_calendar_status_summary_v1.js');
 for(const needle of ['zrPreviewVisitConfirmedByDate','답사 ${preview}','.preview{color:',"document.addEventListener('zr:preview-visits-changed'"])
@@ -50,8 +65,9 @@ const loader=read('admin_tab_active_fix_v1.js');
 syntax('admin_tab_active_fix_v1.js');
 for(const needle of [
   'zrAdminPreviewVisitV1','./admin_preview_visit_v1.js?v=1','loadAdminPreviewVisit()',
-  'zrAdminPreviewVisitQueryUiV1','./admin_preview_visit_query_ui_v1.js?v=1','loadAdminPreviewVisitQueryUi()'
+  'zrAdminPreviewVisitQueryUiV1','./admin_preview_visit_query_ui_v1.js?v=1','loadAdminPreviewVisitQueryUi()',
+  'zrAdminPreviewVisitNotifyV1','./admin_preview_visit_notify_v1.js?v=1','loadAdminPreviewVisitNotify()'
 ])if(!loader.includes(needle))fail(`preview visit loader missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('preview visit management aligns the toolbar, defaults to current-month start through today, supports reception/visit date basis plus status filtering, removes reset, and keeps compact one-line cards');
+ok('preview visit management aligns the toolbar, supports reception/visit date filtering, keeps compact cards, and adds configurable confirmation SMS templates plus two-step SMS handoff without changing reservation data');
