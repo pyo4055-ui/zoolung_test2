@@ -38,7 +38,7 @@ function installStyle(){
     #tab-preview-visit .zr-pv-filterfield.start{grid-column:1/4!important;grid-row:1!important}
     #tab-preview-visit .zr-pv-filterfield.end{grid-column:4/7!important;grid-row:1!important}
     #tab-preview-visit .zr-pv-filterfield.basis{grid-column:7/9!important;grid-row:1!important}
-    #tab-preview-visit .zr-pv-filterfield.status{grid-column:9/11!important;grid-row:1!important}
+    #tab-preview-visit .zr-pv-filterfield.status{grid-column:9/11!important;grid-row:1!important;transform:translateY(4px)!important}
     #tab-preview-visit #zrPreviewApplyFilter{grid-column:11/13!important;grid-row:1!important;width:100%!important;height:44px!important;min-height:44px!important;margin:0!important;align-self:end!important}
     @media(max-width:900px){
       #tab-preview-visit .zr-pv-filterfield.start{grid-column:1/7!important;grid-row:1!important}
