@@ -38,20 +38,28 @@ function clearOptionalEmailSentinel(){
   }
   if(changed)writeInquiries(list);
 }
+function pad2(n){return String(n).padStart(2,'0')}
+function minutesToTime(total){return `${pad2(Math.floor(total/60))}:${pad2(total%60)}`}
+function timeToMinutes(value){
+  const m=/^(\d{2}):(\d{2})$/.exec(String(value||''));
+  return m?Number(m[1])*60+Number(m[2]):NaN;
+}
 
 function installStyle(){
-  if(document.getElementById('zrInquiryVisitStyleV3'))return;
+  if(document.getElementById('zrInquiryVisitStyleV4'))return;
   const style=document.createElement('style');
-  style.id='zrInquiryVisitStyleV3';
+  style.id='zrInquiryVisitStyleV4';
   style.textContent=`
     #inquiryModal .modal-card{width:min(720px,100%)}
-    #zrInquiryFormStage .zr-inquiry-section{border:1px solid var(--line,#dfe5df);border-radius:14px;padding:16px;margin:0 0 12px;background:#fff}
-    #zrInquiryFormStage .zr-inquiry-section-title{display:flex;align-items:center;gap:8px;margin:0 0 13px;font-size:15px;font-weight:900;color:var(--text,#1f2a23)}
+    #zrInquiryFormStage .zr-inquiry-section{border:1px solid var(--line,#dfe5df);border-radius:14px;padding:16px;margin:0 0 18px!important;background:#fff}
+    #zrInquiryFormStage .zr-inquiry-section-title{display:flex;align-items:center;gap:8px;margin:0 0 15px;font-size:15px;font-weight:900;color:var(--text,#1f2a23)}
     #zrInquiryFormStage .zr-inquiry-section-title .section-no{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;background:var(--green2,#e9f3ed);color:var(--green,#2f6b4f);font-size:13px;font-weight:900;flex:0 0 auto}
-    #zrInquiryVisitFields{margin:0!important}
-    #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;align-items:start;width:100%}
-    #zrInquiryVisitFields #inqVisitDate,#zrInquiryVisitFields #inqVisitTime{width:100%;max-width:100%;box-sizing:border-box}
+    #zrInquiryVisitFields{margin-bottom:18px!important}
+    #zrInquiryVisitFields .zr-inquiry-visit-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:14px;align-items:start;width:100%}
+    #zrInquiryVisitFields .zr-inquiry-date-selects{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%}
+    #zrInquiryVisitFields select{width:100%;max-width:100%;box-sizing:border-box}
     #zrInquiryVisitFields .zr-inquiry-people{width:100%;margin-bottom:0}
+    #zrInquiryVisitFields #inqVisitTimeHelp{min-height:18px}
     #inquiryModal .zr-inquiry-contact-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"name phone" "org email" "mobile mobile";gap:12px}
     #inquiryModal .zr-inquiry-name{grid-area:name}
     #inquiryModal .zr-inquiry-phone{grid-area:phone}
@@ -74,18 +82,15 @@ function installStyle(){
     #zrInquiryCompleteStage .zr-complete-actions{display:flex;justify-content:center;margin-top:20px}
     #zrInquiryCompleteStage .zr-complete-actions button{min-width:170px}
     @media(max-width:800px){
-      #zrInquiryFormStage .zr-inquiry-section{padding:14px 13px}
-      #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:max-content max-content;gap:10px;width:auto}
-      #zrInquiryVisitFields #inqVisitDate{width:155px}
-      #zrInquiryVisitFields #inqVisitTime{width:160px}
+      #zrInquiryFormStage .zr-inquiry-section{padding:14px 13px;margin-bottom:16px!important}
+      #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+      #zrInquiryVisitFields .zr-inquiry-date-selects{gap:6px}
       #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email" "mobile"}
       #zrInquiryReviewStage .zr-review-grid{grid-template-columns:1fr}
       #zrInquiryReviewStage .zr-review-row.full{grid-column:auto}
     }
-    @media(max-width:360px){
+    @media(max-width:390px){
       #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr}
-      #zrInquiryVisitFields #inqVisitDate{width:155px}
-      #zrInquiryVisitFields #inqVisitTime{width:160px}
     }`;
   document.head.appendChild(style);
 }
@@ -139,7 +144,6 @@ function install(){
   if(!modal||!submit||!content)return false;
 
   installStyle();
-  const existingStage=document.getElementById('zrInquiryFormStage');
   let contactGrid=modal.querySelector('.modal-card > .grid2,#zrInquiryFormStage .grid2');
   if(!contactGrid)return false;
 
@@ -150,7 +154,7 @@ function install(){
     fields.className='zr-inquiry-section';
     fields.innerHTML=`
       ${sectionTitle(1,'문의 정보')}
-      <div style="margin-bottom:12px">
+      <div style="margin-bottom:14px">
         <label class="req">문의 유형</label>
         <select id="inqType">
           <option value="">선택해주세요</option>
@@ -161,12 +165,16 @@ function install(){
       <div class="zr-inquiry-visit-grid">
         <div>
           <label class="req">방문 희망일</label>
-          <input id="inqVisitDate" type="date">
+          <div class="zr-inquiry-date-selects">
+            <select id="inqVisitMonth"><option value="">월 선택</option></select>
+            <select id="inqVisitDay" disabled><option value="">일 선택</option></select>
+          </div>
+          <input id="inqVisitDate" type="hidden">
         </div>
         <div>
           <label class="req">방문 희망시간</label>
-          <input id="inqVisitTime" type="time" step="1800">
-          <div class="help">30분 단위로 입력해주세요.</div>
+          <select id="inqVisitTime" disabled><option value="">문의 유형을 먼저 선택해주세요</option></select>
+          <div class="help" id="inqVisitTimeHelp">문의 유형을 선택하면 방문시간을 선택할 수 있습니다.</div>
         </div>
       </div>
       <div class="zr-inquiry-people">
@@ -201,8 +209,15 @@ function install(){
     contactGrid.appendChild(wrap);org=wrap.querySelector('#inqOrgName');
   }
 
-  const type=document.getElementById('inqType'),visitDate=document.getElementById('inqVisitDate'),visitTime=document.getElementById('inqVisitTime'),people=document.getElementById('inqPeople'),peopleLabel=document.getElementById('inqPeopleLabel');
-  if(!type||!visitDate||!visitTime||!people||!peopleLabel||!org||!name||!mobile||!email||!privacy)return false;
+  const type=document.getElementById('inqType');
+  const visitMonth=document.getElementById('inqVisitMonth');
+  const visitDay=document.getElementById('inqVisitDay');
+  const visitDate=document.getElementById('inqVisitDate');
+  const visitTime=document.getElementById('inqVisitTime');
+  const visitTimeHelp=document.getElementById('inqVisitTimeHelp');
+  const people=document.getElementById('inqPeople');
+  const peopleLabel=document.getElementById('inqPeopleLabel');
+  if(!type||!visitMonth||!visitDay||!visitDate||!visitTime||!visitTimeHelp||!people||!peopleLabel||!org||!name||!mobile||!email||!privacy)return false;
 
   ensureWrappedSection(contactGrid,'zrInquiryContactSection',2,'문의자 정보');
   const contentWrap=content.parentElement;
@@ -213,25 +228,75 @@ function install(){
   applyInquiryPrivacyText(modal);
 
   let draft=null,nativeSubmit=false;
-  function syncVisitFieldHeight(){
-    const refHeight=Math.round(name.getBoundingClientRect().height);if(!refHeight)return;
-    for(const el of [visitDate,visitTime]){
-      el.style.setProperty('height',`${refHeight}px`,'important');el.style.setProperty('min-height',`${refHeight}px`,'important');el.style.setProperty('max-height',`${refHeight}px`,'important');el.style.setProperty('box-sizing','border-box','important');
+
+  function fillMonths(){
+    const current=visitMonth.value;
+    const today=new Date();
+    const options=['<option value="">월 선택</option>'];
+    for(let i=0;i<18;i++){
+      const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+      const value=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+      options.push(`<option value="${value}">${d.getFullYear()}년 ${d.getMonth()+1}월</option>`);
     }
+    visitMonth.innerHTML=options.join('');
+    if([...visitMonth.options].some(o=>o.value===current))visitMonth.value=current;
+  }
+  function fillDays(){
+    const current=visitDay.value;
+    const month=visitMonth.value;
+    if(!month){visitDay.innerHTML='<option value="">일 선택</option>';visitDay.disabled=true;visitDate.value='';return}
+    const [year,mon]=month.split('-').map(Number);
+    const last=new Date(year,mon,0).getDate();
+    const today=localToday();
+    const options=['<option value="">일 선택</option>'];
+    for(let d=1;d<=last;d++){
+      const dd=pad2(d),value=`${month}-${dd}`;
+      if(value<today)continue;
+      options.push(`<option value="${dd}">${d}일</option>`);
+    }
+    visitDay.innerHTML=options.join('');visitDay.disabled=false;
+    if([...visitDay.options].some(o=>o.value===current))visitDay.value=current;
+    syncDate();
+  }
+  function syncDate(){
+    visitDate.value=visitMonth.value&&visitDay.value?`${visitMonth.value}-${visitDay.value}`:'';
+  }
+  function fillTimeOptions(){
+    const current=visitTime.value;
+    const isGroup=type.value==='group',isPreview=type.value==='preview';
+    if(!isGroup&&!isPreview){
+      visitTime.innerHTML='<option value="">문의 유형을 먼저 선택해주세요</option>';
+      visitTime.disabled=true;
+      visitTimeHelp.textContent='문의 유형을 선택하면 방문시간을 선택할 수 있습니다.';
+      return;
+    }
+    const start=isGroup?10*60+30:11*60;
+    const end=18*60;
+    const options=['<option value="">방문시간 선택</option>'];
+    for(let m=start;m<=end;m+=30){const t=minutesToTime(m);options.push(`<option value="${t}">${t}</option>`)}
+    visitTime.innerHTML=options.join('');visitTime.disabled=false;
+    visitTimeHelp.textContent=isGroup?'단체 10:30~18:00 · 30분 단위':'사전답사 11:00~18:00 · 30분 단위';
+    if([...visitTime.options].some(o=>o.value===current))visitTime.value=current;
   }
   function updatePeopleLabel(){peopleLabel.textContent=type.value==='preview'?'사전답사 인원':type.value==='group'?'단체 인원':'인원'}
+  function updateTypeUi(){updatePeopleLabel();fillTimeOptions()}
   function resetVisitFields(){
-    type.value='';visitDate.value='';visitTime.value='';people.value='';org.value='';draft=null;visitDate.min=localToday();updatePeopleLabel();showStage(stages,'form');requestAnimationFrame(syncVisitFieldHeight);
+    type.value='';visitMonth.value='';visitDay.innerHTML='<option value="">일 선택</option>';visitDay.disabled=true;visitDate.value='';visitTime.value='';people.value='';org.value='';draft=null;fillMonths();updateTypeUi();showStage(stages,'form');
   }
-  function setGroupInquiry(){resetVisitFields();type.value='group';updatePeopleLabel()}
-  function validTime(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return !!m&&['00','30'].includes(m[2])}
+  function setGroupInquiry(){resetVisitFields();type.value='group';updateTypeUi()}
+  function validTime(v,inquiryType){
+    const n=timeToMinutes(v);if(!Number.isFinite(n)||n%30!==0)return false;
+    const start=inquiryType==='group'?10*60+30:inquiryType==='preview'?11*60:NaN;
+    return Number.isFinite(start)&&n>=start&&n<=18*60;
+  }
   function collectDraft(){
+    syncDate();
     const inquiryType=type.value,orgName=org.value.trim(),date=visitDate.value,time=visitTime.value,count=Math.trunc(Number(people.value));
     const person=name.value.trim(),mobileNo=mobile.value.trim(),phoneNo=phone?.value?.trim()||'',emailValue=email.value.trim(),body=content.value.trim();
     if(!inquiryType||!orgName||!date||!time||!Number.isFinite(count)||count<1||!person||!mobileNo||!body||!privacy.checked){
       showToast('필수 입력 항목과 개인정보 수집·이용 동의를 확인해주세요.');return null;
     }
-    if(!validTime(time)){showToast('방문시간은 30분 단위로 입력해주세요.');return null}
+    if(!validTime(time,inquiryType)){showToast(inquiryType==='group'?'단체 방문시간은 10:30~18:00 중 30분 단위로 선택해주세요.':'사전답사 방문시간은 11:00~18:00 중 30분 단위로 선택해주세요.');return null}
     if(emailValue&&!email.validity.valid){showToast('이메일 주소 형식을 확인해주세요.');email.focus();return null}
     return {inquiryType,orgName,date,time,count,person,mobileNo,phoneNo,emailValue,body};
   }
@@ -273,10 +338,10 @@ function install(){
     },0);
   }
 
-  visitDate.min=localToday();requestAnimationFrame(syncVisitFieldHeight);
-  if(!window.__ZR_INQUIRY_VISIT_HEIGHT_SYNC_V1){window.__ZR_INQUIRY_VISIT_HEIGHT_SYNC_V1=true;window.addEventListener('resize',()=>requestAnimationFrame(syncVisitFieldHeight),{passive:true})}
-  if(type.dataset.zrInquiryVisitBound!=='1'){type.dataset.zrInquiryVisitBound='1';type.addEventListener('change',updatePeopleLabel)}
-  updatePeopleLabel();
+  fillMonths();fillDays();updateTypeUi();
+  if(visitMonth.dataset.zrBound!=='1'){visitMonth.dataset.zrBound='1';visitMonth.addEventListener('change',()=>{visitDay.value='';fillDays()})}
+  if(visitDay.dataset.zrBound!=='1'){visitDay.dataset.zrBound='1';visitDay.addEventListener('change',syncDate)}
+  if(type.dataset.zrInquiryVisitBound!=='1'){type.dataset.zrInquiryVisitBound='1';type.addEventListener('change',updateTypeUi)}
 
   if(submit.dataset.zrInquiryReviewBound!=='1'){
     submit.dataset.zrInquiryReviewBound='1';
@@ -287,7 +352,7 @@ function install(){
     },true);
   }
   const editBtn=document.getElementById('zrInquiryReviewEdit');
-  if(editBtn&&editBtn.dataset.zrBound!=='1'){editBtn.dataset.zrBound='1';editBtn.addEventListener('click',()=>{showStage(stages,'form');requestAnimationFrame(syncVisitFieldHeight)})}
+  if(editBtn&&editBtn.dataset.zrBound!=='1'){editBtn.dataset.zrBound='1';editBtn.addEventListener('click',()=>showStage(stages,'form'))}
   const finalBtn=document.getElementById('zrInquiryReviewSubmit');
   if(finalBtn&&finalBtn.dataset.zrBound!=='1'){finalBtn.dataset.zrBound='1';finalBtn.addEventListener('click',submitNative)}
   const homeBtn=document.getElementById('zrInquiryCompleteHome');
