@@ -10,6 +10,11 @@ const FIELDS={
   parking:'customerViewedParkingAt',
   schedule:'customerViewedScheduleAt'
 };
+const LABELS={
+  [FIELDS.guide]:'가이드맵',
+  [FIELDS.parking]:'주차 및 인솔',
+  [FIELDS.schedule]:'최종 스케줄'
+};
 const ALLOWED_FIELDS=new Set(Object.values(FIELDS));
 const $=id=>document.getElementById(id);
 const tel=s=>String(s||'').replace(/\D/g,'');
@@ -19,9 +24,21 @@ let syncQueued=false;
 let FS=null,db=null;
 const inflight=new Set();
 const remoteDone=new Set();
-const failureShown=new Set();
 
-function toastSafe(msg){try{if(typeof window.toast==='function')window.toast(msg)}catch{}}
+function notice(msg,kind='ok'){
+  let n=$('zrCustomerViewTrackingNoticeV1');
+  if(!n){
+    n=document.createElement('div');
+    n.id='zrCustomerViewTrackingNoticeV1';
+    n.style.cssText='position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:30000;max-width:calc(100vw - 28px);padding:10px 14px;border-radius:10px;background:#20372a;color:#fff;font-size:12px;font-weight:900;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.22);text-align:center;pointer-events:none;opacity:0;transition:opacity .18s ease';
+    document.body.appendChild(n);
+  }
+  n.textContent=msg;
+  n.style.background=kind==='err'?'#8d3d3d':kind==='wait'?'#756321':'#24553f';
+  n.style.opacity='1';
+  clearTimeout(n.__zrTimer);
+  n.__zrTimer=setTimeout(()=>{n.style.opacity='0'},2600);
+}
 function customerVisible(){
   const v=$('customerView');
   return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
@@ -38,8 +55,9 @@ function customerBookings(){
 }
 function resolveCardBooking(card){
   if(!card)return null;
+  const all=readBookings();
   const cached=String(card.dataset.zrBookingId||'');
-  if(cached){const b=readBookings().find(x=>String(x?.id||'')===cached);if(b)return b}
+  if(cached){const b=all.find(x=>String(x?.id||'')===cached);if(b)return b}
   const candidates=customerBookings();
   if(!candidates.length)return null;
   const text=String(card.textContent||'').replace(/\s+/g,' ');
@@ -63,22 +81,21 @@ async function ensureDirectDb(){
 async function writeRemoteView(id,field,stamp){
   if(!id||!ALLOWED_FIELDS.has(field))return false;
   const key=`${id}:${field}`;
-  if(remoteDone.has(key)||inflight.has(key))return true;
+  if(remoteDone.has(key))return true;
+  if(inflight.has(key))return false;
   inflight.add(key);
+  const label=LABELS[field]||'고객 확인';
   try{
     if(!(await ensureDirectDb()))throw new Error('firebase-unavailable');
     await FS.updateDoc(FS.doc(db,'reservations',String(id)),{[field]:stamp});
     remoteDone.add(key);
-    failureShown.delete(key);
-    toastSafe('확인 기록 완료');
+    notice(`${label} 확인 기록 완료`,'ok');
     document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:String(id),field,remote:true}}));
     return true;
   }catch(e){
+    const code=String(e?.code||e?.name||e?.message||'unknown').replace(/^firestore\//,'');
     console.warn('customer view receipt write failed',id,field,e);
-    if(!failureShown.has(key)){
-      failureShown.add(key);
-      toastSafe('확인 기록 권한 확인 필요');
-    }
+    notice(`${label} 기록 실패 · ${code}`,'err');
     return false;
   }finally{inflight.delete(key)}
 }
@@ -86,34 +103,35 @@ function persistFirstView(id,field,retry=0){
   if(!customerVisible()||!id||!ALLOWED_FIELDS.has(field))return;
   const list=readBookings();
   const b=list.find(x=>String(x?.id||'')===String(id));
-  if(!b||b.__availabilityOnly||['cancelled','rejected'].includes(String(b.status||'')))return;
+  if(!b||b.__availabilityOnly||['cancelled','rejected'].includes(String(b.status||''))){notice('확인 기록 대상 예약을 찾지 못했습니다.','err');return}
   const stamp=String(b[field]||'').trim()||new Date().toISOString();
   if(!b[field]){
     if(typeof window.setStore!=='function'){
-      if(retry<12)setTimeout(()=>persistFirstView(id,field,retry+1),250);
-      return;
+      if(retry<12){setTimeout(()=>persistFirstView(id,field,retry+1),250);return}
+      notice('예약 저장 연결을 확인해주세요.','err');return;
     }
     b[field]=stamp;
     try{window.setStore(KEY,list)}catch(e){console.debug('customer view local tracking',e)}
   }
   void writeRemoteView(id,field,stamp);
 }
-function modalOpen(id){
-  const m=$(id);return !!m&&!m.classList.contains('hidden')&&getComputedStyle(m).display!=='none';
+function trackCardAction(button,field){
+  const card=button?.closest?.('.existing-card');
+  const b=resolveCardBooking(card);
+  if(!b){notice(`${LABELS[field]||'확인'} · 예약 식별 실패`,'err');return}
+  persistFirstView(b.id,field);
 }
-function confirmModalAfter(id,field,modalId){
-  [40,120,300].forEach(ms=>setTimeout(()=>{if(modalOpen(modalId))persistFirstView(id,field)},ms));
-}
-function bindAction(button,field,modalId){
-  if(!button||button.dataset.zrViewTracking==='1')return;
-  button.dataset.zrViewTracking='1';
-  const arm=()=>{
-    const card=button.closest('.existing-card');
-    const b=resolveCardBooking(card);if(!b)return;
-    confirmModalAfter(b.id,field,modalId);
-  };
-  button.addEventListener('pointerdown',arm,{passive:true});
-  button.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')arm()});
+function installListDelegation(){
+  const list=$('existingBookingList');
+  if(!list||list.dataset.zrViewTrackingDelegated==='1')return false;
+  list.dataset.zrViewTrackingDelegated='1';
+  list.addEventListener('click',e=>{
+    const guide=e.target?.closest?.('.zr-customer-guide-action');
+    if(guide&&list.contains(guide)){trackCardAction(guide,FIELDS.guide);return}
+    const parking=e.target?.closest?.('.zr-customer-parking-action');
+    if(parking&&list.contains(parking)){trackCardAction(parking,FIELDS.parking)}
+  });
+  return true;
 }
 function bindCustomerCards(){
   const list=$('existingBookingList');if(!list)return;
@@ -121,8 +139,6 @@ function bindCustomerCards(){
     if(card.classList.contains('zr-cancelled-record'))return;
     const b=resolveCardBooking(card);
     if(b)card.dataset.zrBookingId=String(b.id);
-    bindAction(card.querySelector('.zr-customer-guide-action'),FIELDS.guide,'zrGuideMapModalV32');
-    bindAction(card.querySelector('.zr-customer-parking-action'),FIELDS.parking,'zrCustomerParkingQuickV1');
   });
 }
 function bindScheduleCards(){
@@ -134,7 +150,7 @@ function bindScheduleCards(){
     card.dataset.zrBookingId=String(id);
     const zoom=card.querySelector('[data-zr-zoom]');
     if(zoom){
-      zoom.addEventListener('pointerdown',()=>persistFirstView(id,FIELDS.schedule),{passive:true});
+      zoom.addEventListener('click',()=>persistFirstView(id,FIELDS.schedule));
       zoom.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')persistFirstView(id,FIELDS.schedule)});
     }
     if(scheduleObserver)scheduleObserver.observe(card);
@@ -143,7 +159,7 @@ function bindScheduleCards(){
 }
 function sync(){
   if(syncQueued)return;syncQueued=true;
-  requestAnimationFrame(()=>{syncQueued=false;if(!customerVisible())return;bindCustomerCards();bindScheduleCards()});
+  requestAnimationFrame(()=>{syncQueued=false;if(!customerVisible())return;installListDelegation();bindCustomerCards();bindScheduleCards()});
 }
 function installListObserver(){
   const list=$('existingBookingList');if(!list||list.dataset.zrViewTrackingRoot==='1')return false;
@@ -170,10 +186,10 @@ function boot(){
       });
     },{threshold:[0.15]});
   }
-  hookLookupButtons();installListObserver();sync();
+  hookLookupButtons();installListObserver();installListDelegation();sync();
   let tries=0;
   const timer=setInterval(()=>{
-    hookLookupButtons();installListObserver();sync();
+    hookLookupButtons();installListObserver();installListDelegation();sync();
     if(++tries>60)clearInterval(timer);
   },300);
 }
