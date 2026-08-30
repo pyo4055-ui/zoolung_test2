@@ -3,8 +3,8 @@
 if(window.__ZR_MODAL_UX_CONSISTENCY_V1)return;
 window.__ZR_MODAL_UX_CONSISTENCY_V1=true;
 
-const OVERLAY_SELECTOR='.modal,.zr-customer-info-modal,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal';
-const SHELL_SELECTOR='.modal-card,.zr-customer-info-sheet,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet';
+const OVERLAY_SELECTOR='.modal,.zr-customer-info-modal,.zr-customer-zoom,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal';
+const SHELL_SELECTOR='.modal-card,.zr-customer-info-sheet,.zr-customer-zoom-card,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet';
 let scanQueued=false;
 let touchX=0,touchY=0;
 
