@@ -6,6 +6,7 @@ window.__ZR_ADMIN_SCHEDULE_CUSTOMER_NOTIFY_V1=true;
 const SCRIPT_STYLE_ID='zrScheduleCustomerNotifyV1Style';
 const SETTINGS_CARD_ID='zrScheduleCustomerNotifySettingsV1';
 const SETTING_FIELD='scheduleCustomerNotifyMessage';
+const BOOKING_KEY='zr_bookings';
 const DEFAULT_MESSAGE='[주렁주렁 동탄점]\n관람 및 체험 일정이 확정되었습니다.\n예약 조회에서 확정된 일정을 확인해주세요.';
 let listObserver=null;
 let observedList=null;
@@ -57,20 +58,30 @@ function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent)||
     (navigator.platform==='MacIntel'&&Number(navigator.maxTouchPoints||0)>1);
 }
-function isMobile(){return /Android|iPad|iPhone|iPod/i.test(navigator.userAgent)||isIOS()}
+function notified(booking){return !!String(booking?.customerSchedule?.notifiedAt||'').trim()}
+function markNotified(id){
+  const list=allBookings();
+  const booking=list.find(b=>b&&!b.__availabilityOnly&&String(b.id)===String(id));
+  if(!booking?.schedulePublished||!booking.customerSchedule||typeof window.setStore!=='function')return false;
+  booking.customerSchedule={...booking.customerSchedule,notifiedAt:new Date().toISOString()};
+  try{window.setStore(BOOKING_KEY,list);return true}
+  catch(e){console.error('schedule notify state save',e);return false}
+}
 function openSms(booking){
   if(!booking?.schedulePublished){toastSafe('스케줄 확정 후 고객 알림을 보낼 수 있습니다.');return}
   const phone=normalizedPhone(booking.contact);
   if(!phone){toastSafe('고객 연락처가 없어 문자를 작성할 수 없습니다.');return}
   const message=buildMessage(booking);
-  if(!isMobile()){
-    if(navigator.clipboard?.writeText){
-      navigator.clipboard.writeText(message).then(()=>toastSafe('알림 문구를 복사했습니다. 모바일에서 고객에게 전송해주세요.')).catch(()=>toastSafe('모바일에서 고객 알림 버튼을 눌러주세요.'));
-    }else toastSafe('모바일에서 고객 알림 버튼을 눌러주세요.');
-    return;
-  }
+  markNotified(booking.id);
+  patchScheduleButtons();
   const separator=isIOS()?'&':'?';
   window.location.href=`sms:${phone}${separator}body=${encodeURIComponent(message)}`;
+}
+function ensurePublishSync(){
+  if(window.__ZR_ADMIN_SCHEDULE_PUBLISH_SYNC_V1||document.getElementById('zrAdminSchedulePublishSyncV1'))return;
+  const s=document.createElement('script');
+  s.id='zrAdminSchedulePublishSyncV1';s.async=false;s.src='./admin_schedule_publish_sync_v1.js?v=1';
+  document.body.appendChild(s);
 }
 function injectStyle(){
   if(document.getElementById(SCRIPT_STYLE_ID))return;
@@ -78,6 +89,7 @@ function injectStyle(){
   style.id=SCRIPT_STYLE_ID;
   style.textContent=`
     #tab-schedule .zr-schedule-customer-notify{background:#eaf3fb!important;color:#2f6b9a!important;border:1px solid #c7dceb!important}
+    #tab-schedule .zr-schedule-customer-notify.done{background:#e9f3ed!important;color:#2f6b4f!important;border-color:#c6decf!important}
     #tab-schedule .zr-schedule-customer-notify:disabled{background:#f1f3f2!important;color:#9aa29d!important;border-color:#dfe4e1!important;cursor:not-allowed!important;opacity:1!important}
     #${SETTINGS_CARD_ID} textarea{min-height:135px;resize:vertical;line-height:1.55}
     #${SETTINGS_CARD_ID} .zr-schedule-notify-auto{margin-top:10px}
@@ -102,7 +114,7 @@ function ensureSettingsCard(){
     <div class="help">스케줄 관리의 <b>고객 알림</b> 버튼에서 사용하는 문구입니다. 스케줄이 확정된 예약에서만 사용할 수 있습니다.</div>
     <div style="margin-top:12px"><label for="zrScheduleCustomerNotifyMessage">알림 문구</label><textarea id="zrScheduleCustomerNotifyMessage"></textarea></div>
     <div class="calc zr-schedule-notify-auto"><b>자동입력 항목</b><br>단체명: <b>[예약 단체명 자동입력]</b><br>방문일: <b>[예약 방문일 자동입력]</b><br>예약 조회: <b>[현재 고객 예약사이트 주소 자동입력]</b></div>
-    <div class="help" style="margin-top:8px">고객 번호와 위 자동입력 항목은 문자 작성 시 자동으로 채워집니다. 실제 전송은 휴대폰 문자 앱에서 마지막으로 확인 후 보내게 됩니다.</div>
+    <div class="help" style="margin-top:8px">고객 번호와 위 자동입력 항목은 문자 작성 시 자동으로 채워집니다. 실제 전송은 문자 앱에서 마지막으로 확인 후 보내게 됩니다.</div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px"><button type="button" class="btn-primary" id="zrSaveScheduleCustomerNotifyMessage">스케줄 알림 문구 저장</button></div>
   `;
   smsCard.insertAdjacentElement('afterend',card);
@@ -136,13 +148,15 @@ function patchScheduleButtons(){
       button.type='button';
       button.className='btn-soft zr-schedule-customer-notify';
       button.dataset.zrScheduleNotify=id;
-      button.textContent='고객 알림';
       actions.insertBefore(button,apply);
     }
     button.dataset.zrScheduleNotify=id;
     const published=!!booking?.schedulePublished;
+    const done=published&&notified(booking);
     button.disabled=!published;
-    button.title=published?'고객 문자 앱에 스케줄 안내 문구를 준비합니다.':'스케줄 확정 후 사용할 수 있습니다.';
+    button.classList.toggle('done',done);
+    button.textContent=done?'✓ 알림완료':'고객 알림';
+    button.title=!published?'스케줄 확정 후 사용할 수 있습니다.':done?'고객 문자 앱을 다시 열어 재전송할 수 있습니다.':'고객 문자 앱에 스케줄 안내 문구를 준비합니다.';
   });
   return true;
 }
@@ -159,6 +173,7 @@ function attachScheduleObserver(){
   return true;
 }
 function attemptInstall(){
+  ensurePublishSync();
   injectStyle();
   const settingsReady=ensureSettingsCard();
   const scheduleReady=attachScheduleObserver();
