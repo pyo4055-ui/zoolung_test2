@@ -49,9 +49,15 @@ for(const needle of [
   "schedule:'zrCustomerScheduleZoom'",
   "const remoteDone=new Set()",
   "const inflight=new Set()",
-  "root.addEventListener('pointerup',onPointerUp,{passive:true})",
+  "const waiting=new Set()",
+  "root.addEventListener('pointerdown',onPointerDown,{passive:true})",
+  "root.addEventListener('touchstart',onTouchStart,{passive:true})",
   "root.addEventListener('keydown',onKeyDown)",
-  "if(!remoteDone.has(`${id}|${FIELDS[kind]}`)&&!inflight.has(`${id}|${FIELDS[kind]}`)&&modalOpen(modalId))persistView(id,kind)",
+  'function waitForOpenedModal(id,kind)',
+  "if(modalOpen(modalId))",
+  "showStatus(`${label} · 버튼 감지됨`,'warn')",
+  "showStatus(`${label} · 팝업 확인 · 서버 기록 확인 중...`,'warn')",
+  "showStatus(`${label} · 팝업 열림 확인 실패`,'err')",
   "await FS.updateDoc(FS.doc(db,COLLECTION,String(id)),{[field]:stamp})",
   "remoteDone.add(key)",
   "const localOk=remoteOk?false:fallbackOwnerSync(id,field,stamp)",
@@ -59,12 +65,12 @@ for(const needle of [
   "showStatus(`${label} · 서버 확인 기록 성공`,'ok')",
   "showStatus(`${label} · Firebase 권한 거부 (permission-denied)`,'err')",
   "showStatus(`${label} · Firebase 연결 확인 필요`,'warn')",
-  "showStatus('확인 기록 대상 예약을 찾지 못했습니다.','err')"
+  "zIndex:'2147483600'"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
   'MutationObserver', 'IntersectionObserver', 'localStorage.setItem(', 'FS.setDoc(', 'FS.deleteDoc(',
-  "collection(db,'reservationAvailability')", "document.addEventListener('click'", "document.addEventListener('pointerup'",
+  "collection(db,'reservationAvailability')", "document.addEventListener('click'", "document.addEventListener('pointerdown'", "document.addEventListener('touchstart'",
   'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
 ])if(tracking.includes(forbidden))fail(`customer view tracking must stay mobile-safe/narrow: ${forbidden}`);
 
