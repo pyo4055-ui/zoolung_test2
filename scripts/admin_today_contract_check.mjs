@@ -47,12 +47,19 @@ for(const needle of [
   "guide:'zrGuideMapModalV32'",
   "parking:'zrCustomerParkingQuickV1'",
   "schedule:'zrCustomerScheduleZoom'",
+  "const remoteDone=new Set()",
+  "const inflight=new Set()",
   "root.addEventListener('pointerup',onPointerUp,{passive:true})",
   "root.addEventListener('keydown',onKeyDown)",
-  "if(!done.has(`${id}|${FIELDS[kind]}`)&&modalOpen(modalId))persistView(id,kind)",
+  "if(!remoteDone.has(`${id}|${FIELDS[kind]}`)&&!inflight.has(`${id}|${FIELDS[kind]}`)&&modalOpen(modalId))persistView(id,kind)",
   "await FS.updateDoc(FS.doc(db,COLLECTION,String(id)),{[field]:stamp})",
-  "if(!remoteOk)fallbackOwnerSync(id,field,stamp)",
-  "window.setStore(KEY,list)"
+  "remoteDone.add(key)",
+  "const localOk=remoteOk?false:fallbackOwnerSync(id,field,stamp)",
+  "window.setStore(KEY,list)",
+  "showStatus(`${label} · 서버 확인 기록 성공`,'ok')",
+  "showStatus(`${label} · Firebase 권한 거부 (permission-denied)`,'err')",
+  "showStatus(`${label} · Firebase 연결 확인 필요`,'warn')",
+  "showStatus('확인 기록 대상 예약을 찾지 못했습니다.','err')"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
