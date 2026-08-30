@@ -40,22 +40,34 @@ for(const forbidden of [
 
 for(const needle of [
   'window.__ZR_CUSTOMER_VIEW_TRACKING_V1=true',
-  'window.zrCustomerViewTrackingV1={disabled:true',
-  "reason:'mobile-popup-regression-check'"
-])if(!tracking.includes(needle))fail(`disabled tracking contract missing: ${needle}`);
+  "COLLECTION='reservations'",
+  "guide:'customerViewedGuideMapAt'",
+  "parking:'customerViewedParkingAt'",
+  "schedule:'customerViewedScheduleAt'",
+  "guide:'zrGuideMapModalV32'",
+  "parking:'zrCustomerParkingQuickV1'",
+  "schedule:'zrCustomerScheduleZoom'",
+  "root.addEventListener('pointerup',onPointerUp,{passive:true})",
+  "root.addEventListener('keydown',onKeyDown)",
+  "if(!done.has(`${id}|${FIELDS[kind]}`)&&modalOpen(modalId))persistView(id,kind)",
+  "await FS.updateDoc(FS.doc(db,COLLECTION,String(id)),{[field]:stamp})",
+  "if(!remoteOk)fallbackOwnerSync(id,field,stamp)",
+  "window.setStore(KEY,list)"
+])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
-  'addEventListener(', 'MutationObserver', 'IntersectionObserver', 'setStore(',
-  'localStorage.setItem(', 'FS.', "collection(db,'", 'updateDoc(', 'setDoc(', 'deleteDoc('
-])if(tracking.includes(forbidden))fail(`disabled tracking must be inert: ${forbidden}`);
+  'MutationObserver', 'IntersectionObserver', 'localStorage.setItem(', 'FS.setDoc(', 'FS.deleteDoc(',
+  "collection(db,'reservationAvailability')", "document.addEventListener('click'", "document.addEventListener('pointerup'",
+  'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
+])if(tracking.includes(forbidden))fail(`customer view tracking must stay mobile-safe/narrow: ${forbidden}`);
 
-for(const forbidden of [
+for(const needle of [
   'loadCustomerViewTracking()',
   "s.src='./customer_view_tracking_v1.js?v=1'",
   'loadAdminToday()',
   "s.src='./admin_today_tab_v1.js?v=1'",
-  'zrTodayTabBtn'
-])if(loader.includes(forbidden))fail(`customer-runtime isolation failed: ${forbidden}`);
+  "if(clicked.id!=='zrTodayTabBtn')gray('zrTodayTabBtn')"
+])if(!loader.includes(needle))fail(`Today/customer view loader contract missing: ${needle}`);
 
-if(failed){console.error('\nToday/customer-runtime isolation contract failed.');process.exit(1)}
-console.log('Today/customer-runtime isolation contract passed.');
+if(failed){console.error('\nToday/customer-view contract failed.');process.exit(1)}
+console.log('Today/customer-view contract passed.');
