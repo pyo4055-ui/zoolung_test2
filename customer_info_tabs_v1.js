@@ -66,6 +66,9 @@ function injectStyle(){
   #zrCustomerParkingQuickBody .zrpk31-title{padding-top:4px}#zrCustomerParkingQuickBody .zrpk31-maps{margin-top:10px}
   #zrCustomerParkingQuickBody .zrpk31-map{min-height:38px;padding:0 14px}
   .zr-customer-info-loading{padding:24px 8px;text-align:center;color:#6c766f;font-size:13px}
+  .zr-customer-schedule-pending{padding:8px 2px 5px;color:#3f4d44;font-size:14px;line-height:1.7}
+  .zr-customer-schedule-pending strong{display:block;margin-bottom:10px;color:#24382c;font-size:16px}
+  .zr-customer-schedule-pending p{margin:7px 0}.zr-customer-schedule-pending b{color:#2f6b4f}
   @media(max-width:520px){
     #existingBookingList .zr-booking-fact-line{gap:6px;min-height:23px}
     #existingBookingList .zr-booking-fact-label{min-width:58px}
@@ -108,13 +111,20 @@ function scheduleButtonFor(id){
   if(!id)return null;
   return [...document.querySelectorAll('#zrCustomerScheduleBox [data-zr-zoom]')].find(x=>String(x.dataset.zrZoom||'')===String(id))||null;
 }
+function openSchedulePending(){
+  const m=ensureModal('zrCustomerSchedulePendingV1','관람 및 체험일정','zrCustomerSchedulePendingBody');
+  const body=$('zrCustomerSchedulePendingBody');
+  body.innerHTML='<div class="zr-customer-schedule-pending"><strong>해당 예약의 관람 및 체험일정은 준비 중입니다.</strong><p>관람 및 체험일정은 방문일 기준 <b>4~5일 전에 확정</b>됩니다.</p><p>확정 후 예약 시 등록하신 번호로 문자 안내드리며, 이곳에서도 확인하실 수 있습니다.</p></div>';
+  m.classList.remove('hidden');
+}
 function openScheduleQuick(card){
   const booking=bookingForCard(card);
-  if(!booking||!booking.schedulePublished||!booking.customerSchedule){toast('확정된 일정표가 아직 없습니다.');return}
+  if(!booking){toast('예약 정보를 찾지 못했습니다.');return}
+  if(!booking.schedulePublished||!booking.customerSchedule){openSchedulePending();return}
   const tryOpen=(left=4)=>{
     const btn=scheduleButtonFor(booking.id);
     if(btn){btn.click();return}
-    if(left<=0){toast('일정표를 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}
+    if(left<=0){toast('관람 및 체험일정을 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}
     setTimeout(()=>tryOpen(left-1),120);
   };
   tryOpen();
@@ -164,7 +174,7 @@ function buildActionBar(card){
   let bar=card.querySelector(':scope > .zr-customer-card-actions');
   if(!bar){
     bar=document.createElement('div');bar.className='zr-customer-card-actions';
-    bar.innerHTML='<div class="zr-customer-card-actions-left"><button type="button" class="zr-customer-guide-action">가이드맵</button><button type="button" class="zr-customer-parking-action">주차 및 인솔</button><button type="button" class="zr-customer-schedule-action">일정표</button></div><div class="zr-customer-card-actions-right"></div>';
+    bar.innerHTML='<div class="zr-customer-card-actions-left"><button type="button" class="zr-customer-guide-action">가이드맵</button><button type="button" class="zr-customer-parking-action">주차 및 인솔</button><button type="button" class="zr-customer-schedule-action">관람 및 체험일정</button></div><div class="zr-customer-card-actions-right"></div>';
     bar.querySelector('.zr-customer-parking-action').addEventListener('click',openParkingQuick);
     bar.querySelector('.zr-customer-schedule-action').addEventListener('click',()=>openScheduleQuick(card));
     card.appendChild(bar);
