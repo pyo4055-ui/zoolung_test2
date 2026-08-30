@@ -6,9 +6,10 @@ const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}};
 
-for(const file of ['admin_today_tab_v1.js','customer_view_tracking_v1.js','customer_info_tabs_v1.js','customer_firebase_bridge_recovery_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
+for(const file of ['admin_today_tab_v1.js','admin_today_print_layout_v1.js','customer_view_tracking_v1.js','customer_info_tabs_v1.js','customer_firebase_bridge_recovery_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
 
 const today=read('admin_today_tab_v1.js');
+const printLayout=read('admin_today_print_layout_v1.js');
 const tracking=read('customer_view_tracking_v1.js');
 const customer=read('customer_info_tabs_v1.js');
 const recovery=read('customer_firebase_bridge_recovery_v1.js');
@@ -39,6 +40,23 @@ for(const forbidden of [
   "collection(db,'reservations')", "collection(db,'reservationAvailability')",
   'observe(document.body', "document.addEventListener('click'"
 ])if(today.includes(forbidden))fail(`Today must remain read-only/narrow: ${forbidden}`);
+
+for(const needle of [
+  'window.__ZR_ADMIN_TODAY_PRINT_LAYOUT_V1=true',
+  '@media print',
+  'grid-template-columns:20mm minmax(0,1.3fr) minmax(48mm,1fr) minmax(43mm,.9fr)!important',
+  '.zr-today-views{border-right:0!important}',
+  'grid-column:auto!important',
+  'border-bottom:0!important',
+  '#tab-today[data-team-count="5"] .zr-today-list{gap:.7mm!important}',
+  '#tab-today[data-team-count="5"] .zr-today-main',
+  '#tab-today[data-team-count="5"] .zr-today-schedule{padding:.7mm 1.2mm .8mm!important}'
+])if(!printLayout.includes(needle))fail(`Today print layout missing: ${needle}`);
+
+for(const forbidden of [
+  'MutationObserver', 'localStorage.', 'FS.', 'setStore(', 'fetch(', 'XMLHttpRequest',
+  "document.addEventListener('click'", 'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
+])if(printLayout.includes(forbidden))fail(`Today print layout must remain CSS-only/narrow: ${forbidden}`);
 
 for(const needle of [
   'window.__ZR_CUSTOMER_VIEW_TRACKING_V1=true',
@@ -96,6 +114,8 @@ for(const needle of [
   "s.src='./customer_view_tracking_v1.js?v=1'",
   'loadAdminToday()',
   "s.src='./admin_today_tab_v1.js?v=1'",
+  'loadAdminTodayPrintLayout()',
+  "s.src='./admin_today_print_layout_v1.js?v=1'",
   "if(clicked.id!=='zrTodayTabBtn')gray('zrTodayTabBtn')"
 ])if(!loader.includes(needle))fail(`Today/customer view loader contract missing: ${needle}`);
 
