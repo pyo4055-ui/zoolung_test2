@@ -14,22 +14,30 @@ const loader=read('admin_tab_active_fix_v1.js');
 for(const needle of [
   'window.__ZR_ADMIN_WARNING_TAB_V1=true',
   "const PREP_DAYS=5",
+  "const PAGE_SIZE=8",
   "String(b?.status||'')==='confirmed'",
+  "diff<=-PREP_DAYS&&!settlementDone(b)",
   "b.schedulePublished",
   "mealNeedsTime(b)",
   "playNeedsTime(b)",
-  "customerViewedParkingAt",
-  "customerViewedGuideMapAt",
-  "customerViewedScheduleAt",
   "settlement?.savedAt",
   "settlementCompletedAt",
   "btn.textContent='경고'",
   "sec.id='tab-warning'",
   "data-zr-warning-filter",
   "data-zr-warning-detail",
+  "data-zr-warning-settlement",
+  "data-zr-warning-page",
+  "id=\"zrWarningPagination\"",
+  "window.zrOpenSettlementWorkspace",
   "window.openAdminBookingDetail",
+  "방문 후 5일이 지난 확정 예약",
   "별도 경고 데이터는 저장하지 않습니다."
 ])if(!warning.includes(needle))fail(`warning tab contract missing: ${needle}`);
+
+for(const removed of [
+  'customerViewedParkingAt','customerViewedGuideMapAt','customerViewedScheduleAt','고객 미확인'
+])if(warning.includes(removed))fail(`customer view status must not be a warning: ${removed}`);
 
 for(const forbidden of [
   'setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','addDoc(',
