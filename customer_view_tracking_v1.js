@@ -34,9 +34,19 @@ function showStatus(message,state='ok'){
   clearTimeout(statusTimer);
   statusTimer=setTimeout(()=>{el.style.opacity='0'},5200);
 }
-async function ensureFirebase(timeout=5000){
+function ensureRecovery(){
+  if(window.__ZR_CUSTOMER_FIREBASE_BRIDGE_RECOVERY_V1||$('zrCustomerFirebaseBridgeRecoveryV1'))return;
+  const s=document.createElement('script');
+  s.id='zrCustomerFirebaseBridgeRecoveryV1';
+  s.async=false;
+  s.src='./customer_firebase_bridge_recovery_v1.js?v=1';
+  document.body.appendChild(s);
+}
+async function ensureFirebase(timeout=7000){
   if(FS&&db)return true;
+  ensureRecovery();
   const start=Date.now();
+  let recoveryAsked=false;
   while(Date.now()-start<timeout){
     const z=window.zrReservationFirebase;
     if(z?.db&&z?.auth?.currentUser){
@@ -45,6 +55,10 @@ async function ensureFirebase(timeout=5000){
         db=z.db;
         return true;
       }catch(e){console.debug('customer view firebase import',e);return false}
+    }
+    if(!recoveryAsked&&Date.now()-start>900&&typeof window.zrCustomerFirebaseBridgeRecoveryV1?.recover==='function'){
+      recoveryAsked=true;
+      window.zrCustomerFirebaseBridgeRecoveryV1.recover();
     }
     await new Promise(r=>setTimeout(r,100));
   }
@@ -92,6 +106,7 @@ async function track(id,kind){
   try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:id,field,kind,remoteOk,localOk,errorCode}}))}catch{}
 }
 
-window.zrCustomerViewTrackingV1={version:3,track};
+ensureRecovery();
+window.zrCustomerViewTrackingV1={version:4,track};
 try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracking-ready'))}catch{}
 })();
