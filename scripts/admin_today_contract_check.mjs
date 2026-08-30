@@ -40,34 +40,14 @@ for(const forbidden of [
 
 for(const needle of [
   'window.__ZR_CUSTOMER_VIEW_TRACKING_V1=true',
-  "const KEY='zr_bookings'",
-  "guide:'customerViewedGuideMapAt'",
-  "parking:'customerViewedParkingAt'",
-  "schedule:'customerViewedScheduleAt'",
-  'const ALLOWED_FIELDS=new Set(Object.values(FIELDS))',
-  'window.setStore(KEY,list)',
-  "FS.updateDoc(FS.doc(db,'reservations',String(id)),{[field]:stamp})",
-  "list.addEventListener('click',e=>{",
-  "e.target?.closest?.('.zr-customer-guide-action')",
-  "e.target?.closest?.('.zr-customer-parking-action')",
-  "trackCardAction(guide,FIELDS.guide)",
-  "trackCardAction(parking,FIELDS.parking)",
-  'IntersectionObserver',
-  "#zrCustomerScheduleBox .zr-customer-schedule",
-  "entry.intersectionRatio<0.15",
-  "{threshold:[0.15]}",
-  "persistFirstView(id,FIELDS.schedule)",
-  'listObserver.observe(list,{childList:true,subtree:true})',
-  "notice(`${label} 확인 기록 완료`,'ok')",
-  "notice(`${label} 기록 실패 · ${code}`,'err')",
-  "notice(`${LABELS[field]||'확인'} · 예약 식별 실패`,'err')"
-])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
+  'window.zrCustomerViewTrackingV1={disabled:true',
+  "reason:'mobile-popup-regression-check'"
+])if(!tracking.includes(needle))fail(`disabled tracking contract missing: ${needle}`);
 
 for(const forbidden of [
-  'FS.setDoc(', 'FS.deleteDoc(', 'localStorage.setItem(',
-  'reservationAvailability', 'scheduleGroups', 'scheduleSharedMemos',
-  'observe(document.body', "document.addEventListener('click'"
-])if(tracking.includes(forbidden))fail(`customer view tracking must stay receipt-only/narrow: ${forbidden}`);
+  'addEventListener(', 'MutationObserver', 'IntersectionObserver', 'setStore(',
+  'localStorage.setItem(', 'FS.', "collection(db,'", 'updateDoc(', 'setDoc(', 'deleteDoc('
+])if(tracking.includes(forbidden))fail(`disabled tracking must be inert: ${forbidden}`);
 
 for(const needle of [
   'loadCustomerViewTracking()',
@@ -76,5 +56,5 @@ for(const needle of [
   "s.src='./admin_today_tab_v1.js?v=1'"
 ])if(!loader.includes(needle))fail(`Today loader contract missing: ${needle}`);
 
-if(failed){console.error('\nToday/admin customer-view contract failed.');process.exit(1)}
-console.log('Today/admin customer-view contract passed.');
+if(failed){console.error('\nToday/customer-view rollback contract failed.');process.exit(1)}
+console.log('Today/customer-view rollback contract passed.');
