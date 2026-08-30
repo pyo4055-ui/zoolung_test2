@@ -54,19 +54,15 @@ for(const needle of [
   'remoteDone.add(key)',
   'const localOk=remoteOk?false:fallbackOwnerSync(id,field,stamp)',
   'window.setStore(KEY,list)',
-  "showStatus(`${label} · 서버 기록 확인 중...`,'warn')",
-  "showStatus(`${label} · 서버 확인 기록 성공`,'ok')",
-  "showStatus(`${label} · Firebase 권한 거부 (permission-denied)`,'err')",
-  "showStatus(`${label} · Firebase 연결 확인 필요`,'warn')",
-  "window.zrCustomerViewTrackingV1={version:4,track}",
-  "zIndex:'2147483600'"
+  "window.zrCustomerViewTrackingV1={version:5,track}"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
 for(const forbidden of [
   'MutationObserver', 'IntersectionObserver', 'localStorage.setItem(', 'FS.setDoc(', 'FS.deleteDoc(',
   "collection(db,'reservationAvailability')", "document.addEventListener('click'", "document.addEventListener('pointerdown'", "document.addEventListener('touchstart'",
-  'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
-])if(tracking.includes(forbidden))fail(`customer view tracking must stay owner-driven/mobile-safe: ${forbidden}`);
+  'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation(',
+  'zrCustomerViewTrackStatus', 'showStatus(', '서버 기록 확인 중', '서버 확인 기록 성공', 'Firebase 권한 거부', 'Firebase 연결 확인 필요'
+])if(tracking.includes(forbidden))fail(`customer view tracking must stay silent/mobile-safe: ${forbidden}`);
 
 for(const needle of [
   'function ensureCustomerViewTracking()',
@@ -85,14 +81,15 @@ for(const needle of [
   'appMod.getApps()',
   'authMod.signInAnonymously(auth)',
   'window.zrReservationFirebase={',
-  "show('Firebase 연결 복구 완료','ok')",
-  'window.zrCustomerFirebaseBridgeRecoveryV1={recover}'
+  "document.dispatchEvent(new CustomEvent('zr:customer-firebase-recovered'))",
+  'window.zrCustomerFirebaseBridgeRecoveryV1={recover,state}'
 ])if(!recovery.includes(needle))fail(`customer firebase recovery contract missing: ${needle}`);
 
 for(const forbidden of [
   'MutationObserver', 'localStorage.setItem(', 'FS.setDoc(', 'FS.updateDoc(', 'FS.deleteDoc(',
-  "document.addEventListener('click'", 'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
-])if(recovery.includes(forbidden))fail(`customer firebase recovery must remain narrow: ${forbidden}`);
+  "document.addEventListener('click'", 'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation(',
+  'zrCustomerFirebaseRecoveryStatus', "document.createElement('div')", 'Firebase 연결 복구 완료', 'Firebase 로그인 복구 중', 'Firebase 로그인 실패', 'Firebase 모듈 연결 실패'
+])if(recovery.includes(forbidden))fail(`customer firebase recovery must remain silent/narrow: ${forbidden}`);
 
 for(const needle of [
   'loadCustomerViewTracking()',
