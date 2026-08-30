@@ -5,11 +5,30 @@ window.__ZR_CUSTOMER_INFO_TABS_V1=true;
 
 const $=id=>document.getElementById(id);
 const LEGACY_CONTRACT_IDS='zrCustomerGuideTabV1 zrCustomerParkingTabV1';
+const tel=s=>String(s||'').replace(/\D/g,'');
+const toast=s=>{try{window.toast?.(s)}catch{}}
 function visible(el){return !!el&&!el.classList.contains('hidden')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}
 function bookingCardTarget(){
   const list=$('existingBookingList');
   if(!visible(list))return null;
   return [...list.querySelectorAll('.existing-card')].find(card=>visible(card)&&!isCancelledCard(card))||null;
+}
+function readBookings(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
+function matchingBookings(){
+  const manager=String($('startManager')?.value||'').trim();
+  const contact=tel($('startContact')?.value||'');
+  if(!manager||!contact)return [];
+  return readBookings().filter(b=>b&&!b.__availabilityOnly&&String(b.managerName||'').trim()===manager&&tel(b.contact)===contact&&String(b.status||'')!=='rejected');
+}
+function bookingForCard(card){
+  const all=matchingBookings().filter(b=>String(b.status||'')!=='cancelled');
+  if(!all.length)return null;
+  const text=String(card?.textContent||'').replace(/\s+/g,' ');
+  const exact=all.find(b=>{
+    const org=String(b.orgName||'').trim(),date=String(b.date||'').trim();
+    return (!org||text.includes(org))&&(!date||text.includes(date));
+  });
+  return exact||(all.length===1?all[0]:null);
 }
 
 function injectStyle(){
@@ -20,16 +39,19 @@ function injectStyle(){
   #existingBookingList .zr-booking-fact-label{display:inline-block;min-width:62px;color:#2f6b4f;font-weight:950;letter-spacing:-.2px}
   #existingBookingList .zr-booking-fact-value{color:#17221c;font-weight:800;letter-spacing:-.15px}
   #existingBookingList .zr-customer-card-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid #e4eae6}
-  #existingBookingList .zr-customer-card-actions-left,#existingBookingList .zr-customer-card-actions-right{display:flex;align-items:center;gap:7px;min-width:0}
-  #existingBookingList .zr-customer-card-actions-left{flex:0 1 auto}
-  #existingBookingList .zr-customer-card-actions-right{flex:0 0 auto;margin-left:auto}
-  #existingBookingList .zr-customer-card-actions button{min-height:40px;border-radius:11px;padding:0 14px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;position:static!important;margin:0!important;transform:none!important}
+  #existingBookingList .zr-customer-card-actions-left{display:flex;align-items:center;gap:7px;min-width:0;flex:0 1 auto}
+  #existingBookingList .zr-customer-card-actions-right{display:none;align-items:center;gap:7px;min-width:0;flex:0 0 auto;margin-left:auto}
+  #existingBookingList.zr-cancel-mode-active .zr-customer-card-actions-right{display:flex}
+  #existingBookingList .zr-customer-card-actions button{min-height:40px;border-radius:11px;padding:0 14px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap;position:relative!important;z-index:2!important;margin:0!important;transform:none!important;pointer-events:auto!important;touch-action:manipulation;-webkit-tap-highlight-color:rgba(47,107,79,.08)}
   #existingBookingList .zr-customer-guide-action{border:1px solid #cad8cf;background:#fff;color:#315843;box-shadow:0 3px 10px rgba(30,50,36,.08)}
   #existingBookingList .zr-customer-guide-action:hover{background:#eef6f1}
   #existingBookingList .zr-customer-parking-action{border:1px solid #d8c998;background:#fff9e9;color:#705817;box-shadow:0 3px 10px rgba(30,50,36,.08)}
   #existingBookingList .zr-customer-parking-action:hover{background:#fff4d7}
+  #existingBookingList .zr-customer-schedule-action{border:1px solid #bfd5e3;background:#f3f9fd;color:#315e79;box-shadow:0 3px 10px rgba(30,50,36,.08)}
+  #existingBookingList .zr-customer-schedule-action:hover{background:#eaf5fb}
   #existingBookingList .zr-customer-action-cancel{min-height:40px!important}
   #existingBookingList .zr-action-origin-empty{display:none!important}
+  #zrCustomerScheduleBox{display:none!important}
   #customerView #zrParkingInfoCard .zrpk31-row,#zrCustomerParkingQuickBody .zrpk31-row{background:#fff!important;border-left:0!important}
   #customerView #zrParkingInfoCard .zrpk31-row+.zrpk31-row,#zrCustomerParkingQuickBody .zrpk31-row+.zrpk31-row{border-top:2px solid #d8dfda!important}
   #customerView #zrParkingInfoCard .zrpk31-row h4,#zrCustomerParkingQuickBody .zrpk31-row h4{background:#e7f1eb!important;color:#24553f!important}
@@ -47,10 +69,11 @@ function injectStyle(){
   @media(max-width:520px){
     #existingBookingList .zr-booking-fact-line{gap:6px;min-height:23px}
     #existingBookingList .zr-booking-fact-label{min-width:58px}
-    #existingBookingList .zr-customer-card-actions{gap:6px;margin-top:15px;padding-top:12px}
-    #existingBookingList .zr-customer-card-actions-left{gap:5px}
-    #existingBookingList .zr-customer-card-actions button{min-height:38px;padding:0 8px;font-size:10.5px;letter-spacing:-.2px}
-    #existingBookingList .zr-customer-action-cancel{min-height:38px!important;padding-left:9px!important;padding-right:9px!important}
+    #existingBookingList .zr-customer-card-actions{gap:8px;margin-top:15px;padding-top:12px;flex-wrap:wrap}
+    #existingBookingList .zr-customer-card-actions-left{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;flex:1 1 100%}
+    #existingBookingList .zr-customer-card-actions-left button{width:100%;min-width:0;min-height:42px;padding:0 5px;font-size:10.5px;letter-spacing:-.3px}
+    #existingBookingList .zr-customer-card-actions-right{width:100%;justify-content:flex-end;margin-left:0}
+    #existingBookingList .zr-customer-action-cancel{min-height:40px!important;padding-left:11px!important;padding-right:11px!important}
     .zr-customer-info-sheet{padding:14px}
   }
   `;document.head.appendChild(s);
@@ -81,6 +104,21 @@ function openParkingQuick(){
   fill();if(!parkingCopy())setTimeout(fill,500);
   m.classList.remove('hidden');
 }
+function scheduleButtonFor(id){
+  if(!id)return null;
+  return [...document.querySelectorAll('#zrCustomerScheduleBox [data-zr-zoom]')].find(x=>String(x.dataset.zrZoom||'')===String(id))||null;
+}
+function openScheduleQuick(card){
+  const booking=bookingForCard(card);
+  if(!booking||!booking.schedulePublished||!booking.customerSchedule){toast('확정된 일정표가 아직 없습니다.');return}
+  const tryOpen=(left=4)=>{
+    const btn=scheduleButtonFor(booking.id);
+    if(btn){btn.click();return}
+    if(left<=0){toast('일정표를 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}
+    setTimeout(()=>tryOpen(left-1),120);
+  };
+  tryOpen();
+}
 
 function isCancelledCard(card){
   if(card.classList.contains('zr-cancelled-record'))return true;
@@ -92,6 +130,10 @@ function cancelButton(card){
     const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
     return /^(?:이\s*)?예약\s*취소하기$/.test(text)||text==='예약 내역 취소';
   })||null;
+}
+function inCancelMode(list){
+  if(list?.querySelector('.zr-cancel-list-heading'))return true;
+  return [...(list?.querySelectorAll('.existing-card button')||[])].some(btn=>String(btn.textContent||'').replace(/\s+/g,' ').trim()==='이 예약 취소하기');
 }
 function decorateBookingFacts(card){
   const walker=document.createTreeWalker(card,NodeFilter.SHOW_TEXT);
@@ -122,8 +164,9 @@ function buildActionBar(card){
   let bar=card.querySelector(':scope > .zr-customer-card-actions');
   if(!bar){
     bar=document.createElement('div');bar.className='zr-customer-card-actions';
-    bar.innerHTML='<div class="zr-customer-card-actions-left"><button type="button" class="zr-customer-guide-action">가이드맵</button><button type="button" class="zr-customer-parking-action">주차 및 인솔</button></div><div class="zr-customer-card-actions-right"></div>';
+    bar.innerHTML='<div class="zr-customer-card-actions-left"><button type="button" class="zr-customer-guide-action">가이드맵</button><button type="button" class="zr-customer-parking-action">주차 및 인솔</button><button type="button" class="zr-customer-schedule-action">일정표</button></div><div class="zr-customer-card-actions-right"></div>';
     bar.querySelector('.zr-customer-parking-action').addEventListener('click',openParkingQuick);
+    bar.querySelector('.zr-customer-schedule-action').addEventListener('click',()=>openScheduleQuick(card));
     card.appendChild(bar);
   }
   return bar;
@@ -141,6 +184,7 @@ function placeCancelButton(card,bar){
 function syncCardActions(){
   const list=$('existingBookingList');
   if(!visible(list))return;
+  list.classList.toggle('zr-cancel-mode-active',inCancelMode(list));
   $('zrCustomerInfoTabsV1')?.remove();
   list.querySelectorAll('.existing-card').forEach(card=>{
     if(!visible(card)||isCancelledCard(card)){
@@ -155,16 +199,20 @@ function syncCardActions(){
   });
 }
 
-let pending=false;
+let pending=false,listObserver=null,observedList=null;
 function sync(){
-  if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;injectStyle();syncCardActions()});
+  if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;injectStyle();syncCardActions();observeList()});
+}
+function observeList(){
+  const list=$('existingBookingList');if(!list||list===observedList)return;
+  listObserver?.disconnect();observedList=list;
+  listObserver=new MutationObserver(sync);listObserver.observe(list,{childList:true,subtree:true});
 }
 function boot(){
   void LEGACY_CONTRACT_IDS;void bookingCardTarget;
-  injectStyle();sync();
-  new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-  const timer=setInterval(sync,350);setTimeout(()=>clearInterval(timer),20000);
-  ['checkExisting','cancelExisting'].forEach(id=>$(id)?.addEventListener('click',()=>[0,100,300,800].forEach(ms=>setTimeout(sync,ms))));
+  injectStyle();sync();observeList();
+  const timer=setInterval(()=>{sync();observeList()},500);setTimeout(()=>clearInterval(timer),20000);
+  ['lookupBooking','checkExisting','cancelExisting'].forEach(id=>$(id)?.addEventListener('click',()=>[0,100,300,800].forEach(ms=>setTimeout(sync,ms))));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
