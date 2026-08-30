@@ -13,8 +13,8 @@ for(const f of [file,'customer_return_home_v1.js']){
 }
 
 for(const needle of [
-  '.modal,.zr-customer-info-modal,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal',
-  '.modal-card,.zr-customer-info-sheet,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet',
+  '.modal,.zr-customer-info-modal,.zr-customer-zoom,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal',
+  '.modal-card,.zr-customer-info-sheet,.zr-customer-zoom-card,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet',
   'function blockBackdrop(e)',
   'if(!visibleOverlay(e.target))return;',
   'e.preventDefault();',
@@ -28,6 +28,7 @@ for(const needle of [
   'function guardTouchStart(e)',
   'function guardTouchMove(e)',
   'function guardWheel(e)',
+  "if(Math.abs(dx)>Math.abs(deltaY))return;",
   "document.addEventListener('touchstart',guardTouchStart,{capture:true,passive:true})",
   "document.addEventListener('touchmove',guardTouchMove,{capture:true,passive:false})",
   "document.addEventListener('wheel',guardWheel,{capture:true,passive:false})",
