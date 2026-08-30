@@ -49,12 +49,13 @@ for(const forbidden of [
   'localStorage.setItem(', 'FS.', "collection(db,'", 'updateDoc(', 'setDoc(', 'deleteDoc('
 ])if(tracking.includes(forbidden))fail(`disabled tracking must be inert: ${forbidden}`);
 
-for(const needle of [
+for(const forbidden of [
   'loadCustomerViewTracking()',
   "s.src='./customer_view_tracking_v1.js?v=1'",
   'loadAdminToday()',
-  "s.src='./admin_today_tab_v1.js?v=1'"
-])if(!loader.includes(needle))fail(`Today loader contract missing: ${needle}`);
+  "s.src='./admin_today_tab_v1.js?v=1'",
+  'zrTodayTabBtn'
+])if(loader.includes(forbidden))fail(`customer-runtime isolation failed: ${forbidden}`);
 
-if(failed){console.error('\nToday/customer-view rollback contract failed.');process.exit(1)}
-console.log('Today/customer-view rollback contract passed.');
+if(failed){console.error('\nToday/customer-runtime isolation contract failed.');process.exit(1)}
+console.log('Today/customer-runtime isolation contract passed.');
