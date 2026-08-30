@@ -5,7 +5,7 @@ window.__ZR_CUSTOMER_LOOKUP_ACTIONS_V1=true;
 
 const $=id=>document.getElementById(id);
 const tel=s=>String(s||'').replace(/\D/g,'');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const toast=s=>{try{window.toast?.(s)}catch{}};
 let cancelTargetId='';
 let cancelMode=false;
@@ -29,13 +29,19 @@ function dateTimeText(v){
   const p=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+function statusText(v){
+  const s=String(v||'');
+  if(s==='confirmed')return '확정';
+  if(s==='hold')return '보류';
+  if(s==='cancelled')return '취소';
+  return '접수';
+}
 
 function injectStyle(){
   if($('zrCustomerLookupActionsV1Style'))return;
   const s=document.createElement('style');s.id='zrCustomerLookupActionsV1Style';s.textContent=`
   #existingBookingList .zr-confirmed-emphasis{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:11px 12px;border:1px solid #b9d9c5;border-radius:11px;background:#eaf6ee;color:#245b40;font-size:14px;font-weight:900;line-height:1.45}
   #existingBookingList .zr-cancelled-emphasis,#cancelSuccessView .zr-cancelled-emphasis{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:11px 12px;border:1px solid #e5bcbc;border-radius:11px;background:#fff0f0;color:#8b3434;font-size:14px;font-weight:900;line-height:1.45}
-  #existingBookingList .zr-cancel-list-heading{margin:0 0 12px;padding:12px 13px;border:1px solid #ebcaca;border-radius:11px;background:#fff4f4;color:#7c3737;font-size:13px;font-weight:850;line-height:1.5}
   #existingBookingList .zr-cancelled-records{display:grid;gap:10px;margin-top:10px}
   #existingBookingList .zr-cancelled-record{border:1px solid #e3caca!important;background:#fffafa!important}
   #existingBookingList .zr-cancelled-record-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
@@ -50,7 +56,17 @@ function injectStyle(){
   #cancelConfirmModal .zr-cancel-reason-help{margin-top:6px;font-size:11px;color:#707a73;line-height:1.5}
   #cancelConfirmModal .zr-cancel-reason-error{display:none;margin-top:6px;font-size:11px;font-weight:800;color:#a33b3b}
   #cancelConfirmModal .zr-cancel-reason-error.show{display:block}
-  @media(max-width:560px){#existingBookingList .zr-cancelled-record-grid{grid-template-columns:1fr}}
+  .zr-cancel-select-modal{position:fixed;inset:0;z-index:10320;background:rgba(16,25,20,.58);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+  .zr-cancel-select-modal.hidden{display:none!important}
+  .zr-cancel-select-sheet{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;padding:18px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.26);-webkit-overflow-scrolling:touch}
+  .zr-cancel-select-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}.zr-cancel-select-head h2{margin:0;flex:1;font-size:20px;color:#2c352f}.zr-cancel-select-close{border:0;border-radius:9px;padding:8px 11px;background:#eef1ee;color:#4f5c54;font-weight:900;cursor:pointer;touch-action:manipulation}
+  .zr-cancel-select-help{margin:0 0 14px;color:#657068;font-size:13px;line-height:1.6}
+  .zr-cancel-select-list{display:grid;gap:10px}
+  .zr-cancel-select-item{border:1px solid #dfe5e1;border-radius:13px;padding:13px;background:#fff}
+  .zr-cancel-select-item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.zr-cancel-select-item-head b{font-size:16px;color:#26342b}.zr-cancel-select-status{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#edf5f0;color:#2f6b4f;font-size:11px;font-weight:900}
+  .zr-cancel-select-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:10px}.zr-cancel-select-meta div{font-size:13px;color:#3f4943;line-height:1.45}.zr-cancel-select-meta span{display:block;margin-bottom:2px;color:#7a837d;font-size:10px;font-weight:850}
+  .zr-cancel-select-action{display:flex;justify-content:flex-end;margin-top:12px}.zr-cancel-select-action button{min-height:42px;border:1px solid #d7a5a5;border-radius:10px;padding:0 14px;background:#fff3f3;color:#963e3e;font-weight:900;cursor:pointer;touch-action:manipulation}
+  @media(max-width:560px){#existingBookingList .zr-cancelled-record-grid,.zr-cancel-select-meta{grid-template-columns:1fr}.zr-cancel-select-sheet{padding:15px}.zr-cancel-select-action button{width:100%;min-height:46px;font-size:14px}}
   `;document.head.appendChild(s);
 }
 
@@ -168,7 +184,6 @@ function cancelledRecordHtml(b){
 function renderCancelledRecords(){
   const list=$('existingBookingList');if(!list)return;
   const old=$('zrCancelledBookingRecordsV2');
-  if(cancelMode){old?.remove();return}
   const cancelled=customerBookings(true).filter(b=>String(b.status||'')==='cancelled');
   if(!cancelled.length){old?.remove();return}
   const baseCards=[...list.querySelectorAll('.existing-card:not(.zr-cancelled-record)')];
@@ -185,13 +200,10 @@ function renderCancelledRecords(){
 }
 function decorateList(){
   const list=$('existingBookingList');if(!list)return;
+  cancelMode=false;
   renameCancelButtons(list);
+  list.querySelector('.zr-cancel-list-heading')?.remove();
   list.querySelectorAll('.existing-card').forEach(statusBanner);
-  if(cancelMode){
-    let head=list.querySelector('.zr-cancel-list-heading');
-    if(!head){head=document.createElement('div');head.className='zr-cancel-list-heading';list.prepend(head)}
-    head.textContent='취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요. 취소 사유를 입력한 뒤 최종 취소됩니다.';
-  }else list.querySelector('.zr-cancel-list-heading')?.remove();
 }
 function syncLookupActions(){
   const all=customerBookings(true),active=cancellableCustomerBookings();
@@ -204,12 +216,64 @@ function syncLookupActions(){
   if($('existingCount'))$('existingCount').textContent=`${all.length}건`;
 }
 
+function cancelChoiceHtml(b){
+  return `<section class="zr-cancel-select-item">
+    <div class="zr-cancel-select-item-head"><span class="zr-cancel-select-status">${esc(statusText(b.status))}</span><b>${esc(b.orgName||'단체 예약')}</b></div>
+    <div class="zr-cancel-select-meta"><div><span>방문일</span>${esc(b.date||'-')}</div><div><span>방문시간</span>${esc(b.entryTime||'--:--')} ~ ${esc(b.exitTime||'--:--')}</div></div>
+    <div class="zr-cancel-select-action"><button type="button" data-zr-cancel-select="${esc(b.id)}">이 예약 취소하기</button></div>
+  </section>`;
+}
+function closeCancelSelect(){
+  $('zrCustomerCancelSelectModal')?.classList.add('hidden');
+}
+function openSelectedCancel(id,left=5){
+  const booking=cancellableCustomerBookings().find(b=>String(b.id||'')===String(id));
+  if(!booking){toast('취소할 예약 정보를 다시 확인해주세요.');return}
+  installCancelOpenWrapper();
+  const fn=window.openCustomerCancel;
+  if(typeof fn==='function'){
+    closeCancelSelect();
+    fn(String(id));
+    return;
+  }
+  if(left<=0){toast('예약 취소 화면을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');return}
+  setTimeout(()=>openSelectedCancel(id,left-1),100);
+}
+function ensureCancelSelectModal(){
+  let modal=$('zrCustomerCancelSelectModal');
+  if(modal)return modal;
+  modal=document.createElement('div');
+  modal.id='zrCustomerCancelSelectModal';
+  modal.className='zr-cancel-select-modal hidden';
+  modal.innerHTML='<div class="zr-cancel-select-sheet" role="dialog" aria-modal="true" aria-labelledby="zrCustomerCancelSelectTitle"><div class="zr-cancel-select-head"><h2 id="zrCustomerCancelSelectTitle">예약 취소하기</h2><button type="button" class="zr-cancel-select-close">닫기</button></div><p class="zr-cancel-select-help">취소하실 예약의 ‘이 예약 취소하기’ 버튼을 눌러주세요. 다음 화면에서 취소 사유를 입력한 뒤 최종 취소됩니다.</p><div class="zr-cancel-select-list" id="zrCustomerCancelSelectList"></div></div>';
+  document.body.appendChild(modal);
+  modal.querySelector('.zr-cancel-select-close').onclick=closeCancelSelect;
+  modal.addEventListener('click',e=>{
+    if(e.target===modal){closeCancelSelect();return}
+    const btn=e.target?.closest?.('[data-zr-cancel-select]');
+    if(!btn)return;
+    openSelectedCancel(btn.dataset.zrCancelSelect||'');
+  });
+  return modal;
+}
+function openCancelSelect(){
+  const matches=cancellableCustomerBookings();
+  if(!matches.length){toast('취소할 수 있는 예약 내역이 없습니다.');return}
+  cancelMode=false;
+  decorateList();
+  const modal=ensureCancelSelectModal();
+  const list=$('zrCustomerCancelSelectList');
+  const ordered=[...matches].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.entryTime||'').localeCompare(String(b.entryTime||'')));
+  list.innerHTML=ordered.map(cancelChoiceHtml).join('');
+  modal.classList.remove('hidden');
+}
+
 function wrapActionButtons(){
   const lookup=$('lookupBooking');
   if(lookup&&lookup.dataset.zrCancelledLookupV2!=='1'){
     lookup.dataset.zrCancelledLookupV2='1';
     lookup.addEventListener('click',()=>{
-      cancelMode=false;
+      cancelMode=false;closeCancelSelect();
       [0,80,220,600].forEach(ms=>setTimeout(syncLookupActions,ms));
     });
   }
@@ -217,23 +281,17 @@ function wrapActionButtons(){
   if(check&&check.dataset.zrCancelModeV1!=='1'){
     check.dataset.zrCancelModeV1='1';
     check.addEventListener('click',()=>{
-      cancelMode=false;
+      cancelMode=false;closeCancelSelect();
       [0,100,300,800,1500].forEach(ms=>setTimeout(()=>{decorateList();renderCancelledRecords();syncLookupActions()},ms));
     });
   }
   const cancel=$('cancelExisting');
   if(cancel&&cancel.dataset.zrCancelModeV1!=='1'){
     cancel.dataset.zrCancelModeV1='1';cancel.textContent='3. 예약 취소하기';
-    const base=cancel.onclick;
     cancel.onclick=function(ev){
-      cancelMode=true;
-      const matches=cancellableCustomerBookings();
-      if(!matches.length){toast('취소할 수 있는 예약 내역이 없습니다.');return}
-      const out=typeof base==='function'?base.call(this,ev):undefined;
-      setTimeout(()=>{
-        decorateList();renderCancelledRecords();const list=$('existingBookingList');list?.classList.remove('hidden');list?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
-      },0);
-      return out;
+      ev?.preventDefault?.();
+      openCancelSelect();
+      return false;
     };
   }
 }
@@ -242,7 +300,7 @@ let pending=false;
 function enhance(){
   if(pending)return;pending=true;
   requestAnimationFrame(()=>{
-    pending=false;injectStyle();ensureReasonUi();installCancelOpenWrapper();bindConfirmGuard();wrapActionButtons();decorateList();decorateCancelSuccess();
+    pending=false;injectStyle();ensureReasonUi();ensureCancelSelectModal();installCancelOpenWrapper();bindConfirmGuard();wrapActionButtons();decorateList();decorateCancelSuccess();
   });
 }
 function boot(){
