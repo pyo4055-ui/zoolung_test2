@@ -15,29 +15,43 @@ for(const needle of [
   'window.__ZR_ADMIN_WARNING_TAB_V1=true',
   "const PREP_DAYS=5",
   "const PAGE_SIZE=8",
-  "String(b?.status||'')==='confirmed'",
+  "['pending','hold'].includes(status)",
   "diff<=-PREP_DAYS&&!settlementDone(b)",
   "b.schedulePublished",
-  "mealNeedsTime(b)",
-  "playNeedsTime(b)",
+  "customerSchedule?.notifiedAt",
+  "customerSchedule?.segments",
+  "function scheduleConflicts(b)",
+  "type==='meal'",
+  "type==='play'",
+  "'4F 베이직'",
+  "'5F 워터가든'",
+  "'예약 미확정'",
+  "'고객 알림 미완료'",
+  "'스케줄 시간 겹침'",
   "settlement?.savedAt",
   "settlementCompletedAt",
   "btn.textContent='경고'",
   "sec.id='tab-warning'",
-  "data-zr-warning-filter",
+  "data-zr-warning-filter=\"booking\"",
+  "data-zr-warning-filter=\"schedule\"",
+  "data-zr-warning-filter=\"notify\"",
+  "data-zr-warning-filter=\"conflict\"",
+  "data-zr-warning-filter=\"settlement\"",
   "data-zr-warning-detail",
   "data-zr-warning-settlement",
   "data-zr-warning-page",
   "id=\"zrWarningPagination\"",
   "window.zrOpenSettlementWorkspace",
   "window.openAdminBookingDetail",
-  "방문 후 5일이 지난 확정 예약",
+  "방문 D-5부터 예약 미확정·스케줄 미확정·고객 알림 미완료·확정 스케줄 시간 겹침",
+  "실제결제 미입력은 방문 D+5부터 표시합니다.",
   "별도 경고 데이터는 저장하지 않습니다."
 ])if(!warning.includes(needle))fail(`warning tab contract missing: ${needle}`);
 
 for(const removed of [
+  'mealNeedsTime','playNeedsTime','식사시간 없음','놀이터시간 없음',
   'customerViewedParkingAt','customerViewedGuideMapAt','customerViewedScheduleAt','고객 미확인'
-])if(warning.includes(removed))fail(`customer view status must not be a warning: ${removed}`);
+])if(warning.includes(removed))fail(`obsolete warning must stay removed: ${removed}`);
 
 for(const forbidden of [
   'setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','addDoc(',
