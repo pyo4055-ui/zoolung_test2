@@ -6,11 +6,12 @@ const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}};
 
-for(const file of ['admin_today_tab_v1.js','customer_view_tracking_v1.js','customer_info_tabs_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
+for(const file of ['admin_today_tab_v1.js','customer_view_tracking_v1.js','customer_info_tabs_v1.js','customer_firebase_bridge_recovery_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
 
 const today=read('admin_today_tab_v1.js');
 const tracking=read('customer_view_tracking_v1.js');
 const customer=read('customer_info_tabs_v1.js');
+const recovery=read('customer_firebase_bridge_recovery_v1.js');
 const loader=read('admin_tab_active_fix_v1.js');
 
 for(const needle of [
@@ -45,6 +46,9 @@ for(const needle of [
   "guide:'customerViewedGuideMapAt'",
   "parking:'customerViewedParkingAt'",
   "schedule:'customerViewedScheduleAt'",
+  'function ensureRecovery()',
+  "s.src='./customer_firebase_bridge_recovery_v1.js?v=1'",
+  'window.zrCustomerFirebaseBridgeRecoveryV1?.recover',
   'async function track(id,kind)',
   "await FS.updateDoc(FS.doc(db,COLLECTION,id),{[field]:stamp})",
   'remoteDone.add(key)',
@@ -54,7 +58,7 @@ for(const needle of [
   "showStatus(`${label} · 서버 확인 기록 성공`,'ok')",
   "showStatus(`${label} · Firebase 권한 거부 (permission-denied)`,'err')",
   "showStatus(`${label} · Firebase 연결 확인 필요`,'warn')",
-  "window.zrCustomerViewTrackingV1={version:3,track}",
+  "window.zrCustomerViewTrackingV1={version:4,track}",
   "zIndex:'2147483600'"
 ])if(!tracking.includes(needle))fail(`customer view tracking contract missing: ${needle}`);
 
@@ -75,6 +79,20 @@ for(const needle of [
   "card.dataset.zrBookingId=String(booking.id)",
   'ensureCustomerViewTracking();'
 ])if(!customer.includes(needle))fail(`customer action owner tracking missing: ${needle}`);
+
+for(const needle of [
+  'window.__ZR_CUSTOMER_FIREBASE_BRIDGE_RECOVERY_V1=true',
+  'appMod.getApps()',
+  'authMod.signInAnonymously(auth)',
+  'window.zrReservationFirebase={',
+  "show('Firebase 연결 복구 완료','ok')",
+  'window.zrCustomerFirebaseBridgeRecoveryV1={recover}'
+])if(!recovery.includes(needle))fail(`customer firebase recovery contract missing: ${needle}`);
+
+for(const forbidden of [
+  'MutationObserver', 'localStorage.setItem(', 'FS.setDoc(', 'FS.updateDoc(', 'FS.deleteDoc(',
+  "document.addEventListener('click'", 'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
+])if(recovery.includes(forbidden))fail(`customer firebase recovery must remain narrow: ${forbidden}`);
 
 for(const needle of [
   'loadCustomerViewTracking()',
