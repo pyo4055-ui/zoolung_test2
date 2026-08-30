@@ -21,6 +21,11 @@ function matchingBookings(){
   return readBookings().filter(b=>b&&!b.__availabilityOnly&&String(b.managerName||'').trim()===manager&&tel(b.contact)===contact&&String(b.status||'')!=='rejected');
 }
 function bookingForCard(card){
+  const cached=String(card?.dataset?.zrBookingId||'');
+  if(cached){
+    const found=readBookings().find(b=>String(b?.id||'')===cached&&String(b?.status||'')!=='cancelled');
+    if(found)return found;
+  }
   const all=matchingBookings().filter(b=>String(b.status||'')!=='cancelled');
   if(!all.length)return null;
   const text=String(card?.textContent||'').replace(/\s+/g,' ');
@@ -28,7 +33,31 @@ function bookingForCard(card){
     const org=String(b.orgName||'').trim(),date=String(b.date||'').trim();
     return (!org||text.includes(org))&&(!date||text.includes(date));
   });
-  return exact||(all.length===1?all[0]:null);
+  const booking=exact||(all.length===1?all[0]:null);
+  if(booking?.id&&card)card.dataset.zrBookingId=String(booking.id);
+  return booking;
+}
+function ensureCustomerViewTracking(){
+  if(window.__ZR_CUSTOMER_VIEW_TRACKING_V1||$('zrCustomerViewTrackingV1'))return;
+  const s=document.createElement('script');
+  s.id='zrCustomerViewTrackingV1';s.async=false;s.src='./customer_view_tracking_v1.js?v=3';
+  s.onerror=()=>{s.remove();setTimeout(ensureCustomerViewTracking,500)};
+  document.body.appendChild(s);
+}
+function sendViewSignal(id,kind,left=24){
+  const fn=window.zrCustomerViewTrackingV1?.track;
+  if(typeof fn==='function'){fn(String(id),kind);return}
+  if(left>0)setTimeout(()=>sendViewSignal(id,kind,left-1),75);
+}
+function trackWhenModalOpen(card,kind,modalId,timeout=1800){
+  const booking=bookingForCard(card);
+  if(!booking?.id)return;
+  const started=Date.now();
+  const check=()=>{
+    if(visible($(modalId))){sendViewSignal(booking.id,kind);return}
+    if(Date.now()-started<timeout)setTimeout(check,70);
+  };
+  setTimeout(check,0);
 }
 
 function injectStyle(){
@@ -96,7 +125,7 @@ function ensureModal(id,title,bodyId){
   m.addEventListener('click',e=>{if(e.target===m)close()});
   return m;
 }
-function openParkingQuick(){
+function openParkingQuick(card){
   const m=ensureModal('zrCustomerParkingQuickV1','주차 및 인솔','zrCustomerParkingQuickBody');
   const body=$('zrCustomerParkingQuickBody');
   const fill=()=>{
@@ -106,6 +135,7 @@ function openParkingQuick(){
   };
   fill();if(!parkingCopy())setTimeout(fill,500);
   m.classList.remove('hidden');
+  trackWhenModalOpen(card,'parking','zrCustomerParkingQuickV1');
 }
 function scheduleButtonFor(id){
   if(!id)return null;
@@ -123,7 +153,7 @@ function openScheduleQuick(card){
   if(!booking.schedulePublished||!booking.customerSchedule){openSchedulePending();return}
   const tryOpen=(left=4)=>{
     const btn=scheduleButtonFor(booking.id);
-    if(btn){btn.click();return}
+    if(btn){btn.click();trackWhenModalOpen(card,'schedule','zrCustomerScheduleZoom');return}
     if(left<=0){toast('관람 및 체험일정을 불러오는 중입니다. 잠시 후 다시 눌러주세요.');return}
     setTimeout(()=>tryOpen(left-1),120);
   };
@@ -175,7 +205,11 @@ function buildActionBar(card){
   if(!bar){
     bar=document.createElement('div');bar.className='zr-customer-card-actions';
     bar.innerHTML='<div class="zr-customer-card-actions-left"><button type="button" class="zr-customer-guide-action">가이드맵</button><button type="button" class="zr-customer-parking-action">주차 및 인솔</button><button type="button" class="zr-customer-schedule-action">관람 및 체험일정</button></div><div class="zr-customer-card-actions-right"></div>';
-    bar.querySelector('.zr-customer-parking-action').addEventListener('click',openParkingQuick);
+    const guide=bar.querySelector('.zr-customer-guide-action');
+    const armGuide=()=>trackWhenModalOpen(card,'guide','zrGuideMapModalV32');
+    guide.addEventListener('pointerup',armGuide,{passive:true});
+    guide.addEventListener('keyup',e=>{if(e.key==='Enter'||e.key===' ')armGuide()});
+    bar.querySelector('.zr-customer-parking-action').addEventListener('click',()=>openParkingQuick(card));
     bar.querySelector('.zr-customer-schedule-action').addEventListener('click',()=>openScheduleQuick(card));
     card.appendChild(bar);
   }
@@ -203,6 +237,7 @@ function syncCardActions(){
       return;
     }
     card.classList.add('zr-has-info-tabs');
+    bookingForCard(card);
     decorateBookingFacts(card);
     const bar=buildActionBar(card);
     placeCancelButton(card,bar);
@@ -220,8 +255,9 @@ function observeList(){
 }
 function boot(){
   void LEGACY_CONTRACT_IDS;void bookingCardTarget;
+  ensureCustomerViewTracking();
   injectStyle();sync();observeList();
-  const timer=setInterval(()=>{sync();observeList()},500);setTimeout(()=>clearInterval(timer),20000);
+  const timer=setInterval(()=>{ensureCustomerViewTracking();sync();observeList()},500);setTimeout(()=>clearInterval(timer),20000);
   ['lookupBooking','checkExisting','cancelExisting'].forEach(id=>$(id)?.addEventListener('click',()=>[0,100,300,800].forEach(ms=>setTimeout(sync,ms))));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
