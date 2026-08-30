@@ -11,57 +11,12 @@ const FIELDS={
   parking:'customerViewedParkingAt',
   schedule:'customerViewedScheduleAt'
 };
-const MODALS={
-  guide:'zrGuideMapModalV32',
-  parking:'zrCustomerParkingQuickV1',
-  schedule:'zrCustomerScheduleZoom'
-};
 const LABELS={guide:'가이드맵',parking:'주차 및 인솔',schedule:'관람 및 체험일정'};
 const $=id=>document.getElementById(id);
-const tel=s=>String(s||'').replace(/\D/g,'');
 const remoteDone=new Set();
 const inflight=new Set();
-const waiting=new Set();
-let FS=null,db=null,root=null,statusTimer=null,lastArmKey='',lastArmAt=0;
+let FS=null,db=null,statusTimer=null;
 
-function customerVisible(){
-  const v=$('customerView');
-  return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
-}
-function readBookings(){
-  try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}
-  catch{return[]}
-}
-function customerBookings(){
-  const manager=String($('startManager')?.value||'').trim();
-  const contact=tel($('startContact')?.value||'');
-  if(!manager||!contact)return[];
-  return readBookings().filter(b=>b&&!b.__availabilityOnly&&!['cancelled','rejected'].includes(String(b.status||''))&&String(b.managerName||'').trim()===manager&&tel(b.contact)===contact);
-}
-function resolveCardBooking(card){
-  if(!card)return null;
-  const cached=String(card.dataset.zrBookingId||'');
-  if(cached){const b=readBookings().find(x=>String(x?.id||'')===cached);if(b)return b}
-  const candidates=customerBookings();
-  if(!candidates.length)return null;
-  const text=String(card.textContent||'').replace(/\s+/g,' ');
-  let matched=candidates.filter(b=>String(b.id||'')&&text.includes(String(b.id)));
-  if(matched.length!==1)matched=candidates.filter(b=>String(b.orgName||'').trim()&&text.includes(String(b.orgName).trim())&&String(b.date||'').trim()&&text.includes(String(b.date).trim()));
-  if(matched.length!==1)matched=candidates.filter(b=>String(b.orgName||'').trim()&&text.includes(String(b.orgName).trim()));
-  const b=matched.length===1?matched[0]:(candidates.length===1?candidates[0]:null);
-  if(b)card.dataset.zrBookingId=String(b.id);
-  return b;
-}
-function actionKind(btn){
-  if(btn?.classList?.contains('zr-customer-guide-action'))return'guide';
-  if(btn?.classList?.contains('zr-customer-parking-action'))return'parking';
-  if(btn?.classList?.contains('zr-customer-schedule-action'))return'schedule';
-  return'';
-}
-function modalOpen(id){
-  const m=$(id);
-  return !!m&&!m.classList.contains('hidden')&&getComputedStyle(m).display!=='none';
-}
 function showStatus(message,state='ok'){
   let el=$('zrCustomerViewTrackStatus');
   if(!el){
@@ -95,6 +50,10 @@ async function ensureFirebase(timeout=5000){
   }
   return false;
 }
+function readBookings(){
+  try{const v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}
+  catch{return[]}
+}
 function fallbackOwnerSync(id,field,stamp){
   if(typeof window.setStore!=='function')return false;
   const list=readBookings();
@@ -103,20 +62,21 @@ function fallbackOwnerSync(id,field,stamp){
   if(!b[field])b[field]=stamp;
   try{window.setStore(KEY,list);return true}catch(e){console.debug('customer view owner fallback',e);return false}
 }
-async function persistView(id,kind){
-  const field=FIELDS[kind];
-  if(!customerVisible()||!id||!field)return;
+async function track(id,kind){
+  const field=FIELDS[kind],label=LABELS[kind]||'고객 안내';
+  id=String(id||'');
+  if(!id||!field){showStatus('고객 확인 기록 정보가 올바르지 않습니다.','err');return}
   const key=`${id}|${field}`;
-  if(remoteDone.has(key)||inflight.has(key))return;
+  if(remoteDone.has(key)){showStatus(`${label} · 서버 확인 기록 완료`,'ok');return}
+  if(inflight.has(key))return;
   inflight.add(key);
+  showStatus(`${label} · 서버 기록 확인 중...`,'warn');
   const stamp=new Date().toISOString();
   let remoteOk=false,errorCode='firebase-unavailable';
   try{
     if(await ensureFirebase()){
-      await FS.updateDoc(FS.doc(db,COLLECTION,String(id)),{[field]:stamp});
-      remoteOk=true;
-      errorCode='';
-      remoteDone.add(key);
+      await FS.updateDoc(FS.doc(db,COLLECTION,id),{[field]:stamp});
+      remoteOk=true;errorCode='';remoteDone.add(key);
     }
   }catch(e){
     errorCode=String(e?.code||e?.message||'unknown-error');
@@ -125,78 +85,13 @@ async function persistView(id,kind){
     inflight.delete(key);
   }
   const localOk=remoteOk?false:fallbackOwnerSync(id,field,stamp);
-  const label=LABELS[kind]||'고객 안내';
   if(remoteOk)showStatus(`${label} · 서버 확인 기록 성공`,'ok');
   else if(/permission-denied/i.test(errorCode))showStatus(`${label} · Firebase 권한 거부 (permission-denied)`,'err');
   else if(errorCode==='firebase-unavailable')showStatus(`${label} · Firebase 연결 확인 필요`,'warn');
   else showStatus(`${label} · 서버 기록 실패 (${errorCode})`,'err');
-  try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:String(id),field,kind,remoteOk,localOk,errorCode}}))}catch{}
+  try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:id,field,kind,remoteOk,localOk,errorCode}}))}catch{}
 }
-function waitForOpenedModal(id,kind){
-  const field=FIELDS[kind],label=LABELS[kind]||'고객 안내',modalId=MODALS[kind];
-  const key=`${id}|${field}`;
-  if(waiting.has(key)||remoteDone.has(key)||inflight.has(key))return;
-  waiting.add(key);
-  const started=Date.now();
-  const timer=setInterval(()=>{
-    if(modalOpen(modalId)){
-      clearInterval(timer);waiting.delete(key);
-      showStatus(`${label} · 팝업 확인 · 서버 기록 확인 중...`,'warn');
-      persistView(id,kind);
-      return;
-    }
-    if(Date.now()-started>=2200){
-      clearInterval(timer);waiting.delete(key);
-      showStatus(`${label} · 팝업 열림 확인 실패`,'err');
-    }
-  },70);
-}
-function armAction(btn){
-  if(!customerVisible()||!btn)return;
-  const kind=actionKind(btn);if(!kind)return;
-  const b=resolveCardBooking(btn.closest('.existing-card'));
-  const label=LABELS[kind]||'고객 안내';
-  if(!b?.id){showStatus(`${label} · 확인 기록 대상 예약을 찾지 못했습니다.`,'err');return}
-  const id=String(b.id),armKey=`${id}|${kind}`,now=Date.now();
-  if(lastArmKey===armKey&&now-lastArmAt<450)return;
-  lastArmKey=armKey;lastArmAt=now;
-  showStatus(`${label} · 버튼 감지됨`,'warn');
-  waitForOpenedModal(id,kind);
-}
-function actionButton(e){
-  return e.target?.closest?.('.zr-customer-guide-action,.zr-customer-parking-action,.zr-customer-schedule-action')||null;
-}
-function onPointerDown(e){
-  const btn=actionButton(e);
-  if(btn&&root?.contains(btn))armAction(btn);
-}
-function onTouchStart(e){
-  const btn=actionButton(e);
-  if(btn&&root?.contains(btn))armAction(btn);
-}
-function onKeyDown(e){
-  if(e.key!=='Enter'&&e.key!==' ')return;
-  const btn=actionButton(e);
-  if(btn&&root?.contains(btn))armAction(btn);
-}
-function bindRoot(){
-  const next=$('existingBookingList');
-  if(!next||next===root)return !!root;
-  if(root){
-    root.removeEventListener('pointerdown',onPointerDown);
-    root.removeEventListener('touchstart',onTouchStart);
-    root.removeEventListener('keydown',onKeyDown);
-  }
-  root=next;
-  root.addEventListener('pointerdown',onPointerDown,{passive:true});
-  root.addEventListener('touchstart',onTouchStart,{passive:true});
-  root.addEventListener('keydown',onKeyDown);
-  return true;
-}
-function boot(){
-  bindRoot();
-  let tries=0;
-  const timer=setInterval(()=>{bindRoot();if(++tries>80)clearInterval(timer)},300);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+
+window.zrCustomerViewTrackingV1={version:3,track};
+try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracking-ready'))}catch{}
 })();
