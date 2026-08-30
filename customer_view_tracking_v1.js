@@ -21,7 +21,8 @@ const $=id=>document.getElementById(id);
 const tel=s=>String(s||'').replace(/\D/g,'');
 const remoteDone=new Set();
 const inflight=new Set();
-let FS=null,db=null,root=null,statusTimer=null;
+const waiting=new Set();
+let FS=null,db=null,root=null,statusTimer=null,lastArmKey='',lastArmAt=0;
 
 function customerVisible(){
   const v=$('customerView');
@@ -67,7 +68,7 @@ function showStatus(message,state='ok'){
     el=document.createElement('div');
     el.id='zrCustomerViewTrackStatus';
     el.setAttribute('role','status');
-    Object.assign(el.style,{position:'fixed',left:'50%',bottom:'22px',transform:'translateX(-50%)',zIndex:'13050',maxWidth:'calc(100vw - 28px)',padding:'11px 14px',borderRadius:'12px',fontSize:'13px',fontWeight:'800',lineHeight:'1.4',textAlign:'center',boxShadow:'0 8px 28px rgba(0,0,0,.24)',pointerEvents:'none',transition:'opacity .18s ease'});
+    Object.assign(el.style,{position:'fixed',left:'50%',bottom:'22px',transform:'translateX(-50%)',zIndex:'2147483600',maxWidth:'calc(100vw - 28px)',padding:'11px 14px',borderRadius:'12px',fontSize:'13px',fontWeight:'800',lineHeight:'1.4',textAlign:'center',boxShadow:'0 8px 28px rgba(0,0,0,.24)',pointerEvents:'none',transition:'opacity .18s ease'});
     document.body.appendChild(el);
   }
   el.textContent=message;
@@ -131,38 +132,71 @@ async function persistView(id,kind){
   else showStatus(`${label} · 서버 기록 실패 (${errorCode})`,'err');
   try{document.dispatchEvent(new CustomEvent('zr:customer-view-tracked',{detail:{bookingId:String(id),field,kind,remoteOk,localOk,errorCode}}))}catch{}
 }
+function waitForOpenedModal(id,kind){
+  const field=FIELDS[kind],label=LABELS[kind]||'고객 안내',modalId=MODALS[kind];
+  const key=`${id}|${field}`;
+  if(waiting.has(key)||remoteDone.has(key)||inflight.has(key))return;
+  waiting.add(key);
+  const started=Date.now();
+  const timer=setInterval(()=>{
+    if(modalOpen(modalId)){
+      clearInterval(timer);waiting.delete(key);
+      showStatus(`${label} · 팝업 확인 · 서버 기록 확인 중...`,'warn');
+      persistView(id,kind);
+      return;
+    }
+    if(Date.now()-started>=2200){
+      clearInterval(timer);waiting.delete(key);
+      showStatus(`${label} · 팝업 열림 확인 실패`,'err');
+    }
+  },70);
+}
 function armAction(btn){
   if(!customerVisible()||!btn)return;
   const kind=actionKind(btn);if(!kind)return;
   const b=resolveCardBooking(btn.closest('.existing-card'));
-  if(!b?.id){showStatus('확인 기록 대상 예약을 찾지 못했습니다.','err');return}
-  const id=String(b.id),modalId=MODALS[kind];
-  [90,180,320].forEach(ms=>setTimeout(()=>{
-    if(!remoteDone.has(`${id}|${FIELDS[kind]}`)&&!inflight.has(`${id}|${FIELDS[kind]}`)&&modalOpen(modalId))persistView(id,kind);
-  },ms));
+  const label=LABELS[kind]||'고객 안내';
+  if(!b?.id){showStatus(`${label} · 확인 기록 대상 예약을 찾지 못했습니다.`,'err');return}
+  const id=String(b.id),armKey=`${id}|${kind}`,now=Date.now();
+  if(lastArmKey===armKey&&now-lastArmAt<450)return;
+  lastArmKey=armKey;lastArmAt=now;
+  showStatus(`${label} · 버튼 감지됨`,'warn');
+  waitForOpenedModal(id,kind);
 }
-function onPointerUp(e){
-  const btn=e.target?.closest?.('.zr-customer-guide-action,.zr-customer-parking-action,.zr-customer-schedule-action');
+function actionButton(e){
+  return e.target?.closest?.('.zr-customer-guide-action,.zr-customer-parking-action,.zr-customer-schedule-action')||null;
+}
+function onPointerDown(e){
+  const btn=actionButton(e);
+  if(btn&&root?.contains(btn))armAction(btn);
+}
+function onTouchStart(e){
+  const btn=actionButton(e);
   if(btn&&root?.contains(btn))armAction(btn);
 }
 function onKeyDown(e){
   if(e.key!=='Enter'&&e.key!==' ')return;
-  const btn=e.target?.closest?.('.zr-customer-guide-action,.zr-customer-parking-action,.zr-customer-schedule-action');
+  const btn=actionButton(e);
   if(btn&&root?.contains(btn))armAction(btn);
 }
 function bindRoot(){
   const next=$('existingBookingList');
   if(!next||next===root)return !!root;
-  if(root){root.removeEventListener('pointerup',onPointerUp);root.removeEventListener('keydown',onKeyDown)}
+  if(root){
+    root.removeEventListener('pointerdown',onPointerDown);
+    root.removeEventListener('touchstart',onTouchStart);
+    root.removeEventListener('keydown',onKeyDown);
+  }
   root=next;
-  root.addEventListener('pointerup',onPointerUp,{passive:true});
+  root.addEventListener('pointerdown',onPointerDown,{passive:true});
+  root.addEventListener('touchstart',onTouchStart,{passive:true});
   root.addEventListener('keydown',onKeyDown);
   return true;
 }
 function boot(){
   bindRoot();
   let tries=0;
-  const timer=setInterval(()=>{if(bindRoot()&&++tries>12)clearInterval(timer);else if(++tries>60)clearInterval(timer)},300);
+  const timer=setInterval(()=>{bindRoot();if(++tries>80)clearInterval(timer)},300);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
