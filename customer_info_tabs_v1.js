@@ -114,7 +114,7 @@ function scheduleButtonFor(id){
 function openSchedulePending(){
   const m=ensureModal('zrCustomerSchedulePendingV1','관람 및 체험일정','zrCustomerSchedulePendingBody');
   const body=$('zrCustomerSchedulePendingBody');
-  body.innerHTML='<div class="zr-customer-schedule-pending"><strong>해당 예약의 관람 및 체험일정은 준비 중입니다.</strong><p>관람 및 체험일정은 방문일 기준 <b>4~5일 전에 확정</b>됩니다.</p><p>확정 후 예약 시 등록하신 번호로 문자 안내드리며, 이곳에서도 확인하실 수 있습니다.</p></div>';
+  body.innerHTML='<div class="zr-customer-schedule-pending"><strong>해당 예약의 관람 및 체험일정은 준비 중입니다.</strong><p>관람 및 체험일정은 방문일 기준 <b>4~5일 전에 확정</b>됩니다.</p><p>확정 후 예약 시 등록하신 번호로 <b>확인 방법을 문자로 안내</b>드립니다.</p></div>';
   m.classList.remove('hidden');
 }
 function openScheduleQuick(card){
