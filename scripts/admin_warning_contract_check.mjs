@@ -6,9 +6,10 @@ const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}};
 
-for(const file of ['admin_warning_tab_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
+for(const file of ['admin_warning_tab_v1.js','admin_warning_schedule_shortcut_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
 
 const warning=read('admin_warning_tab_v1.js');
+const shortcut=read('admin_warning_schedule_shortcut_v1.js');
 const loader=read('admin_tab_active_fix_v1.js');
 
 for(const needle of [
@@ -60,8 +61,27 @@ for(const forbidden of [
 ])if(warning.includes(forbidden))fail(`warning tab must remain read-only/narrow: ${forbidden}`);
 
 for(const needle of [
+  'window.__ZR_ADMIN_WARNING_SCHEDULE_SHORTCUT_V1=true',
+  "new Set(['스케줄 미확정','고객 알림 미완료','스케줄 시간 겹침'])",
+  "document.getElementById('zrWarningRefresh')?.remove()",
+  "data-zr-warning-schedule",
+  "btn.textContent='스케줄 관리'",
+  "document.getElementById('zrScheduleTabBtn')",
+  "document.getElementById('zrscDate')",
+  "input.dispatchEvent(new Event('change',{bubbles:true}))",
+  "observer=new MutationObserver(()=>decorate())"
+])if(!shortcut.includes(needle))fail(`warning shortcut contract missing: ${needle}`);
+
+for(const forbidden of [
+  'setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','addDoc(',
+  'fetch(','XMLHttpRequest',"collection(db,'",'reservationAvailability','scheduleGroups'
+])if(shortcut.includes(forbidden))fail(`warning shortcut must stay navigation-only: ${forbidden}`);
+
+for(const needle of [
   'loadAdminWarning()',
   "s.src='./admin_warning_tab_v1.js?v=1'",
+  'loadAdminWarningScheduleShortcut()',
+  "s.src='./admin_warning_schedule_shortcut_v1.js?v=1'",
   "if(clicked.id!=='zrWarningTabBtn')",
   "gray('zrWarningTabBtn')",
   "document.getElementById('tab-warning')?.classList.add('hidden')"
