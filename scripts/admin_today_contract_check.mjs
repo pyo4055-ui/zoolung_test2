@@ -44,19 +44,25 @@ for(const forbidden of [
 for(const needle of [
   'window.__ZR_ADMIN_TODAY_PRINT_LAYOUT_V1=true',
   '@media print',
-  'grid-template-columns:20mm minmax(0,1.3fr) minmax(48mm,1fr) minmax(43mm,.9fr)!important',
+  '-webkit-print-color-adjust:exact!important',
+  'print-color-adjust:exact!important',
+  'grid-template-columns:18mm minmax(0,1.35fr) minmax(45mm,1fr) minmax(41mm,.9fr)!important',
   '.zr-today-views{border-right:0!important}',
   'grid-column:auto!important',
   'border-bottom:0!important',
-  '#tab-today[data-team-count="5"] .zr-today-list{gap:.7mm!important}',
-  '#tab-today[data-team-count="5"] .zr-today-main',
-  '#tab-today[data-team-count="5"] .zr-today-schedule{padding:.7mm 1.2mm .8mm!important}'
+  'function markScheduleColors()',
+  "el.style.setProperty('--zr-print-seg-color',color)",
+  'border-left:2mm solid var(--zr-print-seg-color,#6f7b73)!important',
+  '#tab-today:is([data-team-count="4"],[data-team-count="5"]) .zr-today-list{gap:.45mm!important}',
+  '#tab-today:is([data-team-count="4"],[data-team-count="5"]) .zr-today-schedule-title span{display:none!important}',
+  '#tab-today[data-team-count="5"] .zr-today-list{gap:.3mm!important}',
+  "window.addEventListener('beforeprint',markScheduleColors)"
 ])if(!printLayout.includes(needle))fail(`Today print layout missing: ${needle}`);
 
 for(const forbidden of [
   'MutationObserver', 'localStorage.', 'FS.', 'setStore(', 'fetch(', 'XMLHttpRequest',
   "document.addEventListener('click'", 'preventDefault(', 'stopPropagation(', 'stopImmediatePropagation('
-])if(printLayout.includes(forbidden))fail(`Today print layout must remain CSS-only/narrow: ${forbidden}`);
+])if(printLayout.includes(forbidden))fail(`Today print layout must remain print-only/narrow: ${forbidden}`);
 
 for(const needle of [
   'window.__ZR_CUSTOMER_VIEW_TRACKING_V1=true',
