@@ -6,11 +6,12 @@ const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}};
 
-for(const file of ['customer_schedule_ui_v5.js','admin_time_15min_v1.js','admin_section_subtabs_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
+for(const file of ['customer_schedule_ui_v5.js','admin_time_15min_v1.js','admin_section_subtabs_v1.js','admin_tab_active_fix_v1.js','admin_inquiry_reply_layout_v1.js'])syntax(file);
 const schedule=read('customer_schedule_ui_v5.js');
 const times=read('admin_time_15min_v1.js');
 const subtabs=read('admin_section_subtabs_v1.js');
 const loader=read('admin_tab_active_fix_v1.js');
+const inquiry=read('admin_inquiry_reply_layout_v1.js');
 
 for(const needle of [
   'function zoomAxisForBooking(b,bounds)',
@@ -52,9 +53,20 @@ for(const needle of [
   "const mapInput=$('zrGuideMapImageUrl')",
   "settingsObserver.observe(sec,{childList:true,subtree:true})",
   'classList.toggle(\'hidden\'',
-  'white-space:nowrap!important'
+  'white-space:nowrap!important',
+  '.zr-admin-subtabs,#zrCleanupInnerTabs{',
+  '.zr-admin-subtabs button,#zrCleanupInnerTabs button{',
+  '.zr-admin-subtabs button.zr-subtab-active,#zrCleanupInnerTabs button.btn-primary{',
+  '.zr-admin-subtabs button:hover,#zrCleanupInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}',
+  'border-color:#bad1c1!important',
+  'box-shadow:0 2px 6px rgba(30,50,36,.08)!important'
 ])if(!subtabs.includes(needle))fail(`admin section subtab refinement missing: ${needle}`);
 for(const forbidden of ['setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','writeBatch('])if(subtabs.includes(forbidden))fail(`admin subtabs must stay UI-only: ${forbidden}`);
+
+for(const needle of [
+  '#zrInquiryReplyInnerTabs button.btn-primary{background:#fff!important;color:#2f6b4f!important;border-color:#bad1c1!important;box-shadow:0 2px 6px rgba(30,50,36,.08)!important}',
+  '#zrInquiryReplyInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}'
+])if(!inquiry.includes(needle))fail(`1:1 inquiry reference subtab style missing: ${needle}`);
 
 for(const needle of [
   'function loadAdminTime15Min()',
