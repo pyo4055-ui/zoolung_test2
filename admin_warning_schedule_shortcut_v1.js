@@ -16,16 +16,44 @@ function allBookings(){
 function bookingById(id){return allBookings().find(b=>String(b?.id)===String(id))||null}
 function toast(text){try{window.toast?.(text)}catch{}}
 function removeRefresh(){document.getElementById('zrWarningRefresh')?.remove()}
-function ensurePagination(){
+function ensurePaginationStyle(){
+  if(document.getElementById('zrWarningPaginationMatchStyleV1'))return;
+  const style=document.createElement('style');style.id='zrWarningPaginationMatchStyleV1';style.textContent=`
+    #tab-warning .zr-warning-pagination{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+    #tab-warning .zr-warning-pagination button{min-width:38px;height:38px;padding:0 11px;margin:0}
+    #tab-warning .zr-warning-pagination button:disabled{opacity:.45;cursor:default;pointer-events:none}
+    @media(max-width:560px){#tab-warning .zr-warning-pagination{gap:5px}#tab-warning .zr-warning-pagination button{min-width:36px;height:36px;padding:0 9px}}
+  `;document.head.appendChild(style);
+}
+function pageNumbers(page,pages){
+  if(pages<=7)return Array.from({length:pages},(_,i)=>i+1);
+  const keep=new Set([1,pages,page-1,page,page+1]);
+  const valid=[...keep].filter(p=>p>=1&&p<=pages).sort((a,b)=>a-b),out=[];let prev=0;
+  for(const p of valid){if(prev&&p-prev>1)out.push('…');out.push(p);prev=p}
+  return out;
+}
+function pageButton(label,value,disabled=false,active=false){
+  return `<button type="button" class="${active?'btn-primary':'btn-soft'}" data-zr-warning-page="${value}"${disabled?' disabled':''}${active?' aria-current="page"':''}>${label}</button>`;
+}
+function normalizePagination(){
   const pager=document.getElementById('zrWarningPagination');if(!pager)return;
-  if(String(pager.innerHTML||'').trim())return;
-  pager.innerHTML='<div class="zr-warning-page-info">1 / 1 페이지</div><div class="zr-warning-page-buttons"><button type="button" class="btn-gray" disabled>‹ 이전</button><button type="button" class="btn-primary" disabled>1</button><button type="button" class="btn-gray" disabled>다음 ›</button></div>';
+  ensurePaginationStyle();
+  const numeric=[...pager.querySelectorAll('[data-zr-warning-page]')]
+    .map(btn=>({btn,n:Number(btn.dataset.zrWarningPage)})).filter(x=>Number.isFinite(x.n)&&x.n>0);
+  let pages=numeric.length?Math.max(...numeric.map(x=>x.n)):1;
+  const info=String(pager.querySelector('.zr-warning-page-info')?.textContent||'');
+  const totalMatch=info.match(/\/\s*(\d+)\s*페이지/);if(totalMatch)pages=Math.max(pages,Number(totalMatch[1])||1);
+  let current=numeric.find(x=>x.btn.classList.contains('btn-primary'))?.n||1;
+  current=Math.max(1,Math.min(current,pages));
+  const nums=pageNumbers(current,pages).map(n=>n==='…'?'<span class="zr-page-gap">…</span>':pageButton(String(n),n,false,n===current)).join('');
+  const html=`${pageButton('이전','prev',current<=1)}${nums}${pageButton('다음','next',current>=pages)}`;
+  if(pager.innerHTML!==html)pager.innerHTML=html;
 }
 function hasScheduleIssue(card){
   return [...card.querySelectorAll('.zr-warning-issue b')].some(el=>SCHEDULE_LABELS.has(String(el.textContent||'').trim()));
 }
 function decorate(){
-  removeRefresh();ensurePagination();
+  removeRefresh();normalizePagination();
   document.querySelectorAll('#zrWarningList .zr-warning-card').forEach(card=>{
     const actions=card.querySelector('.zr-warning-actions');if(!actions)return;
     const id=String(card.dataset.booking||'');
