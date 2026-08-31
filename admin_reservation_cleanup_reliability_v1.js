@@ -84,6 +84,11 @@ function intercept(e){
   if(selected){execute(selectedRows(),'선택 정리',selected);return}
   if(all)execute(filteredRows(),'조회 결과 전체 정리',all);
 }
+function loadCancelCleanup(){
+  if(document.getElementById('zrAdminReservationCleanupCancelV1')||window.__ZR_ADMIN_RESERVATION_CLEANUP_CANCEL_V1)return;
+  const s=document.createElement('script');s.id='zrAdminReservationCleanupCancelV1';s.async=false;s.src='./admin_reservation_cleanup_cancel_v1.js?v=1';document.body.appendChild(s);
+}
 
 document.addEventListener('click',intercept,true);
+loadCancelCleanup();
 })();
