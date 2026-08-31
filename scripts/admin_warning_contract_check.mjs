@@ -64,9 +64,14 @@ for(const needle of [
   'window.__ZR_ADMIN_WARNING_SCHEDULE_SHORTCUT_V1=true',
   "new Set(['스케줄 미확정','고객 알림 미완료','스케줄 시간 겹침'])",
   "document.getElementById('zrWarningRefresh')?.remove()",
-  'function ensurePagination()',
+  'function normalizePagination()',
   "document.getElementById('zrWarningPagination')",
-  '1 / 1 페이지',
+  "pageButton('이전','prev',current<=1)",
+  "pageButton('다음','next',current>=pages)",
+  "active?'btn-primary':'btn-soft'",
+  'aria-current="page"',
+  'zrWarningPaginationMatchStyleV1',
+  'pointer-events:none',
   "data-zr-warning-schedule",
   "btn.textContent='스케줄 관리'",
   "document.getElementById('zrScheduleTabBtn')",
@@ -74,6 +79,8 @@ for(const needle of [
   "input.dispatchEvent(new Event('change',{bubbles:true}))",
   "observer=new MutationObserver(()=>decorate())"
 ])if(!shortcut.includes(needle))fail(`warning shortcut contract missing: ${needle}`);
+
+for(const removed of ['1 / 1 페이지','‹ 이전','다음 ›'])if(shortcut.includes(removed))fail(`warning pagination legacy format must stay removed: ${removed}`);
 
 for(const forbidden of [
   'setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','addDoc(',
