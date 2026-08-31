@@ -9,10 +9,11 @@ let guideMode='guide',settingsMode='operation',guideObserver=null,settingsObserv
 function injectStyle(){
   if($('zrAdminSectionSubtabsStyleV1'))return;
   const s=document.createElement('style');s.id='zrAdminSectionSubtabsStyleV1';s.textContent=`
-  .zr-admin-subtabs{display:inline-flex;align-items:center;gap:4px;margin:0 0 14px;padding:4px;background:#eef3ef;border:1px solid #d7e1da;border-radius:12px;box-shadow:inset 0 1px 2px rgba(30,50,36,.04);max-width:100%;overflow-x:auto}
-  .zr-admin-subtabs button{position:relative;min-width:108px;height:38px;padding:0 16px!important;border:1px solid transparent!important;border-radius:9px!important;background:transparent!important;color:#66736b!important;box-shadow:none!important;font-size:13px!important;font-weight:850!important;white-space:nowrap!important;flex:0 0 auto}
-  .zr-admin-subtabs button.zr-subtab-active{background:#fff!important;color:#2f6b4f!important;border-color:#c9d9cf!important;box-shadow:0 1px 4px rgba(25,60,40,.08)!important}
-  .zr-admin-subtabs button.zr-subtab-active:after{content:'';position:absolute;left:20%;right:20%;bottom:4px;height:2px;border-radius:2px;background:#2f6b4f}
+  .zr-admin-subtabs,#zrCleanupInnerTabs{display:inline-flex;align-items:center;gap:4px;margin:0 0 14px;padding:4px;background:#eef3ef;border:1px solid #d7e1da;border-radius:12px;box-shadow:inset 0 1px 2px rgba(30,50,36,.04);max-width:100%;overflow-x:auto}
+  .zr-admin-subtabs button,#zrCleanupInnerTabs button{position:relative;min-width:108px;height:38px;padding:0 16px!important;border:1px solid transparent!important;border-radius:9px!important;background:transparent!important;color:#66736b!important;box-shadow:none!important;font-size:13px!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important;flex:0 0 auto}
+  .zr-admin-subtabs button.zr-subtab-active,#zrCleanupInnerTabs button.btn-primary{background:#fff!important;color:#2f6b4f!important;border-color:#bad1c1!important;box-shadow:0 2px 6px rgba(30,50,36,.08)!important}
+  .zr-admin-subtabs button.zr-subtab-active:after,#zrCleanupInnerTabs button.btn-primary:after{content:'';position:absolute;left:18px;right:18px;bottom:4px;height:2px;border-radius:999px;background:#2f6b4f}
+  .zr-admin-subtabs button:hover,#zrCleanupInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}
   .zr-admin-subpanel.hidden{display:none!important}
   #zrGuideAdminSection .zr-admin-subtabs{margin-top:14px}
   #tab-settings>.zr-admin-subtabs{margin-top:4px}
