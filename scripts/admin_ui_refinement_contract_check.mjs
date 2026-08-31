@@ -73,9 +73,11 @@ for(const needle of [
   'window.__ZR_ADMIN_PREVIEW_CAFE_UI_V1=true',
   '#zrPreviewNotifyInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}',
   'const PAGE_SIZE=8',
-  "function section(){return $('tab-menuadmin')}",
-  "function rows(){return [...(section()?.querySelectorAll('.menu-row')||[])]}",
-  'function listRoot()',
+  "const direct=$('tab-menuadmin');if(direct)return direct;",
+  "includes('카페메뉴')",
+  "function primaryRows(sec){return [...(sec?.querySelectorAll('.menu-row')||[])]}",
+  'function inferredRoot(sec)',
+  '[onclick*="editCafeMenu"],[data-menu-id],[data-cafe-menu-id]',
   'function pageNumbers(current,pages)',
   'function controlsHtml(pages)',
   'id="zrCafeMenuPagination"',
@@ -84,7 +86,8 @@ for(const needle of [
   "button('다음'",
   'function paginate()',
   "row.dataset.zrCafePageHidden='1'",
-  "const tab=e.target?.closest?.('#adminView .admin-tabs [data-tab=\"menuadmin\"]')",
+  "root.insertAdjacentHTML('afterend',controlsHtml(pages))",
+  'display:flex!important',
   'new MutationObserver(m=>{if(rowMutation(m))schedule({delay:0})})'
 ])if(!previewCafe.includes(needle))fail(`preview/cafe UI refinement missing: ${needle}`);
 for(const forbidden of ['setStore(','localStorage.setItem(','setDoc(','updateDoc(','deleteDoc(','writeBatch(','tabs.appendChild(btn)','openCafeMenu()'])if(previewCafe.includes(forbidden))fail(`preview/cafe UI adapter must stay pagination/UI-only: ${forbidden}`);
