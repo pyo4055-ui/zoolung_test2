@@ -16,11 +16,16 @@ function allBookings(){
 function bookingById(id){return allBookings().find(b=>String(b?.id)===String(id))||null}
 function toast(text){try{window.toast?.(text)}catch{}}
 function removeRefresh(){document.getElementById('zrWarningRefresh')?.remove()}
+function ensurePagination(){
+  const pager=document.getElementById('zrWarningPagination');if(!pager)return;
+  if(String(pager.innerHTML||'').trim())return;
+  pager.innerHTML='<div class="zr-warning-page-info">1 / 1 페이지</div><div class="zr-warning-page-buttons"><button type="button" class="btn-gray" disabled>‹ 이전</button><button type="button" class="btn-primary" disabled>1</button><button type="button" class="btn-gray" disabled>다음 ›</button></div>';
+}
 function hasScheduleIssue(card){
   return [...card.querySelectorAll('.zr-warning-issue b')].some(el=>SCHEDULE_LABELS.has(String(el.textContent||'').trim()));
 }
 function decorate(){
-  removeRefresh();
+  removeRefresh();ensurePagination();
   document.querySelectorAll('#zrWarningList .zr-warning-card').forEach(card=>{
     const actions=card.querySelector('.zr-warning-actions');if(!actions)return;
     const id=String(card.dataset.booking||'');
