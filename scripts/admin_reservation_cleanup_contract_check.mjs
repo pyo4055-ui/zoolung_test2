@@ -65,13 +65,21 @@ for(const needle of [
   'errorLabel(e)',
   'e.stopImmediatePropagation()',
   "document.addEventListener('click',intercept,true)",
-  "$('zrCleanupApply')?.click?.()"
+  "$('zrCleanupApply')?.click?.()",
+  'function phoneLast4(b)',
+  'function confirmationPreview(items)',
+  '연락처 뒤 4자리',
+  '연락처는 정리 내역에 저장하지 않습니다.',
+  'if(!confirmCleanup(valid))return;'
 ])if(!reliability.includes(needle))fail(`cleanup reliability contract missing: ${needle}`);
 for(const forbidden of [
   "document.querySelectorAll('#tab-cleanup button')",
   'buttons.forEach(b=>b.disabled=true)',
   "batch.delete(F.doc(db,'scheduleGroups'",
   'contact:String(b.',
+  'phone:String(b.',
+  'phoneNumber:String(b.',
+  'contactPhone:String(b.',
   'managerName:String(b.',
   'notes:String(b.'
 ])if(reliability.includes(forbidden))fail(`cleanup reliability must stay targeted/minimal: ${forbidden}`);
