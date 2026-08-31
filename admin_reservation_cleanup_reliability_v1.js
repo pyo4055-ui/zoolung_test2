@@ -14,6 +14,7 @@ const pad=n=>String(n).padStart(2,'0');
 function toast(msg){try{if(typeof window.toast==='function')return window.toast(msg)}catch{}alert(msg)}
 function today(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
 function monthsAgo(dateStr,months){const d=new Date(String(dateStr)+'T12:00:00');if(Number.isNaN(d.getTime()))return'';const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()-months);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function dateLabel(v){if(!v)return'-';const d=new Date(String(v)+'T12:00:00');if(Number.isNaN(d.getTime()))return String(v);return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`}
 function settlementDone(b){return !!String(b?.settlement?.savedAt||b?.settlementCompletedAt||'').trim()}
 function settlementAt(b){return String(b?.settlement?.savedAt||b?.settlementCompletedAt||'')}
 function eligible(b){return String(b?.status||'')==='confirmed'&&!!String(b?.date||'')&&String(b.date)<=monthsAgo(today(),6)&&settlementDone(b)}
@@ -22,7 +23,23 @@ function filteredRows(){const start=$('zrCleanupStart')?.value||'',end=$('zrClea
 function bridge(){return window.zrReservationFirebase||null}
 function isStaff(){const z=bridge();return !!z?.isStaff?.()&&String(z.auth?.currentUser?.email||'').toLowerCase()===STAFF_EMAIL.toLowerCase()}
 async function ensureFirebase(){if(F&&db&&auth)return true;const z=bridge();if(!z?.db||!z?.auth)return false;F=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);db=z.db;auth=z.auth;return true}
-function confirmCleanup(count){if(!confirm(`${count}건의 과거 예약을 영구 정리합니다.\n엑셀 백업 여부를 먼저 확인해주세요.\n\n계속하시겠습니까?`))return false;return confirm(`마지막 확인입니다.\n예약 본문과 예약 가능 데이터는 삭제되며 되돌릴 수 없습니다.\n정리 내역에는 최소 정보만 남습니다.\n\n${count}건을 정리할까요?`)}
+function phoneLast4(b){
+  const raw=b?.contact||b?.phone||b?.phoneNumber||b?.contactPhone||b?.managerPhone||b?.tel||b?.mobile||'';
+  const digits=String(raw).replace(/\D/g,'');
+  return digits.length>=4?digits.slice(-4):'확인 불가';
+}
+function confirmationPreview(items){
+  const limit=12,shown=items.slice(0,limit);
+  const lines=shown.map((b,i)=>`${i+1}. ${String(b?.orgName||'단체명 미입력')}\n   방문 ${dateLabel(b?.date)} · 예약번호 ${String(b?.id||'-')} · 연락처 뒤 4자리 ${phoneLast4(b)}`);
+  if(items.length>limit)lines.push(`외 ${items.length-limit}건`);
+  return lines.join('\n');
+}
+function confirmCleanup(items){
+  const list=Array.isArray(items)?items:[];
+  if(!confirm(`${list.length}건의 과거 예약을 영구 정리합니다.\n엑셀 백업 여부를 먼저 확인해주세요.\n\n계속하시겠습니까?`))return false;
+  const preview=confirmationPreview(list);
+  return confirm(`마지막 확인입니다. 삭제할 예약이 맞는지 확인해주세요.\n\n${preview}\n\n예약 본문과 예약 가능 데이터는 삭제되며 되돌릴 수 없습니다.\n연락처는 정리 내역에 저장하지 않습니다.\n\n${list.length}건을 정리할까요?`);
+}
 function localRemove(ids){const set=new Set(ids.map(String)),next=bookings().filter(b=>!set.has(String(b.id)));try{if(typeof window.setStore==='function')window.setStore(KEY,next)}catch(e){console.debug('cleanup local sync',e)}}
 function setButtonBusy(el,busy){if(!el)return;if(busy){el.dataset.zrCleanupBusyText=el.textContent||'';el.disabled=true;el.textContent='정리 중…'}else{el.disabled=false;if(el.dataset.zrCleanupBusyText)el.textContent=el.dataset.zrCleanupBusyText;delete el.dataset.zrCleanupBusyText}}
 function errorLabel(e){const code=String(e?.code||'').replace(/^firestore\//,'');const msg=String(e?.message||'').replace(/\s+/g,' ').trim();return code?`${code}${msg?` · ${msg.slice(0,90)}`:''}`:(msg||'unknown-error')}
@@ -39,7 +56,7 @@ function buildBatch(chunk,cleanupMode){
 }
 async function execute(items,cleanupMode,actionButton){
   const valid=items.filter(eligible).filter(b=>!BUSY.has(String(b.id)));if(!valid.length)return toast('정리 가능한 예약이 없습니다.');
-  if(!confirmCleanup(valid.length))return;
+  if(!confirmCleanup(valid))return;
   const ids=valid.map(b=>String(b.id));ids.forEach(id=>BUSY.add(id));setButtonBusy(actionButton,true);
   try{
     await refreshConnection();
