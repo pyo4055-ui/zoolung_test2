@@ -9,6 +9,7 @@ const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'p
 for(const file of ['admin_reservation_cleanup_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
 const cleanup=read('admin_reservation_cleanup_v1.js');
 const loader=read('admin_tab_active_fix_v1.js');
+const rules=read('firestore.rules');
 
 for(const needle of [
   'window.__ZR_ADMIN_RESERVATION_CLEANUP_V1=true',
@@ -60,6 +61,21 @@ for(const needle of [
   "document.getElementById('tab-cleanup')?.classList.add('hidden')",
   "document.addEventListener('zr:admin-runtime-ready',loadReservationCleanup,{once:true})"
 ])if(!loader.includes(needle))fail(`cleanup loader contract missing: ${needle}`);
+
+for(const needle of [
+  "request.auth.token.email == 'zoolung09@zoolungzoolung.com'",
+  'match /reservations/{reservationId}',
+  'match /reservationAvailability/{reservationId}',
+  'allow delete: if isScheduleStaff();',
+  'allow read: if isScheduleStaff() || isOwner();',
+  'allow read: if isSignedIn();',
+  'allow create: if isScheduleStaff() || createsOwnDocument();',
+  'allow update: if isScheduleStaff() || keepsOwner();',
+  'match /scheduleGroups/{groupId}',
+  'allow delete: if false;'
+])if(!rules.includes(needle))fail(`cleanup Firestore rule contract missing: ${needle}`);
+
+if((rules.match(/allow delete: if isScheduleStaff\(\);/g)||[]).length!==2)fail('staff delete permission must be limited to reservations and reservationAvailability');
 
 if(failed){console.error('\nAdmin reservation cleanup contract failed.');process.exit(1)}
 console.log('Admin reservation cleanup contract passed.');
