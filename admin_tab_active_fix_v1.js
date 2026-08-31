@@ -120,73 +120,30 @@ function loadReservationCleanupReliability(){
   if(document.getElementById('zrAdminReservationCleanupReliabilityV1')||window.__ZR_ADMIN_RESERVATION_CLEANUP_RELIABILITY_V1)return;
   const s=document.createElement('script');s.id='zrAdminReservationCleanupReliabilityV1';s.async=false;s.src='./admin_reservation_cleanup_reliability_v1.js?v=1';document.body.appendChild(s);
 }
+function loadAdminTime15Min(){
+  if(document.getElementById('zrAdminTime15MinV1')||window.__ZR_ADMIN_TIME_15MIN_V1)return;
+  const s=document.createElement('script');s.id='zrAdminTime15MinV1';s.async=false;s.src='./admin_time_15min_v1.js?v=1';document.body.appendChild(s);
+}
+function loadAdminSectionSubtabs(){
+  if(document.getElementById('zrAdminSectionSubtabsV1')||window.__ZR_ADMIN_SECTION_SUBTABS_V1)return;
+  const s=document.createElement('script');s.id='zrAdminSectionSubtabsV1';s.async=false;s.src='./admin_section_subtabs_v1.js?v=1';document.body.appendChild(s);
+}
 function loadUiFixes(){
   renameSettingsTab();
-  loadCustomerInquiryVisit();
-  loadAdminPreviewVisit();
-  loadAdminPreviewVisitQueryUi();
-  loadAdminPreviewVisitNotify();
-  loadAdminPreviewVisitContent();
-  loadAdminInquiryReply();
-  loadAdminInquiryReplyLayout();
-  loadCalendarSummary();
-  loadActivityOrgDetailFix();
-  loadMobileDateInputFix();
-  loadScheduleCustomerNotify();
-  loadBookingHold();
-  loadBookingHoldQueryFix();
-  loadCalendarStatusSelect();
-  loadSettlementWorkspace();
-  loadSettlementUiStability();
-  loadCustomerGroupMinimum();
-  loadUnsavedChangesGuard();
-  loadExcelReliabilityFix();
-  loadAdminListPagination();
-  loadCustomerViewTracking();
-  loadAdminToday();
-  loadAdminTodayPrintLayout();
-  loadAdminWarning();
-  loadAdminWarningScheduleShortcut();
-  loadReservationCleanup();
-  loadReservationCleanupReliability();
+  loadCustomerInquiryVisit();loadAdminPreviewVisit();loadAdminPreviewVisitQueryUi();loadAdminPreviewVisitNotify();loadAdminPreviewVisitContent();loadAdminInquiryReply();loadAdminInquiryReplyLayout();
+  loadCalendarSummary();loadActivityOrgDetailFix();loadMobileDateInputFix();loadScheduleCustomerNotify();loadBookingHold();loadBookingHoldQueryFix();loadCalendarStatusSelect();
+  loadSettlementWorkspace();loadSettlementUiStability();loadCustomerGroupMinimum();loadUnsavedChangesGuard();loadExcelReliabilityFix();loadAdminListPagination();loadCustomerViewTracking();
+  loadAdminToday();loadAdminTodayPrintLayout();loadAdminWarning();loadAdminWarningScheduleShortcut();loadReservationCleanup();loadReservationCleanupReliability();
 }
 
 document.addEventListener('click',e=>{
-  const clicked=e.target?.closest?.('#adminView .admin-tabs button');
-  if(!clicked)return;
-  if(clicked.id!=='zrScheduleTabBtn')gray('zrScheduleTabBtn');
-  if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');
-  if(clicked.id!=='zrPreviewVisitTabBtn')gray('zrPreviewVisitTabBtn');
-  if(clicked.id!=='zrTodayTabBtn')gray('zrTodayTabBtn');
-  if(clicked.id!=='zrWarningTabBtn'){
-    gray('zrWarningTabBtn');
-    document.getElementById('tab-warning')?.classList.add('hidden');
-  }
-  if(clicked.id!=='zrCleanupTabBtn'){
-    gray('zrCleanupTabBtn');
-    document.getElementById('tab-cleanup')?.classList.add('hidden');
-  }
+  const clicked=e.target?.closest?.('#adminView .admin-tabs button');if(!clicked)return;
+  if(clicked.id!=='zrScheduleTabBtn')gray('zrScheduleTabBtn');if(clicked.id!=='zrGuideAdminTab')gray('zrGuideAdminTab');if(clicked.id!=='zrPreviewVisitTabBtn')gray('zrPreviewVisitTabBtn');if(clicked.id!=='zrTodayTabBtn')gray('zrTodayTabBtn');
+  if(clicked.id!=='zrWarningTabBtn'){gray('zrWarningTabBtn');document.getElementById('tab-warning')?.classList.add('hidden')}
+  if(clicked.id!=='zrCleanupTabBtn'){gray('zrCleanupTabBtn');document.getElementById('tab-cleanup')?.classList.add('hidden')}
 },true);
 
-document.addEventListener('zr:admin-runtime-ready',loadCustomerInquiryVisit,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisit,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisitQueryUi,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisitNotify,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminPreviewVisitContent,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminInquiryReply,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminInquiryReplyLayout,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadExcelReliabilityFix,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadSettlementWorkspace,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadSettlementUiStability,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminListPagination,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadCustomerViewTracking,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminToday,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminTodayPrintLayout,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminWarning,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadAdminWarningScheduleShortcut,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadReservationCleanup,{once:true});
-document.addEventListener('zr:admin-runtime-ready',loadReservationCleanupReliability,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminPreviewVisitNotify,0);setTimeout(loadAdminPreviewVisitContent,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);setTimeout(loadAdminListPagination,0);setTimeout(loadCustomerViewTracking,0);setTimeout(loadAdminToday,0);setTimeout(loadAdminTodayPrintLayout,0);setTimeout(loadAdminWarning,0);setTimeout(loadAdminWarningScheduleShortcut,0);setTimeout(loadReservationCleanup,0);setTimeout(loadReservationCleanupReliability,0);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
-else loadUiFixes();
+for(const fn of [loadCustomerInquiryVisit,loadAdminPreviewVisit,loadAdminPreviewVisitQueryUi,loadAdminPreviewVisitNotify,loadAdminPreviewVisitContent,loadAdminInquiryReply,loadAdminInquiryReplyLayout,loadExcelReliabilityFix,loadSettlementWorkspace,loadSettlementUiStability,loadAdminListPagination,loadCustomerViewTracking,loadAdminToday,loadAdminTodayPrintLayout,loadAdminWarning,loadAdminWarningScheduleShortcut,loadReservationCleanup,loadReservationCleanupReliability,loadAdminTime15Min,loadAdminSectionSubtabs])document.addEventListener('zr:admin-runtime-ready',fn,{once:true});
+if(window.__ZR_ADMIN_REFACTOR_READY){for(const fn of [loadCustomerInquiryVisit,loadAdminPreviewVisit,loadAdminPreviewVisitQueryUi,loadAdminPreviewVisitNotify,loadAdminPreviewVisitContent,loadAdminInquiryReply,loadAdminInquiryReplyLayout,loadExcelReliabilityFix,loadSettlementWorkspace,loadSettlementUiStability,loadAdminListPagination,loadCustomerViewTracking,loadAdminToday,loadAdminTodayPrintLayout,loadAdminWarning,loadAdminWarningScheduleShortcut,loadReservationCleanup,loadReservationCleanupReliability,loadAdminTime15Min,loadAdminSectionSubtabs])setTimeout(fn,0)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});else loadUiFixes();
 })();
