@@ -6,8 +6,9 @@ const fail=m=>{failed=true;console.error('FAIL:',m)};
 const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'})}catch(e){fail(`${file} syntax: ${e.stderr?.toString()||e.message}`)}};
 
-for(const file of ['admin_reservation_cleanup_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
+for(const file of ['admin_reservation_cleanup_v1.js','admin_reservation_cleanup_reliability_v1.js','admin_tab_active_fix_v1.js'])syntax(file);
 const cleanup=read('admin_reservation_cleanup_v1.js');
+const reliability=read('admin_reservation_cleanup_reliability_v1.js');
 const loader=read('admin_tab_active_fix_v1.js');
 const rules=read('firestore.rules');
 
@@ -53,13 +54,40 @@ for(const forbidden of [
 ])if(cleanup.includes(forbidden))fail(`cleanup must not introduce forbidden storage/history detail: ${forbidden}`);
 
 for(const needle of [
+  'window.__ZR_ADMIN_RESERVATION_CLEANUP_RELIABILITY_V1=true',
+  "const BUSY=new Set()",
+  'auth.currentUser?.getIdToken?.(true)',
+  'F.enableNetwork(db)',
+  "batch.set(F.doc(db,'scheduleGroups',id),history)",
+  "batch.delete(F.doc(db,'reservations',id))",
+  "batch.delete(F.doc(db,'reservationAvailability',id))",
+  "el.textContent='정리 중…'",
+  'errorLabel(e)',
+  'e.stopImmediatePropagation()',
+  "document.addEventListener('click',intercept,true)",
+  "$('zrCleanupApply')?.click?.()"
+])if(!reliability.includes(needle))fail(`cleanup reliability contract missing: ${needle}`);
+for(const forbidden of [
+  "document.querySelectorAll('#tab-cleanup button')",
+  'buttons.forEach(b=>b.disabled=true)',
+  "batch.delete(F.doc(db,'scheduleGroups'",
+  'contact:String(b.',
+  'managerName:String(b.',
+  'notes:String(b.'
+])if(reliability.includes(forbidden))fail(`cleanup reliability must stay targeted/minimal: ${forbidden}`);
+
+for(const needle of [
   'function loadReservationCleanup()',
   "s.src='./admin_reservation_cleanup_v1.js?v=1'",
   'loadReservationCleanup();',
+  'function loadReservationCleanupReliability()',
+  "s.src='./admin_reservation_cleanup_reliability_v1.js?v=1'",
+  'loadReservationCleanupReliability();',
   "if(clicked.id!=='zrCleanupTabBtn')",
   "gray('zrCleanupTabBtn')",
   "document.getElementById('tab-cleanup')?.classList.add('hidden')",
-  "document.addEventListener('zr:admin-runtime-ready',loadReservationCleanup,{once:true})"
+  "document.addEventListener('zr:admin-runtime-ready',loadReservationCleanup,{once:true})",
+  "document.addEventListener('zr:admin-runtime-ready',loadReservationCleanupReliability,{once:true})"
 ])if(!loader.includes(needle))fail(`cleanup loader contract missing: ${needle}`);
 
 for(const needle of [
