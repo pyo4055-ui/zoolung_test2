@@ -116,6 +116,10 @@ function loadReservationCleanup(){
   if(document.getElementById('zrAdminReservationCleanupV1')||window.__ZR_ADMIN_RESERVATION_CLEANUP_V1)return;
   const s=document.createElement('script');s.id='zrAdminReservationCleanupV1';s.async=false;s.src='./admin_reservation_cleanup_v1.js?v=1';document.body.appendChild(s);
 }
+function loadReservationCleanupReliability(){
+  if(document.getElementById('zrAdminReservationCleanupReliabilityV1')||window.__ZR_ADMIN_RESERVATION_CLEANUP_RELIABILITY_V1)return;
+  const s=document.createElement('script');s.id='zrAdminReservationCleanupReliabilityV1';s.async=false;s.src='./admin_reservation_cleanup_reliability_v1.js?v=1';document.body.appendChild(s);
+}
 function loadUiFixes(){
   renameSettingsTab();
   loadCustomerInquiryVisit();
@@ -144,6 +148,7 @@ function loadUiFixes(){
   loadAdminWarning();
   loadAdminWarningScheduleShortcut();
   loadReservationCleanup();
+  loadReservationCleanupReliability();
 }
 
 document.addEventListener('click',e=>{
@@ -180,7 +185,8 @@ document.addEventListener('zr:admin-runtime-ready',loadAdminTodayPrintLayout,{on
 document.addEventListener('zr:admin-runtime-ready',loadAdminWarning,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadAdminWarningScheduleShortcut,{once:true});
 document.addEventListener('zr:admin-runtime-ready',loadReservationCleanup,{once:true});
-if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminPreviewVisitNotify,0);setTimeout(loadAdminPreviewVisitContent,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);setTimeout(loadAdminListPagination,0);setTimeout(loadCustomerViewTracking,0);setTimeout(loadAdminToday,0);setTimeout(loadAdminTodayPrintLayout,0);setTimeout(loadAdminWarning,0);setTimeout(loadAdminWarningScheduleShortcut,0);setTimeout(loadReservationCleanup,0);}
+document.addEventListener('zr:admin-runtime-ready',loadReservationCleanupReliability,{once:true});
+if(window.__ZR_ADMIN_REFACTOR_READY){setTimeout(loadCustomerInquiryVisit,0);setTimeout(loadAdminPreviewVisit,0);setTimeout(loadAdminPreviewVisitQueryUi,0);setTimeout(loadAdminPreviewVisitNotify,0);setTimeout(loadAdminPreviewVisitContent,0);setTimeout(loadAdminInquiryReply,0);setTimeout(loadAdminInquiryReplyLayout,0);setTimeout(loadExcelReliabilityFix,0);setTimeout(loadSettlementWorkspace,0);setTimeout(loadSettlementUiStability,0);setTimeout(loadAdminListPagination,0);setTimeout(loadCustomerViewTracking,0);setTimeout(loadAdminToday,0);setTimeout(loadAdminTodayPrintLayout,0);setTimeout(loadAdminWarning,0);setTimeout(loadAdminWarningScheduleShortcut,0);setTimeout(loadReservationCleanup,0);setTimeout(loadReservationCleanupReliability,0);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadUiFixes,{once:true});
 else loadUiFixes();
 })();
