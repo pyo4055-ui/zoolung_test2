@@ -7,13 +7,31 @@ const $=id=>document.getElementById(id);
 const HOLIDAY_SUFFIX=' (공휴일 예약 불가)';
 const KR_HOLIDAYS_2026=new Set([
   '2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
-  '2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-08-15','2026-08-17',
+  '2026-05-01','2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-07-17','2026-08-15','2026-08-17',
   '2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25'
 ]);
-const FIXED_HOLIDAY_MD=new Set(['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+const KR_HOLIDAYS_2027=new Set([
+  '2027-01-01',
+  '2027-02-06','2027-02-07','2027-02-08','2027-02-09',
+  '2027-03-01',
+  '2027-05-01','2027-05-03','2027-05-05','2027-05-13',
+  '2027-06-06',
+  '2027-07-17','2027-07-19',
+  '2027-08-15','2027-08-16',
+  '2027-09-14','2027-09-15','2027-09-16',
+  '2027-10-03','2027-10-04','2027-10-09','2027-10-11',
+  '2027-12-25','2027-12-27'
+]);
+const FIXED_HOLIDAY_MD=new Set(['01-01','03-01','05-01','05-05','06-06','07-17','08-15','10-03','10-09','12-25']);
 let adminDirty=false;
 let wrappedRender=null;
 
+function loadSharedReservationSettings(){
+  if(document.getElementById('zrReservationSettingsFirebaseSyncV1')||window.__ZR_RESERVATION_SETTINGS_FIREBASE_SYNC_V1)return;
+  const s=document.createElement('script');
+  s.id='zrReservationSettingsFirebaseSyncV1';s.async=false;s.src='./reservation_settings_firebase_sync_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function localToday(){
   const d=new Date(),pad=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -24,7 +42,7 @@ function isPastOrToday(date){
 }
 function isHoliday(date){
   const v=String(date||'');
-  return KR_HOLIDAYS_2026.has(v)||FIXED_HOLIDAY_MD.has(v.slice(5));
+  return KR_HOLIDAYS_2026.has(v)||KR_HOLIDAYS_2027.has(v)||FIXED_HOLIDAY_MD.has(v.slice(5));
 }
 function readSettings(){
   try{
@@ -150,6 +168,7 @@ function bookingActionButton(target){
   return btn;
 }
 function boot(){
+  loadSharedReservationSettings();
   refreshHooks();
   if(customerVisible())applyCustomerHolidayAvailability();
 
@@ -158,6 +177,11 @@ function boot(){
   const t=setInterval(refreshHooks,500);
   setTimeout(()=>clearInterval(t),30000);
 
+  document.addEventListener('zr:reservation-settings-synced',()=>{
+    adminDirty=false;
+    refreshHooks();
+    if(customerVisible())setTimeout(applyCustomerHolidayAvailability,0);
+  });
   document.addEventListener('change',e=>{
     if(e.target?.id==='visitMonth')setTimeout(applyCustomerHolidayAvailability,0);
   },true);
