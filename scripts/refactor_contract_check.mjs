@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 
 const frozen = {
   'index.html':'3d92d7e08b85eb2326aeba0d0def53659dac0ec9',
-  'firestore.rules':'947479062fdb55544bb1af2d371db71a7861e147',
+  'firestore.rules':'5884ea6d8f468079da3ab48f5688e61ad3999d94',
   'admin_features.js':'92b56752200626496fedb9816b880414a74c571c',
   'admin2_part1.txt':'118b334e77bf168659a1f9d9f3b83282f04c730c',
   'admin2_part2.txt':'5e0d2acd06f6b1b417d42c29da488c03811fd0fb',
