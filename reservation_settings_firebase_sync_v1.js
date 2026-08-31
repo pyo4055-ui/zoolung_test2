@@ -9,7 +9,7 @@ const DOC_ID='main';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 let F=null,Auth=null,unsub=null,remote=null,remoteReady=false,applyingRemote=false;
 let baseSettings=null,baseSaveSettings=null,settingsWrapper=null,saveWrapper=null;
-let writeChain=Promise.resolve(),bootstrapPending=false,lastStaff=false;
+let writeChain=Promise.resolve();
 
 const clone=v=>JSON.parse(JSON.stringify(v));
 function clean(v){
@@ -24,9 +24,6 @@ function bridge(){return window.zrReservationFirebase||null}
 function isStaff(){
   const z=bridge(),u=z?.auth?.currentUser;
   return !!z?.isStaff?.()&&!!u&&String(u.email||'').toLowerCase()===STAFF_EMAIL;
-}
-function rawSettings(){
-  try{return typeof baseSettings==='function'?baseSettings():{}}catch{return {}}
 }
 function mergedSettings(local){
   const l=local&&typeof local==='object'?local:{};
@@ -95,26 +92,13 @@ function installHooks(){
     try{saveSettings=saveWrapper}catch{}
   }
 }
-async function bootstrapIfNeeded(){
-  if(remoteReady||bootstrapPending||!F||!bridge()?.db||!isStaff())return;
-  bootstrapPending=true;
-  try{
-    const local=clean(rawSettings());
-    await F.setDoc(F.doc(bridge().db,COLLECTION,DOC_ID),{
-      reservationSettings:local,
-      reservationSettingsVersion:1,
-      reservationSettingsUpdatedAt:F.serverTimestamp()
-    },{merge:true});
-  }catch(e){console.error('reservation settings bootstrap',e)}
-  finally{bootstrapPending=false}
-}
 function subscribe(){
   const z=bridge();if(!F||!z?.db||!z?.auth?.currentUser)return false;
   if(unsub){unsub();unsub=null}
   unsub=F.onSnapshot(F.doc(z.db,COLLECTION,DOC_ID),snap=>{
     const data=snap.exists()?snap.data()||{}:{};
     if(data.reservationSettings&&typeof data.reservationSettings==='object')setRemote(data.reservationSettings);
-    else{remote=null;remoteReady=false;bootstrapIfNeeded()}
+    else{remote=null;remoteReady=false}
   },e=>console.error('reservation settings firebase read',e));
   return true;
 }
@@ -129,19 +113,14 @@ async function initFirebase(){
       installHooks();
       const z=bridge();if(!z?.auth||!z?.db){if(Date.now()-started>20000)clearInterval(t);return}
       clearInterval(t);
-      Auth.onAuthStateChanged(z.auth,()=>setTimeout(()=>{installHooks();subscribe();bootstrapIfNeeded()},20));
-      subscribe();bootstrapIfNeeded();
+      Auth.onAuthStateChanged(z.auth,()=>setTimeout(()=>{installHooks();subscribe()},20));
+      subscribe();
     },150);
   }catch(e){console.error('reservation settings firebase init',e)}
 }
 function boot(){
   installHooks();
-  const hookTimer=setInterval(()=>{
-    installHooks();
-    const staff=isStaff();
-    if(staff&&!lastStaff)bootstrapIfNeeded();
-    lastStaff=staff;
-  },500);
+  const hookTimer=setInterval(installHooks,500);
   setTimeout(()=>clearInterval(hookTimer),60000);
   initFirebase();
 }
