@@ -94,7 +94,7 @@ for(const needle of [
   'cancelDateKey(b)',
   'monthsAgo(today(),6)',
   "sub.textContent='취소 정리'",
-  'id="zrCancelCleanupPanel"',
+  "panel.id='zrCancelCleanupPanel'",
   'id="zrCancelCleanupSelectPage"',
   'id="zrCancelCleanupSelected"',
   'id="zrCancelCleanupAll"',
