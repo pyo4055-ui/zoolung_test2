@@ -87,22 +87,23 @@ for(const needle of [
   '},{merge:true})',
   'F.onSnapshot(F.doc(z.db,COLLECTION,DOC_ID)',
   'if(data.reservationSettings&&typeof data.reservationSettings===\'object\')setRemote(data.reservationSettings)',
+  'else{remote=null;remoteReady=false}',
   'if(remoteReady&&!isStaff())',
   'if(isStaff())queueWrite(value)',
-  'function bootstrapIfNeeded()',
-  'if(remoteReady||bootstrapPending||!F||!bridge()?.db||!isStaff())return',
   "document.dispatchEvent(new CustomEvent('zr:reservation-settings-synced'",
   "window.settings=settingsWrapper",
   "window.saveSettings=saveWrapper"
 ])if(!sync.includes(needle))fail(`shared reservation settings contract missing: ${needle}`);
 for(const forbidden of [
+  'bootstrapIfNeeded',
+  'bootstrapPending',
   "const COLLECTION='reservations'",
   "const COLLECTION='reservationAvailability'",
   "const COLLECTION='scheduleGroups'",
   "localStorage.setItem('zr_bookings'",
   'deleteDoc(',
   'writeBatch('
-])if(sync.includes(forbidden))fail(`shared settings sync must not alter reservation data contract: ${forbidden}`);
+])if(sync.includes(forbidden))fail(`shared settings sync safety contract violated: ${forbidden}`);
 
 const loader=fs.readFileSync('admin_features_v2_loader.js','utf8');
 if(!loader.includes("['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=1']"))fail('holiday booking setting is not loaded by active loader');
@@ -113,4 +114,4 @@ for(const date of ['2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-
 }
 
 if(failed)process.exit(1);
-ok('customer booking shares reservation settings across devices, covers 2027 holidays, preserves configurable holiday behavior, and avoids reservation-data writes');
+ok('customer booking shares reservation settings after explicit staff save, covers 2027 holidays, preserves configurable holiday behavior, and avoids reservation-data writes');
