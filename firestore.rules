@@ -1,9 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isScheduleStaff() {
-      return request.auth != null
+      return isSignedIn()
         && request.auth.token.email == 'zoolung09@zoolungzoolung.com';
+    }
+
+    function isOwner() {
+      return isSignedIn()
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
+    function createsOwnDocument() {
+      return isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    function keepsOwner() {
+      return isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    match /reservations/{reservationId} {
+      allow read: if isScheduleStaff() || isOwner();
+      allow create: if isScheduleStaff() || createsOwnDocument();
+      allow update: if isScheduleStaff() || keepsOwner();
+      allow delete: if isScheduleStaff();
+    }
+
+    match /reservationAvailability/{reservationId} {
+      // Anonymous reservation users are authenticated anonymously and need
+      // availability reads to block duplicate date/playground reservations.
+      allow read: if isSignedIn();
+      allow create: if isScheduleStaff() || createsOwnDocument();
+      allow update: if isScheduleStaff() || keepsOwner();
+      allow delete: if isScheduleStaff();
     }
 
     match /scheduleGroups/{groupId} {
