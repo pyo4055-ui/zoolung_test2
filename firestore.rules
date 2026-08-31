@@ -1,55 +1,120 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
 
+    // 관리자 계정 확인
     function isScheduleStaff() {
-      return isSignedIn()
+      return request.auth != null
         && request.auth.token.email == 'zoolung09@zoolungzoolung.com';
     }
 
-    function isOwner() {
-      return isSignedIn()
-        && resource.data.ownerUid == request.auth.uid;
-    }
-
-    function createsOwnDocument() {
-      return isSignedIn()
-        && request.resource.data.ownerUid == request.auth.uid;
-    }
-
-    function keepsOwner() {
-      return isSignedIn()
-        && resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerUid == resource.data.ownerUid;
-    }
-
+    // =========================
+    // 단체예약 원본 DB
+    // =========================
     match /reservations/{reservationId} {
-      allow read: if isScheduleStaff() || isOwner();
-      allow create: if isScheduleStaff() || createsOwnDocument();
-      allow update: if isScheduleStaff() || keepsOwner();
+
+      // 관리자는 전체 조회
+      // 고객은 본인이 만든 예약만 조회
+      allow read: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+        );
+
+      // 관리자 예약 생성
+      // 고객은 자기 UID로만 예약 생성
+      allow create: if isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 관리자 수정
+      // 고객은 자기 예약만 수정
+      allow update: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 과거 예약 정리는 관리자만 영구 삭제 가능
       allow delete: if isScheduleStaff();
     }
 
+
+    // =========================
+    // 예약 가능 여부 공유 DB
+    // 놀이터 중복확인 등에 사용
+    // =========================
     match /reservationAvailability/{reservationId} {
-      // Anonymous reservation users are authenticated anonymously and need
-      // availability reads to block duplicate date/playground reservations.
-      allow read: if isSignedIn();
-      allow create: if isScheduleStaff() || createsOwnDocument();
-      allow update: if isScheduleStaff() || keepsOwner();
+
+      // 로그인된 고객/관리자 모두 조회 가능
+      allow read: if request.auth != null;
+
+      // 관리자 생성 가능
+      // 고객은 자기 UID 데이터만 생성
+      allow create: if isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 관리자 수정 가능
+      // 고객은 자기 데이터만 수정
+      allow update: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 과거 예약 정리는 관리자만 영구 삭제 가능
       allow delete: if isScheduleStaff();
     }
 
+
+    // =========================
+    // 현장 스케줄
+    // =========================
     match /scheduleGroups/{groupId} {
       allow read, create, update: if isScheduleStaff();
       allow delete: if false;
     }
 
+
+    // =========================
+    // 현장 공용 메모
+    // =========================
     match /scheduleSharedMemos/{dateId} {
       allow read, create, update: if isScheduleStaff();
       allow delete: if false;
+    }
+
+
+    // =========================
+    // 고객 방문 안내
+    // 컨텐츠 / 사진URL / 소요시간
+    // 설명 / 주의사항
+    // =========================
+    match /customerGuides/{guideId} {
+
+      // 고객은 읽기만 가능
+      allow read: if request.auth != null;
+
+      // 관리자만 설정 변경 가능
+      allow create, update: if isScheduleStaff();
+
+      allow delete: if false;
+    }
+
+
+    // =========================
+    // 그 외 모든 DB 접근 차단
+    // =========================
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
