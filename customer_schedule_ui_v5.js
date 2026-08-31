@@ -29,7 +29,21 @@ function axisFor(b,bounds){
   if(end<=start)end=Math.min(MAX,start+60);
   return {start,end};
 }
+function zoomAxisForBooking(b,bounds){
+  const start=mn(b?.entryTime||b?.customerSchedule?.entryTime);
+  const end=mn(b?.exitTime||b?.customerSchedule?.exitTime);
+  if(Number.isFinite(start)&&Number.isFinite(end)&&end>start)return {start,end};
+  if(bounds&&bounds.end>bounds.start)return {start:bounds.start,end:bounds.end};
+  return {start:630,end:870};
+}
 function timeText(m){const h=Math.floor(m/60),v=m%60;return `${String(h).padStart(2,'0')}:${String(v).padStart(2,'0')}`}
+function rulerFor(axis){
+  const span=Math.max(1,axis.end-axis.start),points=[axis.start];
+  let tick=Math.ceil(axis.start/30)*30;
+  while(tick<axis.end){if(tick>axis.start)points.push(tick);tick+=30}
+  if(axis.end!==axis.start)points.push(axis.end);
+  return [...new Set(points)].map(m=>`<span style="left:${(m-axis.start)/span*100}%">${timeText(m)}</span>`).join('');
+}
 
 function injectStyle(){
   if($('zrCustomerScheduleUiV5Style'))return;
@@ -47,6 +61,10 @@ function injectStyle(){
   .zr-customer-schedule .zr-customer-time-pill{display:inline-flex;align-items:center;padding:5px 8px;border-radius:8px;background:#eef5f0;border:1px solid #d3e3d8;color:#315c46;font-size:11px;font-weight:800}
   .zr-customer-schedule .zr-customer-time-pill.mismatch{background:#fff5e5;border-color:#edcf9c;color:#8b5b10}
   .zr-customer-schedule .zr-customer-notice{margin-top:9px;padding:9px 10px;border-radius:9px;background:#fff8e8;border:1px solid #ecd59b;color:#6e5212;font-size:11px;font-weight:900;line-height:1.45}
+  #zrCustomerScheduleZoom .zr-customer-wide{min-width:760px!important}
+  #zrCustomerScheduleZoom .zr-customer-ruler span:first-child{transform:translateX(0)!important}
+  #zrCustomerScheduleZoom .zr-customer-ruler span:last-child{transform:translateX(-100%)!important}
+  @media(max-width:720px){#zrCustomerScheduleZoom .zr-customer-wide{min-width:680px!important}}
   `;
   document.head.appendChild(s);
 }
@@ -87,38 +105,41 @@ function patchCard(card){
 
   let notice=card.querySelector('.zr-customer-notice');
   const legend=card.querySelector('.zr-customer-legend');
-  if(legend){
-    legend.className='zr-customer-notice';
-    notice=legend;
-  }
-  if(!notice){
-    notice=document.createElement('div');notice.className='zr-customer-notice';
-    card.querySelector('.zr-customer-line')?.insertAdjacentElement('afterend',notice);
-  }
+  if(legend){legend.className='zr-customer-notice';notice=legend}
+  if(!notice){notice=document.createElement('div');notice.className='zr-customer-notice';card.querySelector('.zr-customer-line')?.insertAdjacentElement('afterend',notice)}
   const noticeText='※ 오전 10:30 이전에 도착하셔도 동물 관람은 10:30부터 가능합니다.';
   if(notice&&notice.textContent!==noticeText)notice.textContent=noticeText;
 }
+
+function patchZoom(id){
+  const modal=$('zrCustomerScheduleZoom'),line=$('zrCustomerZoomLine'),ruler=$('zrCustomerZoomRuler');
+  const b=bookingById(id);if(!modal||!line||!ruler||!b||modal.classList.contains('hidden'))return;
+  const items=[...line.querySelectorAll('.zr-customer-seg')].map(el=>({el,time:segmentTimes(el)})).filter(x=>x.time);
+  const bounds=scheduleBounds(items.map(x=>x.time)),axis=zoomAxisForBooking(b,bounds),span=Math.max(1,axis.end-axis.start);
+  ruler.innerHTML=rulerFor(axis);
+  const grid=line.querySelector('.zr-customer-grid');if(grid)grid.style.backgroundSize=`${SLOT/span*100}% 100%`;
+  items.forEach(({el,time})=>{
+    const left=pct(time.start,axis),right=pct(time.end,axis),width=Math.max(1,right-left);
+    el.style.left=`${left}%`;el.style.width=`${width}%`;
+    if(width<7)el.classList.add('compact');else el.classList.remove('compact');
+  });
+  const help=modal.querySelector('.zr-customer-zoom-head + .help');
+  if(help)help.textContent=`예약시간 ${timeText(axis.start)}~${timeText(axis.end)} 범위로 크게 표시됩니다.`;
+}
+function queueZoomPatch(id){[0,30,90,180].forEach(ms=>setTimeout(()=>patchZoom(id),ms))}
 
 let pending=false;
 function patch(){
   if(pending)return;
   pending=true;
-  requestAnimationFrame(()=>{
-    pending=false;
-    injectStyle();
-    document.querySelectorAll('.zr-customer-schedule').forEach(patchCard);
-  });
+  requestAnimationFrame(()=>{pending=false;injectStyle();document.querySelectorAll('.zr-customer-schedule').forEach(patchCard)});
 }
 function boot(){
-  injectStyle();
-  patch();
+  injectStyle();patch();
   new MutationObserver(patch).observe(document.body,{childList:true,subtree:true});
-  ['lookupBooking','checkExisting'].forEach(id=>{
-    const el=$(id);if(!el)return;
-    el.addEventListener('click',()=>{setTimeout(patch,0);setTimeout(patch,300);setTimeout(patch,800);setTimeout(patch,1500)});
-  });
-  const timer=setInterval(patch,300);
-  setTimeout(()=>clearInterval(timer),15000);
+  document.addEventListener('click',e=>{const btn=e.target?.closest?.('[data-zr-zoom]');if(btn?.dataset?.zrZoom)queueZoomPatch(btn.dataset.zrZoom)},true);
+  ['lookupBooking','checkExisting'].forEach(id=>{const el=$(id);if(!el)return;el.addEventListener('click',()=>{setTimeout(patch,0);setTimeout(patch,300);setTimeout(patch,800);setTimeout(patch,1500)})});
+  const timer=setInterval(patch,300);setTimeout(()=>clearInterval(timer),15000);
   window.addEventListener('resize',patch);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
