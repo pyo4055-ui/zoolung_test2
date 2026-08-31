@@ -13,22 +13,57 @@ function installStyle(){
   s.id='zrAdminPreviewCafeUiStyleV1';
   s.textContent=`
     #zrPreviewNotifyInnerTabs button:hover{background:#f8faf8!important;color:#2f6b4f!important}
-    #zrCafeMenuPagination{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+    #zrCafeMenuPagination{display:flex!important;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;width:100%;margin:16px 0 4px;clear:both}
     #zrCafeMenuPagination button{min-width:38px;height:38px;padding:0 11px}
     #zrCafeMenuPagination .zr-page-gap{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:38px;color:var(--muted,#6d756f);font-weight:800}
     @media(max-width:560px){#zrCafeMenuPagination{gap:5px}#zrCafeMenuPagination button{min-width:36px;height:36px;padding:0 9px}}
   `;
   document.head.appendChild(s);
 }
-function section(){return $('tab-menuadmin')}
-function rows(){return [...(section()?.querySelectorAll('.menu-row')||[])]}
-function listRoot(){
-  const all=rows();if(!all.length)return null;
-  const root=all[0].parentElement;
-  return root&&all.every(row=>row.parentElement===root)?root:null;
+function section(){
+  const direct=$('tab-menuadmin');if(direct)return direct;
+  const admin=$('adminView');if(!admin)return null;
+  const btn=[...admin.querySelectorAll('.admin-tabs button')].find(b=>(b.textContent||'').replace(/\s/g,'').includes('카페메뉴'));
+  const key=btn?.dataset?.tab||'';
+  if(key&&$(`tab-${key}`))return $(`tab-${key}`);
+  return [...admin.querySelectorAll('section,[id^="tab-"]')].find(sec=>{
+    const title=sec.querySelector('h1,h2,h3')?.textContent||'';
+    return title.replace(/\s/g,'').includes('카페메뉴');
+  })||null;
+}
+function primaryRows(sec){return [...(sec?.querySelectorAll('.menu-row')||[])]}
+function editButtons(sec){return [...(sec?.querySelectorAll('[onclick*="editCafeMenu"],[data-menu-id],[data-cafe-menu-id]')||[])]}
+function inferredRoot(sec){
+  const edits=editButtons(sec);if(!edits.length)return null;
+  const candidates=new Map();
+  for(const edit of edits){
+    let p=edit.parentElement,depth=0;
+    while(p&&p!==sec&&depth<7){
+      const direct=[...p.children].filter(ch=>ch.querySelector?.('[onclick*="editCafeMenu"],[data-menu-id],[data-cafe-menu-id]'));
+      if(direct.length)candidates.set(p,{count:direct.length,depth});
+      p=p.parentElement;depth++;
+    }
+  }
+  return [...candidates.entries()].sort((a,b)=>b[1].count-a[1].count||a[1].depth-b[1].depth)[0]?.[0]||null;
+}
+function listRoot(sec=section()){
+  if(!sec)return null;
+  const all=primaryRows(sec);
+  if(all.length){
+    const root=all[0].parentElement;
+    if(root&&all.every(row=>row.parentElement===root))return root;
+  }
+  return inferredRoot(sec);
+}
+function rows(sec=section(),root=listRoot(sec)){
+  if(!sec||!root)return [];
+  const primary=primaryRows(sec).filter(row=>row.parentElement===root);
+  if(primary.length)return primary;
+  return [...root.children].filter(ch=>ch.querySelector?.('[onclick*="editCafeMenu"],[data-menu-id],[data-cafe-menu-id]'));
 }
 function restoreRows(){
-  rows().forEach(row=>{
+  const sec=section(),root=listRoot(sec);
+  rows(sec,root).forEach(row=>{
     if(row.dataset.zrCafePageHidden!=='1')return;
     row.style.display=row.dataset.zrCafePageDisplay||'';
     delete row.dataset.zrCafePageHidden;delete row.dataset.zrCafePageDisplay;
@@ -53,7 +88,7 @@ function paginate(){
   installStyle();
   $('zrCafeMenuPagination')?.remove();
   restoreRows();
-  const all=rows(),root=listRoot();if(!all.length||!root)return false;
+  const root=listRoot(sec),all=rows(sec,root);if(!root||!all.length)return false;
   const eligible=all.filter(row=>row.style.display!=='none');
   const pages=Math.max(1,Math.ceil(eligible.length/PAGE_SIZE));
   page=Math.max(1,Math.min(page,pages));
@@ -62,7 +97,7 @@ function paginate(){
     if(i>=start&&i<start+PAGE_SIZE)return;
     row.dataset.zrCafePageHidden='1';row.dataset.zrCafePageDisplay=row.style.display||'';row.style.display='none';
   });
-  if(eligible.length)root.insertAdjacentHTML('beforeend',controlsHtml(pages));
+  root.insertAdjacentHTML('afterend',controlsHtml(pages));
   return true;
 }
 function schedule({reset=false,delay=0}={}){
@@ -70,7 +105,7 @@ function schedule({reset=false,delay=0}={}){
   clearTimeout(timer);timer=setTimeout(paginate,delay);
 }
 function rowMutation(mutations){
-  return mutations.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.menu-row')||n.querySelector?.('.menu-row'))));
+  return mutations.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.menu-row')||n.querySelector?.('.menu-row,[onclick*="editCafeMenu"],[data-menu-id],[data-cafe-menu-id]'))));
 }
 function bindObserver(){
   const sec=section();if(!sec)return false;
@@ -91,8 +126,8 @@ function installEvents(){
       try{listRoot()?.scrollIntoView?.({block:'start'})}catch{}
       return;
     }
-    const tab=e.target?.closest?.('#adminView .admin-tabs [data-tab="menuadmin"]');
-    if(tab)schedule({reset:true,delay:40});
+    const tab=e.target?.closest?.('#adminView .admin-tabs button');
+    if(tab&&(tab.textContent||'').replace(/\s/g,'').includes('카페메뉴'))schedule({reset:true,delay:40});
   },true);
 }
 function boot(){
