@@ -67,15 +67,19 @@ for(const needle of [
   'match /reservations/{reservationId}',
   'match /reservationAvailability/{reservationId}',
   'allow delete: if isScheduleStaff();',
-  'allow read: if isScheduleStaff() || isOwner();',
-  'allow read: if isSignedIn();',
-  'allow create: if isScheduleStaff() || createsOwnDocument();',
-  'allow update: if isScheduleStaff() || keepsOwner();',
+  'resource.data.ownerUid == request.auth.uid',
+  'request.resource.data.ownerUid == request.auth.uid',
+  'allow read: if request.auth != null;',
   'match /scheduleGroups/{groupId}',
+  'match /scheduleSharedMemos/{dateId}',
+  'match /customerGuides/{guideId}',
+  'match /{document=**}',
+  'allow read, write: if false;',
   'allow delete: if false;'
 ])if(!rules.includes(needle))fail(`cleanup Firestore rule contract missing: ${needle}`);
 
 if((rules.match(/allow delete: if isScheduleStaff\(\);/g)||[]).length!==2)fail('staff delete permission must be limited to reservations and reservationAvailability');
+if((rules.match(/allow delete: if false;/g)||[]).length<3)fail('schedule, memo, and customer guide deletes must remain blocked');
 
 if(failed){console.error('\nAdmin reservation cleanup contract failed.');process.exit(1)}
 console.log('Admin reservation cleanup contract passed.');
