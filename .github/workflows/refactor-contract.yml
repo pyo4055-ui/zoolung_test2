@@ -29,6 +29,8 @@ jobs:
         run: node scripts/admin_today_contract_check.mjs
       - name: Verify admin warning dashboard
         run: node scripts/admin_warning_contract_check.mjs
+      - name: Verify past reservation cleanup
+        run: node scripts/admin_reservation_cleanup_contract_check.mjs
       - name: Verify compact calendar status summary
         run: node scripts/admin_calendar_status_summary_contract_check.mjs
       - name: Verify calendar booking status selector
