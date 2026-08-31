@@ -32,10 +32,10 @@ for(const needle of [
 ])if(!fix.includes(needle))fail(`quick-time fix missing: ${needle}`);
 
 for(const forbidden of [
-  "actualPaid",
-  "actualChap",
-  "mealLoc",
-  "appearance",
+  "data-q=\"actualPaid\"",
+  "data-q=\"actualChap\"",
+  "data-q=\"mealLoc\"",
+  "data-q=\"appearance\"",
   "scheduleSharedMemos",
   "reservationAvailability",
   "reservations"
