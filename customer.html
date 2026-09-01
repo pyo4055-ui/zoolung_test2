@@ -14,7 +14,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-s
 <script>
 (async()=>{
   try{
-    const r=await fetch('./index.html?v=customer-entry-1',{cache:'no-store'});
+    const r=await fetch('./index.html?v=customer-entry-2',{cache:'no-store'});
     if(!r.ok)throw new Error('공통 예약 런타임을 불러오지 못했습니다.');
     let source=await r.text();
     const adminLoader='./admin_features_v2_loader.js?v=31';
@@ -22,7 +22,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-s
     if(!source.includes(adminLoader))throw new Error('고객 분리 연결 지점을 찾지 못했습니다.');
     source=source.replace(adminLoader,customerLoader);
     const bridgeMarker='<script src="./reservation_firebase_bridge.js?v=1"><\\/script></body>';
-    const customerMarker='<script src="./reservation_firebase_bridge.js?v=1"><\\/script><script src="./customer_entry_bootstrap_v1.js?v=1"><\\/script></body>';
+    const customerMarker='<script src="./customer_reservation_firebase_bridge_v1.js?v=1"><\\/script><script src="./customer_entry_bootstrap_v1.js?v=1"><\\/script></body>';
     if(!source.includes(bridgeMarker))throw new Error('고객 전용 화면 연결 지점을 찾지 못했습니다.');
     source=source.replace(bridgeMarker,customerMarker);
     source=source.replace('<title>주렁주렁 단체예약 테스트</title>','<title>주렁주렁 동탄점 단체예약</title>');
