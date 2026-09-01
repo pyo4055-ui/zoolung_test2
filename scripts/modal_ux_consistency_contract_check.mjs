@@ -43,54 +43,53 @@ for(const needle of [
   "el.textContent='닫기'",
   'function isCloseControl(el)',
   'cancelToggle|bookingCancel|cancelBooking|reservationCancel|cancelReservation|statusCancel',
-  'function titleForSource(btn)',
-  'function proxyButton()',
-  "btn.id='zrModalUxPinnedClose'",
-  'function proxyTitle()',
-  "title.id='zrModalUxPinnedTitle'",
-  'function pickPinnedSource(overlay)',
-  'function syncPinnedTitle(source)',
-  'function syncPinnedClose()',
-  'function placePinnedHeader(overlay,source,closeProxy=proxyButton(),titleProxy=proxyTitle())',
-  'zr-modal-ux-proxied-title',
-  '#zrModalUxPinnedTitle{position:fixed!important',
-  'top:var(--zr-modal-title-top,14px)!important',
-  'left:var(--zr-modal-title-left,14px)!important',
-  'width:var(--zr-modal-title-width,180px)!important',
-  'position:fixed!important',
-  'top:var(--zr-modal-close-top,14px)!important',
-  'right:var(--zr-modal-close-right,14px)!important',
-  'zr-modal-ux-proxied-source',
-  "document.addEventListener('scroll',schedulePosition,true)",
-  "window.addEventListener('resize',schedulePosition)",
-  'zr-modal-ux-close',
-  'zr-modal-ux-shell',
-  'zr-modal-ux-title'
-])if(!s.includes(needle))fail(`modal UX contract missing: ${needle}`);
-
-for(const needle of [
-  "const OVERLAY_SELECTOR='.zr-customer-info-modal,.zr-customer-zoom,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal'",
-  'function topOverlay()',
-  'function shellFor(overlay)',
+  'function shellForOverlay(overlay)',
   'function labelledTitle(overlay,shell)',
   "getAttribute?.('aria-labelledby')",
-  'function titleFor(overlay)',
+  'function titleForOverlay(overlay,shell=shellForOverlay(overlay))',
   '.zr-guide-head h1,.zr-guide-head h2,.zr-guide-head h3',
+  'function pickCloseSource(overlay)',
+  'function headerForShell(shell)',
+  "header.className='zr-modal-ux-header'",
+  "title.className='zr-modal-ux-header-title'",
+  "close.className='zr-modal-ux-header-close'",
+  'if(source?.isConnected)source.click();',
+  'shell.insertBefore(header,shell.firstChild);',
+  'function syncHeaderGeometry(shell,header)',
+  'function syncOverlayHeader(overlay)',
+  "titleSource.classList.add('zr-modal-ux-title-source')",
+  "closeSource.classList.add('zr-modal-ux-close-source')",
+  'function cleanupLegacyFloating()',
+  "'zrModalUxPinnedClose','zrModalUxPinnedTitle','zrCustomerModalPinnedTitle'",
+  '.zr-modal-ux-title-source,.zr-modal-ux-close-source{display:none!important}',
+  '.zr-modal-ux-header{position:sticky!important;top:0!important',
+  'width:calc(100% + var(--zr-modal-ux-shell-pad-left,0px) + var(--zr-modal-ux-shell-pad-right,0px))!important',
+  'border-bottom:1px solid #e3e8e5!important',
+  "window.__ZR_MODAL_UX_SYNC_HEADERS=scheduleScan"
+])if(!s.includes(needle))fail(`modal UX contract missing: ${needle}`);
+
+for(const forbidden of [
+  "btn.id='zrModalUxPinnedClose'",
+  "title.id='zrModalUxPinnedTitle'",
+  '#zrModalUxPinnedTitle{position:fixed!important',
+  '#zrModalUxPinnedClose{position:fixed!important'
+])if(s.includes(forbidden))fail(`legacy floating modal UI must stay removed: ${forbidden}`);
+
+for(const needle of [
+  'function cleanupLegacyFloating()',
+  "'zrCustomerModalPinnedTitle','zrModalUxPinnedTitle','zrModalUxPinnedClose'",
+  'function syncCommonHeader()',
+  "typeof window.__ZR_MODAL_UX_SYNC_HEADERS==='function'",
+  'window.__ZR_MODAL_UX_SYNC_HEADERS()',
+  "document.addEventListener('click',()=>setTimeout(syncCommonHeader,0),true)",
+  "window.addEventListener('resize',syncCommonHeader)"
+])if(!customerPin.includes(needle))fail(`customer popup header compatibility missing: ${needle}`);
+
+for(const forbidden of [
   "el.id='zrCustomerModalPinnedTitle'",
-  'function commonCloseRect()',
-  "document.getElementById('zrModalUxPinnedClose')",
-  'function place(overlay,titleProxy=proxy())',
-  'function sync()',
-  "document.body.classList.add('zr-customer-modal-title-pin-active')",
-  'body.zr-customer-modal-title-pin-active #zrModalUxPinnedTitle{display:none!important}',
-  '.zr-customer-modal-title-source{visibility:hidden!important;pointer-events:none!important}',
   '#zrCustomerModalPinnedTitle{position:fixed!important',
-  'top:var(--zr-customer-modal-title-top,14px)!important',
-  'left:var(--zr-customer-modal-title-left,14px)!important',
-  'width:var(--zr-customer-modal-title-width,180px)!important',
-  "document.addEventListener('scroll',schedulePosition,true)",
-  "window.addEventListener('resize',schedulePosition)"
-])if(!customerPin.includes(needle))fail(`customer popup title pin contract missing: ${needle}`);
+  'position:fixed!important'
+])if(customerPin.includes(forbidden))fail(`customer floating title UI must stay removed: ${forbidden}`);
 
 for(const [label,source] of [['modal UX layer',s],['customer popup title layer',customerPin]]){
   for(const forbidden of [
@@ -135,4 +134,4 @@ for(const needle of [
 ])if(!onsite.includes(needle))fail(`onsite modal UX integration missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('customer booking popup titles stay pinned even when a popup has no close button, while existing popup close and destructive actions remain unchanged');
+ok('modal titles and existing close controls render through one full-width sticky header while destructive actions and data behavior remain unchanged');
