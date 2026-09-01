@@ -54,7 +54,13 @@ async function loadCustomerVisitGuideV16(){
     guide16.slice(fnEnd);
   const openNeedle='function openCustomerGuide(control){';
   if(!guide16.includes(openNeedle))throw new Error('고객 방문 안내 팝업 함수를 찾지 못했습니다.');
-  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
+  guide16=guide16.replace(openNeedle,"function openCustomerGuide(control){if(control?.id!=='entryTime')return;if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return;const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
+  const ackNeedle='function acknowledgementOk(control){';
+  if(!guide16.includes(ackNeedle))throw new Error('고객 방문 안내 확인 상태 함수를 찾지 못했습니다.');
+  guide16=guide16.replace(ackNeedle,"function acknowledgementOk(control){if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return true;");
+  const confirmNeedle='ackEntry=v;ackSig=guideSig;';
+  if(!guide16.includes(confirmNeedle))throw new Error('고객 방문 안내 확인 버튼 처리를 찾지 못했습니다.');
+  guide16=guide16.replace(confirmNeedle,"ackEntry=v;ackSig=guideSig;window.__ZR_ZOO_GUIDE_ACK_ONCE=true;");
   guide16=guide16.replace('function interceptBooking(ev){',"function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   guide16=guide16.replace('function interceptSubmit(ev){',"function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;");
   const marker=document.createElement('script');marker.id='zrCustomerVisitGuideV16';marker.type='application/json';document.body.appendChild(marker);
@@ -78,10 +84,13 @@ async function loadCustomerGuideFixV20(){
   let guide20=await fetchText('./customer_visit_guide_fix_v20.js?v=31','고객 안내 분리 기능을 불러오지 못했습니다.');
   const playAckNeedle='function playAcknowledged(){';
   if(!guide20.includes(playAckNeedle))throw new Error('놀이터 안내 확인 함수를 찾지 못했습니다.');
-  guide20=guide20.replace(playAckNeedle,"function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;");
+  guide20=guide20.replace(playAckNeedle,"function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return true;");
   const playOpenNeedle='function openPlayGuide(){';
   if(!guide20.includes(playOpenNeedle))throw new Error('놀이터 안내 팝업 함수를 찾지 못했습니다.');
-  guide20=guide20.replace(playOpenNeedle,"function openPlayGuide(){document.getElementById('zrGuideModal')?.classList.add('hidden');const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
+  guide20=guide20.replace(playOpenNeedle,"function openPlayGuide(){if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return;document.getElementById('zrGuideModal')?.classList.add('hidden');const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;");
+  const playConfirmNeedle="playAckValue=v;playAckSig=sectionSig('playground');";
+  if(!guide20.includes(playConfirmNeedle))throw new Error('놀이터 안내 확인 버튼 처리를 찾지 못했습니다.');
+  guide20=guide20.replace(playConfirmNeedle,"playAckValue=v;playAckSig=sectionSig('playground');window.__ZR_PLAY_GUIDE_ACK_ONCE=true;");
   evalText(guide20);
 }
 
