@@ -7,7 +7,7 @@ const OVERLAY_SELECTOR='.modal,.zr-customer-info-modal,.zr-customer-zoom,.zrgm32
 const SHELL_SELECTOR='.modal-card,.sheet,.zr-customer-info-sheet,.zr-customer-zoom-card,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet';
 let scanQueued=false,positionQueued=false;
 let touchX=0,touchY=0;
-let pinnedSource=null;
+let pinnedSource=null,pinnedTitleSource=null;
 
 function visibleOverlay(el){
   if(!(el instanceof Element)||!el.matches(OVERLAY_SELECTOR))return false;
@@ -104,6 +104,10 @@ function shellFor(btn){
   const overlay=btn?.closest?.(OVERLAY_SELECTOR);if(!overlay)return null;
   return overlay.querySelector(':scope > .modal-card,:scope > .sheet,:scope > [role="dialog"],:scope > .card')||overlay.firstElementChild||null;
 }
+function titleForSource(btn){
+  const shell=shellFor(btn);if(!shell)return null;
+  return shell.querySelector('.titleRow h1,.titleRow h2,.titleRow h3,.modal-title,[data-modal-title],h1,h2,h3');
+}
 function decorateClose(btn){
   if(isDismissCancel(btn))renameDismissCancel(btn);
   if(btn.dataset.zrModalUxClose==='1')return;
@@ -112,7 +116,7 @@ function decorateClose(btn){
   btn.classList.add('zr-modal-ux-close');
   if(/^[×✕✖xX]$/.test(textOf(btn)))btn.classList.add('zr-modal-ux-close-icon');
   shell.classList.add('zr-modal-ux-shell');
-  const title=shell.querySelector('h1,h2,h3');if(title)title.classList.add('zr-modal-ux-title');
+  const title=titleForSource(btn);if(title)title.classList.add('zr-modal-ux-title');
 }
 function proxyButton(){
   let btn=document.getElementById('zrModalUxPinnedClose');
@@ -132,6 +136,17 @@ function proxyButton(){
   document.body.appendChild(btn);
   return btn;
 }
+function proxyTitle(){
+  let title=document.getElementById('zrModalUxPinnedTitle');
+  if(title)return title;
+  title=document.createElement('div');
+  title.id='zrModalUxPinnedTitle';
+  title.className='zr-modal-ux-pinned-title';
+  title.hidden=true;
+  title.setAttribute('aria-hidden','true');
+  document.body.appendChild(title);
+  return title;
+}
 function sourcePriority(btn){
   const text=textOf(btn),meta=metaOf(btn);
   if(/^[×✕✖xX]$/.test(text))return 0;
@@ -147,17 +162,38 @@ function pickPinnedSource(overlay){
 }
 function clearPinnedSource(){
   if(pinnedSource)pinnedSource.classList.remove('zr-modal-ux-proxied-source');
+  if(pinnedTitleSource)pinnedTitleSource.classList.remove('zr-modal-ux-proxied-title');
   pinnedSource=null;
+  pinnedTitleSource=null;
+}
+function syncPinnedTitle(source){
+  const proxy=proxyTitle();
+  const title=titleForSource(source);
+  if(!title){
+    if(pinnedTitleSource)pinnedTitleSource.classList.remove('zr-modal-ux-proxied-title');
+    pinnedTitleSource=null;
+    proxy.hidden=true;
+    return null;
+  }
+  if(pinnedTitleSource!==title){
+    if(pinnedTitleSource)pinnedTitleSource.classList.remove('zr-modal-ux-proxied-title');
+    pinnedTitleSource=title;
+    pinnedTitleSource.classList.add('zr-modal-ux-proxied-title');
+  }
+  proxy.textContent=textOf(title);
+  proxy.hidden=false;
+  return proxy;
 }
 function syncPinnedClose(){
   const proxy=proxyButton();
+  const titleProxy=proxyTitle();
   const overlay=topVisibleOverlay();
-  if(!overlay){clearPinnedSource();proxy.hidden=true;return}
+  if(!overlay){clearPinnedSource();proxy.hidden=true;titleProxy.hidden=true;return}
   const source=pickPinnedSource(overlay);
-  if(!source){clearPinnedSource();proxy.hidden=true;return}
+  if(!source){clearPinnedSource();proxy.hidden=true;titleProxy.hidden=true;return}
   decorateClose(source);
   if(pinnedSource!==source){
-    clearPinnedSource();
+    if(pinnedSource)pinnedSource.classList.remove('zr-modal-ux-proxied-source');
     pinnedSource=source;
     pinnedSource.classList.add('zr-modal-ux-proxied-source');
   }
@@ -165,18 +201,27 @@ function syncPinnedClose(){
   proxy.textContent=icon?'✕':'닫기';
   proxy.classList.toggle('zr-modal-ux-pinned-icon',icon);
   proxy.hidden=false;
-  placePinnedClose(overlay,source,proxy);
+  syncPinnedTitle(source);
+  placePinnedHeader(overlay,source,proxy,titleProxy);
 }
-function placePinnedClose(overlay,source,proxy=proxyButton()){
-  if(!visibleOverlay(overlay)||!source?.isConnected){proxy.hidden=true;return}
+function placePinnedHeader(overlay,source,closeProxy=proxyButton(),titleProxy=proxyTitle()){
+  if(!visibleOverlay(overlay)||!source?.isConnected){closeProxy.hidden=true;titleProxy.hidden=true;return}
   const shell=shellFor(source)||overlay.firstElementChild||overlay;
   let rect;try{rect=shell.getBoundingClientRect()}catch{return}
   const inset=12;
-  const width=proxy.offsetWidth||64,height=proxy.offsetHeight||38;
-  const top=Math.max(inset,Math.min(rect.top+inset,window.innerHeight-height-inset));
-  const right=Math.max(inset,Math.min(window.innerWidth-width-inset,window.innerWidth-Math.min(rect.right,window.innerWidth)+inset));
-  proxy.style.setProperty('--zr-modal-close-top',`${Math.round(top)}px`);
-  proxy.style.setProperty('--zr-modal-close-right',`${Math.round(right)}px`);
+  const closeWidth=closeProxy.offsetWidth||64,closeHeight=closeProxy.offsetHeight||38;
+  const top=Math.max(inset,Math.min(rect.top+inset,window.innerHeight-closeHeight-inset));
+  const right=Math.max(inset,Math.min(window.innerWidth-closeWidth-inset,window.innerWidth-Math.min(rect.right,window.innerWidth)+inset));
+  closeProxy.style.setProperty('--zr-modal-close-top',`${Math.round(top)}px`);
+  closeProxy.style.setProperty('--zr-modal-close-right',`${Math.round(right)}px`);
+  if(!titleProxy.hidden){
+    const left=Math.max(inset,Math.min(rect.left+inset,window.innerWidth-inset));
+    const closeLeft=window.innerWidth-right-closeWidth;
+    const width=Math.max(90,closeLeft-left-inset);
+    titleProxy.style.setProperty('--zr-modal-title-top',`${Math.round(top)}px`);
+    titleProxy.style.setProperty('--zr-modal-title-left',`${Math.round(left)}px`);
+    titleProxy.style.setProperty('--zr-modal-title-width',`${Math.round(width)}px`);
+  }
 }
 function scanCloseButtons(){
   scanQueued=false;
@@ -205,7 +250,9 @@ function injectStyle(){
     ${SHELL_SELECTOR}{overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch}
     .zr-modal-ux-shell{position:relative!important}
     .zr-modal-ux-shell .zr-modal-ux-title{padding-right:82px!important}
-    .zr-modal-ux-proxied-source{visibility:hidden!important;pointer-events:none!important}
+    .zr-modal-ux-proxied-source,.zr-modal-ux-proxied-title{visibility:hidden!important;pointer-events:none!important}
+    #zrModalUxPinnedTitle{position:fixed!important;top:var(--zr-modal-title-top,14px)!important;left:var(--zr-modal-title-left,14px)!important;width:var(--zr-modal-title-width,180px)!important;height:38px!important;z-index:2147482999!important;display:flex!important;align-items:center!important;margin:0!important;padding:0 8px!important;box-sizing:border-box!important;border-radius:9px!important;background:#fff!important;color:#1f2d25!important;box-shadow:0 3px 12px rgba(0,0,0,.10)!important;font:inherit!important;font-weight:800!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;pointer-events:none!important;-webkit-text-fill-color:currentColor!important}
+    #zrModalUxPinnedTitle[hidden]{display:none!important}
     #zrModalUxPinnedClose{position:fixed!important;top:var(--zr-modal-close-top,14px)!important;right:var(--zr-modal-close-right,14px)!important;bottom:auto!important;left:auto!important;z-index:2147483000!important;margin:0!important;transform:none!important;float:none!important;min-width:64px!important;min-height:38px!important;padding:7px 11px!important;border:1px solid #d5ddd7!important;border-radius:9px!important;background:#fff!important;color:#31433a!important;box-shadow:0 3px 12px rgba(0,0,0,.13)!important;font:inherit!important;font-weight:700!important;line-height:1.2!important;white-space:nowrap!important;cursor:pointer!important;-webkit-text-fill-color:currentColor!important}
     #zrModalUxPinnedClose.zr-modal-ux-pinned-icon{width:40px!important;min-width:40px!important;padding:0!important;font-size:18px!important}
     #zrModalUxPinnedClose[hidden]{display:none!important}
@@ -213,7 +260,7 @@ function injectStyle(){
   document.head.appendChild(s);
 }
 function boot(){
-  injectStyle();proxyButton();scanCloseButtons();
+  injectStyle();proxyTitle();proxyButton();scanCloseButtons();
   document.addEventListener('pointerdown',blockBackdrop,true);
   document.addEventListener('click',blockBackdrop,true);
   document.addEventListener('touchstart',guardTouchStart,{capture:true,passive:true});
