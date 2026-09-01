@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const admin=fs.readFileSync('admin.html','utf8');
 const bootstrap=fs.readFileSync('admin_entry_bootstrap_v1.js','utf8');
 const index=fs.readFileSync('index.html','utf8');
-const bridgeMarker='<script src="./reservation_firebase_bridge.js?v=1"><\/script></body>';
+const bridgeMarker=String.raw`<script src="./reservation_firebase_bridge.js?v=1"><\/script></body>`;
 
 function need(ok,message){
   if(!ok){console.error(message);process.exit(1)}
