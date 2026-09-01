@@ -61,8 +61,10 @@ for(const needle of [
   "closeSource.classList.add('zr-modal-ux-close-source')",
   'function cleanupLegacyFloating()',
   "'zrModalUxPinnedClose','zrModalUxPinnedTitle','zrCustomerModalPinnedTitle'",
+  '.zr-modal-ux-shell{position:relative!important;padding-top:0!important}',
   '.zr-modal-ux-title-source,.zr-modal-ux-close-source{display:none!important}',
   '.zr-modal-ux-header{position:sticky!important;top:0!important',
+  'margin-top:0!important',
   'width:calc(100% + var(--zr-modal-ux-shell-pad-left,0px) + var(--zr-modal-ux-shell-pad-right,0px))!important',
   'border-bottom:1px solid #e3e8e5!important',
   "window.__ZR_MODAL_UX_SYNC_HEADERS=scheduleScan"
@@ -72,8 +74,9 @@ for(const forbidden of [
   "btn.id='zrModalUxPinnedClose'",
   "title.id='zrModalUxPinnedTitle'",
   '#zrModalUxPinnedTitle{position:fixed!important',
-  '#zrModalUxPinnedClose{position:fixed!important'
-])if(s.includes(forbidden))fail(`legacy floating modal UI must stay removed: ${forbidden}`);
+  '#zrModalUxPinnedClose{position:fixed!important',
+  'margin-top:calc(-1 * var(--zr-modal-ux-shell-pad-top'
+])if(s.includes(forbidden))fail(`legacy/overlapping modal UI must stay removed: ${forbidden}`);
 
 for(const needle of [
   'function cleanupLegacyFloating()',
@@ -134,4 +137,4 @@ for(const needle of [
 ])if(!onsite.includes(needle))fail(`onsite modal UX integration missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('modal titles and existing close controls render through one full-width sticky header while destructive actions and data behavior remain unchanged');
+ok('modal titles and existing close controls render through one full-width sticky header without overlapping body content while destructive actions and data behavior remain unchanged');
