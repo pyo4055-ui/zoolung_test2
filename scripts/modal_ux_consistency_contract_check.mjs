@@ -41,11 +41,20 @@ for(const needle of [
   "el.textContent='닫기'",
   'function isCloseControl(el)',
   'cancelToggle|bookingCancel|cancelBooking|reservationCancel|cancelReservation|statusCancel',
+  'function titleForSource(btn)',
   'function proxyButton()',
   "btn.id='zrModalUxPinnedClose'",
+  'function proxyTitle()',
+  "title.id='zrModalUxPinnedTitle'",
   'function pickPinnedSource(overlay)',
+  'function syncPinnedTitle(source)',
   'function syncPinnedClose()',
-  'function placePinnedClose(overlay,source,proxy=proxyButton())',
+  'function placePinnedHeader(overlay,source,closeProxy=proxyButton(),titleProxy=proxyTitle())',
+  'zr-modal-ux-proxied-title',
+  '#zrModalUxPinnedTitle{position:fixed!important',
+  'top:var(--zr-modal-title-top,14px)!important',
+  'left:var(--zr-modal-title-left,14px)!important',
+  'width:var(--zr-modal-title-width,180px)!important',
   'position:fixed!important',
   'top:var(--zr-modal-close-top,14px)!important',
   'right:var(--zr-modal-close-right,14px)!important',
@@ -87,4 +96,4 @@ for(const needle of [
 ])if(!onsite.includes(needle))fail(`onsite modal UX integration missing: ${needle}`);
 
 if(failed)process.exit(1);
-ok('popup-only dismiss controls are normalized to close, pinned at the popup top, and destructive cancellation actions stay separate');
+ok('popup dismiss controls and their titles stay pinned together while destructive cancellation actions remain separate');
