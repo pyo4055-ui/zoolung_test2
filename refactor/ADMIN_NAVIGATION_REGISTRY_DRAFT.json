@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "status": "draft-only-not-loaded-at-runtime",
+  "groups": [
+    {"id": "operation", "label": "운영", "order": 10},
+    {"id": "reservation", "label": "예약", "order": 20},
+    {"id": "customer", "label": "고객", "order": 30},
+    {"id": "sales", "label": "매출", "order": 40},
+    {"id": "settings", "label": "설정", "order": 50}
+  ],
+  "items": [
+    {
+      "id": "today",
+      "group": "operation",
+      "label": "오늘 운영",
+      "currentLabel": "Today",
+      "buttonId": "zrTodayTabBtn",
+      "sectionId": "tab-today",
+      "order": 10,
+      "mobilePrimary": true,
+      "favoriteDefault": true,
+      "smartPanel": "today"
+    },
+    {
+      "id": "calendar",
+      "group": "operation",
+      "label": "예약 캘린더",
+      "dataTab": "calendar",
+      "sectionId": "tab-calendar",
+      "order": 20,
+      "mobilePrimary": false,
+      "favoriteDefault": true,
+      "smartPanel": "calendar"
+    },
+    {
+      "id": "schedule",
+      "group": "operation",
+      "label": "스케줄 관리",
+      "buttonId": "zrScheduleTabBtn",
+      "sectionId": "tab-schedule",
+      "order": 30,
+      "mobilePrimary": true,
+      "favoriteDefault": true,
+      "smartPanel": "schedule"
+    },
+    {
+      "id": "warning",
+      "group": "operation",
+      "label": "경고",
+      "buttonId": "zrWarningTabBtn",
+      "sectionId": "tab-warning",
+      "order": 40,
+      "mobilePrimary": false,
+      "badge": "warningCount",
+      "smartPanel": "warning"
+    },
+    {
+      "id": "activity",
+      "group": "reservation",
+      "label": "예약 현황",
+      "dataTab": "activity",
+      "sectionId": "tab-activity",
+      "order": 10,
+      "mobilePrimary": true,
+      "favoriteDefault": true,
+      "badge": "pendingBookingCount",
+      "smartPanel": "reservation"
+    },
+    {
+      "id": "meals",
+      "group": "reservation",
+      "label": "식사 현황",
+      "dataTab": "meals",
+      "sectionId": "tab-meals",
+      "order": 20,
+      "mobilePrimary": false,
+      "smartPanel": "meals"
+    },
+    {
+      "id": "cleanup",
+      "group": "reservation",
+      "label": "과거 예약 정리",
+      "buttonId": "zrCleanupTabBtn",
+      "sectionId": "tab-cleanup",
+      "order": 30,
+      "mobilePrimary": false,
+      "dangerZone": true,
+      "smartPanel": "cleanup"
+    },
+    {
+      "id": "inquiries",
+      "group": "customer",
+      "label": "1:1 문의",
+      "dataTab": "inquiries",
+      "sectionId": "tab-inquiries",
+      "order": 10,
+      "mobilePrimary": false,
+      "badge": "unansweredInquiryCount",
+      "smartPanel": "inquiries"
+    },
+    {
+      "id": "previewVisit",
+      "group": "customer",
+      "label": "사전답사 관리",
+      "buttonId": "zrPreviewVisitTabBtn",
+      "sectionId": "tab-preview-visit",
+      "order": 20,
+      "mobilePrimary": false,
+      "badge": "pendingPreviewVisitCount",
+      "smartPanel": "previewVisit"
+    },
+    {
+      "id": "guide",
+      "group": "customer",
+      "label": "고객 안내 관리",
+      "buttonId": "zrGuideAdminTab",
+      "sectionId": "zrGuideAdminSection",
+      "order": 30,
+      "mobilePrimary": false,
+      "smartPanel": "guide"
+    },
+    {
+      "id": "outsourcing",
+      "group": "sales",
+      "label": "아웃소싱 결제대금",
+      "buttonId": "outsourceTabBtn",
+      "sectionId": "tab-outsourcing",
+      "order": 10,
+      "mobilePrimary": false,
+      "smartPanel": "outsourcing"
+    },
+    {
+      "id": "menuadmin",
+      "group": "sales",
+      "label": "카페 메뉴 관리",
+      "dataTab": "menuadmin",
+      "sectionId": "tab-menuadmin",
+      "order": 20,
+      "mobilePrimary": false,
+      "smartPanel": "cafe"
+    },
+    {
+      "id": "settings",
+      "group": "settings",
+      "label": "예약설정",
+      "dataTab": "settings",
+      "sectionId": "tab-settings",
+      "order": 10,
+      "mobilePrimary": false,
+      "smartPanel": "settings"
+    }
+  ],
+  "mobileNavigation": {
+    "primary": ["today", "activity", "schedule", "inquiries"],
+    "allMenuLabel": "전체"
+  },
+  "smartPanelProcessing": {
+    "pendingBookingCount": "existing reservation status === pending",
+    "unansweredInquiryCount": "derive from existing inquiry reply state; do not create new collection",
+    "pendingPreviewVisitCount": "existing preview visit request not yet confirmed"
+  },
+  "notes": [
+    "This file is planning data only and must not be imported by runtime yet.",
+    "New navigation must forward to existing button click handlers during first rollout.",
+    "Do not remove or rewrite existing tab handlers until the new shell passes human regression tests.",
+    "User-specific order/favorites should later use a UI-only preference key, not reservation data."
+  ]
+}
