@@ -66,10 +66,14 @@ for(const forbidden of [
 
 for(const transform of [
   "return el.id==='entryTime';",
-  "function openCustomerGuide(control){if(control?.id!=='entryTime')return;",
+  "function openCustomerGuide(control){if(control?.id!=='entryTime')return;if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return;",
+  'function acknowledgementOk(control){if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return true;',
+  'window.__ZR_ZOO_GUIDE_ACK_ONCE=true;',
   'function interceptBooking(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
   'function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;',
-  'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;',
+  'function playAcknowledged(){if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return true;',
+  'function openPlayGuide(){if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return;',
+  'window.__ZR_PLAY_GUIDE_ACK_ONCE=true;',
   "parking=parking.replace(finalBindNeedle,\"function bindFinal(){\\n  document.addEventListener('click',e=>{\")"
 ])need(customerLoader.includes(transform),`customer compatibility transform missing: ${transform}`);
 
@@ -93,4 +97,4 @@ need(index.includes("fetch('./data1.txt?v=27'")&&index.includes("fetch('./data2.
 need(index.includes('./admin_features_v2_loader.js?v=31')&&index.includes('./reservation_firebase_bridge.js?v=1'),'compatibility index dependencies changed unexpectedly before cutover.');
 need(index.includes(bridgeMarker),'entry compatibility injection point no longer exists in index.html.');
 
-console.log('OK: customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps; customer entry excludes administrator patch chains and cannot replace the administrator login session.');
+console.log('OK: customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps; customer entry excludes administrator patch chains and customer zoo/playground guides acknowledge once per page.');
