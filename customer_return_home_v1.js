@@ -13,6 +13,14 @@ function ensureModalUxConsistency(){
   s.src='./modal_ux_consistency_v1.js?v=1';
   document.body.appendChild(s);
 }
+function ensureCustomerModalTitlePin(){
+  if(document.getElementById('zrCustomerModalTitlePinV1')||window.__ZR_CUSTOMER_MODAL_TITLE_PIN_V1)return;
+  const s=document.createElement('script');
+  s.id='zrCustomerModalTitlePinV1';
+  s.async=false;
+  s.src='./customer_modal_title_pin_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function customerVisible(){
   const v=$('customerView');
   return !!v&&!v.classList.contains('hidden')&&getComputedStyle(v).display!=='none';
@@ -93,6 +101,7 @@ function ensureButton(){
 function ensure(){ensureStyle();ensureModal();ensureButton()}
 function boot(){
   ensureModalUxConsistency();
+  ensureCustomerModalTitlePin();
   ensure();
   const timer=setInterval(ensure,350);setTimeout(()=>clearInterval(timer),15000);
   document.addEventListener('click',()=>setTimeout(ensureButton,0),true);
