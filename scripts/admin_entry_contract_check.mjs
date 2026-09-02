@@ -15,10 +15,12 @@ function need(ok,message){
   if(!ok){console.error(message);process.exit(1)}
 }
 
-need(admin.includes("fetch('./index.html?v=admin-entry-2'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
+need(admin.includes("fetch('./index.html?v=admin-entry-3'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
+need(admin.includes("fetch('./admin_design_tokens_v1.css?v=2'"),'admin.html must preload the centralized administrator design tokens.');
+need(admin.includes('id="zrAdminDesignTokensV1"'),'admin.html must inline administrator design tokens before writing the runtime document.');
+need(admin.includes("if(!styleResponse.ok)throw new Error('관리자 화면 스타일을 불러오지 못했습니다.')"),'admin.html must fail closed instead of rendering an unstyled redevelopment shell.');
 need(admin.includes('admin_entry_bootstrap_v1.js?v=1'),'admin.html must inject the dedicated admin bootstrap.');
 need(admin.includes('admin_shell_v1.js?v=1'),'admin.html must inject the dedicated admin redevelopment shell.');
-need(admin.includes('admin_design_tokens_v1.css?v=1'),'admin.html must inject centralized administrator design tokens.');
 need(admin.includes('reservation_firebase_bridge.js?v=1'),'admin.html must preserve the existing administrator reservation Firebase bridge.');
 need(!admin.includes('setDoc(')&&!admin.includes('updateDoc(')&&!admin.includes('deleteDoc(')&&!admin.includes('setStore('),'admin.html must remain an entry-only compatibility shell with no data writes.');
 
@@ -45,6 +47,7 @@ for(const required of [
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','setStore(','localStorage.setItem(','sessionStorage.setItem('])need(!adminShell.includes(forbidden),`admin shell must remain navigation/UI-only: ${forbidden}`);
 for(const token of ['--zr-operation:','--zr-reservation:','--zr-customer:','--zr-sales:','--zr-settings:','--zr-action-primary:','--zr-action-danger:','--zr-admin-rail-width:'])need(adminTokens.includes(token),`admin centralized design token missing: ${token}`);
 need(adminTokens.includes('#adminView .admin-tabs'),'desktop shell must visually replace, not delete, the legacy admin tab controls.');
+need(adminTokens.includes('.zr-admin-shell-rail[hidden],.zr-admin-shell-header[hidden]{display:none!important}'),'hidden administrator shell surfaces must never leak into the login/loading layout.');
 
 need(customer.includes("fetch('./index.html?v=customer-entry-2'"),'customer.html must reuse the frozen reservation runtime instead of copying booking business logic.');
 need(customer.includes("source.replace(adminLoader,customerLoader)"),'customer.html must replace the admin extension loader with the customer-only loader.');
@@ -117,4 +120,4 @@ need(index.includes("fetch('./data1.txt?v=27'")&&index.includes("fetch('./data2.
 need(index.includes('./admin_features_v2_loader.js?v=31')&&index.includes('./reservation_firebase_bridge.js?v=1'),'compatibility index dependencies changed unexpectedly before cutover.');
 need(index.includes(bridgeMarker),'entry compatibility injection point no longer exists in index.html.');
 
-console.log('OK: admin entry mounts a UI-only forwarding shell with centralized design tokens; customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps.');
+console.log('OK: admin entry preloads a UI-only forwarding shell with centralized design tokens; customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps.');
