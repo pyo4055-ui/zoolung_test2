@@ -13,23 +13,30 @@ function around(label,needle,radius=900){
   console.log(html.slice(Math.max(0,i-radius),Math.min(html.length,i+needle.length+radius)));
 }
 
+const bodyAt=html.indexOf('<body');
+console.log(`\n===== BODY_START index=${bodyAt} =====`);
+console.log(html.slice(bodyAt,Math.min(html.length,bodyAt+7000)));
+
 for(const [label,needle] of [
   ['LOGIN_MODAL_ID','id="adminLoginModal"'],
-  ['LOGIN_MODAL_SINGLE','id=\'adminLoginModal\''],
   ['ADMIN_VIEW','id="adminView"'],
   ['LEGACY_TITLE','단체예약 관리자'],
   ['ADMIN_HEAD_CLASS','admin-head'],
   ['ADMIN_TABS_CLASS','admin-tabs'],
+  ['HEADER_TAG','<header'],
+  ['SITE_HEADER_CLASS','site-header'],
+  ['TOPBAR_CLASS','topbar'],
+  ['TOP_BAR_CLASS','top-bar'],
   ['CLOSE_TEXT','닫기'],
   ['CANCEL_TEXT','취소']
 ])around(label,needle);
 
-const styleNeedles=['.admin-head','.admin-tabs','#adminView','.modal','.modal-card'];
+const styleNeedles=['.admin-head','.admin-tabs','#adminView','header{','.header','.site-header','.topbar','.top-bar','main{','body{','.modal','.modal-card'];
 for(const needle of styleNeedles){
   let pos=0,count=0;
-  while((pos=html.indexOf(needle,pos))>=0&&count<5){
+  while((pos=html.indexOf(needle,pos))>=0&&count<8){
     console.log(`\n===== CSS/REF ${needle} #${++count} index=${pos} =====`);
-    console.log(html.slice(Math.max(0,pos-350),Math.min(html.length,pos+1000)));
+    console.log(html.slice(Math.max(0,pos-450),Math.min(html.length,pos+1200)));
     pos+=needle.length;
   }
 }
