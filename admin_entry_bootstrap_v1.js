@@ -152,7 +152,8 @@ function syncLoginClean(){
   const modal=$('adminLoginModal');if(!modal)return;
   const clean=!adminVisible();
   document.documentElement.classList.toggle('zr-admin-login-clean',clean);
-  if(clean){maskSiblingsAlongModalPath(modal);installLoginVisual()}else clearLoginSiblingMask();
+  if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask();
+  if(clean)installLoginVisual();
   if(!clean){
     commitIdentityIfLoggedIn();
     startIdentityStatusSync();
