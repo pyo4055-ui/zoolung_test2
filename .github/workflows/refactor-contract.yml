@@ -81,6 +81,10 @@ jobs:
         run: node scripts/admin_smart_panel_contract_check.mjs
       - name: Verify rounded admin workspace polish
         run: node scripts/admin_shell_layout_polish_contract_check.mjs
+      - name: Verify cleaned admin top chrome
+        run: node scripts/admin_shell_current_ui_contract_check.mjs
+      - name: Verify shared admin daily memo
+        run: node scripts/admin_daily_memo_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
