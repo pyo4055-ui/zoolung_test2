@@ -89,8 +89,6 @@ jobs:
         run: node scripts/admin_section_header_help_contract_check.mjs
       - name: Verify final admin workspace frame
         run: node scripts/admin_workspace_frame_contract_check.mjs
-      - name: TEMP probe restored admin DOM
-        run: node scripts/admin_dom_probe_tmp.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
