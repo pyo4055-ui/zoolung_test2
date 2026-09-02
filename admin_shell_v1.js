@@ -3,6 +3,7 @@
 if(window.__ZR_ADMIN_SHELL_V1)return;
 window.__ZR_ADMIN_SHELL_V1=true;
 
+const PREF_KEY='zr_admin_nav_preferences_v1';
 const GROUPS=[
   {id:'operation',label:'운영'},
   {id:'reservation',label:'예약'},
@@ -25,15 +26,16 @@ const ITEMS=[
   {id:'menuadmin',group:'sales',label:'카페 메뉴 관리',dataTab:'menuadmin',sectionId:'tab-menuadmin'},
   {id:'settings',group:'settings',label:'예약설정',dataTab:'settings',sectionId:'tab-settings'}
 ];
+const VALID_ITEM_IDS=new Set(ITEMS.map(x=>x.id));
 const $=id=>document.getElementById(id);
-let rail=null,header=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null;
+let rail=null,header=null,editor=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null,editButton=null;
 
 async function ensureRuntimeStyle(){
   if($('zrAdminDesignTokensRuntimeV1'))return true;
   if(stylePromise)return stylePromise;
   stylePromise=(async()=>{
     try{
-      const r=await fetch('./admin_design_tokens_v1.css?v=3',{cache:'no-store'});
+      const r=await fetch('./admin_design_tokens_v1.css?v=4',{cache:'no-store'});
       if(!r.ok)throw new Error(`style ${r.status}`);
       const css=await r.text();
       if(!css.includes('--zr-admin-rail-width:')||!css.includes('.zr-admin-shell-rail'))throw new Error('invalid admin shell css');
@@ -48,6 +50,16 @@ async function ensureRuntimeStyle(){
     }
   })();
   return stylePromise;
+}
+function loadPrefs(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(PREF_KEY)||'{}');
+    const hidden=Array.isArray(raw.hidden)?raw.hidden.filter(id=>VALID_ITEM_IDS.has(id)):[];
+    return {hidden};
+  }catch{return {hidden:[]}}
+}
+function savePrefs(prefs){
+  try{localStorage.setItem(PREF_KEY,JSON.stringify({hidden:[...new Set(prefs.hidden)].filter(id=>VALID_ITEM_IDS.has(id))}))}catch{}
 }
 function groupLabel(id){return GROUPS.find(g=>g.id===id)?.label||''}
 function findTarget(item){
@@ -80,6 +92,17 @@ function syncAvailability(){
     b.setAttribute('aria-disabled',ready?'false':'true');
   });
 }
+function applyMenuPrefs(){
+  if(!rail)return;
+  const hidden=new Set(loadPrefs().hidden);
+  rail.querySelectorAll('[data-zr-admin-item]').forEach(b=>{b.hidden=hidden.has(b.dataset.zrAdminItem)});
+  rail.querySelectorAll('.zr-admin-shell-group').forEach(group=>{
+    group.hidden=![...group.querySelectorAll('[data-zr-admin-item]')].some(b=>!b.hidden);
+  });
+  const empty=$('zrAdminShellEmpty');
+  if(empty)empty.hidden=ITEMS.some(item=>!hidden.has(item.id));
+  editor?.querySelectorAll('[data-zr-pref-item]').forEach(input=>{input.checked=!hidden.has(input.dataset.zrPrefItem)});
+}
 function syncActive(){
   pendingSync=false;syncAvailability();
   const visible=ITEMS.find(sectionVisible);
@@ -97,6 +120,40 @@ function forward(item){
   setTimeout(syncActive,30);
   setTimeout(syncActive,140);
 }
+function setEditorOpen(open){
+  if(!editor)return;
+  editor.hidden=!open;
+  editButton?.setAttribute('aria-expanded',open?'true':'false');
+  if(open){applyMenuPrefs();editor.querySelector('input')?.focus?.()}
+}
+function toggleItemPreference(id,visible){
+  const prefs=loadPrefs();
+  const hidden=new Set(prefs.hidden);
+  if(visible)hidden.delete(id);else hidden.add(id);
+  savePrefs({hidden:[...hidden]});
+  applyMenuPrefs();
+}
+function buildEditor(){
+  const panel=document.createElement('div');panel.className='zr-admin-shell-editor';panel.id='zrAdminShellEditor';panel.hidden=true;
+  const head=document.createElement('div');head.className='zr-admin-shell-editor-head';
+  head.innerHTML='<div class="zr-admin-shell-editor-copy"><div class="zr-admin-shell-editor-title">메뉴 편집</div><div class="zr-admin-shell-editor-help">왼쪽에 표시할 메뉴만 선택하세요. 기능은 삭제되지 않고 이 브라우저 화면에서만 숨겨집니다.</div></div>';
+  const close=document.createElement('button');close.type='button';close.className='zr-admin-shell-editor-close';close.setAttribute('aria-label','메뉴 편집 닫기');close.textContent='×';close.addEventListener('click',()=>setEditorOpen(false));head.appendChild(close);panel.appendChild(head);
+  GROUPS.forEach(group=>{
+    const box=document.createElement('section');box.className='zr-admin-shell-editor-group';
+    const title=document.createElement('div');title.className='zr-admin-shell-editor-group-title';title.textContent=group.label;box.appendChild(title);
+    ITEMS.filter(item=>item.group===group.id).forEach(item=>{
+      const label=document.createElement('label');label.className='zr-admin-shell-editor-row';
+      const input=document.createElement('input');input.type='checkbox';input.dataset.zrPrefItem=item.id;input.checked=true;
+      const text=document.createElement('span');text.textContent=item.label;
+      input.addEventListener('change',()=>toggleItemPreference(item.id,input.checked));
+      label.append(input,text);box.appendChild(label);
+    });
+    panel.appendChild(box);
+  });
+  const actions=document.createElement('div');actions.className='zr-admin-shell-editor-actions';
+  const reset=document.createElement('button');reset.type='button';reset.className='zr-admin-shell-reset';reset.textContent='전체 표시';reset.addEventListener('click',()=>{savePrefs({hidden:[]});applyMenuPrefs()});actions.appendChild(reset);panel.appendChild(actions);
+  return panel;
+}
 function buildRail(){
   const el=document.createElement('aside');el.className='zr-admin-shell-rail';el.id='zrAdminShellRail';
   const brand=document.createElement('div');brand.className='zr-admin-shell-brand';brand.innerHTML='<div class="zr-admin-shell-logo-slot" aria-hidden="true">Z</div><div class="zr-admin-shell-brand-copy"><div class="zr-admin-shell-brand-title">주렁주렁 동탄점</div><div class="zr-admin-shell-brand-sub">통합 예약관리 시스템</div></div>';
@@ -112,8 +169,10 @@ function buildRail(){
     });
     nav.appendChild(box);
   });
+  const empty=document.createElement('div');empty.id='zrAdminShellEmpty';empty.className='zr-admin-shell-empty';empty.hidden=true;empty.textContent='표시 중인 메뉴가 없습니다. 아래 메뉴 편집에서 다시 선택할 수 있어요.';nav.appendChild(empty);
   const footer=document.createElement('div');footer.className='zr-admin-shell-footer';
-  const logout=document.createElement('button');logout.type='button';logout.className='zr-admin-shell-logout';logout.textContent='관리자 로그아웃';logout.addEventListener('click',()=>$('adminLogout')?.click());footer.appendChild(logout);
+  editButton=document.createElement('button');editButton.type='button';editButton.className='zr-admin-shell-edit';editButton.textContent='메뉴 편집';editButton.setAttribute('aria-expanded','false');editButton.addEventListener('click',()=>setEditorOpen(editor?.hidden!==false));
+  const logout=document.createElement('button');logout.type='button';logout.className='zr-admin-shell-logout';logout.textContent='관리자 로그아웃';logout.addEventListener('click',()=>$('adminLogout')?.click());footer.append(editButton,logout);
   el.append(brand,nav,footer);return el;
 }
 function buildHeader(){
@@ -129,6 +188,7 @@ function syncVisibility(){
   const on=adminIsVisible();
   document.documentElement.classList.toggle('zr-admin-shell-mounted',on);
   if(rail)rail.hidden=!on;if(header)header.hidden=!on;
+  if(!on)setEditorOpen(false);
   if(on)scheduleSync();
 }
 function installObservers(){
@@ -140,12 +200,14 @@ function installObservers(){
   adminObserver.observe(admin,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','aria-selected']});
   document.addEventListener('click',e=>{
     const old=e.target?.closest?.('#adminView .admin-tabs button');if(old)setTimeout(syncActive,0);
+    if(editor&&!editor.hidden&&!e.target?.closest?.('#zrAdminShellEditor')&&!e.target?.closest?.('.zr-admin-shell-edit'))setEditorOpen(false);
   },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&editor&&!editor.hidden)setEditorOpen(false)});
 }
 function mount(){
   if(rail||!$('adminView'))return false;
-  rail=buildRail();header=buildHeader();rail.hidden=true;header.hidden=true;
-  document.body.append(rail,header);installObservers();syncAvailability();syncVisibility();syncActive();
+  rail=buildRail();header=buildHeader();editor=buildEditor();rail.hidden=true;header.hidden=true;
+  document.body.append(rail,header,editor);applyMenuPrefs();installObservers();syncAvailability();syncVisibility();syncActive();
   let ticks=0;const t=setInterval(()=>{syncAvailability();syncVisibility();syncActive();if(++ticks>=60)clearInterval(t)},500);
   return true;
 }
