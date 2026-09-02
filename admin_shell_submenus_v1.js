@@ -164,10 +164,12 @@ function createSubmenu(parentId,parent){
 
   wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap));
   wrap.addEventListener('mouseleave',()=>cancelHover(parentId));
-  wrap.addEventListener('focusin',()=>{cancelHover();openSubmenu(parentId)});
+  wrap.addEventListener('focusin',()=>cancelHover());
   parent.addEventListener('click',()=>{
     cancelHover();
     if(!suppressParentToggle)toggleSubmenu(parentId);
+  },true);
+  parent.addEventListener('click',()=>{
     setTimeout(scheduleSync,0);setTimeout(scheduleSync,120);
   });
 }
