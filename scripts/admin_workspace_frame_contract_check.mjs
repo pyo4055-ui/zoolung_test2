@@ -31,7 +31,7 @@ for(const required of [
   'border-radius:20px!important',
   'overflow-y:auto!important'
 ])need(frame.includes(required),`forced fluid three-panel workspace contract missing: ${required}`);
-for(const required of ['zr-admin-login-clean','zr-admin-login-legacy-hidden','maskSiblingsAlongModalPath','clearLoginSiblingMask','html.zr-admin-login-clean #adminLoginModal{background:#fff!important}',"sibling===admin||sibling.contains?.(admin)","if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask()"]){
+for(const required of ['zr-admin-login-clean','zr-admin-login-legacy-hidden','maskSiblingsAlongModalPath','clearLoginSiblingMask','html.zr-admin-login-clean #adminLoginModal{background:#38271e!important;background-image:none!important}',"sibling===admin||sibling.contains?.(admin)","if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask()"]){
   need(bootstrap.includes(required),`clean dedicated login contract missing: ${required}`);
 }
 
