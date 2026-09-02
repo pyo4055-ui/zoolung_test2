@@ -28,14 +28,14 @@ const ITEMS=[
 ];
 const VALID_ITEM_IDS=new Set(ITEMS.map(x=>x.id));
 const $=id=>document.getElementById(id);
-let rail=null,header=null,editor=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null,editButton=null;
+let rail=null,header=null,editor=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null,editButton=null,collapseButton=null;
 
 async function ensureRuntimeStyle(){
   if($('zrAdminDesignTokensRuntimeV1'))return true;
   if(stylePromise)return stylePromise;
   stylePromise=(async()=>{
     try{
-      const r=await fetch('./admin_design_tokens_v1.css?v=4',{cache:'no-store'});
+      const r=await fetch('./admin_design_tokens_v1.css?v=5',{cache:'no-store'});
       if(!r.ok)throw new Error(`style ${r.status}`);
       const css=await r.text();
       if(!css.includes('--zr-admin-rail-width:')||!css.includes('.zr-admin-shell-rail'))throw new Error('invalid admin shell css');
@@ -55,11 +55,16 @@ function loadPrefs(){
   try{
     const raw=JSON.parse(localStorage.getItem(PREF_KEY)||'{}');
     const hidden=Array.isArray(raw.hidden)?raw.hidden.filter(id=>VALID_ITEM_IDS.has(id)):[];
-    return {hidden};
-  }catch{return {hidden:[]}}
+    return {hidden,collapsed:raw.collapsed===true};
+  }catch{return {hidden:[],collapsed:false}}
 }
-function savePrefs(prefs){
-  try{localStorage.setItem(PREF_KEY,JSON.stringify({hidden:[...new Set(prefs.hidden)].filter(id=>VALID_ITEM_IDS.has(id))}))}catch{}
+function savePrefs(next){
+  try{
+    const current=loadPrefs();
+    const hidden=Array.isArray(next.hidden)?[...new Set(next.hidden)].filter(id=>VALID_ITEM_IDS.has(id)):current.hidden;
+    const collapsed=typeof next.collapsed==='boolean'?next.collapsed:current.collapsed;
+    localStorage.setItem(PREF_KEY,JSON.stringify({hidden,collapsed}));
+  }catch{}
 }
 function groupLabel(id){return GROUPS.find(g=>g.id===id)?.label||''}
 function findTarget(item){
@@ -103,6 +108,22 @@ function applyMenuPrefs(){
   if(empty)empty.hidden=ITEMS.some(item=>!hidden.has(item.id));
   editor?.querySelectorAll('[data-zr-pref-item]').forEach(input=>{input.checked=!hidden.has(input.dataset.zrPrefItem)});
 }
+function applyCollapsedState(){
+  const collapsed=loadPrefs().collapsed;
+  document.documentElement.classList.toggle('zr-admin-shell-collapsed',collapsed);
+  if(collapseButton){
+    collapseButton.textContent=collapsed?'›':'‹';
+    collapseButton.setAttribute('aria-expanded',collapsed?'false':'true');
+    collapseButton.setAttribute('aria-label',collapsed?'왼쪽 메뉴 펼치기':'왼쪽 메뉴 접기');
+    collapseButton.title=collapsed?'왼쪽 메뉴 펼치기':'왼쪽 메뉴 접기';
+  }
+  if(collapsed)setEditorOpen(false);
+}
+function toggleCollapsed(){
+  const collapsed=!loadPrefs().collapsed;
+  savePrefs({collapsed});
+  applyCollapsedState();
+}
 function syncActive(){
   pendingSync=false;syncAvailability();
   const visible=ITEMS.find(sectionVisible);
@@ -122,6 +143,7 @@ function forward(item){
 }
 function setEditorOpen(open){
   if(!editor)return;
+  if(open&&loadPrefs().collapsed)open=false;
   editor.hidden=!open;
   editButton?.setAttribute('aria-expanded',open?'true':'false');
   if(open){applyMenuPrefs();editor.querySelector('input')?.focus?.()}
@@ -157,7 +179,8 @@ function buildEditor(){
 function buildRail(){
   const el=document.createElement('aside');el.className='zr-admin-shell-rail';el.id='zrAdminShellRail';
   const brand=document.createElement('div');brand.className='zr-admin-shell-brand';brand.innerHTML='<div class="zr-admin-shell-logo-slot" aria-hidden="true">Z</div><div class="zr-admin-shell-brand-copy"><div class="zr-admin-shell-brand-title">주렁주렁 동탄점</div><div class="zr-admin-shell-brand-sub">통합 예약관리 시스템</div></div>';
-  const nav=document.createElement('nav');nav.className='zr-admin-shell-nav';nav.setAttribute('aria-label','관리자 메뉴');
+  collapseButton=document.createElement('button');collapseButton.type='button';collapseButton.className='zr-admin-shell-collapse';collapseButton.setAttribute('aria-controls','zrAdminShellNav');collapseButton.addEventListener('click',toggleCollapsed);brand.appendChild(collapseButton);
+  const nav=document.createElement('nav');nav.className='zr-admin-shell-nav';nav.id='zrAdminShellNav';nav.setAttribute('aria-label','관리자 메뉴');
   GROUPS.forEach(group=>{
     const box=document.createElement('section');box.className='zr-admin-shell-group';box.dataset.group=group.id;
     const h=document.createElement('div');h.className='zr-admin-shell-group-title';h.textContent=group.label;box.appendChild(h);
@@ -207,7 +230,7 @@ function installObservers(){
 function mount(){
   if(rail||!$('adminView'))return false;
   rail=buildRail();header=buildHeader();editor=buildEditor();rail.hidden=true;header.hidden=true;
-  document.body.append(rail,header,editor);applyMenuPrefs();installObservers();syncAvailability();syncVisibility();syncActive();
+  document.body.append(rail,header,editor);applyMenuPrefs();applyCollapsedState();installObservers();syncAvailability();syncVisibility();syncActive();
   let ticks=0;const t=setInterval(()=>{syncAvailability();syncVisibility();syncActive();if(++ticks>=60)clearInterval(t)},500);
   return true;
 }
