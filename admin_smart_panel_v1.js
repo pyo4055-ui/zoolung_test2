@@ -7,7 +7,7 @@ const INQUIRY_KEY='zr_inquiries';
 const REPLY_MARKER='\n\n[관리자 답변]\n';
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
-let panel=null,toggleButton=null,timer=null,observer=null;
+let panel=null,timer=null,observer=null;
 
 function today(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
 function allBookings(){
@@ -25,12 +25,19 @@ function isPreview(text){return /^\[(사전답사 문의|사전답사 확정)\]/
 function hasReply(text){return String(text||'').lastIndexOf(REPLY_MARKER)>=0}
 function cafeOrdered(b){return String(b?.mealType||'')==='cafe'||(Array.isArray(b?.cafe?.items)&&b.cafe.items.some(x=>Number(x?.qty||0)>0))}
 function paymentDone(b){return !!(b?.settlement?.savedAt||b?.settlementStatus==='completed'||b?.settlementCompletedAt)}
+function groupType(b){return String(b?.groupType||b?.organizationType||b?.orgType||'기타단체').trim()||'기타단체'}
+function typeCounts(rows){
+  const map=new Map();
+  rows.forEach(b=>{const key=groupType(b);map.set(key,(map.get(key)||0)+1)});
+  return [...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'));
+}
 function counts(){
   const date=today(),all=allBookings();
   const rows=all.filter(b=>String(b.status||'')==='confirmed'&&String(b.date||'')===date);
   const inquiries=inquiryList();
   return {
     confirmedTeams:rows.length,
+    groupTypes:typeCounts(rows),
     visitors:rows.reduce((sum,b)=>sum+Math.max(0,Number(b.paidCount||0))+Math.max(0,Number(b.chaperoneCount||0)),0),
     cafeTeams:rows.filter(cafeOrdered).length,
     paidTeams:rows.filter(paymentDone).length,
@@ -43,59 +50,50 @@ function injectStyle(){
   if($('zrAdminSmartPanelStyleV1'))return;
   const style=document.createElement('style');style.id='zrAdminSmartPanelStyleV1';
   style.textContent=`
-    :root{--zr-admin-smart-width:292px;--zr-admin-smart-collapsed-width:54px}
-    .zr-admin-smart-panel{display:none;position:fixed;inset:0 0 0 auto;z-index:64;width:var(--zr-admin-smart-collapsed-width);box-sizing:border-box;background:#fff;border-left:1px solid var(--zr-brand-line);box-shadow:-3px 0 18px rgba(28,43,34,.04);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;overflow:hidden;transition:width .18s ease}
+    :root{--zr-admin-smart-width:292px}
+    .zr-admin-smart-panel{display:none;position:fixed;inset:0 0 0 auto;z-index:64;width:var(--zr-admin-smart-width);box-sizing:border-box;background:#fff;border-left:1px solid var(--zr-brand-line);box-shadow:-3px 0 18px rgba(28,43,34,.04);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;overflow:hidden}
     html.zr-admin-shell-mounted .zr-admin-smart-panel{display:flex;flex-direction:column}
-    html.zr-admin-smart-open .zr-admin-smart-panel{width:var(--zr-admin-smart-width)}
     .zr-admin-smart-head{min-height:var(--zr-admin-header-height);box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--zr-brand-line);white-space:nowrap}
     .zr-admin-smart-copy{min-width:0;flex:1;overflow:hidden}.zr-admin-smart-title{font-size:15px;font-weight:950;color:var(--zr-brand-ink);line-height:1.2}.zr-admin-smart-sub{font-size:10px;color:var(--zr-brand-muted);margin-top:4px}
-    .zr-admin-smart-toggle{width:32px;height:32px;flex:none;border:1px solid #d8e1db!important;border-radius:9px!important;background:#fff!important;color:#526158!important;font-size:20px!important;font-weight:850!important;line-height:1!important;padding:0!important;box-shadow:none!important;display:grid!important;place-items:center!important}
-    .zr-admin-smart-toggle:hover{background:var(--zr-operation-soft)!important;color:var(--zr-operation)!important}
-    html:not(.zr-admin-smart-open) .zr-admin-smart-head{justify-content:center;padding:12px 6px}
-    html:not(.zr-admin-smart-open) .zr-admin-smart-copy,html:not(.zr-admin-smart-open) .zr-admin-smart-body,html:not(.zr-admin-smart-open) .zr-admin-smart-foot{display:none!important}
     .zr-admin-smart-body{padding:13px 12px 18px;display:grid;gap:12px;overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
     .zr-admin-smart-section{border:1px solid #e3e8e4;border-radius:15px;background:#fff;padding:13px 13px 12px}
     .zr-admin-smart-section-title{font-size:14px;font-weight:950;color:var(--zr-brand-ink);margin-bottom:10px}.zr-admin-smart-section-help{font-size:10px;color:#8b948e;margin:-5px 0 10px;line-height:1.4}
-    .zr-admin-smart-summary{display:grid;gap:9px}.zr-admin-smart-summary-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:#667169}.zr-admin-smart-summary-row b{font-size:13px;color:#4d5a52}.zr-admin-smart-summary-row strong{font-size:13px;color:var(--zr-brand-ink);font-weight:950;white-space:nowrap}
+    .zr-admin-smart-summary{display:grid;gap:8px}.zr-admin-smart-summary-card{border:1px solid #e8e3dd;border-radius:12px;background:#faf8f5;padding:10px 11px}.zr-admin-smart-summary-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:#667169}.zr-admin-smart-summary-row strong{font-size:14px;color:var(--zr-brand-ink);font-weight:950;white-space:nowrap}
+    .zr-admin-smart-type-list{display:grid;gap:5px;margin-top:9px;padding-top:8px;border-top:1px dashed #ddd6cf}.zr-admin-smart-type-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#746d67}.zr-admin-smart-type-row b{font-size:11px;color:#4f4944}.zr-admin-smart-type-empty{font-size:10.5px;color:#98918a}
     .zr-admin-smart-pending{display:grid;gap:7px}.zr-admin-smart-pending-row{--zr-row-color:var(--zr-customer);width:100%;border:1px solid #e4e9e5!important;border-radius:10px!important;background:#fafbfa!important;box-shadow:none!important;min-height:43px;padding:8px 10px!important;display:flex!important;align-items:center!important;gap:8px!important;text-align:left!important;color:#4f5c54!important;font-size:11px!important;font-weight:850!important}
     .zr-admin-smart-pending-row:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--zr-row-color);flex:none}.zr-admin-smart-pending-row strong{margin-left:auto;font-size:16px;font-weight:950;color:var(--zr-row-color)}
     .zr-admin-smart-pending-row[data-kind="preview"]{--zr-row-color:var(--zr-sales)}.zr-admin-smart-pending-row[data-kind="reservation"]{--zr-row-color:var(--zr-reservation)}
     .zr-admin-smart-pending-row:hover{background:#fff!important;transform:translateY(-1px)}
     .zr-admin-smart-quick{display:grid;grid-template-columns:1fr 1fr;gap:7px}.zr-admin-smart-quick button{min-height:39px;border:1px solid #e1e7e2!important;border-radius:10px!important;background:#fff!important;color:#546158!important;box-shadow:none!important;padding:7px 8px!important;font-size:10px!important;font-weight:850!important;line-height:1.3!important}.zr-admin-smart-quick button:hover{background:var(--zr-operation-soft)!important;color:var(--zr-operation)!important}.zr-admin-smart-quick button:first-child{grid-column:1/3}
     .zr-admin-smart-foot{margin-top:auto;padding:9px 12px 10px;border-top:1px solid #edf0ed;font-size:9px;color:#929a95;display:flex;justify-content:space-between;gap:8px;white-space:nowrap}
-    @media(min-width:1101px){
-      html.zr-admin-shell-mounted .zr-admin-shell-header{right:var(--zr-admin-smart-collapsed-width)}
-      html.zr-admin-shell-mounted #adminView{padding-right:calc(var(--zr-admin-smart-collapsed-width) + 18px)!important;transition:padding-left .18s ease,padding-right .18s ease}
-      html.zr-admin-smart-open.zr-admin-shell-mounted .zr-admin-shell-header{right:var(--zr-admin-smart-width)}
-      html.zr-admin-smart-open.zr-admin-shell-mounted #adminView{padding-right:calc(var(--zr-admin-smart-width) + 18px)!important}
-    }
+    @media(min-width:1101px){html.zr-admin-shell-mounted .zr-admin-shell-header{right:var(--zr-admin-smart-width)}html.zr-admin-shell-mounted #adminView{padding-right:calc(var(--zr-admin-smart-width) + 18px)!important;transition:padding-left .18s ease,padding-right .18s ease}}
     @media(max-width:1100px){.zr-admin-smart-panel{display:none!important}html.zr-admin-shell-mounted #adminView{padding-right:18px!important}.zr-admin-shell-header{right:0!important}}
-    @media(prefers-reduced-motion:reduce){.zr-admin-smart-panel,html.zr-admin-shell-mounted #adminView,.zr-admin-shell-header{transition:none!important}.zr-admin-smart-pending-row:hover{transform:none}}
+    @media(prefers-reduced-motion:reduce){html.zr-admin-shell-mounted #adminView,.zr-admin-shell-header{transition:none!important}.zr-admin-smart-pending-row:hover{transform:none}}
   `;
   document.head.appendChild(style);
 }
 function navButton(id){return document.querySelector(`#zrAdminShellRail [data-zr-admin-item="${CSS.escape(id)}"]`)}
 function go(id){const button=navButton(id);if(button){button.click();return true}return false}
-function setOpen(open){
-  document.documentElement.classList.toggle('zr-admin-smart-open',!!open);
-  if(toggleButton){toggleButton.textContent=open?'›':'‹';toggleButton.setAttribute('aria-expanded',open?'true':'false');toggleButton.setAttribute('aria-label',open?'오른쪽 운영요약 접기':'오른쪽 운영요약 펼치기');toggleButton.title=open?'오른쪽 운영요약 접기':'오른쪽 운영요약 펼치기'}
-}
 function setText(id,value,unit){const el=$(id);if(el)el.textContent=`${value}${unit||''}`}
+function renderTypes(items){
+  const root=$('zrSmartGroupTypes');if(!root)return;
+  root.innerHTML=items.length?items.map(([name,count])=>`<div class="zr-admin-smart-type-row"><span>${String(name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span><b>${count}팀</b></div>`).join(''):'<div class="zr-admin-smart-type-empty">오늘 확정된 단체가 없습니다.</div>';
+}
 function render(){
   if(!panel)return;const c=counts();
-  setText('zrSmartConfirmedTeams',c.confirmedTeams,'팀');setText('zrSmartVisitors',c.visitors,'명');setText('zrSmartCafeTeams',c.cafeTeams,'팀');setText('zrSmartPaidTeams',c.paidTeams,'팀');
+  setText('zrSmartConfirmedTeams',c.confirmedTeams,'팀');renderTypes(c.groupTypes);setText('zrSmartVisitors',c.visitors,'명');setText('zrSmartCafeTeams',c.cafeTeams,'팀');setText('zrSmartPaidTeams',c.paidTeams,'팀');
   setText('zrSmartInquiry',c.pendingInquiry,'');setText('zrSmartPreview',c.pendingPreview,'');setText('zrSmartPendingReservation',c.pendingReservation,'');
   const now=new Date(),time=$('zrSmartUpdated');if(time)time.textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 function build(){
-  if($('zrAdminSmartPanelV1')){panel=$('zrAdminSmartPanelV1');toggleButton=$('zrAdminSmartToggle');return true}
+  if($('zrAdminSmartPanelV1')){panel=$('zrAdminSmartPanelV1');return true}
   if(!$('zrAdminShellRail')||!$('adminView'))return false;
   injectStyle();
   panel=document.createElement('aside');panel.id='zrAdminSmartPanelV1';panel.className='zr-admin-smart-panel';panel.setAttribute('aria-label','오른쪽 운영 요약');
-  panel.innerHTML=`<div class="zr-admin-smart-head"><div class="zr-admin-smart-copy"><div class="zr-admin-smart-title">운영 요약</div><div class="zr-admin-smart-sub">오늘 운영과 처리대기 현황</div></div><button type="button" class="zr-admin-smart-toggle" id="zrAdminSmartToggle" aria-controls="zrAdminSmartPanelV1"></button></div><div class="zr-admin-smart-body"><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">오늘 운영 요약</div><div class="zr-admin-smart-summary"><div class="zr-admin-smart-summary-row"><span>총 예약 확정 팀</span><strong id="zrSmartConfirmedTeams">0팀</strong></div><div class="zr-admin-smart-summary-row"><span>총 방문 인원</span><strong id="zrSmartVisitors">0명</strong></div><div class="zr-admin-smart-summary-row"><span>카페 주문 단체</span><strong id="zrSmartCafeTeams">0팀</strong></div><div class="zr-admin-smart-summary-row"><span>결제 완료 팀</span><strong id="zrSmartPaidTeams">0팀</strong></div></div></section><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">처리 대기 현황</div><div class="zr-admin-smart-section-help">아직 확인하거나 처리할 항목입니다.</div><div class="zr-admin-smart-pending"><button type="button" class="zr-admin-smart-pending-row" data-smart-go="inquiries" data-kind="inquiry"><span>1:1 문의</span><strong id="zrSmartInquiry">0</strong></button><button type="button" class="zr-admin-smart-pending-row" data-smart-go="previewVisit" data-kind="preview"><span>사전답사 문의</span><strong id="zrSmartPreview">0</strong></button><button type="button" class="zr-admin-smart-pending-row" data-smart-go="activity" data-kind="reservation"><span>예약 대기</span><strong id="zrSmartPendingReservation">0</strong></button></div></section><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">빠른 실행</div><div class="zr-admin-smart-quick"><button type="button" data-smart-schedule>현장스케줄 열기 ↗</button><button type="button" data-smart-go="activity">예약현황</button><button type="button" data-smart-go="meals">식사현황</button><button type="button" data-smart-go="calendar">예약 캘린더</button><button type="button" data-smart-go="schedule">스케줄 관리</button></div></section></div><div class="zr-admin-smart-foot"><span>자동 갱신</span><span id="zrSmartUpdated">--:--:--</span></div>`;
-  document.body.appendChild(panel);toggleButton=$('zrAdminSmartToggle');toggleButton.addEventListener('click',()=>setOpen(!document.documentElement.classList.contains('zr-admin-smart-open')));
+  panel.innerHTML=`<div class="zr-admin-smart-head"><div class="zr-admin-smart-copy"><div class="zr-admin-smart-title">운영 요약</div><div class="zr-admin-smart-sub">오늘 운영과 처리대기 현황</div></div></div><div class="zr-admin-smart-body"><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">오늘 운영 요약</div><div class="zr-admin-smart-summary"><div class="zr-admin-smart-summary-card"><div class="zr-admin-smart-summary-row"><span>총 예약 확정 팀</span><strong id="zrSmartConfirmedTeams">0팀</strong></div><div class="zr-admin-smart-type-list" id="zrSmartGroupTypes"></div></div><div class="zr-admin-smart-summary-card"><div class="zr-admin-smart-summary-row"><span>총 방문 인원</span><strong id="zrSmartVisitors">0명</strong></div></div><div class="zr-admin-smart-summary-card"><div class="zr-admin-smart-summary-row"><span>카페 주문 단체</span><strong id="zrSmartCafeTeams">0팀</strong></div></div><div class="zr-admin-smart-summary-card"><div class="zr-admin-smart-summary-row"><span>결제 완료 팀</span><strong id="zrSmartPaidTeams">0팀</strong></div></div></div></section><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">처리 대기 현황</div><div class="zr-admin-smart-section-help">아직 확인하거나 처리할 항목입니다.</div><div class="zr-admin-smart-pending"><button type="button" class="zr-admin-smart-pending-row" data-smart-go="inquiries" data-kind="inquiry"><span>1:1 문의</span><strong id="zrSmartInquiry">0</strong></button><button type="button" class="zr-admin-smart-pending-row" data-smart-go="previewVisit" data-kind="preview"><span>사전답사 문의</span><strong id="zrSmartPreview">0</strong></button><button type="button" class="zr-admin-smart-pending-row" data-smart-go="activity" data-kind="reservation"><span>예약 대기</span><strong id="zrSmartPendingReservation">0</strong></button></div></section><section class="zr-admin-smart-section"><div class="zr-admin-smart-section-title">빠른 실행</div><div class="zr-admin-smart-quick"><button type="button" data-smart-schedule>현장스케줄 열기 ↗</button><button type="button" data-smart-go="activity">예약현황</button><button type="button" data-smart-go="meals">식사현황</button><button type="button" data-smart-go="calendar">예약 캘린더</button><button type="button" data-smart-go="schedule">스케줄 관리</button></div></section></div><div class="zr-admin-smart-foot"><span>자동 갱신</span><span id="zrSmartUpdated">--:--:--</span></div>`;
+  document.body.appendChild(panel);document.documentElement.classList.add('zr-admin-smart-open');
   panel.addEventListener('click',e=>{const b=e.target.closest('[data-smart-go]');if(b){go(b.dataset.smartGo||'');return}if(e.target.closest('[data-smart-schedule]'))window.open('./schedule.html','_blank','noopener')});
-  setOpen(true);render();return true;
+  render();return true;
 }
 function observe(){
   if(observer)return;observer=new MutationObserver(render);observer.observe($('adminView'),{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-team-count']});
