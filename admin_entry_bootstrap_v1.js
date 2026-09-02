@@ -16,11 +16,13 @@ function installStyle(){
     html.zr-admin-entry-page #customerView,
     html.zr-admin-entry-page #successView,
     html.zr-admin-entry-page #cancelSuccessView{display:none!important}
+    html.zr-admin-entry-page body>header{display:none!important}
     html.zr-admin-login-clean,html.zr-admin-login-clean body{background:#fff!important}
     html.zr-admin-login-clean body{overflow:hidden!important}
     .zr-admin-login-legacy-hidden{display:none!important}
     html.zr-admin-login-clean #adminLoginModal{background:#fff!important}
-    html.zr-admin-entry-page #adminLoginModal [data-close="adminLoginModal"]{display:none!important}
+    html.zr-admin-entry-page #adminLoginModal [data-close="adminLoginModal"],
+    html.zr-admin-entry-page #adminLoginModal .zr-modal-ux-header-close{display:none!important}
     html.zr-admin-shell-mounted #adminView>.admin-head,
     html.zr-admin-shell-mounted #adminView>.admin-tabs{display:none!important}
   `;
