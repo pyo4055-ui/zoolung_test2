@@ -35,11 +35,16 @@ function clearLoginSiblingMask(){
 }
 function maskSiblingsAlongModalPath(modal){
   clearLoginSiblingMask();
+  const admin=$('adminView');
   let node=modal;
   while(node&&node!==document.body){
     const parent=node.parentElement;if(!parent)break;
     for(const sibling of parent.children){
       if(sibling===node||['SCRIPT','STYLE','LINK'].includes(sibling.tagName))continue;
+      /* Never mask the real administrator workspace (or an ancestor that contains it).
+         Its own pre-login display state already keeps it hidden. Masking it here creates
+         a circular state where successful login can never be detected. */
+      if(admin&&(sibling===admin||sibling.contains?.(admin)))continue;
       sibling.classList.add('zr-admin-login-legacy-hidden');hiddenLoginSiblings.add(sibling);
     }
     node=parent;
@@ -102,7 +107,11 @@ function boot(){
   }
 
   document.addEventListener('click',e=>{
-    if(e.target?.closest?.('#adminLoginSubmit'))setTimeout(syncLoginClean,0);
+    if(e.target?.closest?.('#adminLoginSubmit')){
+      setTimeout(syncLoginClean,0);
+      setTimeout(syncLoginClean,120);
+      setTimeout(syncLoginClean,500);
+    }
     if(!e.target?.closest?.('#adminLogout'))return;
     setTimeout(()=>openAdminGate(true),0);
   });
