@@ -20,6 +20,9 @@ function installStyle(){
     html.zr-admin-login-clean body{overflow:hidden!important}
     .zr-admin-login-legacy-hidden{display:none!important}
     html.zr-admin-login-clean #adminLoginModal{background:#fff!important}
+    html.zr-admin-entry-page #adminLoginModal [data-close="adminLoginModal"]{display:none!important}
+    html.zr-admin-shell-mounted #adminView>.admin-head,
+    html.zr-admin-shell-mounted #adminView>.admin-tabs{display:none!important}
   `;
   document.head.appendChild(s);
 }
