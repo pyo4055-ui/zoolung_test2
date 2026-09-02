@@ -9,7 +9,7 @@ function ensureSafariTheme(){
   ['zrAdminSafariThemeV1','zrAdminSafariThemeV2'].forEach(id=>$(id)?.remove());
   if(!$('zrAdminSafariThemeV3')){
     const link=document.createElement('link');
-    link.id='zrAdminSafariThemeV3';link.rel='stylesheet';link.href='./admin_safari_theme_v3.css?v=2';
+    link.id='zrAdminSafariThemeV3';link.rel='stylesheet';link.href='./admin_safari_theme_v3.css?v=4';
     document.head.appendChild(link);
   }
 }
@@ -70,9 +70,11 @@ function decorateCalendar(){
 }
 function decorateActionButtons(){
   const root=$('adminView');if(!root)return;
+  const roleClasses=['zr-safari-role-primary','zr-safari-role-current','zr-safari-role-export','zr-safari-role-print'];
   root.querySelectorAll('button').forEach(btn=>{
     if(btn.id==='zrAdminShellRefresh')return;
     const text=exactText(btn),onclick=String(btn.getAttribute('onclick')||'');
+    roleClasses.forEach(c=>btn.classList.remove(c));
     const inCalendarDay=!!btn.closest('#adminCalendar .day');
     if(inCalendarDay&&text==='자세히'){
       btn.classList.remove('zr-safari-popup-trigger','zr-safari-payment-trigger');
@@ -84,6 +86,15 @@ function decorateActionButtons(){
     const popup=detail||popupText.includes(text)||/openModal\s*\(/.test(onclick);
     btn.classList.toggle('zr-safari-payment-trigger',payment);
     if(!payment)btn.classList.toggle('zr-safari-popup-trigger',popup);
+
+    const isToday=text==='오늘';
+    const isExport=/^엑셀\s*(내려받기|다운로드)$/.test(text);
+    const isPrint=/인쇄/.test(text);
+    const isPrimary=['조회하기','단체명 검색','이번 달로 이동','이번달로 이동'].includes(text);
+    btn.classList.toggle('zr-safari-role-current',isToday);
+    btn.classList.toggle('zr-safari-role-export',isExport);
+    btn.classList.toggle('zr-safari-role-print',isPrint);
+    btn.classList.toggle('zr-safari-role-primary',isPrimary&&!popup&&!payment);
   });
 }
 function hideLegacyChrome(){
