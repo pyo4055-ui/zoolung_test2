@@ -27,14 +27,16 @@ const SUBMENUS={
   ]
 };
 const $=id=>document.getElementById(id);
-let rail=null,admin=null,observer=null,scheduled=false,peekId='',hoverTimer=0,hoverPendingId='';
+let rail=null,admin=null,observer=null,scheduled=false,hoverTimer=0,hoverPendingId='',suppressParentToggle=false;
 const wrappers=new Map();
+const openIds=new Set();
 
 function injectStyle(){
   if($('zrAdminShellSubmenusStyleV1'))return;
   const style=document.createElement('style');
   style.id='zrAdminShellSubmenusStyleV1';
   style.textContent=`
+    .zr-admin-shell-nav{overflow-y:auto!important;overscroll-behavior-y:contain;scrollbar-gutter:stable}
     .zr-admin-shell-item-wrap{--zr-sub-color:var(--zr-settings);--zr-sub-soft:var(--zr-settings-soft);position:relative}
     .zr-admin-shell-item-wrap[data-group="operation"]{--zr-sub-color:var(--zr-operation);--zr-sub-soft:var(--zr-operation-soft)}
     .zr-admin-shell-item-wrap[data-group="reservation"]{--zr-sub-color:var(--zr-reservation);--zr-sub-soft:var(--zr-reservation-soft)}
@@ -72,8 +74,7 @@ function syncAll(){
     const parent=wrap.querySelector(':scope > .zr-admin-shell-item');
     if(!parent)return;
     wrap.hidden=parent.hidden;
-    const active=parent.classList.contains('is-active');
-    const open=!collapsed&&(peekId===parentId||(!peekId&&active));
+    const open=!collapsed&&openIds.has(parentId);
     wrap.classList.toggle('is-submenu-open',open);
     parent.setAttribute('aria-expanded',open?'true':'false');
     wrap.querySelectorAll('[data-zr-admin-subitem]').forEach(button=>{
@@ -88,24 +89,37 @@ function cancelHover(parentId=''){
   if(hoverTimer){clearTimeout(hoverTimer);hoverTimer=0}
   hoverPendingId='';
 }
+function openSubmenu(parentId){
+  if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;
+  openIds.add(parentId);scheduleSync();
+}
+function toggleSubmenu(parentId){
+  if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;
+  if(openIds.has(parentId))openIds.delete(parentId);else openIds.add(parentId);
+  scheduleSync();
+}
 function scheduleHover(parentId,wrap){
   cancelHover();
-  if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;
+  if(document.documentElement.classList.contains('zr-admin-shell-collapsed')||openIds.has(parentId))return;
   hoverPendingId=parentId;
   hoverTimer=setTimeout(()=>{
     hoverTimer=0;
     if(hoverPendingId!==parentId)return;
     hoverPendingId='';
     if(!wrap.matches(':hover'))return;
-    peekId=parentId;scheduleSync();
+    openSubmenu(parentId);
   },HOVER_OPEN_DELAY_MS);
 }
 async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
   if(!parent)return;
-  cancelHover();peekId='';
+  cancelHover();openSubmenu(parentId);
   const alreadyActive=parent.classList.contains('is-active');
-  if(!alreadyActive)parent.click();
+  if(!alreadyActive){
+    suppressParentToggle=true;
+    try{parent.click()}finally{suppressParentToggle=false}
+    openSubmenu(parentId);
+  }
   let target=$(sub.targetId);
   if(target){
     target.click();
@@ -149,14 +163,13 @@ function createSubmenu(parentId,parent){
   wrappers.set(parentId,wrap);
 
   wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap));
-  wrap.addEventListener('mouseleave',()=>{
-    cancelHover(parentId);
-    if(peekId===parentId)peekId='';
-    scheduleSync();
+  wrap.addEventListener('mouseleave',()=>cancelHover(parentId));
+  wrap.addEventListener('focusin',()=>{cancelHover();openSubmenu(parentId)});
+  parent.addEventListener('click',()=>{
+    cancelHover();
+    if(!suppressParentToggle)toggleSubmenu(parentId);
+    setTimeout(scheduleSync,0);setTimeout(scheduleSync,120);
   });
-  wrap.addEventListener('focusin',()=>{cancelHover();if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;peekId=parentId;scheduleSync()});
-  wrap.addEventListener('focusout',()=>setTimeout(()=>{if(!wrap.contains(document.activeElement)&&peekId===parentId){peekId='';scheduleSync()}},0));
-  parent.addEventListener('click',()=>{cancelHover();peekId='';setTimeout(scheduleSync,0);setTimeout(scheduleSync,120)});
 }
 function installMenus(){
   rail=$('zrAdminShellRail');admin=$('adminView');
@@ -174,9 +187,7 @@ function installObserver(){
   observer=new MutationObserver(scheduleSync);
   observer.observe(rail,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected']});
   observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']});
-  document.addEventListener('click',e=>{
-    if(!e.target?.closest?.('.zr-admin-shell-item-wrap')){cancelHover();peekId='';setTimeout(scheduleSync,0)}
-  },true);
+  document.addEventListener('click',e=>{if(!e.target?.closest?.('.zr-admin-shell-item-wrap'))cancelHover()},true);
 }
 function boot(){
   if(installMenus()){installObserver();return}
