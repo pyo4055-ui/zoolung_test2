@@ -85,6 +85,8 @@ jobs:
         run: node scripts/admin_shell_current_ui_contract_check.mjs
       - name: Verify shared admin daily memo
         run: node scripts/admin_daily_memo_contract_check.mjs
+      - name: Verify unified admin section headers
+        run: node scripts/admin_section_header_help_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
