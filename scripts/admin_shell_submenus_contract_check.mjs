@@ -12,6 +12,7 @@ need(admin.includes('admin_shell_submenus_v1.js?v=1'),'admin entry must load sid
 need(admin.includes('admin_shell_submenu_customer_guard_v1.js?v=1'),'admin entry must load the customer-modal collision guard after sidebar submenus.');
 
 for(const required of [
+  'const HOVER_OPEN_DELAY_MS=1000;',
   "cleanup:[",
   "inquiries:[",
   "guide:[",
@@ -40,10 +41,15 @@ for(const required of [
   "targetId:'zrSettingsScheduleSmsSubtabV1'",
   "targetId:'zrSettingsOutsourceSubtabV1'",
   "targetId:'zrSettingsConfirmSmsSubtabV1'",
-  "wrap.addEventListener('mouseenter'",
+  "wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap))",
+  'hoverTimer=setTimeout',
+  '},HOVER_OPEN_DELAY_MS);',
   "parent.addEventListener('click'",
   'async function activateSubitem(parentId,sub)',
-  'parent.click();',
+  "const alreadyActive=parent.classList.contains('is-active');",
+  'if(!alreadyActive)parent.click();',
+  'let target=$(sub.targetId);',
+  'if(target){',
   'target.click();',
   "className='zr-admin-shell-subitem'",
   "classList.contains('zr-admin-shell-collapsed')",
@@ -51,6 +57,8 @@ for(const required of [
   'var(--zr-customer)',
   'var(--zr-settings)'
 ])need(submenu.includes(required),`admin sidebar submenu contract missing: ${required}`);
+
+need(!submenu.includes('await wait(90);'),'admin sidebar submenu must not pause after opening a parent tab when the target already exists; that pause causes visible default-subtab flashing.');
 
 for(const required of [
   'data-zr-admin-subitem="guide-map"',
@@ -71,4 +79,4 @@ for(const source of [submenu,guard])for(const forbidden of [
   'reservationAvailability'
 ])need(!source.includes(forbidden),`admin sidebar navigation helpers must remain navigation-only: ${forbidden}`);
 
-console.log('OK: sidebar exposes existing section subtabs, guide-map submenu cannot be mistaken for a customer guide button, shares group colors, and performs no data writes.');
+console.log('OK: sidebar delays hover expansion by one second, switches existing subtabs in the same frame without default-tab flash, guide-map submenu cannot be mistaken for a customer guide button, shares group colors, and performs no data writes.');
