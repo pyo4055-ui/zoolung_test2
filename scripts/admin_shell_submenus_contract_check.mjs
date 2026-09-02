@@ -2,12 +2,14 @@ import fs from 'node:fs';
 
 const admin=fs.readFileSync('admin.html','utf8');
 const submenu=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
+const guard=fs.readFileSync('admin_shell_submenu_customer_guard_v1.js','utf8');
 
 function need(ok,message){
   if(!ok){console.error(message);process.exit(1)}
 }
 
 need(admin.includes('admin_shell_submenus_v1.js?v=1'),'admin entry must load sidebar section submenus after the main shell.');
+need(admin.includes('admin_shell_submenu_customer_guard_v1.js?v=1'),'admin entry must load the customer-modal collision guard after sidebar submenus.');
 
 for(const required of [
   "cleanup:[",
@@ -50,7 +52,13 @@ for(const required of [
   'var(--zr-settings)'
 ])need(submenu.includes(required),`admin sidebar submenu contract missing: ${required}`);
 
-for(const forbidden of [
+for(const required of [
+  'data-zr-admin-subitem="guide-map"',
+  "setAttribute('aria-label','가이드맵')",
+  "textContent='가이드맵\\u200B'"
+])need(guard.includes(required),`admin sidebar guide-map guard missing: ${required}`);
+
+for(const source of [submenu,guard])for(const forbidden of [
   'setDoc(',
   'updateDoc(',
   'deleteDoc(',
@@ -61,6 +69,6 @@ for(const forbidden of [
   'zr_bookings',
   'reservations',
   'reservationAvailability'
-])need(!submenu.includes(forbidden),`admin sidebar submenu must remain navigation-only: ${forbidden}`);
+])need(!source.includes(forbidden),`admin sidebar navigation helpers must remain navigation-only: ${forbidden}`);
 
-console.log('OK: sidebar exposes existing section subtabs on hover/click, forwards only to legacy controls, shares group colors, and performs no data writes.');
+console.log('OK: sidebar exposes existing section subtabs, guide-map submenu cannot be mistaken for a customer guide button, shares group colors, and performs no data writes.');
