@@ -8,6 +8,20 @@ html.zr-admin-login-clean body{
 
 html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{
   background:#38271e!important;
+  background-image:none!important;
+}
+
+/* The generic modal UX helper must not create a second title bar on the
+   dedicated full-screen administrator login. */
+html.zr-admin-login-clean #adminLoginModal .zr-modal-ux-header{
+  display:none!important;
+}
+
+/* Never expose the card while the intro scene is still mounting. */
+html.zr-admin-login-v4-booting #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
 }
 
 /* Match the approved preview's centered 16:9 frame exactly.
