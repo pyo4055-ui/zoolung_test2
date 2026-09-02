@@ -40,23 +40,30 @@ for(const required of [
   "sectionId:'tab-schedule'",
   "$('adminLogout')?.click()",
   "document.documentElement.classList.toggle('zr-admin-shell-mounted',on)",
-  "fetch('./admin_design_tokens_v1.css?v=4'",
+  "fetch('./admin_design_tokens_v1.css?v=5'",
   "style.id='zrAdminDesignTokensRuntimeV1'",
   'document.head.appendChild(style)',
   'const styled=await ensureRuntimeStyle()',
   "const PREF_KEY='zr_admin_nav_preferences_v1'",
   'localStorage.getItem(PREF_KEY)',
   'localStorage.setItem(PREF_KEY',
+  "raw.collapsed===true",
   "editButton.textContent='메뉴 편집'",
   "reset.textContent='전체 표시'",
+  "collapseButton.className='zr-admin-shell-collapse'",
   'function applyMenuPrefs()',
-  'function toggleItemPreference(id,visible)'
+  'function toggleItemPreference(id,visible)',
+  'function applyCollapsedState()',
+  'function toggleCollapsed()'
 ])need(adminShell.includes(required),`admin shell forwarding/customization contract missing: ${required}`);
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','setStore(','sessionStorage.setItem(','zr_bookings'])need(!adminShell.includes(forbidden),`admin shell must remain UI-only and isolated from reservation data: ${forbidden}`);
-for(const token of ['--zr-operation:','--zr-reservation:','--zr-customer:','--zr-sales:','--zr-settings:','--zr-action-primary:','--zr-action-danger:','--zr-admin-rail-width:'])need(adminTokens.includes(token),`admin centralized design token missing: ${token}`);
+for(const token of ['--zr-operation:','--zr-reservation:','--zr-customer:','--zr-sales:','--zr-settings:','--zr-action-primary:','--zr-action-danger:','--zr-admin-rail-width:','--zr-admin-rail-collapsed-width:'])need(adminTokens.includes(token),`admin centralized design token missing: ${token}`);
 need(adminTokens.includes('font-size:14px!important'),'administrator rail menu labels must remain readable at the enlarged size.');
+need(adminTokens.includes('.zr-admin-shell-group-title{padding:0 9px 8px;font-size:13px'),'administrator menu group headings must stay visibly larger than the old compact labels.');
 need(adminTokens.includes('.zr-admin-shell-editor'),'administrator shell must style the menu editor.');
 need(adminTokens.includes('.zr-admin-shell-item[hidden]'),'hidden administrator menu preferences must visually remove the selected item.');
+need(adminTokens.includes('html.zr-admin-shell-collapsed .zr-admin-shell-rail'),'administrator navigation rail must support a persistent collapsed layout.');
+need(adminTokens.includes('html.zr-admin-shell-collapsed #adminView'),'collapsed administrator navigation must return horizontal space to the workspace.');
 need(adminTokens.includes('#adminView .admin-tabs'),'desktop shell must visually replace, not delete, the legacy admin tab controls.');
 
 need(customer.includes("fetch('./index.html?v=customer-entry-2'"),'customer.html must reuse the frozen reservation runtime instead of copying booking business logic.');
@@ -130,4 +137,4 @@ need(index.includes("fetch('./data1.txt?v=27'")&&index.includes("fetch('./data2.
 need(index.includes('./admin_features_v2_loader.js?v=31')&&index.includes('./reservation_firebase_bridge.js?v=1'),'compatibility index dependencies changed unexpectedly before cutover.');
 need(index.includes(bridgeMarker),'entry compatibility injection point no longer exists in index.html.');
 
-console.log('OK: admin shell keeps legacy handlers, readable centralized colors, and browser-local menu visibility preferences without touching reservation data; customer/admin Auth isolation remains intact.');
+console.log('OK: admin shell keeps legacy handlers, readable group headings, editable menu visibility and a persistent collapsible rail without touching reservation data; customer/admin Auth isolation remains intact.');
