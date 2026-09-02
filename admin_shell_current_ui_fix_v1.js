@@ -49,7 +49,7 @@ function commonAncestor(nodes,stop){
 function decorateBrand(){
   const title=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-title');
   const sub=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-sub');
-  if(title){title.dataset.zrSafariBrand='1';title.textContent='동탄점'}
+  if(title){title.dataset.zrSafariBrand='1';title.innerHTML='<span class="zr-admin-brand-dongtan">동탄점</span>'}
   if(sub){sub.textContent='예약관리'}
 }
 function decorateCalendar(){
