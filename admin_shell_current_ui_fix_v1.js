@@ -6,19 +6,10 @@ const $=id=>document.getElementById(id);
 let observer=null;
 
 function ensureSafariTheme(){
-  if(!$('zrAdminSafariThemeV1')){
-    const link=document.createElement('link');
-    link.id='zrAdminSafariThemeV1';link.rel='stylesheet';link.href='./admin_safari_theme_v1.css?v=1';
-    document.head.appendChild(link);
-  }
-  if(!$('zrAdminSafariThemeV2')){
-    const link=document.createElement('link');
-    link.id='zrAdminSafariThemeV2';link.rel='stylesheet';link.href='./admin_safari_theme_v2.css?v=1';
-    document.head.appendChild(link);
-  }
+  ['zrAdminSafariThemeV1','zrAdminSafariThemeV2'].forEach(id=>$(id)?.remove());
   if(!$('zrAdminSafariThemeV3')){
     const link=document.createElement('link');
-    link.id='zrAdminSafariThemeV3';link.rel='stylesheet';link.href='./admin_safari_theme_v3.css?v=1';
+    link.id='zrAdminSafariThemeV3';link.rel='stylesheet';link.href='./admin_safari_theme_v3.css?v=2';
     document.head.appendChild(link);
   }
 }
@@ -26,12 +17,10 @@ function injectStyle(){
   if($('zrAdminShellCurrentUiFixV1Style'))return;
   const s=document.createElement('style');s.id='zrAdminShellCurrentUiFixV1Style';s.textContent=`
     .zr-admin-legacy-chrome-hidden,.zr-admin-legacy-time-pill-hidden{display:none!important}
-    .zr-admin-shell-refresh{height:40px;min-width:78px;border:1px solid #e2dad2!important;border-radius:10px!important;background:#fff!important;color:#57514b!important;box-shadow:none!important;padding:0 12px!important;font-size:12px!important;font-weight:900!important;white-space:nowrap}
-    .zr-admin-shell-refresh:hover{background:#f7f3ee!important}
-    .zr-admin-smart-summary-card{border:1px solid #e8dfd7!important;border-radius:12px!important;background:#faf7f3!important;padding:11px!important}
-    .zr-admin-smart-summary-card:first-child{background:#f5f8f5!important;border-color:#dfe8e1!important}
+    .zr-admin-shell-refresh{height:40px;min-width:78px;border-radius:10px!important;padding:0 12px!important;font-size:12px!important;font-weight:900!important;white-space:nowrap}
+    .zr-admin-smart-summary-card{border-radius:12px!important;padding:11px!important}
     .zr-admin-smart-type-list{margin-top:9px!important;padding-top:8px!important;border-top:1px dashed #ddd6cf!important}
-    .zr-admin-smart-type-row{font-size:11.5px!important;color:#716a64!important}.zr-admin-smart-type-row b{font-size:11.5px!important;color:#413c37!important}
+    .zr-admin-smart-type-row{font-size:11.5px!important}.zr-admin-smart-type-row b{font-size:11.5px!important}
     @media(min-width:901px){
       html.zr-admin-shell-mounted #adminView>section:not(.hidden){margin-top:0!important}
       html.zr-admin-shell-mounted #tab-today{margin-top:0!important}
@@ -50,7 +39,7 @@ function decorateBrand(){
   const title=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-title');
   const sub=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-sub');
   if(title){title.dataset.zrSafariBrand='1';title.innerHTML='<span class="zr-admin-brand-dongtan">동탄점</span>'}
-  if(sub){sub.textContent='예약관리'}
+  if(sub)sub.textContent='예약관리';
 }
 function decorateCalendar(){
   const cal=$('adminCalendar');if(!cal)return;
