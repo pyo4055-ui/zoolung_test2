@@ -21,6 +21,89 @@ function injectStyle(){
     .zr-admin-smart-summary-card{border-radius:12px!important;padding:11px!important}
     .zr-admin-smart-type-list{margin-top:9px!important;padding-top:8px!important;border-top:1px dashed #ddd6cf!important}
     .zr-admin-smart-type-row{font-size:11.5px!important}.zr-admin-smart-type-row b{font-size:11.5px!important}
+
+    /* One navigation language: old per-group hover/active colors must never reappear. */
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item{
+      --zr-group-color:var(--zr-v3-green)!important;
+      --zr-group-soft:#fff7ef!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item:not([data-zr-admin-item="warning"]) .zr-admin-shell-item-dot{
+      background:var(--zr-v3-green)!important;opacity:.7!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item:not([data-zr-admin-item="warning"]):hover{
+      background:#fff7ef!important;color:var(--zr-v3-green)!important;border-color:#f0cfb3!important;
+      box-shadow:inset 4px 0 0 rgba(252,84,4,.48)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item:not([data-zr-admin-item="warning"]):hover .zr-admin-shell-item-dot,
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item:not([data-zr-admin-item="warning"]).is-active .zr-admin-shell-item-dot{
+      background:var(--zr-v3-orange)!important;opacity:1!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item:not([data-zr-admin-item="warning"]).is-active{
+      background:#fff7ef!important;color:var(--zr-v3-green)!important;border-color:#efc6a5!important;
+      box-shadow:inset 4px 0 0 var(--zr-v3-orange)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item-wrap{
+      --zr-sub-color:var(--zr-v3-green)!important;--zr-sub-soft:#fff7ef!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item-wrap.is-submenu-open .zr-admin-shell-submenu-chevron{
+      color:var(--zr-v3-orange)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-submenu-inner{
+      border-left-color:#efc6a5!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-subitem:before{
+      background:var(--zr-v3-green)!important;opacity:.42!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-subitem:hover{
+      background:#fff7ef!important;color:var(--zr-v3-green)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-subitem.is-active{
+      background:#fff1e5!important;color:var(--zr-v3-green)!important;
+      box-shadow:inset 3px 0 0 var(--zr-v3-orange)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-subitem.is-active:before{
+      background:var(--zr-v3-orange)!important;opacity:1!important;
+    }
+
+    /* Same role = same color everywhere. */
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-primary,
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-print{
+      background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;
+      color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 4px 10px rgba(252,84,4,.14)!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-primary:hover,
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-print:hover{
+      background:var(--zr-v3-orange-dark)!important;border-color:var(--zr-v3-orange-dark)!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-current{
+      background:var(--zr-v3-green)!important;border-color:var(--zr-v3-green)!important;
+      color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-current:hover{
+      background:var(--zr-v3-green-dark)!important;border-color:var(--zr-v3-green-dark)!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-export{
+      background:#fff!important;border:1.5px solid var(--zr-v3-green)!important;
+      color:var(--zr-v3-green)!important;-webkit-text-fill-color:var(--zr-v3-green)!important;box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-export:hover{
+      background:var(--zr-v3-green)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
+    }
+
+    /* Reservation activity: filters on row 1, four actions in one balanced row 2. */
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar{
+      grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:10px 12px!important;align-items:end!important;
+    }
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-start{grid-column:1/4!important;grid-row:1!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-end{grid-column:4/7!important;grid-row:1!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/10!important;grid-row:1!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:10/13!important;grid-row:1!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/4!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:4/7!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:7/10!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:10/13!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar button{min-height:42px!important;width:100%!important;margin:0!important}
+
     @media(min-width:901px){
       html.zr-admin-shell-mounted #adminView>section:not(.hidden){margin-top:0!important}
       html.zr-admin-shell-mounted #tab-today{margin-top:0!important}
