@@ -5,6 +5,7 @@ window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1=true;
 
 const $=id=>document.getElementById(id);
 const IDENTITY_KEY='zr_admin_display_name_v1';
+const LOGIN_BG_URL='https://cdn.imweb.me/upload/S2021020405a5aa28b5282/971c416f7a19c.png';
 let opened=false,loginObserver=null,todayPrepareTimer=0,identitySyncTimer=0,pendingIdentity='';
 const hiddenLoginSiblings=new Set();
 
@@ -22,6 +23,7 @@ function installStyle(){
     html.zr-admin-login-clean body{overflow:hidden!important}
     .zr-admin-login-legacy-hidden{display:none!important}
     html.zr-admin-login-clean #adminLoginModal{background:#fff!important}
+    html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before{display:none!important}
     html.zr-admin-entry-page #adminLoginModal [data-close="adminLoginModal"],
     html.zr-admin-entry-page #adminLoginModal .zr-modal-ux-header-close{display:none!important}
     html.zr-admin-shell-mounted #adminView>.admin-head,
@@ -47,6 +49,11 @@ function installLoginVisual(){
   const modal=$('adminLoginModal');
   if(!modal)return false;
   modal.dataset.zrLoginVisual='1';
+  modal.style.setProperty('background-color','#38271e','important');
+  modal.style.setProperty('background-image',`linear-gradient(rgba(54,31,18,.28),rgba(54,31,18,.38)),url("${LOGIN_BG_URL}")`,'important');
+  modal.style.setProperty('background-size','cover','important');
+  modal.style.setProperty('background-position','center center','important');
+  modal.style.setProperty('background-repeat','no-repeat','important');
   const title=modal.querySelector('.modal-card h2');
   if(title)title.textContent='관리자 로그인';
   const identity=$('zrAdminIdentity');
@@ -105,7 +112,6 @@ function ensureIdentityField(){
     input?.addEventListener('input',()=>showIdentityError(false));
     input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('adminLoginSubmit')?.click()}});
   }
-  if(input&&!input.value)input.value=savedIdentity();
   installLoginVisual();
   return input;
 }
@@ -191,6 +197,7 @@ function openAdminGate(force=false){
   const modal=$('adminLoginModal'),admin=$('adminView');
   if(!modal||!admin||!$('adminLoginSubmit')||!$('adminPassword'))return false;
   const identity=ensureIdentityField();
+  if(identity&&(!opened||force))identity.value='';
   installLoginVisual();
   watchLoginClean();
   startIdentityStatusSync();
