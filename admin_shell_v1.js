@@ -26,8 +26,29 @@ const ITEMS=[
   {id:'settings',group:'settings',label:'예약설정',dataTab:'settings',sectionId:'tab-settings'}
 ];
 const $=id=>document.getElementById(id);
-let rail=null,header=null,adminObserver=null,pendingSync=false,activeId='';
+let rail=null,header=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null;
 
+async function ensureRuntimeStyle(){
+  if($('zrAdminDesignTokensRuntimeV1'))return true;
+  if(stylePromise)return stylePromise;
+  stylePromise=(async()=>{
+    try{
+      const r=await fetch('./admin_design_tokens_v1.css?v=3',{cache:'no-store'});
+      if(!r.ok)throw new Error(`style ${r.status}`);
+      const css=await r.text();
+      if(!css.includes('--zr-admin-rail-width:')||!css.includes('.zr-admin-shell-rail'))throw new Error('invalid admin shell css');
+      const style=document.createElement('style');
+      style.id='zrAdminDesignTokensRuntimeV1';
+      style.textContent=css;
+      document.head.appendChild(style);
+      return true;
+    }catch(e){
+      console.error('admin shell style load',e);
+      return false;
+    }
+  })();
+  return stylePromise;
+}
 function groupLabel(id){return GROUPS.find(g=>g.id===id)?.label||''}
 function findTarget(item){
   if(item.buttonId){const b=$(item.buttonId);if(b)return b}
@@ -128,7 +149,9 @@ function mount(){
   let ticks=0;const t=setInterval(()=>{syncAvailability();syncVisibility();syncActive();if(++ticks>=60)clearInterval(t)},500);
   return true;
 }
-function boot(){
+async function boot(){
+  const styled=await ensureRuntimeStyle();
+  if(!styled)return;
   if(mount())return;
   let tries=0;const t=setInterval(()=>{if(mount()||++tries>100)clearInterval(t)},100);
 }
