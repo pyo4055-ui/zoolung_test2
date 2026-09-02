@@ -84,6 +84,11 @@ function decorateActionButtons(){
   root.querySelectorAll('button').forEach(btn=>{
     if(btn.id==='zrAdminShellRefresh')return;
     const text=exactText(btn),onclick=String(btn.getAttribute('onclick')||'');
+    const inCalendarDay=!!btn.closest('#adminCalendar .day');
+    if(inCalendarDay&&text==='자세히'){
+      btn.classList.remove('zr-safari-popup-trigger','zr-safari-payment-trigger');
+      return;
+    }
     const payment=text==='실제결제'||btn.classList.contains('zr-settle-open');
     const detail=text==='자세히'||text==='상세보기'||text==='상세'||/openAdminBookingDetail\s*\(/.test(onclick);
     const popupText=['문의 보기','답변 보기','답변하기','가이드맵','주차 안내','예약 상세','예약 상세보기'];
