@@ -77,6 +77,8 @@ jobs:
         run: node scripts/admin_shell_submenus_contract_check.mjs
       - name: Verify admin urgent warning attention
         run: node scripts/admin_shell_attention_contract_check.mjs
+      - name: Verify admin smart operations panel
+        run: node scripts/admin_smart_panel_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
