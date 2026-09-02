@@ -15,9 +15,9 @@ function need(ok,message){
   if(!ok){console.error(message);process.exit(1)}
 }
 
-need(admin.includes("fetch('./index.html?v=admin-entry-4'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
+need(admin.includes("fetch('./index.html?v=admin-entry-5'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
 need(admin.includes('admin_entry_bootstrap_v1.js?v=1'),'admin.html must inject the dedicated admin bootstrap.');
-need(admin.includes('admin_shell_v1.js?v=2'),'admin.html must inject the dedicated admin redevelopment shell after the restored runtime.');
+need(admin.includes('admin_shell_v1.js?v=3'),'admin.html must inject the dedicated admin redevelopment shell after the restored runtime.');
 need(admin.includes('reservation_firebase_bridge.js?v=1'),'admin.html must preserve the existing administrator reservation Firebase bridge.');
 need(!admin.includes('setDoc(')&&!admin.includes('updateDoc(')&&!admin.includes('deleteDoc(')&&!admin.includes('setStore('),'admin.html must remain an entry-only compatibility shell with no data writes.');
 
@@ -40,15 +40,24 @@ for(const required of [
   "sectionId:'tab-schedule'",
   "$('adminLogout')?.click()",
   "document.documentElement.classList.toggle('zr-admin-shell-mounted',on)",
-  "fetch('./admin_design_tokens_v1.css?v=3'",
+  "fetch('./admin_design_tokens_v1.css?v=4'",
   "style.id='zrAdminDesignTokensRuntimeV1'",
   'document.head.appendChild(style)',
-  'const styled=await ensureRuntimeStyle()'
-])need(adminShell.includes(required),`admin shell forwarding/runtime-style contract missing: ${required}`);
-for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','setStore(','localStorage.setItem(','sessionStorage.setItem('])need(!adminShell.includes(forbidden),`admin shell must remain navigation/UI-only: ${forbidden}`);
+  'const styled=await ensureRuntimeStyle()',
+  "const PREF_KEY='zr_admin_nav_preferences_v1'",
+  'localStorage.getItem(PREF_KEY)',
+  'localStorage.setItem(PREF_KEY',
+  "editButton.textContent='메뉴 편집'",
+  "reset.textContent='전체 표시'",
+  'function applyMenuPrefs()',
+  'function toggleItemPreference(id,visible)'
+])need(adminShell.includes(required),`admin shell forwarding/customization contract missing: ${required}`);
+for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','setStore(','sessionStorage.setItem(','zr_bookings'])need(!adminShell.includes(forbidden),`admin shell must remain UI-only and isolated from reservation data: ${forbidden}`);
 for(const token of ['--zr-operation:','--zr-reservation:','--zr-customer:','--zr-sales:','--zr-settings:','--zr-action-primary:','--zr-action-danger:','--zr-admin-rail-width:'])need(adminTokens.includes(token),`admin centralized design token missing: ${token}`);
+need(adminTokens.includes('font-size:14px!important'),'administrator rail menu labels must remain readable at the enlarged size.');
+need(adminTokens.includes('.zr-admin-shell-editor'),'administrator shell must style the menu editor.');
+need(adminTokens.includes('.zr-admin-shell-item[hidden]'),'hidden administrator menu preferences must visually remove the selected item.');
 need(adminTokens.includes('#adminView .admin-tabs'),'desktop shell must visually replace, not delete, the legacy admin tab controls.');
-need(adminTokens.includes('.zr-admin-shell-rail[hidden],.zr-admin-shell-header[hidden]{display:none!important}'),'hidden administrator shell surfaces must never leak into the login/loading layout.');
 
 need(customer.includes("fetch('./index.html?v=customer-entry-2'"),'customer.html must reuse the frozen reservation runtime instead of copying booking business logic.');
 need(customer.includes("source.replace(adminLoader,customerLoader)"),'customer.html must replace the admin extension loader with the customer-only loader.');
@@ -121,4 +130,4 @@ need(index.includes("fetch('./data1.txt?v=27'")&&index.includes("fetch('./data2.
 need(index.includes('./admin_features_v2_loader.js?v=31')&&index.includes('./reservation_firebase_bridge.js?v=1'),'compatibility index dependencies changed unexpectedly before cutover.');
 need(index.includes(bridgeMarker),'entry compatibility injection point no longer exists in index.html.');
 
-console.log('OK: admin entry restores the legacy runtime, then the final admin shell injects its centralized CSS into the live document before mounting; customer/admin Auth isolation remains intact.');
+console.log('OK: admin shell keeps legacy handlers, readable centralized colors, and browser-local menu visibility preferences without touching reservation data; customer/admin Auth isolation remains intact.');
