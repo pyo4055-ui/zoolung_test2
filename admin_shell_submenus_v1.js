@@ -14,6 +14,10 @@ const SUBMENUS={
     {id:'inquiry-list',label:'문의 현황',targetId:'zrInquiryReplyInquirySubtab'},
     {id:'inquiry-examples',label:'답변 예시',targetId:'zrInquiryReplyExampleSubtab'}
   ],
+  previewVisit:[
+    {id:'preview-visit-list',label:'사전답사 현황',targetId:'zrPreviewNotifyVisitSubtab'},
+    {id:'preview-visit-sms',label:'확정문자 예시',targetId:'zrPreviewNotifyTemplateSubtab'}
+  ],
   guide:[
     {id:'guide-info',label:'이용 안내',targetId:'zrGuideInfoSubtabV1'},
     {id:'guide-map',label:'가이드맵',targetId:'zrGuideMapSubtabV1'},
