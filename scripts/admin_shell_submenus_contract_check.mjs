@@ -47,10 +47,11 @@ for(const required of [
   "const open=!collapsed&&openIds.has(parentId);",
   "wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap))",
   "wrap.addEventListener('mouseleave',()=>cancelHover(parentId))",
+  "wrap.addEventListener('focusin',()=>cancelHover());",
   'hoverTimer=setTimeout',
   '},HOVER_OPEN_DELAY_MS);',
   "parent.addEventListener('click'",
-  'if(!suppressParentToggle)toggleSubmenu(parentId);',
+  'if(!suppressParentToggle)toggleSubmenu(parentId);\n  },true);',
   'async function activateSubitem(parentId,sub)',
   "const alreadyActive=parent.classList.contains('is-active');",
   'suppressParentToggle=true;',
@@ -68,6 +69,7 @@ for(const required of [
   'var(--zr-settings)'
 ])need(submenu.includes(required),`admin sidebar submenu contract missing: ${required}`);
 
+need(!submenu.includes("wrap.addEventListener('focusin',()=>{cancelHover();openSubmenu(parentId)});"),'focusing a parent must not pre-open and then immediately re-toggle the submenu before the first click.');
 need(!submenu.includes('peekId'),'admin sidebar submenu expansion must no longer be limited to one transient peek menu.');
 need(!submenu.includes('await wait(90);'),'admin sidebar submenu must not pause after opening a parent tab when the target already exists; that pause causes visible default-subtab flashing.');
 
@@ -90,4 +92,4 @@ for(const source of [submenu,guard])for(const forbidden of [
   'reservationAvailability'
 ])need(!source.includes(forbidden),`admin sidebar navigation helpers must remain navigation-only: ${forbidden}`);
 
-console.log('OK: sidebar delays hover expansion by one second, keeps multiple opened submenu groups expanded until explicitly toggled closed, scrolls long navigation with the mouse wheel, switches existing subtabs without default-tab flash, preserves the guide-map collision guard, and performs no data writes.');
+console.log('OK: sidebar opens or closes a submenu on the first parent click, delays hover expansion by one second, keeps multiple opened groups expanded until explicitly toggled closed, scrolls long navigation with the mouse wheel, switches existing subtabs without default-tab flash, preserves the guide-map collision guard, and performs no data writes.');
