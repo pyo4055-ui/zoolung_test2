@@ -4,7 +4,8 @@ if(window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1)return;
 window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1=true;
 
 const $=id=>document.getElementById(id);
-let opened=false;
+let opened=false,loginObserver=null;
+const hiddenLoginSiblings=new Set();
 
 function installStyle(){
   if($('zrAdminEntryBootstrapStyleV1'))return;
@@ -15,6 +16,10 @@ function installStyle(){
     html.zr-admin-entry-page #customerView,
     html.zr-admin-entry-page #successView,
     html.zr-admin-entry-page #cancelSuccessView{display:none!important}
+    html.zr-admin-login-clean,html.zr-admin-login-clean body{background:#fff!important}
+    html.zr-admin-login-clean body{overflow:hidden!important}
+    .zr-admin-login-legacy-hidden{display:none!important}
+    html.zr-admin-login-clean #adminLoginModal{background:#fff!important}
   `;
   document.head.appendChild(s);
 }
@@ -23,6 +28,39 @@ function hideCustomerSurfaces(){
   for(const id of ['startView','customerView','successView','cancelSuccessView']){
     const el=$(id);if(el)el.classList.add('hidden');
   }
+}
+function clearLoginSiblingMask(){
+  hiddenLoginSiblings.forEach(el=>el?.classList?.remove('zr-admin-login-legacy-hidden'));
+  hiddenLoginSiblings.clear();
+}
+function maskSiblingsAlongModalPath(modal){
+  clearLoginSiblingMask();
+  let node=modal;
+  while(node&&node!==document.body){
+    const parent=node.parentElement;if(!parent)break;
+    for(const sibling of parent.children){
+      if(sibling===node||['SCRIPT','STYLE','LINK'].includes(sibling.tagName))continue;
+      sibling.classList.add('zr-admin-login-legacy-hidden');hiddenLoginSiblings.add(sibling);
+    }
+    node=parent;
+  }
+}
+function adminVisible(){
+  const admin=$('adminView');if(!admin)return false;
+  return !admin.classList.contains('hidden')&&getComputedStyle(admin).display!=='none';
+}
+function syncLoginClean(){
+  const modal=$('adminLoginModal');if(!modal)return;
+  const clean=!adminVisible();
+  document.documentElement.classList.toggle('zr-admin-login-clean',clean);
+  if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask();
+}
+function watchLoginClean(){
+  const modal=$('adminLoginModal'),admin=$('adminView');if(!modal||!admin||loginObserver)return;
+  loginObserver=new MutationObserver(()=>setTimeout(syncLoginClean,0));
+  loginObserver.observe(modal,{attributes:true,attributeFilter:['class','style','hidden']});
+  loginObserver.observe(admin,{attributes:true,attributeFilter:['class','style','hidden']});
+  syncLoginClean();
 }
 
 function openAdminGate(force=false){
@@ -33,14 +71,15 @@ function openAdminGate(force=false){
 
   const modal=$('adminLoginModal'),admin=$('adminView');
   if(!modal||!admin||!$('adminLoginSubmit')||!$('adminPassword'))return false;
+  watchLoginClean();
 
-  const adminVisible=getComputedStyle(admin).display!=='none'&&!admin.classList.contains('hidden');
-  if(adminVisible&&!force){opened=true;return true}
+  const adminIsVisible=adminVisible();
+  if(adminIsVisible&&!force){opened=true;syncLoginClean();return true}
 
   if(typeof window.openModal==='function')window.openModal('adminLoginModal');
   else modal.classList.remove('hidden');
 
-  opened=true;
+  opened=true;syncLoginClean();
   setTimeout(()=>$('adminPassword')?.focus?.(),60);
   return true;
 }
@@ -63,6 +102,7 @@ function boot(){
   }
 
   document.addEventListener('click',e=>{
+    if(e.target?.closest?.('#adminLoginSubmit'))setTimeout(syncLoginClean,0);
     if(!e.target?.closest?.('#adminLogout'))return;
     setTimeout(()=>openAdminGate(true),0);
   });
