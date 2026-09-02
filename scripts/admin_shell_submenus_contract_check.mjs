@@ -15,6 +15,7 @@ for(const required of [
   'const HOVER_OPEN_DELAY_MS=1000;',
   "cleanup:[",
   "inquiries:[",
+  "previewVisit:[",
   "guide:[",
   "settings:[",
   "label:'예약 정리'",
@@ -22,6 +23,8 @@ for(const required of [
   "label:'정리 내역'",
   "label:'문의 현황'",
   "label:'답변 예시'",
+  "label:'사전답사 현황'",
+  "label:'확정문자 예시'",
   "label:'이용 안내'",
   "label:'가이드맵'",
   "label:'주차 안내'",
@@ -34,6 +37,8 @@ for(const required of [
   "targetId:'zrCleanupHistorySubtab'",
   "targetId:'zrInquiryReplyInquirySubtab'",
   "targetId:'zrInquiryReplyExampleSubtab'",
+  "targetId:'zrPreviewNotifyVisitSubtab'",
+  "targetId:'zrPreviewNotifyTemplateSubtab'",
   "targetId:'zrGuideInfoSubtabV1'",
   "targetId:'zrGuideMapSubtabV1'",
   "targetId:'zrGuideParkingSubtabV1'",
@@ -92,4 +97,4 @@ for(const source of [submenu,guard])for(const forbidden of [
   'reservationAvailability'
 ])need(!source.includes(forbidden),`admin sidebar navigation helpers must remain navigation-only: ${forbidden}`);
 
-console.log('OK: sidebar opens or closes a submenu on the first parent click, delays hover expansion by one second, keeps multiple opened groups expanded until explicitly toggled closed, scrolls long navigation with the mouse wheel, switches existing subtabs without default-tab flash, preserves the guide-map collision guard, and performs no data writes.');
+console.log('OK: sidebar owns preview-visit subtabs as well as the existing nested sections, switches hidden original controls without default-tab flash, preserves delayed hover/multi-open behavior, and performs no data writes.');
