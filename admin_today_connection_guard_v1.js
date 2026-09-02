@@ -6,6 +6,7 @@ window.__ZR_ADMIN_TODAY_CONNECTION_GUARD_V1=true;
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const $=id=>document.getElementById(id);
 let retryTimer=0,watchTimer=0,lastLoadingAt=0,lastRetryAt=0,retryCount=0,lastDate='';
+let defaultTodayOpened=false,defaultTodayTimer=0;
 
 function injectStyle(){
   if($('zrAdminTodayConnectionGuardStyleV1'))return;
@@ -77,6 +78,77 @@ function injectStyle(){
       border-color:#c7ddea!important;
       color:var(--zr-v3-blue,#2f6b86)!important;
     }
+
+    /* Schedule month controls: same date-navigation language as every other admin screen. */
+    html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-date-nav-fix{
+      min-width:38px!important;
+      min-height:38px!important;
+      background:#fff!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      border-radius:10px!important;
+      color:var(--zr-v3-green,#004b2a)!important;
+      -webkit-text-fill-color:var(--zr-v3-green,#004b2a)!important;
+      box-shadow:none!important;
+      opacity:1!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-date-nav-fix:hover{
+      background:var(--zr-v3-green-soft,#eef6f1)!important;
+      border-color:var(--zr-v3-green,#004b2a)!important;
+      color:var(--zr-v3-green-dark,#003b21)!important;
+      -webkit-text-fill-color:var(--zr-v3-green-dark,#003b21)!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-export-fix{
+      background:#fff!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      color:var(--zr-v3-green,#004b2a)!important;
+      -webkit-text-fill-color:var(--zr-v3-green,#004b2a)!important;
+      box-shadow:none!important;
+      opacity:1!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-export-fix:hover,
+    html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-export-fix:focus-visible{
+      background:var(--zr-v3-green,#004b2a)!important;
+      border-color:var(--zr-v3-green,#004b2a)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+    }
+
+    /* Right shared memo: mirror the same navigation/action colors. */
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-nav{
+      background:#fff!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      color:var(--zr-v3-green,#004b2a)!important;
+      -webkit-text-fill-color:var(--zr-v3-green,#004b2a)!important;
+      box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-nav:hover{
+      background:var(--zr-v3-green-soft,#eef6f1)!important;
+      color:var(--zr-v3-green-dark,#003b21)!important;
+      -webkit-text-fill-color:var(--zr-v3-green-dark,#003b21)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-today{
+      background:var(--zr-v3-green,#004b2a)!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-today:hover{
+      background:var(--zr-v3-green-dark,#003b21)!important;
+      border-color:var(--zr-v3-green-dark,#003b21)!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-save{
+      background:var(--zr-v3-orange,#fc5404)!important;
+      border:1px solid var(--zr-v3-orange,#fc5404)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-save:hover:not(:disabled){
+      background:var(--zr-v3-orange-dark,#e24600)!important;
+      border-color:var(--zr-v3-orange-dark,#e24600)!important;
+    }
+
     #zrTodayDbStatus[data-zr-retryable="1"]{cursor:pointer;user-select:none}
     #zrTodayDbStatus[data-zr-retryable="1"]:hover{border-color:var(--zr-v3-orange,#fc5404)!important}
   `;
@@ -88,6 +160,38 @@ function markCalendarCurrentMonth(){
     const compact=String(btn.textContent||'').replace(/\s+/g,'').trim();
     btn.classList.toggle('zr-calendar-current-month-fix',compact==='이번달');
   });
+}
+function markScheduleControls(){
+  const tab=$('tab-schedule');if(!tab)return;
+  tab.querySelectorAll('button').forEach(btn=>{
+    const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
+    const compact=text.replace(/\s+/g,'');
+    const aria=String(btn.getAttribute('aria-label')||'').replace(/\s+/g,'');
+    const nav=/^[‹›<>←→]$/.test(compact)||/(이전|다음).*(달|월)/.test(compact)||(이전|다음).*(달|월)/.test(aria);
+    const excel=/엑셀/.test(compact);
+    btn.classList.toggle('zr-schedule-date-nav-fix',nav);
+    btn.classList.toggle('zr-schedule-export-fix',excel);
+  });
+}
+function adminVisible(){
+  const admin=$('adminView');if(!admin)return false;
+  const style=getComputedStyle(admin);
+  return style.display!=='none'&&style.visibility!=='hidden'&&admin.getClientRects().length>0;
+}
+function loginModalVisible(){
+  const modal=$('adminLoginModal');
+  if(!modal||modal.classList.contains('hidden'))return false;
+  const style=getComputedStyle(modal);return style.display!=='none'&&style.visibility!=='hidden';
+}
+function openTodayAfterLoginOnce(){
+  if(defaultTodayOpened)return true;
+  if(!adminVisible()||loginModalVisible())return false;
+  const btn=document.querySelector('#zrAdminShellRail [data-zr-admin-item="today"]');
+  if(!btn)return false;
+  defaultTodayOpened=true;
+  try{btn.click()}catch{}
+  if(defaultTodayTimer){clearInterval(defaultTodayTimer);defaultTodayTimer=0}
+  return true;
 }
 function todayOpen(){
   const sec=$('tab-today');
@@ -123,6 +227,8 @@ function markManualRetry(){
 function watch(){
   injectStyle();
   markCalendarCurrentMonth();
+  markScheduleControls();
+  openTodayAfterLoginOnce();
   const st=$('zrTodayDbStatus'),date=$('zrTodayDate');
   if(!st||!date)return;
   if(date.value!==lastDate){lastDate=date.value;retryCount=0;lastLoadingAt=0}
@@ -152,6 +258,8 @@ function bindStatus(){
 function boot(){
   injectStyle();
   markCalendarCurrentMonth();
+  markScheduleControls();
+  if(!defaultTodayTimer)defaultTodayTimer=setInterval(openTodayAfterLoginOnce,120);
   if(!watchTimer)watchTimer=setInterval(()=>{bindStatus();watch()},700);
   window.addEventListener('online',()=>{retryCount=0;setTimeout(()=>triggerRetry('online'),100)});
   document.addEventListener('zr:customer-firebase-ready',()=>{retryCount=0;setTimeout(()=>triggerRetry('firebase-ready'),100)});
