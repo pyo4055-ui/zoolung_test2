@@ -54,6 +54,29 @@ function injectStyle(){
       color:#fff!important;
       -webkit-text-fill-color:#fff!important;
     }
+    html.zr-admin-shell-mounted #adminView #tab-calendar #adminCalendar .weekday{
+      min-height:34px!important;
+      display:flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      margin:0 3px 8px!important;
+      border:1px solid #ded5cc!important;
+      border-radius:9px!important;
+      background:#fbf8f3!important;
+      color:#4e4741!important;
+      font-weight:900!important;
+      box-sizing:border-box!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-calendar #adminCalendar .weekday.zr-cal-sun{
+      background:var(--zr-v3-coral-soft,#fff0ec)!important;
+      border-color:#efc8c1!important;
+      color:var(--zr-v3-coral,#bd5548)!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-calendar #adminCalendar .weekday.zr-cal-sat{
+      background:var(--zr-v3-blue-soft,#edf6fb)!important;
+      border-color:#c7ddea!important;
+      color:var(--zr-v3-blue,#2f6b86)!important;
+    }
     #zrTodayDbStatus[data-zr-retryable="1"]{cursor:pointer;user-select:none}
     #zrTodayDbStatus[data-zr-retryable="1"]:hover{border-color:var(--zr-v3-orange,#fc5404)!important}
   `;
