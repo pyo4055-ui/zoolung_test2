@@ -4,7 +4,7 @@ if(window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1)return;
 window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1=true;
 
 const $=id=>document.getElementById(id);
-let opened=false,loginObserver=null;
+let opened=false,loginObserver=null,todayPrepareTimer=0;
 const hiddenLoginSiblings=new Set();
 
 function installStyle(){
@@ -72,6 +72,21 @@ function watchLoginClean(){
   loginObserver.observe(admin,{attributes:true,attributeFilter:['class','style','hidden']});
   syncLoginClean();
 }
+function preselectTodayWhileHidden(){
+  if(todayPrepareTimer){clearInterval(todayPrepareTimer);todayPrepareTimer=0}
+  let tries=0;
+  const select=()=>{
+    const btn=$('zrTodayTabBtn');
+    if(btn){
+      try{btn.click()}catch{}
+      if(todayPrepareTimer){clearInterval(todayPrepareTimer);todayPrepareTimer=0}
+      return true;
+    }
+    return ++tries>40;
+  };
+  if(select())return;
+  todayPrepareTimer=setInterval(()=>{if(select()){clearInterval(todayPrepareTimer);todayPrepareTimer=0}},25);
+}
 
 function openAdminGate(force=false){
   document.documentElement.classList.add('zr-admin-entry-page');
@@ -113,6 +128,9 @@ function boot(){
 
   document.addEventListener('click',e=>{
     if(e.target?.closest?.('#adminLoginSubmit')){
+      /* Select Today while #adminView is still hidden. The async login handler reveals
+         the workspace later, so no previous/default tab can flash on screen first. */
+      preselectTodayWhileHidden();
       setTimeout(syncLoginClean,0);
       setTimeout(syncLoginClean,120);
       setTimeout(syncLoginClean,500);
