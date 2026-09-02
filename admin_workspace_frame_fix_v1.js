@@ -5,7 +5,7 @@ window.__ZR_ADMIN_WORKSPACE_FRAME_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
 const SECTION_IDS=['tab-today','tab-calendar','tab-schedule','tab-warning','tab-activity','tab-meals','tab-cleanup','tab-inquiries','tab-preview-visit','zrGuideAdminSection','tab-outsourcing','tab-menuadmin','tab-settings'];
-let rootObserver=null,adminObserver=null,scheduled=false;
+let rootObserver=null,adminObserver=null,scheduled=false,loginIdentityResetDone=false;
 
 function injectStyle(){
   if($('zrAdminWorkspaceFrameFixV1Style'))return;
@@ -91,6 +91,21 @@ function fixLoginIdentityPlacement(){
   }else{
     const actions=card.querySelector('.modal-actions');
     if(field.parentElement!==card)card.insertBefore(field,actions||null);
+  }
+
+  const clean=document.documentElement.classList.contains('zr-admin-login-clean');
+  if(clean&&!loginIdentityResetDone){
+    try{localStorage.removeItem('zr_admin_display_name_v1')}catch{}
+    const input=$('zrAdminIdentity');
+    if(input){
+      input.value='';
+      input.placeholder='아이디';
+      input.setAttribute('autocomplete','off');
+      input.setAttribute('aria-label','아이디');
+    }
+    loginIdentityResetDone=true;
+  }else if(!clean){
+    loginIdentityResetDone=false;
   }
   return true;
 }
