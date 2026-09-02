@@ -124,13 +124,15 @@ function observe(){
   document.addEventListener('zr:preview-visits-changed',render);
   window.addEventListener('storage',e=>{if([INQUIRY_KEY,'zr_bookings'].includes(e.key||''))render()});
 }
+function ensureTimer(){if(!timer)timer=setInterval(render,3000)}
 function boot(){
+  ensureTimer();
   if(!build()){
     let tries=0;const wait=setInterval(()=>{if(build()||++tries>120){clearInterval(wait);if(panel)observe()}},100);return;
   }
   observe();
-  if(!timer)timer=setInterval(render,3000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,0),{once:true});
+ensureTimer();
 })();
