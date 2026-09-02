@@ -79,7 +79,6 @@ function injectStyle(){
       color:var(--zr-v3-blue,#2f6b86)!important;
     }
 
-    /* Schedule month controls: same date-navigation language as every other admin screen. */
     html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-date-nav-fix{
       min-width:38px!important;
       min-height:38px!important;
@@ -113,7 +112,6 @@ function injectStyle(){
       -webkit-text-fill-color:#fff!important;
     }
 
-    /* Right shared memo: mirror the same navigation/action colors. */
     html.zr-admin-shell-mounted #zrAdminDailyMemoV1 .zr-admin-daily-memo-nav{
       background:#fff!important;
       border:1.5px solid var(--zr-v3-green,#004b2a)!important;
@@ -167,7 +165,7 @@ function markScheduleControls(){
     const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
     const compact=text.replace(/\s+/g,'');
     const aria=String(btn.getAttribute('aria-label')||'').replace(/\s+/g,'');
-    const nav=/^[‹›<>←→]$/.test(compact)||/(이전|다음).*(달|월)/.test(compact)||(이전|다음).*(달|월)/.test(aria);
+    const nav=/^[‹›<>←→]$/.test(compact)||/(이전|다음).*(달|월)/.test(compact)||/(이전|다음).*(달|월)/.test(aria);
     const excel=/엑셀/.test(compact);
     btn.classList.toggle('zr-schedule-date-nav-fix',nav);
     btn.classList.toggle('zr-schedule-export-fix',excel);
