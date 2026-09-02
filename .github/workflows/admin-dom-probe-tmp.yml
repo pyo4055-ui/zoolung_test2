@@ -1,0 +1,14 @@
+name: TEMP Admin DOM Probe
+on:
+  push:
+    branches:
+      - refactor-preserve-behavior
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/admin_dom_probe_tmp.mjs
