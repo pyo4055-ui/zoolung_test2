@@ -4,6 +4,7 @@ if(window.__ZR_ADMIN_INQUIRY_REPLY_LAYOUT_V1)return;
 window.__ZR_ADMIN_INQUIRY_REPLY_LAYOUT_V1=true;
 
 const INQUIRY_KEY='zr_inquiries';
+const TEMPLATE_KEY='zr_inquiry_reply_templates_v1';
 const PREVIEW_LIMIT=20;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -87,6 +88,18 @@ function decorateInquiryCards(){
   });
 }
 function scheduleDecorate(){setTimeout(decorateInquiryCards,0)}
+function requestTemplateRender(){
+  /* admin_inquiry_reply_v1 keeps renderTemplates private, but already listens for
+     TEMPLATE_KEY storage changes. Dispatch the same signal in this window so saved
+     examples are painted on the very first subtab open without creating a dummy item. */
+  try{
+    window.dispatchEvent(new StorageEvent('storage',{key:TEMPLATE_KEY,storageArea:localStorage}));
+  }catch{
+    const ev=new Event('storage');
+    try{Object.defineProperty(ev,'key',{value:TEMPLATE_KEY})}catch{}
+    window.dispatchEvent(ev);
+  }
+}
 function setSubtab(mode){
   const main=$('tab-inquiry-reply-v1'),examples=$('tab-inquiry-reply-examples');
   if(!main||!examples)return;
@@ -97,6 +110,7 @@ function setSubtab(mode){
   if(inquiryBtn)inquiryBtn.className=examplesOpen?'btn-gray':'btn-primary';
   if(exampleBtn)exampleBtn.className=examplesOpen?'btn-primary':'btn-gray';
   if(examplesOpen){
+    requestTemplateRender();
     try{document.getElementById('zrInquiryTemplateList')?.scrollIntoView?.({block:'nearest'})}catch{}
   }else scheduleDecorate();
 }
@@ -144,6 +158,8 @@ function install(){
   document.addEventListener('zr:inquiry-replies-changed',scheduleDecorate);
   window.addEventListener('storage',e=>{if(e.key===INQUIRY_KEY)scheduleDecorate()});
 
+  /* Prepaint the hidden list once so the sidebar's first Answers-example open is instant. */
+  requestTemplateRender();
   setSubtab('inquiry');
   scheduleDecorate();
   installed=true;
