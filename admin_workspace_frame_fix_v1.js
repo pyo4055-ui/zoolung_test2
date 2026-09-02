@@ -37,6 +37,12 @@ function injectStyle(){
         width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important;
       }
     }
+    /* Login visual repair: keep the photo layer above the modal fallback background,
+       while the white login card stays above both photo and overlay. */
+    html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{background:#38271e!important}
+    html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before{z-index:0!important;opacity:1!important}
+    html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::after{z-index:1!important}
+    html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{z-index:2!important}
   `;document.head.appendChild(s);
 }
 function important(el,name,value){try{el?.style?.setProperty(name,value,'important')}catch{}}
@@ -74,7 +80,21 @@ function fluidize(){
     }
   }
 }
-function apply(){scheduled=false;injectStyle();forceFrame();fluidize()}
+function fixLoginIdentityPlacement(){
+  const modal=$('adminLoginModal'),card=modal?.querySelector('.modal-card');
+  const field=$('zrAdminIdentityField'),password=$('adminPassword');
+  if(!modal||!card||!field||!password)return false;
+  let anchor=password;
+  while(anchor.parentElement&&anchor.parentElement!==card&&card.contains(anchor.parentElement))anchor=anchor.parentElement;
+  if(anchor.parentElement===card){
+    if(field.parentElement!==card||field.nextElementSibling!==anchor)card.insertBefore(field,anchor);
+  }else{
+    const actions=card.querySelector('.modal-actions');
+    if(field.parentElement!==card)card.insertBefore(field,actions||null);
+  }
+  return true;
+}
+function apply(){scheduled=false;injectStyle();fixLoginIdentityPlacement();forceFrame();fluidize()}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(apply)}
 function installObservers(){
   const admin=$('adminView');
