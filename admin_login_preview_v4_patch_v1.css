@@ -1,0 +1,105 @@
+/* Approved admin login preview v4 parity patch.
+   Visual-only layer: auth, Firestore, reservation and schedule behavior stay untouched. */
+
+html.zr-admin-login-clean,
+html.zr-admin-login-clean body{
+  background:#38271e!important;
+}
+
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{
+  background:#38271e!important;
+}
+
+/* Match the approved preview's centered 16:9 frame exactly.
+   Wide screens get brown side gutters; tall screens get brown top/bottom gutters. */
+#zrAdminLoginSceneV1{
+  display:grid!important;
+  place-items:center!important;
+  overflow:hidden!important;
+  background:#38271e!important;
+}
+
+#zrAdminLoginSceneV1 video{
+  width:min(100vw,calc(100svh * 16 / 9))!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:100svh!important;
+  aspect-ratio:16 / 9!important;
+  display:block!important;
+  object-fit:contain!important;
+  background:#38271e!important;
+}
+
+/* Preview v4: the gradient is always present, then a very light warm veil
+   is added only after the intro has finished and the card is ready. */
+#zrAdminLoginSceneV1::before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  background:rgba(20,12,8,0)!important;
+  transition:background .65s ease!important;
+}
+
+html.zr-admin-login-intro-ready #zrAdminLoginSceneV1::before{
+  background:rgba(20,12,8,.08)!important;
+}
+
+#zrAdminLoginSceneV1::after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:2!important;
+  pointer-events:none!important;
+  opacity:1!important;
+  background:linear-gradient(
+    90deg,
+    rgba(34,18,10,.28) 0%,
+    rgba(34,18,10,.12) 33%,
+    rgba(10,14,14,.03) 64%,
+    rgba(10,14,14,.08) 100%
+  )!important;
+  transition:none!important;
+}
+
+/* The approved preview card is a vertical flex card so the employee label
+   stays naturally anchored at the bottom when there is spare height. */
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  display:flex!important;
+  flex-direction:column!important;
+  width:min(430px,calc(100vw - 56px))!important;
+  min-height:590px!important;
+  padding:54px 42px 38px!important;
+  border-radius:30px!important;
+}
+
+#zrAdminLoginEmployeeV1{
+  margin-top:auto!important;
+  padding-top:28px!important;
+}
+
+@media(max-width:900px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    width:min(420px,calc(100vw - 36px))!important;
+    min-height:520px!important;
+    padding:42px 30px 30px!important;
+    border-radius:26px!important;
+  }
+  #zrAdminLoginSceneV1::after{
+    background:rgba(31,17,11,.18)!important;
+  }
+}
+
+@media(max-height:660px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    min-height:0!important;
+    padding-top:30px!important;
+    padding-bottom:26px!important;
+  }
+  #zrAdminLoginEmployeeV1{
+    padding-top:18px!important;
+  }
+}
