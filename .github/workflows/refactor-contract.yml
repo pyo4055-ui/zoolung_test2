@@ -69,6 +69,8 @@ jobs:
         run: node scripts/booking_hold_contract_check.mjs
       - name: Verify onsite quick-time controls
         run: node scripts/schedule_quick_time_contract_check.mjs
+      - name: Verify onsite outsourcing payment display
+        run: node scripts/schedule_outsource_display_contract_check.mjs
       - name: Verify dedicated admin entry isolation
         run: node scripts/admin_entry_contract_check.mjs
       - name: Verify onsite auth isolation
