@@ -75,6 +75,8 @@ jobs:
         run: node scripts/admin_entry_contract_check.mjs
       - name: Verify admin sidebar submenus
         run: node scripts/admin_shell_submenus_contract_check.mjs
+      - name: Verify admin urgent warning attention
+        run: node scripts/admin_shell_attention_contract_check.mjs
       - name: Verify onsite auth isolation
         run: |
           node - <<'NODE'
