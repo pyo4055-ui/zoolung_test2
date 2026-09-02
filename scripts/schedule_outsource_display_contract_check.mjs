@@ -21,10 +21,10 @@ for(const needle of [
   'b?.outsourcingVendorSnapshot',
   'st.vendorId',
   'st.vendorSnapshot',
-  "badge.textContent=isSelf?'자체':`외주 · ${info.name}`",
+  'const text=info.name',
   "pay.insertAdjacentElement('afterend',badge)",
   "F.onAuthStateChanged(auth",
-  "new MutationObserver(()=>{start();applyBadges();})"
+  "observer.observe(list,{childList:true})"
 ])if(!s.includes(needle))fail(`onsite outsourcing display missing: ${needle}`);
 
 for(const forbidden of [
@@ -33,11 +33,13 @@ for(const forbidden of [
   'deleteDoc(',
   'savePatch(',
   "localStorage.setItem('zr_bookings'",
-  "F.collection(db,'scheduleGroups')"
-])if(s.includes(forbidden))fail(`onsite outsourcing display must remain read/display-only: ${forbidden}`);
+  "F.collection(db,'scheduleGroups')",
+  "observer.observe(list,{childList:true,subtree:true})",
+  '외주 · ${info.name}'
+])if(s.includes(forbidden))fail(`onsite outsourcing display must remain read/display-only and loop-safe: ${forbidden}`);
 
 if(!page.includes('<script type="module" src="./schedule_refactor/outsource_display.js?v=1"></script>'))fail('schedule page does not load outsourcing display module');
 if(!display.includes('data-c="pay"')||!display.includes('${g.pay?"✓ ":""}결제'))fail('existing onsite payment toggle must remain intact');
 
 if(failed)process.exit(1);
-ok('onsite payment row reads the reservation vendor and shows it beside the unchanged payment toggle without reservation writes');
+ok('onsite payment row shows the reservation vendor name beside the unchanged payment toggle without observer recursion or reservation writes');
