@@ -20,7 +20,7 @@ for(const required of [
   "#tab-today{margin-top:0!important}",
   "['zrAdminSafariThemeV1','zrAdminSafariThemeV2']",
   "link.id='zrAdminSafariThemeV3'",
-  "link.href='./admin_safari_theme_v3.css?v=2'",
+  "link.href='./admin_safari_theme_v3.css?v=4'",
   "function decorateBrand()",
   "zr-admin-brand-dongtan",
   "function decorateCalendar()",
@@ -29,7 +29,14 @@ for(const required of [
   "zr-cal-has-booking",
   "function decorateActionButtons()",
   "zr-safari-popup-trigger",
-  "zr-safari-payment-trigger"
+  "zr-safari-payment-trigger",
+  "zr-safari-role-primary",
+  "zr-safari-role-current",
+  "zr-safari-role-export",
+  "zr-safari-role-print",
+  "#zrAdminShellRail .zr-admin-shell-subitem.is-active",
+  "#tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/4!important;grid-row:2!important}",
+  "#tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:10/13!important;grid-row:2!important}"
 ])need(ui.includes(required),`admin current UI cleanup missing: ${required}`);
 for(const forbiddenLink of [
   "link.id='zrAdminSafariThemeV1'",
@@ -66,4 +73,4 @@ for(const required of [
 ])need(safari3.includes(required),`admin safari v3 theme missing: ${required}`);
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore(','localStorage.setItem(','sessionStorage.setItem(','zr_bookings','scheduleSharedMemos'])need(!safari3.includes(forbidden),`admin safari v3 theme must remain visual-only: ${forbidden}`);
 
-console.log('OK: admin loads one safari v3 visual layer only; Zoolung orange + deep green lead the brand, brown stays secondary, weekends remain blue/coral, and reservation data remains untouched.');
+console.log('OK: admin keeps one safari v3 visual layer; action roles are consistent, activity controls are aligned, old sidebar group hover colors cannot resurface, and reservation data remains untouched.');
