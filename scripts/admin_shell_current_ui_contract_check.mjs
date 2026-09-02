@@ -35,8 +35,12 @@ for(const required of [
   "zr-safari-role-export",
   "zr-safari-role-print",
   "#zrAdminShellRail .zr-admin-shell-subitem.is-active",
-  "#tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/4!important;grid-row:2!important}",
-  "#tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:10/13!important;grid-row:2!important}"
+  "#tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:13/16!important;grid-row:1!important}",
+  "#tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:7/10!important;grid-row:2!important}",
+  "#tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:10/13!important;grid-row:2!important}",
+  "#tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:13/16!important;grid-row:2!important}",
+  "#zr11ActivityToolbar #zrActivityOrgModalBtn",
+  "background:var(--zr-v3-blue)!important"
 ])need(ui.includes(required),`admin current UI cleanup missing: ${required}`);
 for(const forbiddenLink of [
   "link.id='zrAdminSafariThemeV1'",
@@ -73,4 +77,4 @@ for(const required of [
 ])need(safari3.includes(required),`admin safari v3 theme missing: ${required}`);
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore(','localStorage.setItem(','sessionStorage.setItem(','zr_bookings','scheduleSharedMemos'])need(!safari3.includes(forbidden),`admin safari v3 theme must remain visual-only: ${forbidden}`);
 
-console.log('OK: admin keeps one safari v3 visual layer; action roles are consistent, activity controls are aligned, old sidebar group hover colors cannot resurface, and reservation data remains untouched.');
+console.log('OK: admin keeps one safari v3 visual layer; activity search stays beside filters, organization search is distinct blue, supporting actions remain aligned, and reservation data remains untouched.');
