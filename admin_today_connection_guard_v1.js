@@ -79,6 +79,40 @@ function injectStyle(){
       color:var(--zr-v3-blue,#2f6b86)!important;
     }
 
+    /* Today and Schedule use the same top-right date toolbar geometry. */
+    html.zr-admin-shell-mounted #adminView #tab-today .zr-today-tools{
+      display:flex!important;align-items:center!important;justify-content:flex-end!important;
+      gap:8px!important;flex-wrap:wrap!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-today .zr-today-tools button,
+    html.zr-admin-shell-mounted #adminView #tab-today .zr-today-tools input{
+      min-height:40px!important;height:40px!important;box-sizing:border-box!important;margin:0!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-today #zrTodayDate{
+      width:150px!important;min-width:150px!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .card>.row{
+      align-items:flex-start!important;gap:14px!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-toolbar{
+      margin:0 0 0 auto!important;display:flex!important;align-items:center!important;
+      justify-content:flex-end!important;gap:8px!important;flex-wrap:wrap!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-toolbar button,
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-toolbar input{
+      min-height:40px!important;height:40px!important;box-sizing:border-box!important;margin:0!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscStatus{order:0!important;margin:0 4px 0 0!important;white-space:nowrap!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscPrev{order:1!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscDate{order:2!important;width:150px!important;min-width:150px!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscNext{order:3!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscToday{order:4!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule #zrscExcel{order:5!important}
+    @media(max-width:1100px){
+      html.zr-admin-shell-mounted #adminView #tab-schedule .card>.row{flex-wrap:wrap!important}
+      html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-toolbar{width:100%!important;margin-left:0!important}
+    }
+
     html.zr-admin-shell-mounted #adminView #tab-schedule button.zr-schedule-date-nav-fix{
       min-width:38px!important;
       min-height:38px!important;
@@ -161,14 +195,17 @@ function markCalendarCurrentMonth(){
 }
 function markScheduleControls(){
   const tab=$('tab-schedule');if(!tab)return;
+  const toolbar=tab.querySelector('.zrsc-toolbar'),topRow=tab.querySelector('.card>.row'),excel=$('zrscExcel');
+  if(toolbar&&topRow&&toolbar.parentElement!==topRow)topRow.appendChild(toolbar);
+  if(toolbar&&excel&&excel.parentElement!==toolbar)toolbar.appendChild(excel);
   tab.querySelectorAll('button').forEach(btn=>{
     const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
     const compact=text.replace(/\s+/g,'');
     const aria=String(btn.getAttribute('aria-label')||'').replace(/\s+/g,'');
     const nav=/^[‹›<>←→]$/.test(compact)||/(이전|다음).*(달|월)/.test(compact)||/(이전|다음).*(달|월)/.test(aria);
-    const excel=/엑셀/.test(compact);
+    const isExcel=/엑셀/.test(compact);
     btn.classList.toggle('zr-schedule-date-nav-fix',nav);
-    btn.classList.toggle('zr-schedule-export-fix',excel);
+    btn.classList.toggle('zr-schedule-export-fix',isExcel);
   });
 }
 function adminVisible(){
@@ -183,6 +220,13 @@ function loginModalVisible(){
 }
 function openTodayAfterLoginOnce(){
   if(defaultTodayOpened)return true;
+  /* Dedicated login now preselects Today while adminView is still hidden. If that
+     already happened, stop here so there is no second post-login click/re-render. */
+  if(todayOpen()){
+    defaultTodayOpened=true;
+    if(defaultTodayTimer){clearInterval(defaultTodayTimer);defaultTodayTimer=0}
+    return true;
+  }
   if(!adminVisible()||loginModalVisible())return false;
   const btn=document.querySelector('#zrAdminShellRail [data-zr-admin-item="today"]');
   if(!btn)return false;
