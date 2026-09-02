@@ -5,6 +5,12 @@ window.__ZR_ADMIN_SHELL_CURRENT_UI_FIX_V1=true;
 const $=id=>document.getElementById(id);
 let observer=null;
 
+function ensureSafariTheme(){
+  if($('zrAdminSafariThemeV1'))return;
+  const link=document.createElement('link');
+  link.id='zrAdminSafariThemeV1';link.rel='stylesheet';link.href='./admin_safari_theme_v1.css?v=1';
+  document.head.appendChild(link);
+}
 function injectStyle(){
   if($('zrAdminShellCurrentUiFixV1Style'))return;
   const s=document.createElement('style');s.id='zrAdminShellCurrentUiFixV1Style';s.textContent=`
@@ -67,7 +73,7 @@ function buildRefresh(){
   const edit=$('zrAdminShellHeaderEdit'),status=header.querySelector('.zr-admin-shell-status');
   header.insertBefore(btn,edit||status||null);return true;
 }
-function apply(){injectStyle();hideLegacyChrome();buildRefresh()}
+function apply(){injectStyle();ensureSafariTheme();hideLegacyChrome();buildRefresh()}
 function boot(){
   apply();let tries=0;const wait=setInterval(()=>{apply();if(($('zrAdminShellRefresh')&&$('adminView'))||++tries>120)clearInterval(wait)},100);
   const admin=$('adminView');if(admin&&!observer){observer=new MutationObserver(()=>hideLegacyChrome());observer.observe(admin,{subtree:true,childList:true})}
