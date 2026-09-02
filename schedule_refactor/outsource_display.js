@@ -27,9 +27,11 @@ function applyBadges(){
       pay.insertAdjacentElement('afterend',badge);
     }
     const isSelf=info.id==='self';
+    const text=info.name;
+    const title=isSelf?'결제 구분: 자체':`아웃소싱 업체: ${info.name}`;
     badge.classList.toggle('self',isSelf);
-    badge.textContent=isSelf?'자체':`외주 · ${info.name}`;
-    badge.title=isSelf?'결제 구분: 자체':`아웃소싱 업체: ${info.name}`;
+    if(badge.textContent!==text)badge.textContent=text;
+    if(badge.title!==title)badge.title=title;
   });
 }
 
@@ -75,7 +77,9 @@ function boot(){
   const list=$('list');
   if(list&&!observer){
     observer=new MutationObserver(()=>{start();applyBadges();});
-    observer.observe(list,{childList:true,subtree:true});
+    // renderView replaces the direct children of #list. Observe only that boundary.
+    // Badge insertions happen deeper inside each card and must not retrigger this observer.
+    observer.observe(list,{childList:true});
   }
   F.onAuthStateChanged(auth,user=>{if(user)start();else stop();});
   document.addEventListener('change',e=>{if(e.target?.id==='date')setTimeout(start,0)},true);
