@@ -5,7 +5,6 @@ window.__ZR_ADMIN_ENTRY_BOOTSTRAP_V1=true;
 
 const $=id=>document.getElementById(id);
 const IDENTITY_KEY='zr_admin_display_name_v1';
-const LOGIN_BG_URL='https://cdn.imweb.me/upload/S2021020405a5aa28b5282/971c416f7a19c.png';
 let opened=false,loginObserver=null,todayPrepareTimer=0,identitySyncTimer=0,pendingIdentity='';
 const hiddenLoginSiblings=new Set();
 
@@ -19,10 +18,10 @@ function installStyle(){
     html.zr-admin-entry-page #successView,
     html.zr-admin-entry-page #cancelSuccessView{display:none!important}
     html.zr-admin-entry-page body>header:not(#zrAdminShellHeader){display:none!important}
-    html.zr-admin-login-clean,html.zr-admin-login-clean body{background:#fff!important}
+    html.zr-admin-login-clean,html.zr-admin-login-clean body{background:#38271e!important}
     html.zr-admin-login-clean body{overflow:hidden!important}
     .zr-admin-login-legacy-hidden{display:none!important}
-    html.zr-admin-login-clean #adminLoginModal{background:#fff!important}
+    html.zr-admin-login-clean #adminLoginModal{background:#38271e!important;background-image:none!important}
     html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before{display:none!important}
     html.zr-admin-entry-page #adminLoginModal [data-close="adminLoginModal"],
     html.zr-admin-entry-page #adminLoginModal .zr-modal-ux-header-close{display:none!important}
@@ -50,8 +49,8 @@ function installLoginVisual(){
   if(!modal)return false;
   modal.dataset.zrLoginVisual='1';
   modal.style.setProperty('background-color','#38271e','important');
-  modal.style.setProperty('background-image',`linear-gradient(rgba(54,31,18,.28),rgba(54,31,18,.38)),url("${LOGIN_BG_URL}")`,'important');
-  modal.style.setProperty('background-size','cover','important');
+  modal.style.setProperty('background-image','none','important');
+  modal.style.setProperty('background-size','auto','important');
   modal.style.setProperty('background-position','center center','important');
   modal.style.setProperty('background-repeat','no-repeat','important');
   const title=modal.querySelector('.modal-card h2');
