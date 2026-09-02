@@ -14,8 +14,10 @@ need(titles.includes("if(sec.firstElementChild!==head)sec.prepend(head)"),'secti
 need(titles.includes("e.stopImmediatePropagation();showHelp(activeMeta(group))"),'subtab help button must show help for the active subtab.');
 
 for(const required of ['position:fixed!important','overflow-y:auto!important','overflow:hidden!important','top:calc(var(--zr-shell-gap) + var(--zr-admin-header-height) + var(--zr-shell-gap))!important','bottom:var(--zr-shell-gap)!important','right:calc(var(--zr-admin-smart-width) + (var(--zr-shell-gap) * 2))!important'])need(frame.includes(required),`fixed three-panel workspace contract missing: ${required}`);
-for(const required of ['zr-admin-login-clean','zr-admin-login-legacy-hidden','maskSiblingsAlongModalPath','clearLoginSiblingMask','html.zr-admin-login-clean #adminLoginModal{background:#fff!important}'])need(bootstrap.includes(required),`clean dedicated login contract missing: ${required}`);
+for(const required of ['zr-admin-login-clean','zr-admin-login-legacy-hidden','maskSiblingsAlongModalPath','clearLoginSiblingMask','html.zr-admin-login-clean #adminLoginModal{background:#fff!important}',"sibling===admin||sibling.contains?.(admin)","if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask()"]){
+  need(bootstrap.includes(required),`clean dedicated login contract missing: ${required}`);
+}
 
 for(const text of [titles,frame,bootstrap])for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore('])need(!text.includes(forbidden),`workspace UI module must not write reservation data: ${forbidden}`);
 
-console.log('OK: active subtab names drive visible section headers/help, login background is isolated, and desktop body scroll is replaced by a fixed center workspace scroller.');
+console.log('OK: active subtab names drive visible section headers/help, login background is isolated without masking the administrator workspace after successful sign-in, and desktop body scroll is replaced by a fixed center workspace scroller.');
