@@ -18,6 +18,7 @@ for(const required of [
   ".zr-admin-smart-summary-card",
   ".zr-admin-smart-type-list",
   "#tab-today{margin-top:0!important}",
+  "#zrPreviewNotifyInnerTabs{display:none!important}",
   "['zrAdminSafariThemeV1','zrAdminSafariThemeV2']",
   "link.id='zrAdminSafariThemeV3'",
   "link.href='./admin_safari_theme_v3.css?v=4'",
@@ -32,8 +33,12 @@ for(const required of [
   "zr-safari-payment-trigger",
   "zr-safari-role-primary",
   "zr-safari-role-current",
+  "zr-safari-role-date-nav",
   "zr-safari-role-export",
   "zr-safari-role-print",
+  "const isDateCurrent=/^(오늘|이번달|이번달로이동)$/.test(compact);",
+  "const isDateNav=/(?:이전|저번)(?:날|일|달|월)|다음(?:날|일|달|월)/.test(compact);",
+  "const isPrimary=['조회하기','단체명 검색'].includes(text);",
   "#zrAdminShellRail .zr-admin-shell-subitem.is-active",
   "#tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:13/16!important;grid-row:1!important}",
   "#tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:7/10!important;grid-row:2!important}",
@@ -77,4 +82,4 @@ for(const required of [
 ])need(safari3.includes(required),`admin safari v3 theme missing: ${required}`);
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore(','localStorage.setItem(','sessionStorage.setItem(','zr_bookings','scheduleSharedMemos'])need(!safari3.includes(forbidden),`admin safari v3 theme must remain visual-only: ${forbidden}`);
 
-console.log('OK: admin keeps one safari v3 visual layer; activity search stays beside filters, organization search is distinct blue, supporting actions remain aligned, and reservation data remains untouched.');
+console.log('OK: admin keeps one safari v3 visual layer; date-adjacent navigation uses one current/previous-next language everywhere, preview-visit original subtabs stay hidden behind sidebar controls, activity actions remain aligned, and reservation data remains untouched.');
