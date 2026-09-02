@@ -34,6 +34,7 @@ html.zr-admin-shell-mounted body{background:var(--zr-brand-surface)!important}
 
 .zr-admin-shell-rail,
 .zr-admin-shell-header{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif}
+.zr-admin-shell-rail[hidden],.zr-admin-shell-header[hidden]{display:none!important}
 
 .zr-admin-shell-rail{
   position:fixed;inset:0 auto 0 0;z-index:70;width:var(--zr-admin-rail-width);
