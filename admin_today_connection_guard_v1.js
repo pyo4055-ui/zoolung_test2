@@ -181,6 +181,9 @@ function injectStyle(){
       border-color:var(--zr-v3-orange-dark,#e24600)!important;
     }
 
+    /* Old outsourcing paints a temporary 0-count frame before the V10 renderer. */
+    #tab-outsourcing.zr-outsourcing-preparing{visibility:hidden!important}
+
     #zrTodayDbStatus[data-zr-retryable="1"]{cursor:pointer;user-select:none}
     #zrTodayDbStatus[data-zr-retryable="1"]:hover{border-color:var(--zr-v3-orange,#fc5404)!important}
   `;
@@ -207,6 +210,19 @@ function markScheduleControls(){
     btn.classList.toggle('zr-schedule-date-nav-fix',nav);
     btn.classList.toggle('zr-schedule-export-fix',isExcel);
   });
+}
+function bindOutsourceNoFlash(){
+  const btn=$('outsourceTabBtn'),tab=$('tab-outsourcing');
+  if(!btn||!tab||btn.dataset.zrOutsourceNoFlash==='1')return false;
+  btn.dataset.zrOutsourceNoFlash='1';
+  btn.addEventListener('click',()=>{
+    tab.classList.add('zr-outsourcing-preparing');
+    requestAnimationFrame(()=>{
+      try{$('outsourceSearch')?.click()}catch{}
+      setTimeout(()=>tab.classList.remove('zr-outsourcing-preparing'),70);
+    });
+  },true);
+  return true;
 }
 function adminVisible(){
   const admin=$('adminView');if(!admin)return false;
@@ -270,6 +286,7 @@ function watch(){
   injectStyle();
   markCalendarCurrentMonth();
   markScheduleControls();
+  bindOutsourceNoFlash();
   openTodayAfterLoginOnce();
   const st=$('zrTodayDbStatus'),date=$('zrTodayDate');
   if(!st||!date)return;
@@ -301,6 +318,7 @@ function boot(){
   injectStyle();
   markCalendarCurrentMonth();
   markScheduleControls();
+  bindOutsourceNoFlash();
   if(!defaultTodayTimer)defaultTodayTimer=setInterval(openTodayAfterLoginOnce,120);
   if(!watchTimer)watchTimer=setInterval(()=>{bindStatus();watch()},700);
   window.addEventListener('online',()=>{retryCount=0;setTimeout(()=>triggerRetry('online'),100)});
