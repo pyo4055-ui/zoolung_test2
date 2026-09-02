@@ -90,19 +90,28 @@ function injectStyle(){
       background:var(--zr-v3-green)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
     }
 
-    /* Reservation activity: filters on row 1, four actions in one balanced row 2. */
+    /* Reservation activity: filter flow on row 1, supporting actions aligned on row 2. */
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar{
-      grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:10px 12px!important;align-items:end!important;
+      grid-template-columns:repeat(15,minmax(0,1fr))!important;gap:10px 12px!important;align-items:end!important;
     }
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-start{grid-column:1/4!important;grid-row:1!important}
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-end{grid-column:4/7!important;grid-row:1!important}
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-column:7/10!important;grid-row:1!important}
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-column:10/13!important;grid-row:1!important}
-    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:1/4!important;grid-row:2!important}
-    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:4/7!important;grid-row:2!important}
-    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:7/10!important;grid-row:2!important}
-    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:10/13!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-column:13/16!important;grid-row:1!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-column:7/10!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-column:10/13!important;grid-row:2!important}
+    html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-column:13/16!important;grid-row:2!important}
     html.zr-admin-shell-mounted #tab-activity #zr11ActivityToolbar button{min-height:42px!important;width:100%!important;margin:0!important}
+
+    /* Organisation search is a separate information/search action, not another orange primary CTA. */
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{
+      background:var(--zr-v3-blue)!important;border-color:var(--zr-v3-blue)!important;
+      color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 4px 10px rgba(47,107,134,.14)!important;
+    }
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn:hover{
+      background:#24566d!important;border-color:#24566d!important;
+    }
 
     @media(min-width:901px){
       html.zr-admin-shell-mounted #adminView>section:not(.hidden){margin-top:0!important}
