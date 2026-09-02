@@ -40,18 +40,23 @@ for(const forbiddenLink of [
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore(','localStorage.setItem(','sessionStorage.setItem(','zr_bookings','scheduleSharedMemos'])need(!ui.includes(forbidden),`admin current UI cleanup must remain UI-only: ${forbidden}`);
 
 for(const required of [
-  '--zr-v3-brown:#4b171d',
-  '--zr-v3-orange:#df7916',
+  '--zr-v3-orange:#fc5404',
+  '--zr-v3-green:#004b2a',
+  '--zr-v3-brown:#470910',
   '--zr-v3-blue:#2f6b86',
-  '--zr-v3-leaf:#46664b',
+  '--zr-v3-leaf:#004b2a',
   'data:image/png;base64,',
   '.zr-admin-shell-logo-slot',
-  '.zr-admin-shell-collapse',
+  '#zrAdminShellRail .zr-admin-shell-collapse',
   '.zr-admin-shell-item.is-active',
   '#adminCalendar .day.zr-cal-sat',
   '#adminCalendar .day.zr-cal-sun',
   '#adminCalendar .day.zr-cal-has-booking',
   '#adminCalendar .day.zr-cal-today',
+  '#adminCalendar .day>button',
+  '#zrActivityOrgModalBtn',
+  '.zr-act-today-btn',
+  '.zr-act-excel-btn',
   '#tab-today .zr-today-db.ok',
   '#tab-today .zr-today-metric.em',
   '.zr-admin-smart-summary-card:first-child',
@@ -61,4 +66,4 @@ for(const required of [
 ])need(safari3.includes(required),`admin safari v3 theme missing: ${required}`);
 for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','writeBatch(','setStore(','localStorage.setItem(','sessionStorage.setItem(','zr_bookings','scheduleSharedMemos'])need(!safari3.includes(forbidden),`admin safari v3 theme must remain visual-only: ${forbidden}`);
 
-console.log('OK: admin loads one safari v3 visual layer only; brown structures the UI, orange marks actions, weekends are blue/coral, green stays status-only, and reservation data remains untouched.');
+console.log('OK: admin loads one safari v3 visual layer only; Zoolung orange + deep green lead the brand, brown stays secondary, weekends remain blue/coral, and reservation data remains untouched.');
