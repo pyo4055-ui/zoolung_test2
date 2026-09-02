@@ -1,110 +1,48 @@
-/* Zoolung Dongtan admin safari theme v3 - visual hierarchy only */
+/* Zoolung Dongtan admin safari theme v3 - single visual source of truth.
+   UI only. Brown = structure, orange = action, blue/coral = weekend/info,
+   green = positive status signal only. */
 :root{
-  --zr-v3-brown:#5a3027;
-  --zr-v3-brown-dark:#451f1c;
-  --zr-v3-orange:#db7618;
-  --zr-v3-orange-dark:#c86511;
-  --zr-v3-blue:#2f6b86;
-  --zr-v3-leaf:#41694b;
-  --zr-v3-ivory:#fffdf9;
-  --zr-v3-cream:#f8f3ec;
-  --zr-v3-line:#dfd3c7;
+  --zr-v3-brown:#4b171d;--zr-v3-brown2:#6b3a2e;--zr-v3-brown-soft:#f5ece7;
+  --zr-v3-orange:#df7916;--zr-v3-orange-dark:#c96610;--zr-v3-orange-soft:#fff2e4;
+  --zr-v3-blue:#2f6b86;--zr-v3-blue-soft:#edf6fb;
+  --zr-v3-coral:#b65347;--zr-v3-coral-soft:#fff0ed;
+  --zr-v3-leaf:#46664b;--zr-v3-leaf-soft:#edf4ee;
+  --zr-v3-amber:#a66a19;--zr-v3-amber-soft:#fff4df;
+  --zr-v3-purple:#725c78;--zr-v3-purple-soft:#f4eff6;
+  --zr-v3-red:#ad4343;--zr-v3-red-soft:#fff0f0;
+  --zr-v3-bg:#f1efec;--zr-v3-surface:#fff;--zr-v3-surface2:#fbf8f4;
+  --zr-v3-line:#e2d9d1;--zr-v3-text:#392f2b;--zr-v3-muted:#776c65;
+  --zr-v3-logo:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMMAAABMCAMAAADnR/OVAAAAwFBMVEXjpmRWJR/gy810XF64o6QuERPcspWmXyX41aLukiVePUGKY1qafoH6wnhvQCjZeSLUvsGagHzc09M6EREmBQdUODhDICBeNjaKPBWtl5WsnpsAAAD9/PpHCRAwAgbxkyz+/v7riypHEhbWhi/56Oj9/fxMJyr+9tTu2Nj8/Pw5FBf8/PtpSUuiiInNt7ZzV1j9/PtUNTeQd3iumJjVllD8/PvzpE/0yJD8/PyFaGmahYbrmEv82Kv+5bX86MrQfCzNvOdOAAAAQHRSTlP//v3///3///////r///////8LV5EJfZL/XrEA/v/+/wv//v/+Lf///lD/z//+/v5t//7+/5D//63//v////7/AxsrUAAAC8VJREFUeNrVWweXqkwSJZjGmXlhc8AmCmZBFAOG//+vtqqruwFxgmG/Xfu8c4SGgbpd+TZP+/fzD+2RD3Oc/nAYx3HfcZ4Ug9NfjS0Y4/FmNfwjUWgPhBAjgl1zNBmshv0nxbACCAvGRmwU/JEQHmlLQ1QDY16vx9L4Sf1hAxAGI9YDDG/Wc2LooxoMwrB7TgwOQrAGHscwfU4McRXDM/o0qUH6w3Ni6J9hGD4fBqGGAsPm6XKcsznHYA2d58LQH1s1DFbsPBUG5xIGa9z/P8Lg8LJaDKiu+/3+cLXZbGI8XSn5zzEACkeU5Oq3GPAMOfr9yjz93oeBi0mP64uXodRxVdrLY8DKGCyLP2C4WvEHAvCxGJf+dryCsYFL4w3CugvDcAyPi3GBYvyJN9b3xzkGNTbxVc+xVleAqGP40+t8uzXNrRjmIpDypabZOH9XkC7Kk2Vb2hV/CifzxbG4a99qrdeHM/hTeOtOPSu+B0OTnY3RgL9ijsfNXRXBlt9hFoLIWsMKwiZrNgfivlA9x7Ia+o+l7/q+1v5dPMmYiLfJN/TvsKW/oxCVwSbwyJSRlTAQRK3ujPFZxmZ1PSzYqOc1BTrojJjH5vz4FQ6Xtm1ncGAKWNaUHt/z4PdHcGVQq2HwejUMTQ6hx6+wVitszunVv/C9sPAem86SkWlUMEz4QUIizpnniZO1znT2jxxAoLyvEVkaK1YOVBGokHYbBr2uh9AyindwnY9wqQI5yViXm8HgEwyoBzwZ+DnIrmd21obLP5aa0KdcOvxlXZgb3oHhX8IfSusys5JC2pCv/dZCKfkLYVLXQQiP/ahj6BIGk3eoumUdln7m6/rJdu02vCN/8fdweaQeTzhY4ypF1DA4aRKGSTjRFYQU14kOw61BTssCEUbh0JsPEnIL42M99AhDx7fdLM/zZZZpbb2d2ycNDVW8KfTke9Aj7ohLvIoOglA8DiDAMpJNoeuK+amwYcYagVLJtpQfLmAAydY2H+9RdFznWWbb7jKiW+HemRVMiVNg6FvO7Rh4DToIxdo0Uy43f/CRbJfPv5JcPQpJQvSuZXgfYdDx5Ng+5ZntaujJkebaWZYtj4HOHx/yO9/oVdM7MYylWZMhgVK8nvQBGNw3IN5OpH1YlpQ4tIKP/AGclceGnt62/Q6PRh0/O7Xb+ozcgS0oTzB10r/LlgoIPG0GvdJLhHATq8tk7oCx/QCDrvTA8DJPKG17zycPGoYm1qpgCDx1Mrwdw1BGUk9AED4glE0RFfIVWbFX3IGuGChbmpOL8EwikOmE4WcmMWAcRwy9wpb4erG79WBQPvOYZ1ilpe9xYwpw+T1cKJMVihBOPynpYUEYEvD4QP298QrByF5S5XTAFIEYunQrLzKO+GYPMcT31HwqdelTLPp+B1AJ0ESyWIT0PnDlmZgMcZKETEtxiZQJC/H6SvFhBNLuIRZlbi4wLHO33T51IMJ5uCyUOJUt3VPz/YVRtsTHUs13tJR/iITK401YTNLBSOU4XNLu+WUoWdY+RlZfYOCByV9L82S/yhjuyXF/ZZ7M+fgwj9t+yiplFMXvGWPVyVSJsFPxtpLuIRS9YEqQegA8LmDAkpDypip8F9bmjlrjz96lmm9eFoiR6UIwYkWVw3hZOihCI9aJajk8ctND/gLVniYxuFBy+B3ucIxyglyE7RVpuo7hb/WaL6G3eAqCiLLCrYXFzEUE8kRW4QW1py7zv5lBjsulP0RL1wXD4kEqNScNEfZ69/vDP9F+q00Qf/rbSF5opqpzSYuGSbSfOzwORYcxC1UfJVH1vLZtCwzr00/3pEWVrmrLS0pchHvi0jQchXLo4UhPRJIIdl2djcJJGpQbud0EsI0mOzW5g/aiuCM1k1DvziVq7KT0XOgBQGhaS0EYBEFgbFnhb/17ao2gNKyKxINBUOvea5NntwSl8wa2aZmtOulIIYAmSvd0mVzDErNzB78kWJmYsyWPGp12G+pt/1C7YLBy1yLqg5VzLtK1HBmBuI5R+WocMqy3L2CAykTFONl4n1VMzvCjzdZPMSCI1UMx+BCJqHerjgmTGQkcOlGklFPB8NGut/bptn+djLwTg4057gKGRdGby1KYgyj7tbNCdvR6vlUyjA/CcMx5rVHHgKmGRlKl4cYFV+asPiD/vuSMH+oUR+ijXy5isBqLxe5tlxr1K5u+MIhbbKnw7fhBihjo+o/2ZQyfjfEmxpXsf8CHf2v/gT5j+HxEUfS1MBhCe+2cYzDKSz4YVG4bGLU8NA4MY7C6UQ/l3aqZOTfN1+0r/ptvzbkihY9rLfeX+yqMaA+JeH9Gi0MvmkOZZyTgvIqNDksnxpaTs8miDCuY6ljrhPOZVf+y6Nv7QH2RZqsjHJCwSwiarl81kr2m+b5/Wpf9Qdd7eg6laoASyQgU8KqrW1CzojAr+OlGUxC7UFoG50H3+xgc2RbzCCg7DCI7WiesoiHgaNFhLZQRrX3e8CARc5S0faTlWo7ldoOpskjQPeIkKer5gk/fNYuiucmXbXXbflytq+lJomB9wiIa62jtXTv5VImuTzDFge3Xy6VsGSA98ByXlvnylMkeSZBtqqDfWkUj4ommjKri+FY91DB4aA7Yy9gcg5vh0vsttC7fliPzXfe05MBw1nWh1khLBBsphZ/szlo/fsP50pF6nNv0QM1BmVBGA4g0nwD4/rvmcus5Qn/DJ6FN07Kca2MdWXSrjbxGg/Twq4pBLlLRg4eS6CxPnlfm38eAH5WkSZgkieSTPSS4rKNGJpOBJ3DHcP1WRM2/7S+1PbcfaKIPvHNDPeRR2XxKGCR/MkmnXSbvEMCYt0tNcX17K4ZhEb4VzdHilCOXMcP8cOCr72sdzaWDQ4S8KmLUOkhrcH1pCoNRYEBx56oRVZzWb4kwNKTnUHPs3KqHMwh8GVs+pyeonubGZC8PGV9w7gRRxyejio5COXur6g8prbkhqFwi/ASDOec+wnoCLqHUrQrt8X2f3hSbcCUtEAYX1MBPwIZA+mUnJ9qFT0YIyH5573Aew7URWaOmB5SSOFGzyk0vaMMskA35HRiGVQie2khccwy2wPCC8uaAwRV+TCQ9Glsm1LCuhKLCQgyxRzAvYyA9KLj3YYjPtSDLnbX/ouQlysjVDlRj0z4D58JEsqBNE9yOVIZtBbQFyAKhh3mZqJ5LuJOHYWiIACeKDOrNbDKcw3HP3QAwdMgvIEBFkUgflEGEGiyrKfd+jJagcJNi6St6kHFpVsEwvsWn+bcxLcl6MX2xNanmi3JeaLz4y0wstb+PMEtzNGtNQeAgToKMMYugLyjcqVXVQ4JMMp6ICGUSfSUw3BRbnSrDKnf1A0q+3FZcwuCDtRwooNruSSRAAUJRYgPcSaXnCMI5sM5tSWDoUD6cVPRQ5jK/X7eOhQGo3t3r0d5/pJ2KpRbtctTySe6Xl/KlEqs3rVQQFORCvuVV8YeJ6lMbVQwlRVyDwajVS7QLe9ROhde6wuA1330pFGC7gOWnti41GGaTFWVXcyrF9qr+MJHN9k4gH0kMRZb7vi2tLtR84h1QB/2U9r7siNq7qh0spzBrl8Yb7xP4Jr0gmQGWJ4/xgw9PcrvGbCA5HKYwDK/P06CIXa0HEhE+6uTQ7fx0/WWr+MKntSQU6Cc+XDmcN6vGfESE8lZ+XmOWPsIJJqyp2DIFm2uNCKjN9RhAEdYuCSvDnKluer9+f3/vHMtyRusMoIH4S01bHy+128Es3aWzMiE7nZVOdsX3OLvFYreYsFJBVYTXK75JdIbjj5nhi6xAFB33MI7H6E4+ZFau+RkTalvd8F2lE1v/ozGqxLCt+lrwBgz9R3LgV4xflZ00RcdKr74KA35piWQVjNUqjoeCgHsYhfb5l47CkJLgnI29DsPX3506zld0Wsx56K9Qbyqfos5lQVLsBZa+vHzo/4+r2B1X07Ama7/8HS3S0ZvP/h+adMFt09M9L+y+KXJwPLw+x10PwhH2x7cwQFYANbzhS3ZnuPlAn/91DI9dkHMDHZc/f/0P+U+c1Dn8XJgAAAAASUVORK5CYII=");
 }
-
-/* Remove the leftover pale-green cast. Brown is structure, orange is action, green is signal only. */
-html.zr-admin-shell-mounted,html.zr-admin-shell-mounted body{
-  background:radial-gradient(circle at 92% 5%,rgba(219,118,24,.045),transparent 20%),linear-gradient(180deg,#f4f0eb 0%,#eee8e1 100%)!important;
-}
-.zr-admin-shell-brand{
-  background:#fff!important;
-  border-bottom-color:#e4d8cd!important;
-  min-height:78px!important;
-  padding:10px 9px 10px 12px!important;
-  gap:9px!important;
-}
-.zr-admin-shell-logo-slot{
-  width:86px!important;height:44px!important;flex:0 0 86px!important;
-  background-color:#fff!important;background-blend-mode:normal!important;
-  background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;
-  border:0!important;box-shadow:none!important;border-radius:0!important;
-}
-.zr-admin-shell-brand-copy{min-width:46px!important;overflow:visible!important}
-.zr-admin-shell-brand-title{font-size:14px!important;font-weight:950!important;line-height:1.1!important;color:var(--zr-v3-blue)!important;white-space:nowrap!important}
-.zr-admin-shell-brand-sub{font-size:10px!important;font-weight:800!important;color:#80675a!important;margin-top:4px!important;white-space:nowrap!important}
-.zr-admin-shell-collapse{
-  width:32px!important;height:32px!important;min-width:32px!important;
-  background:var(--zr-v3-brown)!important;border:1px solid var(--zr-v3-brown)!important;
-  color:#fff!important;-webkit-text-fill-color:#fff!important;
-  box-shadow:0 4px 10px rgba(69,31,28,.18)!important;
-}
-.zr-admin-shell-collapse:hover{background:var(--zr-v3-brown-dark)!important;border-color:var(--zr-v3-brown-dark)!important;color:#fff!important}
-
-/* Brown gets a stronger structural role throughout the shell. */
-.zr-admin-shell-page-title,.zr-admin-smart-title,.zr-admin-smart-section-title{color:var(--zr-v3-brown-dark)!important}
-.zr-admin-shell-group-title{color:#785f52!important}
-.zr-admin-shell-path,.zr-admin-shell-status,.zr-admin-shell-refresh{color:var(--zr-v3-brown)!important}
-.zr-admin-shell-status:before{background:var(--zr-v3-leaf)!important}
-.zr-admin-shell-item.is-active{box-shadow:inset 4px 0 0 var(--zr-v3-brown)!important}
-
-/* Calendar hierarchy: classes are assigned from the real YYYY-MM-DD, not DOM nth-child. */
-#adminCalendar .day{position:relative!important;background:#fff!important;border-color:#e1d7ce!important;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease!important}
-#adminCalendar .day.zr-cal-sat{background:#f1f7fb!important;border-color:#c7dce9!important}
-#adminCalendar .day.zr-cal-sun{background:#fff2ee!important;border-color:#edc9c0!important}
-#adminCalendar .day.zr-cal-holiday{background:#ffede8!important;border-color:#e7b9ad!important}
-#adminCalendar .day.zr-cal-sat>.num{color:#2e6380!important}
-#adminCalendar .day.zr-cal-sun>.num,#adminCalendar .day.zr-cal-holiday>.num{color:#ae4b40!important}
-#adminCalendar .weekday.zr-cal-sat{color:#2e6380!important;font-weight:950!important}
-#adminCalendar .weekday.zr-cal-sun{color:#ae4b40!important;font-weight:950!important}
-
-/* Booking exists: make the information, not every button, the focal point. */
-#adminCalendar .day.zr-cal-has-booking{
-  border-color:#c9aa96!important;
-  box-shadow:inset 0 4px 0 var(--zr-v3-brown),0 5px 14px rgba(69,31,28,.06)!important;
-}
-#adminCalendar .day.zr-cal-has-booking .meta{color:#4f352c!important;font-weight:900!important}
-#adminCalendar .day.zr-cal-has-booking .zr-cal-status-summary{font-size:10.5px!important}
-
-/* Today = clear anchor. */
-#adminCalendar .day.zr-cal-today{outline:2px solid var(--zr-v3-brown)!important;outline-offset:-2px!important}
-#adminCalendar .day.zr-cal-today:after{
-  content:'오늘';position:absolute;right:7px;top:7px;z-index:2;
-  padding:2px 6px;border-radius:999px;background:var(--zr-v3-brown)!important;color:#fff!important;
-  font-size:9px;font-weight:950;line-height:1.35;
-}
-
-/* Detail buttons: quiet on empty dates, orange only when there is something to inspect. */
-#adminCalendar .day>.btn-soft,#adminCalendar .day>button.btn-soft{
-  background:#fffaf4!important;border:1px solid #d6c5b7!important;color:var(--zr-v3-brown)!important;-webkit-text-fill-color:var(--zr-v3-brown)!important;
-  box-shadow:none!important;font-weight:900!important;
-}
-#adminCalendar .day>.btn-soft:hover,#adminCalendar .day>button.btn-soft:hover{background:#f3e9df!important;border-color:#bea18e!important;color:var(--zr-v3-brown-dark)!important}
-#adminCalendar .day.zr-cal-has-booking>.btn-soft,#adminCalendar .day.zr-cal-has-booking>button.btn-soft{
-  background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
-}
-#adminCalendar .day.zr-cal-has-booking>.btn-soft:hover,#adminCalendar .day.zr-cal-has-booking>button.btn-soft:hover{background:var(--zr-v3-orange-dark)!important;border-color:var(--zr-v3-orange-dark)!important}
-
-/* Calendar KPI cards: same surface, different semantic accents. */
-#tab-calendar .kpi .box{background:#fff!important;border-color:#e2d7cd!important;box-shadow:0 5px 14px rgba(69,31,28,.04)!important}
-#tab-calendar .kpi .box:nth-child(1){box-shadow:inset 0 3px 0 var(--zr-v3-orange),0 5px 14px rgba(69,31,28,.04)!important}
-#tab-calendar .kpi .box:nth-child(1) strong{color:#a95312!important}
-#tab-calendar .kpi .box:nth-child(2){box-shadow:inset 0 3px 0 var(--zr-v3-blue),0 5px 14px rgba(69,31,28,.04)!important}
-#tab-calendar .kpi .box:nth-child(2) strong{color:#285d76!important}
-#tab-calendar .kpi .box:nth-child(3){box-shadow:inset 0 3px 0 var(--zr-v3-brown),0 5px 14px rgba(69,31,28,.04)!important}
-#tab-calendar .kpi .box:nth-child(3) strong{color:var(--zr-v3-brown-dark)!important}
-
-/* Today operation: green becomes status-only. Surfaces remain neutral/wood toned. */
-#tab-today .zr-today-metric,#tab-today .zr-today-team-card,#tab-today .zr-today-alertbox{background:#fff!important}
-#tab-today .zr-today-metric.em{background:#fff7ed!important;border-color:#e8c9a4!important;box-shadow:inset 0 3px 0 var(--zr-v3-orange),0 5px 18px rgba(69,31,28,.045)!important}
-#tab-today .zr-today-time{background:#f5ece3!important}
-#tab-today .zr-today-program-grid>div,#tab-today .zr-today-schedule{background:#faf6f1!important}
-#tab-today .zr-today-db.ok{background:#fff!important;color:var(--zr-v3-brown)!important;border-color:#d9cbbf!important;box-shadow:inset 3px 0 0 var(--zr-v3-leaf)!important}
-#tab-today .zr-today-badge.confirmed,#tab-today .zr-today-chip.ok{background:#fff!important;color:var(--zr-v3-leaf)!important;border-color:#bfd0c2!important}
-
-/* Orange is still the popup/open action; brown distinguishes adjacent payment/action buttons. */
-html.zr-admin-shell-mounted #adminView button.zr-safari-popup-trigger{background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
-html.zr-admin-shell-mounted #adminView button.zr-safari-payment-trigger,#activityList .zr-settle-card-actions .zr-settle-open{background:var(--zr-v3-brown)!important;border-color:var(--zr-v3-brown)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
-
-@media(max-width:1180px){
-  .zr-admin-shell-logo-slot{width:80px!important;flex-basis:80px!important}
-  .zr-admin-shell-brand{gap:7px!important;padding-left:10px!important}
-}
+html.zr-admin-shell-mounted,html.zr-admin-shell-mounted body{background:var(--zr-v3-bg)!important;color:var(--zr-v3-text)!important}
+.zr-admin-shell-rail{background:#fff!important;border-color:var(--zr-v3-line)!important;box-shadow:4px 0 18px rgba(63,39,31,.045)!important}
+.zr-admin-shell-header{background:rgba(255,255,255,.97)!important;border-color:var(--zr-v3-line)!important;box-shadow:0 3px 14px rgba(63,39,31,.045)!important}
+.zr-admin-shell-page-title,.zr-admin-smart-title,.zr-admin-smart-section-title{color:var(--zr-v3-brown)!important}
+.zr-admin-shell-eyebrow{color:var(--zr-v3-orange)!important}.zr-admin-shell-path{color:var(--zr-v3-muted)!important}
+.zr-admin-shell-status{background:#fff!important;border-color:var(--zr-v3-line)!important;color:var(--zr-v3-brown2)!important}.zr-admin-shell-status:before{background:var(--zr-v3-leaf)!important}
+.zr-admin-shell-brand{min-height:76px!important;padding:10px 8px 10px 10px!important;gap:7px!important;background:#fff!important;border-bottom-color:var(--zr-v3-line)!important}
+.zr-admin-shell-logo-slot{width:82px!important;height:40px!important;flex:0 0 82px!important;background:var(--zr-v3-logo) center/contain no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:transparent!important;font-size:0!important;overflow:visible!important}
+.zr-admin-shell-brand-copy{min-width:38px!important;overflow:visible!important}.zr-admin-shell-brand-title,.zr-admin-shell-brand-title .zr-admin-brand-dongtan{color:var(--zr-v3-blue)!important;font-size:12.5px!important;line-height:1.08!important;font-weight:950!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}.zr-admin-shell-brand-sub{margin-top:4px!important;color:var(--zr-v3-brown2)!important;font-size:9.5px!important;font-weight:850!important;white-space:nowrap!important}
+.zr-admin-shell-collapse{width:31px!important;height:31px!important;min-width:31px!important;padding:0!important;border:1px solid var(--zr-v3-brown)!important;border-radius:10px!important;background:var(--zr-v3-brown)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 4px 10px rgba(75,23,29,.16)!important}.zr-admin-shell-collapse:hover{background:#351116!important;border-color:#351116!important;color:#fff!important}
+.zr-admin-shell-group-title{color:#725f55!important;font-weight:900!important}.zr-admin-shell-item{color:#514843!important;background:transparent!important;border-color:transparent!important}.zr-admin-shell-item:hover{background:#faf6f2!important;color:var(--zr-v3-brown)!important}.zr-admin-shell-item.is-active{background:var(--zr-v3-brown-soft)!important;border-color:#dcc8bc!important;color:var(--zr-v3-brown)!important;box-shadow:inset 4px 0 0 var(--zr-v3-brown)!important}
+.zr-admin-shell-item-dot{background:#8a7d75!important}.zr-admin-shell-item[data-group="operation"] .zr-admin-shell-item-dot{background:var(--zr-v3-brown2)!important}.zr-admin-shell-item[data-group="reservation"] .zr-admin-shell-item-dot{background:var(--zr-v3-blue)!important}.zr-admin-shell-item[data-group="customer"] .zr-admin-shell-item-dot{background:#a96c37!important}.zr-admin-shell-item[data-group="sales"] .zr-admin-shell-item-dot{background:var(--zr-v3-purple)!important}.zr-admin-shell-item[data-group="settings"] .zr-admin-shell-item-dot{background:#736d67!important}
+.zr-admin-shell-item[data-zr-admin-item="warning"]{background:var(--zr-v3-red-soft)!important;border-color:#efc1c1!important;color:var(--zr-v3-red)!important}.zr-admin-shell-item[data-zr-admin-item="warning"] .zr-admin-shell-item-dot{background:var(--zr-v3-red)!important}
+.zr-admin-shell-footer{background:#fff!important;border-top-color:var(--zr-v3-line)!important}.zr-admin-shell-edit,.zr-admin-shell-logout,.zr-admin-shell-refresh{border-color:var(--zr-v3-line)!important;color:var(--zr-v3-brown2)!important}.zr-admin-shell-edit,.zr-admin-shell-refresh{background:#fff!important}.zr-admin-shell-logout{background:#f7f4f1!important}.zr-admin-shell-edit:hover,.zr-admin-shell-refresh:hover{background:var(--zr-v3-orange-soft)!important;color:#8d470d!important}
+.zr-admin-shell-editor{background:#fff!important;border-color:#d2c1b5!important;box-shadow:0 20px 55px rgba(75,23,29,.16)!important}.zr-admin-shell-editor-title{color:var(--zr-v3-brown)!important}.zr-admin-shell-editor-group,.zr-admin-shell-editor-actions{border-color:var(--zr-v3-line)!important}.zr-admin-shell-editor-row:hover{background:#faf5f0!important}.zr-admin-shell-editor-row input{accent-color:var(--zr-v3-orange)!important}
+html.zr-admin-shell-mounted #adminView{color:var(--zr-v3-text)!important;background:#fff!important}html.zr-admin-shell-mounted #adminView h1,html.zr-admin-shell-mounted #adminView h2,html.zr-admin-shell-mounted #adminView h3{color:#332824!important}html.zr-admin-shell-mounted #adminView .card,html.zr-admin-shell-mounted #adminView .kpi .box{background:#fff!important;border-color:var(--zr-v3-line)!important;box-shadow:0 5px 18px rgba(63,39,31,.055)!important}html.zr-admin-shell-mounted #adminView .help{color:var(--zr-v3-muted)!important}html.zr-admin-shell-mounted #adminView .notice{background:var(--zr-v3-orange-soft)!important;border-color:#edc99f!important;color:#674831!important}html.zr-admin-shell-mounted #adminView .calc{background:var(--zr-v3-surface2)!important;border-color:var(--zr-v3-line)!important;color:#594b43!important}
+html.zr-admin-shell-mounted #adminView input,html.zr-admin-shell-mounted #adminView select,html.zr-admin-shell-mounted #adminView textarea{background:#fff!important;border-color:#d9cec6!important;color:var(--zr-v3-text)!important}html.zr-admin-shell-mounted #adminView input:focus,html.zr-admin-shell-mounted #adminView select:focus,html.zr-admin-shell-mounted #adminView textarea:focus{outline:2px solid rgba(223,121,22,.18)!important;border-color:#c98d59!important}
+html.zr-admin-shell-mounted #adminView .btn-primary,html.zr-admin-shell-mounted #adminView button.zr-safari-popup-trigger{background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 4px 10px rgba(223,121,22,.14)!important}html.zr-admin-shell-mounted #adminView .btn-primary:hover,html.zr-admin-shell-mounted #adminView button.zr-safari-popup-trigger:hover{background:var(--zr-v3-orange-dark)!important;border-color:var(--zr-v3-orange-dark)!important}
+html.zr-admin-shell-mounted #adminView button.zr-safari-payment-trigger,#activityList .zr-settle-card-actions .zr-settle-open{background:var(--zr-v3-brown)!important;border-color:var(--zr-v3-brown)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 4px 10px rgba(75,23,29,.12)!important}html.zr-admin-shell-mounted #adminView button.zr-safari-payment-trigger:hover,#activityList .zr-settle-card-actions .zr-settle-open:hover{background:#351116!important;border-color:#351116!important}
+html.zr-admin-shell-mounted #adminView .btn-soft:not(.zr-safari-popup-trigger):not(.zr-safari-payment-trigger),html.zr-admin-shell-mounted #adminView .btn-gray{background:#fff!important;border-color:#dcd1c8!important;color:var(--zr-v3-brown2)!important;-webkit-text-fill-color:var(--zr-v3-brown2)!important;box-shadow:none!important}html.zr-admin-shell-mounted #adminView .btn-soft:not(.zr-safari-popup-trigger):not(.zr-safari-payment-trigger):hover,html.zr-admin-shell-mounted #adminView .btn-gray:hover{background:#f8f2ed!important;border-color:#ccb8aa!important}
+html.zr-admin-shell-mounted #adminView .status.confirmed{background:var(--zr-v3-leaf-soft)!important;border-color:#c7d9ca!important;color:var(--zr-v3-leaf)!important}html.zr-admin-shell-mounted #adminView .status.pending{background:var(--zr-v3-amber-soft)!important;border-color:#ead3a8!important;color:#8b5a17!important}html.zr-admin-shell-mounted #adminView .status.zr-hold-status{background:var(--zr-v3-purple-soft)!important;border-color:#d9cce0!important;color:var(--zr-v3-purple)!important}html.zr-admin-shell-mounted #adminView .status.rejected,html.zr-admin-shell-mounted #adminView .danger{color:var(--zr-v3-red)!important}
+#tab-calendar .kpi .box{position:relative!important;overflow:hidden!important;background:#fff!important;border-color:var(--zr-v3-line)!important}#tab-calendar .kpi .box:before{content:'';position:absolute;left:0;right:0;top:0;height:3px}#tab-calendar .kpi .box:nth-child(1):before{background:var(--zr-v3-orange)!important}#tab-calendar .kpi .box:nth-child(2):before{background:var(--zr-v3-blue)!important}#tab-calendar .kpi .box:nth-child(3):before{background:var(--zr-v3-brown)!important}#tab-calendar .kpi .box:nth-child(1) strong{color:#a95513!important}#tab-calendar .kpi .box:nth-child(2) strong{color:#285f79!important}#tab-calendar .kpi .box:nth-child(3) strong{color:var(--zr-v3-brown)!important}
+#adminCalendar .weekday{color:#655a54!important;font-weight:900!important}#adminCalendar .weekday.zr-cal-sat{color:var(--zr-v3-blue)!important;font-weight:950!important}#adminCalendar .weekday.zr-cal-sun{color:var(--zr-v3-coral)!important;font-weight:950!important}
+#adminCalendar .day{position:relative!important;background:#fff!important;border-color:#e0d7d0!important;box-shadow:none!important}#adminCalendar .day.zr-cal-sat{background:var(--zr-v3-blue-soft)!important;border-color:#bfd7e5!important}#adminCalendar .day.zr-cal-sun{background:var(--zr-v3-coral-soft)!important;border-color:#edc5be!important}#adminCalendar .day.zr-cal-holiday{background:#ffeae5!important;border-color:#e7b2a8!important}#adminCalendar .day.zr-cal-sat>.num{color:#285f79!important}#adminCalendar .day.zr-cal-sun>.num,#adminCalendar .day.zr-cal-holiday>.num{color:#ae473e!important}
+#adminCalendar .day.zr-cal-has-booking{border-color:#bfa28f!important;box-shadow:inset 0 4px 0 var(--zr-v3-brown),0 5px 14px rgba(75,23,29,.065)!important}#adminCalendar .day.zr-cal-has-booking .meta{color:#4e352d!important;font-weight:900!important}#adminCalendar .day.zr-cal-has-booking .zr-cal-status-summary{font-size:10.5px!important}
+#adminCalendar .day.zr-cal-today{outline:2px solid var(--zr-v3-brown)!important;outline-offset:-2px!important}#adminCalendar .day.zr-cal-today:after{content:'오늘';position:absolute;right:7px;top:7px;z-index:2;padding:2px 6px;border-radius:999px;background:var(--zr-v3-brown)!important;color:#fff!important;font-size:9px;font-weight:950;line-height:1.35}
+#adminCalendar .day>.btn-soft,#adminCalendar .day>button.btn-soft{background:#fff!important;border:1px solid #d5c5ba!important;color:var(--zr-v3-brown)!important;-webkit-text-fill-color:var(--zr-v3-brown)!important;box-shadow:none!important;font-weight:900!important}#adminCalendar .day.zr-cal-sat>.btn-soft,#adminCalendar .day.zr-cal-sat>button.btn-soft{background:#f8fcfe!important}#adminCalendar .day.zr-cal-sun>.btn-soft,#adminCalendar .day.zr-cal-sun>button.btn-soft{background:#fff8f6!important}#adminCalendar .day>.btn-soft:hover,#adminCalendar .day>button.btn-soft:hover{background:var(--zr-v3-brown-soft)!important;border-color:#ba9b89!important}#adminCalendar .day.zr-cal-has-booking>.btn-soft,#adminCalendar .day.zr-cal-has-booking>button.btn-soft{background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#tab-today{--zt-green:var(--zr-v3-leaf)!important;--zt-soft:#fff!important;--zt-text:var(--zr-v3-text)!important;--zt-muted:var(--zr-v3-muted)!important;--zt-line:var(--zr-v3-line)!important;--zt-yellow:var(--zr-v3-amber-soft)!important;--zt-shadow:0 5px 18px rgba(63,39,31,.055)!important}#tab-today .zr-today-metric,#tab-today .zr-today-team-card,#tab-today .zr-today-alertbox{background:#fff!important;border-color:var(--zr-v3-line)!important}#tab-today .zr-today-metric.em{background:#fff!important;border-color:#e4c39f!important;box-shadow:inset 0 3px 0 var(--zr-v3-orange),var(--zt-shadow)!important}#tab-today .zr-today-metric.em strong{color:#9b4c0e!important}#tab-today .zr-today-time{background:var(--zr-v3-brown-soft)!important;border-color:var(--zr-v3-line)!important}#tab-today .zr-today-time strong{color:var(--zr-v3-brown)!important}#tab-today .zr-today-note,#tab-today .zr-today-program-grid>div,#tab-today .zr-today-schedule,#tab-today .zr-today-schedule-empty{background:var(--zr-v3-surface2)!important;border-color:var(--zr-v3-line)!important}#tab-today .zr-today-db{background:#fff!important;border-color:var(--zr-v3-line)!important;color:var(--zr-v3-brown2)!important}#tab-today .zr-today-db.ok{background:#fff!important;border-color:#cfd9d0!important;color:var(--zr-v3-brown2)!important;box-shadow:inset 3px 0 0 var(--zr-v3-leaf)!important}#tab-today .zr-today-badge.confirmed,#tab-today .zr-today-chip.ok{background:var(--zr-v3-leaf-soft)!important;border-color:#c8d8ca!important;color:var(--zr-v3-leaf)!important}#tab-today .zr-today-badge.pending,#tab-today .zr-today-chip.warn{background:var(--zr-v3-amber-soft)!important;border-color:#ead4aa!important;color:#8a5b1b!important}#tab-today .zr-today-check{background:#fff!important;border-color:var(--zr-v3-line)!important}#tab-today .zr-today-check .ok,#tab-today .zr-today-program-grid .ok{color:var(--zr-v3-leaf)!important}#tab-today .zr-today-schedule-title span{color:var(--zr-v3-brown2)!important}
+.zr-admin-smart-panel{background:#f8f6f3!important;border-color:var(--zr-v3-line)!important}.zr-admin-smart-head{background:#fff!important;border-bottom-color:var(--zr-v3-line)!important}.zr-admin-smart-sub,.zr-admin-smart-section-help{color:var(--zr-v3-muted)!important}.zr-admin-smart-section{background:#fff!important;border-color:var(--zr-v3-line)!important;box-shadow:0 4px 13px rgba(63,39,31,.035)!important}.zr-admin-smart-summary-card,.zr-admin-smart-summary-card:first-child{background:#fff!important;border-color:var(--zr-v3-line)!important}.zr-admin-smart-summary-card:first-child{border-color:#e1c4a5!important;box-shadow:inset 3px 0 0 var(--zr-v3-orange)!important}.zr-admin-smart-summary-row strong{color:var(--zr-v3-brown)!important}.zr-admin-smart-type-list{border-top-color:var(--zr-v3-line)!important}.zr-admin-smart-pending-row{background:#fff!important;border-color:var(--zr-v3-line)!important;color:#5a4d46!important}.zr-admin-smart-quick button{background:#fff!important;border-color:var(--zr-v3-line)!important;color:var(--zr-v3-brown2)!important}.zr-admin-smart-quick button:first-child{background:var(--zr-v3-orange)!important;border-color:var(--zr-v3-orange)!important;color:#fff!important}
+#adminLoginModal .modal-card:before{content:'';display:block;width:138px;height:54px;margin:0 auto 14px;background:var(--zr-v3-logo) center/contain no-repeat!important;border:0!important;box-shadow:none!important}
+#zrSettlementWorkspaceModal .zr-settle-vendor:has(input:checked){background:var(--zr-v3-brown-soft)!important;border-color:#c9ad9c!important}#zrSettlementWorkspaceModal .zr-settle-summary{background:var(--zr-v3-surface2)!important;border-color:var(--zr-v3-line)!important}
+@media(max-width:1180px){.zr-admin-shell-logo-slot{width:76px!important;flex-basis:76px!important}.zr-admin-shell-brand{gap:6px!important;padding-left:8px!important}.zr-admin-shell-brand-title,.zr-admin-shell-brand-title .zr-admin-brand-dongtan{font-size:12px!important}}
