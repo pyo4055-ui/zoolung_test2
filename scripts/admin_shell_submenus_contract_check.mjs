@@ -41,23 +41,34 @@ for(const required of [
   "targetId:'zrSettingsScheduleSmsSubtabV1'",
   "targetId:'zrSettingsOutsourceSubtabV1'",
   "targetId:'zrSettingsConfirmSmsSubtabV1'",
+  "const openIds=new Set();",
+  "openIds.add(parentId)",
+  "if(openIds.has(parentId))openIds.delete(parentId);else openIds.add(parentId);",
+  "const open=!collapsed&&openIds.has(parentId);",
   "wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap))",
+  "wrap.addEventListener('mouseleave',()=>cancelHover(parentId))",
   'hoverTimer=setTimeout',
   '},HOVER_OPEN_DELAY_MS);',
   "parent.addEventListener('click'",
+  'if(!suppressParentToggle)toggleSubmenu(parentId);',
   'async function activateSubitem(parentId,sub)',
   "const alreadyActive=parent.classList.contains('is-active');",
-  'if(!alreadyActive)parent.click();',
+  'suppressParentToggle=true;',
+  'try{parent.click()}finally{suppressParentToggle=false}',
   'let target=$(sub.targetId);',
   'if(target){',
   'target.click();',
   "className='zr-admin-shell-subitem'",
   "classList.contains('zr-admin-shell-collapsed')",
+  'overflow-y:auto!important',
+  'overscroll-behavior-y:contain',
+  'scrollbar-gutter:stable',
   'var(--zr-reservation)',
   'var(--zr-customer)',
   'var(--zr-settings)'
 ])need(submenu.includes(required),`admin sidebar submenu contract missing: ${required}`);
 
+need(!submenu.includes('peekId'),'admin sidebar submenu expansion must no longer be limited to one transient peek menu.');
 need(!submenu.includes('await wait(90);'),'admin sidebar submenu must not pause after opening a parent tab when the target already exists; that pause causes visible default-subtab flashing.');
 
 for(const required of [
@@ -79,4 +90,4 @@ for(const source of [submenu,guard])for(const forbidden of [
   'reservationAvailability'
 ])need(!source.includes(forbidden),`admin sidebar navigation helpers must remain navigation-only: ${forbidden}`);
 
-console.log('OK: sidebar delays hover expansion by one second, switches existing subtabs in the same frame without default-tab flash, guide-map submenu cannot be mistaken for a customer guide button, shares group colors, and performs no data writes.');
+console.log('OK: sidebar delays hover expansion by one second, keeps multiple opened submenu groups expanded until explicitly toggled closed, scrolls long navigation with the mouse wheel, switches existing subtabs without default-tab flash, preserves the guide-map collision guard, and performs no data writes.');
