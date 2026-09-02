@@ -3,6 +3,7 @@
 if(window.__ZR_ADMIN_SHELL_SUBMENUS_V1)return;
 window.__ZR_ADMIN_SHELL_SUBMENUS_V1=true;
 
+const HOVER_OPEN_DELAY_MS=1000;
 const SUBMENUS={
   cleanup:[
     {id:'reservation-cleanup',label:'예약 정리',targetId:'zrCleanupSubtab'},
@@ -26,7 +27,7 @@ const SUBMENUS={
   ]
 };
 const $=id=>document.getElementById(id);
-let rail=null,admin=null,observer=null,scheduled=false,peekId='';
+let rail=null,admin=null,observer=null,scheduled=false,peekId='',hoverTimer=0,hoverPendingId='';
 const wrappers=new Map();
 
 function injectStyle(){
@@ -82,12 +83,34 @@ function syncAll(){
   });
 }
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function cancelHover(parentId=''){
+  if(parentId&&hoverPendingId&&hoverPendingId!==parentId)return;
+  if(hoverTimer){clearTimeout(hoverTimer);hoverTimer=0}
+  hoverPendingId='';
+}
+function scheduleHover(parentId,wrap){
+  cancelHover();
+  if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;
+  hoverPendingId=parentId;
+  hoverTimer=setTimeout(()=>{
+    hoverTimer=0;
+    if(hoverPendingId!==parentId)return;
+    hoverPendingId='';
+    if(!wrap.matches(':hover'))return;
+    peekId=parentId;scheduleSync();
+  },HOVER_OPEN_DELAY_MS);
+}
 async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
   if(!parent)return;
-  parent.click();
-  await wait(90);
+  cancelHover();peekId='';
+  const alreadyActive=parent.classList.contains('is-active');
+  if(!alreadyActive)parent.click();
   let target=$(sub.targetId);
+  if(target){
+    target.click();
+    await wait(30);scheduleSync();return;
+  }
   for(let i=0;!target&&i<28;i++){
     await wait(50);target=$(sub.targetId);
   }
@@ -125,11 +148,15 @@ function createSubmenu(parentId,parent){
   menu.appendChild(inner);wrap.appendChild(menu);
   wrappers.set(parentId,wrap);
 
-  wrap.addEventListener('mouseenter',()=>{if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;peekId=parentId;scheduleSync()});
-  wrap.addEventListener('mouseleave',()=>{if(peekId===parentId)peekId='';scheduleSync()});
-  wrap.addEventListener('focusin',()=>{if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;peekId=parentId;scheduleSync()});
+  wrap.addEventListener('mouseenter',()=>scheduleHover(parentId,wrap));
+  wrap.addEventListener('mouseleave',()=>{
+    cancelHover(parentId);
+    if(peekId===parentId)peekId='';
+    scheduleSync();
+  });
+  wrap.addEventListener('focusin',()=>{cancelHover();if(document.documentElement.classList.contains('zr-admin-shell-collapsed'))return;peekId=parentId;scheduleSync()});
   wrap.addEventListener('focusout',()=>setTimeout(()=>{if(!wrap.contains(document.activeElement)&&peekId===parentId){peekId='';scheduleSync()}},0));
-  parent.addEventListener('click',()=>{peekId='';setTimeout(scheduleSync,0);setTimeout(scheduleSync,120)});
+  parent.addEventListener('click',()=>{cancelHover();peekId='';setTimeout(scheduleSync,0);setTimeout(scheduleSync,120)});
 }
 function installMenus(){
   rail=$('zrAdminShellRail');admin=$('adminView');
@@ -148,7 +175,7 @@ function installObserver(){
   observer.observe(rail,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected']});
   observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']});
   document.addEventListener('click',e=>{
-    if(!e.target?.closest?.('.zr-admin-shell-item-wrap')){peekId='';setTimeout(scheduleSync,0)}
+    if(!e.target?.closest?.('.zr-admin-shell-item-wrap')){cancelHover();peekId='';setTimeout(scheduleSync,0)}
   },true);
 }
 function boot(){
