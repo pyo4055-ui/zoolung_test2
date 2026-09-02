@@ -11,7 +11,6 @@ function injectStyle(){
  #tab-activity .zr11-activity-toolbar>div,#tab-activity .zr11-activity-toolbar>label{min-width:0;margin:0!important}
  #tab-activity .zr11-activity-toolbar input,#tab-activity .zr11-activity-toolbar select{width:100%!important;min-width:0!important}
  #tab-activity .zr11-activity-toolbar button{height:40px;white-space:nowrap;align-self:end}
- #tab-outsourcing.zr-outsourcing-preparing{visibility:hidden!important}
  @media(max-width:900px){#tab-activity .zr11-activity-toolbar{grid-template-columns:1fr 1fr 122px auto}}
  @media(max-width:620px){#tab-activity .zr11-activity-toolbar{grid-template-columns:1fr 1fr}#tab-activity .zr11-activity-toolbar button{width:100%}}
  `;document.head.appendChild(s);
@@ -50,24 +49,9 @@ function bindExcelButtons(){
  const tab=$('tab-activity');if(!tab||!hookExcel())return;
  [...tab.querySelectorAll('button')].filter(b=>(b.textContent||'').includes('엑셀')).forEach(b=>b.onclick=window.downloadActivityExcelV11);
 }
-function bindOutsourceNoFlash(){
- const btn=$('outsourceTabBtn'),tab=$('tab-outsourcing');
- if(!btn||!tab||btn.dataset.zrOutsourceNoFlash==='1')return false;
- btn.dataset.zrOutsourceNoFlash='1';
- btn.addEventListener('click',()=>{
-  /* Legacy outsourcing paints a temporary 0-count empty state first, then V10
-     replaces it with the real data. Keep that intermediate frame invisible. */
-  tab.classList.add('zr-outsourcing-preparing');
-  requestAnimationFrame(()=>{
-   try{$('outsourceSearch')?.click()}catch{}
-   setTimeout(()=>tab.classList.remove('zr-outsourcing-preparing'),70);
-  });
- },true);
- return true;
-}
-function apply(){injectStyle();arrangeActivityToolbar();bindExcelButtons();bindOutsourceNoFlash()}
+function apply(){injectStyle();arrangeActivityToolbar();bindExcelButtons()}
 function boot(){
- const t=setInterval(()=>{apply();if($('tab-activity')&&$('activityDateBasisWrap')&&$('outsourceTabBtn'))clearInterval(t)},250);setTimeout(()=>clearInterval(t),15000);
+ const t=setInterval(()=>{apply();if($('tab-activity')&&$('activityDateBasisWrap'))clearInterval(t)},250);setTimeout(()=>clearInterval(t),15000);
  const root=$('adminView')||document.body;new MutationObserver(()=>setTimeout(apply,0)).observe(root,{childList:true,subtree:true});
  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setTimeout(apply,80)));
 }
