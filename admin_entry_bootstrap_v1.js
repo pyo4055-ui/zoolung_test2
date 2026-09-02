@@ -36,6 +36,27 @@ function installStyle(){
   `;
   document.head.appendChild(s);
 }
+function installLoginVisual(){
+  if(!$('zrAdminLoginVisualV1Style')){
+    const link=document.createElement('link');
+    link.id='zrAdminLoginVisualV1Style';
+    link.rel='stylesheet';
+    link.href='./admin_login_visual_v1.css?v=1';
+    document.head.appendChild(link);
+  }
+  const modal=$('adminLoginModal');
+  if(!modal)return false;
+  modal.dataset.zrLoginVisual='1';
+  const title=modal.querySelector('.modal-card h2');
+  if(title)title.textContent='관리자 로그인';
+  const identity=$('zrAdminIdentity');
+  if(identity){identity.placeholder='아이디';identity.setAttribute('aria-label','아이디')}
+  const password=$('adminPassword');
+  if(password){password.placeholder='비밀번호';password.setAttribute('aria-label','비밀번호')}
+  const submit=$('adminLoginSubmit');
+  if(submit)submit.textContent='로그인';
+  return true;
+}
 function normalizeIdentity(value){return String(value||'').replace(/\s+/g,' ').trim().slice(0,20)}
 function savedIdentity(){
   try{return normalizeIdentity(localStorage.getItem(IDENTITY_KEY)||'')}
@@ -85,6 +106,7 @@ function ensureIdentityField(){
     input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('adminLoginSubmit')?.click()}});
   }
   if(input&&!input.value)input.value=savedIdentity();
+  installLoginVisual();
   return input;
 }
 function identityForSubmit(){
@@ -130,7 +152,7 @@ function syncLoginClean(){
   const modal=$('adminLoginModal');if(!modal)return;
   const clean=!adminVisible();
   document.documentElement.classList.toggle('zr-admin-login-clean',clean);
-  if(clean)maskSiblingsAlongModalPath(modal);else clearLoginSiblingMask();
+  if(clean){maskSiblingsAlongModalPath(modal);installLoginVisual()}else clearLoginSiblingMask();
   if(!clean){
     commitIdentityIfLoggedIn();
     startIdentityStatusSync();
@@ -168,6 +190,7 @@ function openAdminGate(force=false){
   const modal=$('adminLoginModal'),admin=$('adminView');
   if(!modal||!admin||!$('adminLoginSubmit')||!$('adminPassword'))return false;
   const identity=ensureIdentityField();
+  installLoginVisual();
   watchLoginClean();
   startIdentityStatusSync();
 
@@ -219,7 +242,7 @@ function boot(){
     setTimeout(()=>openAdminGate(true),0);
   },true);
 
-  document.addEventListener('zr:admin-runtime-ready',()=>{ensureIdentityField();startIdentityStatusSync()});
+  document.addEventListener('zr:admin-runtime-ready',()=>{ensureIdentityField();installLoginVisual();startIdentityStatusSync()});
   window.zrOpenDedicatedAdminLogin=()=>openAdminGate(true);
 }
 
