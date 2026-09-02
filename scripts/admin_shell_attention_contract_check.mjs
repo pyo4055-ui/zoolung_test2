@@ -17,6 +17,8 @@ for(const required of [
   "badge.textContent=count>99?'99+':String(count)",
   '긴급 ${count}건',
   '@keyframes zrAdminUrgentPulse',
+  'animation:zrAdminUrgentPulse 1.15s ease-in-out infinite',
+  '50%{opacity:.55;filter:saturate(1.5) brightness(1.05)}',
   '@media(prefers-reduced-motion:reduce)',
   "setInterval(refreshHiddenWarning,3000)"
 ])need(attention.includes(required),`admin attention contract missing: ${required}`);
@@ -34,4 +36,4 @@ for(const forbidden of [
   'reservationAvailability'
 ])need(!attention.includes(forbidden),`admin attention helper must remain display-only: ${forbidden}`);
 
-console.log('OK: admin workspace uses full left-side space and urgent warnings pulse with a count badge without writing reservation data.');
+console.log('OK: admin workspace uses full left-side space and urgent warnings visibly pulse with a count badge without writing reservation data.');
