@@ -1,0 +1,173 @@
+/* Zoolung Dongtan admin safari theme v2 - UI only, loaded after v1 */
+:root{
+  --zr-safari-blue:#2f6b86;
+  --zr-safari-blue-soft:#eef5f8;
+  --zr-safari-orange-strong:#db7618;
+  --zr-safari-orange-soft:#fff2e2;
+  --zr-safari-lodge:#f3efe9;
+  --zr-safari-wood:#5a3027;
+  --zr-safari-wood-dark:#471f1f;
+  --zr-safari-leaf-signal:#41694b;
+}
+
+/* Less desert, more safari lodge: neutral ivory with restrained leaf/orange atmosphere. */
+html.zr-admin-shell-mounted,
+html.zr-admin-shell-mounted body{
+  background:
+    radial-gradient(circle at 6% 12%,rgba(65,105,75,.075),transparent 23%),
+    radial-gradient(circle at 88% 4%,rgba(219,118,24,.055),transparent 21%),
+    #f2eee8!important;
+}
+
+/* Brand block */
+.zr-admin-shell-brand{
+  min-height:80px!important;
+  padding:11px 9px 11px 13px!important;
+  gap:7px!important;
+  background:linear-gradient(135deg,#fffaf3 0%,#f8f4ed 62%,#eef3ed 100%)!important;
+}
+.zr-admin-shell-logo-slot{
+  width:72px!important;height:39px!important;flex:0 0 72px!important;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  background-color:#f8f3eb!important;
+  background-blend-mode:multiply!important;
+}
+.zr-admin-shell-brand-copy{overflow:visible!important;min-width:0!important}
+.zr-admin-shell-brand-title{
+  font-size:13.5px!important;line-height:1.15!important;white-space:nowrap!important;
+  overflow:visible!important;text-overflow:clip!important;color:var(--zr-safari-brown)!important;
+}
+.zr-admin-shell-brand-title .zr-admin-brand-dongtan{color:var(--zr-safari-blue)!important}
+.zr-admin-shell-brand-sub{font-size:9.8px!important;color:#7c685b!important;white-space:nowrap!important}
+.zr-admin-shell-collapse{
+  width:31px!important;height:31px!important;
+  background:var(--zr-safari-wood)!important;color:#fff!important;
+  border-color:var(--zr-safari-wood)!important;
+  box-shadow:0 3px 10px rgba(71,31,31,.12)!important;
+}
+.zr-admin-shell-collapse:hover{background:var(--zr-safari-wood-dark)!important;color:#fff!important}
+
+/* Main shell uses brand colors instead of one dominant pale green. */
+.zr-admin-shell-header{background:rgba(255,252,247,.97)!important;border-bottom-color:#dfd3c8!important;box-shadow:0 3px 0 rgba(219,118,24,.10)!important}
+.zr-admin-shell-eyebrow{color:var(--zr-safari-blue)!important}
+.zr-admin-shell-page-title{color:var(--zr-safari-wood-dark)!important}
+.zr-admin-shell-status{color:var(--zr-safari-wood)!important;background:#fff!important}
+.zr-admin-shell-status:before{background:var(--zr-safari-leaf-signal)!important}
+.zr-admin-shell-refresh{background:#fff!important;color:var(--zr-safari-wood)!important;border-color:#ded0c3!important}
+.zr-admin-shell-refresh:hover{background:var(--zr-safari-orange-soft)!important;color:#8a470d!important}
+
+/* Orange = deliberate action/open. Green = status only. */
+html.zr-admin-shell-mounted #adminView .btn-primary,
+html.zr-admin-shell-mounted #adminView button.zr-safari-popup-trigger{
+  background:var(--zr-safari-orange-strong)!important;
+  border-color:var(--zr-safari-orange-strong)!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  box-shadow:0 4px 10px rgba(219,118,24,.13)!important;
+}
+html.zr-admin-shell-mounted #adminView .btn-primary:hover,
+html.zr-admin-shell-mounted #adminView button.zr-safari-popup-trigger:hover{
+  background:#c96612!important;border-color:#c96612!important;color:#fff!important;
+}
+html.zr-admin-shell-mounted #adminView button.zr-safari-payment-trigger,
+#activityList .zr-settle-card-actions .zr-settle-open{
+  background:var(--zr-safari-wood)!important;
+  border-color:var(--zr-safari-wood)!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  box-shadow:0 4px 10px rgba(90,48,39,.12)!important;
+}
+html.zr-admin-shell-mounted #adminView button.zr-safari-payment-trigger:hover,
+#activityList .zr-settle-card-actions .zr-settle-open:hover{background:var(--zr-safari-wood-dark)!important;border-color:var(--zr-safari-wood-dark)!important}
+html.zr-admin-shell-mounted #adminView .btn-soft:not(.zr-safari-popup-trigger):not(.zr-safari-payment-trigger){background:#fffaf4!important;color:#674f40!important;border-color:#dfd2c5!important}
+html.zr-admin-shell-mounted #adminView .btn-gray{background:#fff!important;color:#65574d!important;border-color:#ded6ce!important}
+
+/* Calendar: weekends read instantly without spreadsheet-style neon fills. */
+#adminCalendar .day{background:#fffdf9!important;border-color:#e1d7cd!important}
+#adminCalendar .day:nth-child(7n+1){background:#fff4f1!important;border-color:#edc9c1!important}
+#adminCalendar .day:nth-child(7n){background:#f1f7fb!important;border-color:#c9ddea!important}
+#adminCalendar .weekday:nth-child(7n+1){color:#b55345!important}
+#adminCalendar .weekday:nth-child(7n){color:var(--zr-safari-blue)!important}
+#adminCalendar .day:nth-child(7n+1)>.num{color:#a94a3e!important}
+#adminCalendar .day:nth-child(7n)>.num{color:#315f7a!important}
+#adminCalendar .day.holiday,#adminCalendar .day[data-holiday="true"]{background:#fff0ec!important;border-color:#e9bfb4!important}
+#adminCalendar .day>.btn-soft,
+#adminCalendar .day>button.btn-soft{
+  background:var(--zr-safari-orange-strong)!important;
+  border-color:var(--zr-safari-orange-strong)!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  box-shadow:none!important;
+}
+#adminCalendar .day>.btn-soft:hover,#adminCalendar .day>button.btn-soft:hover{background:#c96612!important;border-color:#c96612!important}
+
+/* Today operation: remove pale-green sheet look. */
+#tab-today{
+  --zt-green:var(--zr-safari-leaf-signal)!important;
+  --zt-soft:#f6f1ea!important;
+  --zt-text:#41342c!important;
+  --zt-muted:#786b61!important;
+  --zt-line:#e2d8cd!important;
+  --zt-yellow:#fff2dc!important;
+  --zt-shadow:0 5px 18px rgba(75,44,27,.045)!important;
+}
+#tab-today .zr-today-db{background:#fff!important;border-color:#ddd2c8!important;color:#725f53!important}
+#tab-today .zr-today-db.ok{
+  background:#fffaf4!important;color:var(--zr-safari-wood)!important;border-color:#dfd0c2!important;
+  box-shadow:inset 3px 0 0 var(--zr-safari-leaf-signal)!important;
+}
+#tab-today .zr-today-db.err{background:#fff2f1!important;color:#a33b3b!important;border-color:#e7c2bf!important}
+#tab-today .zr-today-summary{gap:10px!important}
+#tab-today .zr-today-metric{background:#fffdf9!important;border-color:#e2d7cc!important;box-shadow:var(--zt-shadow)!important}
+#tab-today .zr-today-metric.em{
+  background:#fff7ed!important;border-color:#edcfaa!important;
+  box-shadow:inset 0 3px 0 var(--zr-safari-orange-strong),var(--zt-shadow)!important;
+}
+#tab-today .zr-today-metric.em strong{color:#8a470d!important}
+#tab-today .zr-today-alertbox{background:#fffdf9!important;border-color:#e2d7cc!important}
+#tab-today .zr-today-chip.ok{background:#edf5ef!important;border-color:#c9ddce!important;color:var(--zr-safari-leaf-signal)!important}
+#tab-today .zr-today-team-card{background:#fffdf9!important;border-color:#e1d7cc!important;box-shadow:var(--zt-shadow)!important}
+#tab-today .zr-today-time{background:#f7eee5!important;border-right-color:#e2d7cc!important}
+#tab-today .zr-today-time strong{color:var(--zr-safari-wood-dark)!important}
+#tab-today .zr-today-main,#tab-today .zr-today-program{border-right-color:#ece2d8!important}
+#tab-today .zr-today-badge.confirmed{background:#edf5ef!important;border-color:#c9ddce!important;color:var(--zr-safari-leaf-signal)!important}
+#tab-today .zr-today-badge.pending{background:#fff3df!important;border-color:#ebd0a6!important;color:#99601f!important}
+#tab-today .zr-today-note{background:#fffaf5!important;border-color:#dfd3c7!important;color:#604f43!important}
+#tab-today .zr-today-program-grid>div{background:#faf6f0!important;border-color:#e8ded4!important}
+#tab-today .zr-today-program-grid span{color:#66584e!important}
+#tab-today .zr-today-program-grid .ok{color:var(--zr-safari-leaf-signal)!important}
+#tab-today .zr-today-check{background:#fff!important;border-color:#e1d7cd!important}
+#tab-today .zr-today-check .ok{color:var(--zr-safari-leaf-signal)!important}
+#tab-today .zr-today-schedule{background:#f8f4ee!important;border-top-color:#e8ded4!important}
+#tab-today .zr-today-schedule-title span{color:var(--zr-safari-wood)!important}
+#tab-today .zr-today-schedule-empty{background:#faf6f0!important;border-color:#dfd5cb!important}
+#tab-today .zr-today-empty{background:#fffdf9!important;border-color:#dfd5cb!important}
+
+/* Right panel: white cards, orange/blue/wood accents instead of large green fields. */
+.zr-admin-smart-panel{background:#fbf8f3!important}
+.zr-admin-smart-head{background:#fffaf4!important}
+.zr-admin-smart-section{background:#fff!important;border-color:#e2d8ce!important}
+.zr-admin-smart-summary-card,.zr-admin-smart-summary-card:first-child{background:#fff!important;border-color:#e4dbd2!important}
+.zr-admin-smart-summary-card:first-child{box-shadow:inset 3px 0 0 var(--zr-safari-orange-strong)!important}
+.zr-admin-smart-summary-row strong{color:var(--zr-safari-wood-dark)!important}
+.zr-admin-smart-pending-row{background:#fff!important;border-color:#e5ddd5!important}
+.zr-admin-smart-quick button{background:#fff!important;color:#68574b!important;border-color:#e1d7cd!important}
+.zr-admin-smart-quick button:first-child{
+  background:var(--zr-safari-orange-strong)!important;border-color:var(--zr-safari-orange-strong)!important;color:#fff!important;
+}
+.zr-admin-smart-quick button:first-child:hover{background:#c96612!important;color:#fff!important}
+.zr-admin-smart-quick button:not(:first-child):hover{background:var(--zr-safari-orange-soft)!important;color:#88480f!important}
+
+/* Login brand mark: soften the JPG's white rectangle into the card surface. */
+#adminLoginModal .modal-card:before{
+  background-color:#fff8ef!important;
+  background-blend-mode:multiply!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+
+/* Popup/open action family stays orange; settlement remains a distinct wood action beside detail. */
+#activityList .zr-settle-card-actions{gap:8px!important}
+#activityList .zr-settle-card-actions button{min-width:76px!important}
+
+@media(max-width:1180px){
+  .zr-admin-shell-logo-slot{width:68px!important;flex-basis:68px!important}
+  .zr-admin-shell-brand-title{font-size:13px!important}
+}
