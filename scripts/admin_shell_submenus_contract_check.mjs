@@ -1,0 +1,66 @@
+import fs from 'node:fs';
+
+const admin=fs.readFileSync('admin.html','utf8');
+const submenu=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
+
+function need(ok,message){
+  if(!ok){console.error(message);process.exit(1)}
+}
+
+need(admin.includes('admin_shell_submenus_v1.js?v=1'),'admin entry must load sidebar section submenus after the main shell.');
+
+for(const required of [
+  "cleanup:[",
+  "inquiries:[",
+  "guide:[",
+  "settings:[",
+  "label:'예약 정리'",
+  "label:'취소 정리'",
+  "label:'정리 내역'",
+  "label:'문의 현황'",
+  "label:'답변 예시'",
+  "label:'이용 안내'",
+  "label:'가이드맵'",
+  "label:'주차 안내'",
+  "label:'예약 운영'",
+  "label:'스케줄 알림 문자'",
+  "label:'아웃소싱 업체 설정'",
+  "label:'예약 확정 문자'",
+  "targetId:'zrCleanupSubtab'",
+  "targetId:'zrCancelCleanupSubtab'",
+  "targetId:'zrCleanupHistorySubtab'",
+  "targetId:'zrInquiryReplyInquirySubtab'",
+  "targetId:'zrInquiryReplyExampleSubtab'",
+  "targetId:'zrGuideInfoSubtabV1'",
+  "targetId:'zrGuideMapSubtabV1'",
+  "targetId:'zrGuideParkingSubtabV1'",
+  "targetId:'zrSettingsOperationSubtabV1'",
+  "targetId:'zrSettingsScheduleSmsSubtabV1'",
+  "targetId:'zrSettingsOutsourceSubtabV1'",
+  "targetId:'zrSettingsConfirmSmsSubtabV1'",
+  "wrap.addEventListener('mouseenter'",
+  "parent.addEventListener('click'",
+  'async function activateSubitem(parentId,sub)',
+  'parent.click();',
+  'target.click();',
+  "className='zr-admin-shell-subitem'",
+  "classList.contains('zr-admin-shell-collapsed')",
+  'var(--zr-reservation)',
+  'var(--zr-customer)',
+  'var(--zr-settings)'
+])need(submenu.includes(required),`admin sidebar submenu contract missing: ${required}`);
+
+for(const forbidden of [
+  'setDoc(',
+  'updateDoc(',
+  'deleteDoc(',
+  'writeBatch(',
+  'setStore(',
+  'localStorage.setItem(',
+  'sessionStorage.setItem(',
+  'zr_bookings',
+  'reservations',
+  'reservationAvailability'
+])need(!submenu.includes(forbidden),`admin sidebar submenu must remain navigation-only: ${forbidden}`);
+
+console.log('OK: sidebar exposes existing section subtabs on hover/click, forwards only to legacy controls, shares group colors, and performs no data writes.');
