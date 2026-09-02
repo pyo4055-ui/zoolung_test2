@@ -22,6 +22,9 @@ function injectStyle(){
     .zr-admin-smart-type-list{margin-top:9px!important;padding-top:8px!important;border-top:1px dashed #ddd6cf!important}
     .zr-admin-smart-type-row{font-size:11.5px!important}.zr-admin-smart-type-row b{font-size:11.5px!important}
 
+    /* The sidebar owns preview-visit subtabs; keep original controls clickable but not visible. */
+    #zrPreviewNotifyInnerTabs{display:none!important}
+
     /* One navigation language: old per-group hover/active colors must never reappear. */
     html.zr-admin-shell-mounted #zrAdminShellRail .zr-admin-shell-item{
       --zr-group-color:var(--zr-v3-green)!important;
@@ -81,6 +84,14 @@ function injectStyle(){
     }
     html.zr-admin-shell-mounted #adminView button.zr-safari-role-current:hover{
       background:var(--zr-v3-green-dark)!important;border-color:var(--zr-v3-green-dark)!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-date-nav{
+      background:#fff!important;border:1.5px solid var(--zr-v3-green)!important;
+      color:var(--zr-v3-green)!important;-webkit-text-fill-color:var(--zr-v3-green)!important;box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #adminView button.zr-safari-role-date-nav:hover{
+      background:var(--zr-v3-green-soft)!important;border-color:var(--zr-v3-green)!important;
+      color:var(--zr-v3-green-dark)!important;-webkit-text-fill-color:var(--zr-v3-green-dark)!important;
     }
     html.zr-admin-shell-mounted #adminView button.zr-safari-role-export{
       background:#fff!important;border:1.5px solid var(--zr-v3-green)!important;
@@ -162,10 +173,11 @@ function decorateCalendar(){
 }
 function decorateActionButtons(){
   const root=$('adminView');if(!root)return;
-  const roleClasses=['zr-safari-role-primary','zr-safari-role-current','zr-safari-role-export','zr-safari-role-print'];
+  const roleClasses=['zr-safari-role-primary','zr-safari-role-current','zr-safari-role-date-nav','zr-safari-role-export','zr-safari-role-print'];
   root.querySelectorAll('button').forEach(btn=>{
     if(btn.id==='zrAdminShellRefresh')return;
     const text=exactText(btn),onclick=String(btn.getAttribute('onclick')||'');
+    const compact=text.replace(/\s+/g,'');
     roleClasses.forEach(c=>btn.classList.remove(c));
     const inCalendarDay=!!btn.closest('#adminCalendar .day');
     if(inCalendarDay&&text==='자세히'){
@@ -179,11 +191,13 @@ function decorateActionButtons(){
     btn.classList.toggle('zr-safari-payment-trigger',payment);
     if(!payment)btn.classList.toggle('zr-safari-popup-trigger',popup);
 
-    const isToday=text==='오늘';
+    const isDateCurrent=/^(오늘|이번달|이번달로이동)$/.test(compact);
+    const isDateNav=/(?:이전|저번)(?:날|일|달|월)|다음(?:날|일|달|월)/.test(compact);
     const isExport=/^엑셀\s*(내려받기|다운로드)$/.test(text);
     const isPrint=/인쇄/.test(text);
-    const isPrimary=['조회하기','단체명 검색','이번 달로 이동','이번달로 이동'].includes(text);
-    btn.classList.toggle('zr-safari-role-current',isToday);
+    const isPrimary=['조회하기','단체명 검색'].includes(text);
+    btn.classList.toggle('zr-safari-role-current',isDateCurrent);
+    btn.classList.toggle('zr-safari-role-date-nav',isDateNav&&!isDateCurrent);
     btn.classList.toggle('zr-safari-role-export',isExport);
     btn.classList.toggle('zr-safari-role-print',isPrint);
     btn.classList.toggle('zr-safari-role-primary',isPrimary&&!popup&&!payment);
