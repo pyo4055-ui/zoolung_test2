@@ -16,6 +16,11 @@ function ensureSafariTheme(){
     link.id='zrAdminSafariThemeV2';link.rel='stylesheet';link.href='./admin_safari_theme_v2.css?v=1';
     document.head.appendChild(link);
   }
+  if(!$('zrAdminSafariThemeV3')){
+    const link=document.createElement('link');
+    link.id='zrAdminSafariThemeV3';link.rel='stylesheet';link.href='./admin_safari_theme_v3.css?v=1';
+    document.head.appendChild(link);
+  }
 }
 function injectStyle(){
   if($('zrAdminShellCurrentUiFixV1Style'))return;
@@ -43,9 +48,36 @@ function commonAncestor(nodes,stop){
 }
 function decorateBrand(){
   const title=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-title');
-  if(!title||title.dataset.zrSafariBrand==='1')return;
-  title.dataset.zrSafariBrand='1';
-  title.innerHTML='주렁주렁 <span class="zr-admin-brand-dongtan">동탄점</span>';
+  const sub=document.querySelector('#zrAdminShellRail .zr-admin-shell-brand-sub');
+  if(title){title.dataset.zrSafariBrand='1';title.textContent='동탄점'}
+  if(sub){sub.textContent='예약관리'}
+}
+function decorateCalendar(){
+  const cal=$('adminCalendar');if(!cal)return;
+  const ym=String($('adminMonth')?.value||'');
+  if(!/^\d{4}-\d{2}$/.test(ym))return;
+  const [year,month]=ym.split('-').map(Number);
+  const now=new Date();
+  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  cal.querySelectorAll('.weekday').forEach((el,i)=>{
+    el.classList.toggle('zr-cal-sun',i===0);
+    el.classList.toggle('zr-cal-sat',i===6);
+  });
+  cal.querySelectorAll('.day').forEach(day=>{
+    const text=String(day.querySelector(':scope > .num')?.textContent||day.textContent||'');
+    const m=text.match(/(\d{1,2})일/);if(!m)return;
+    const d=Number(m[1]);
+    const dow=new Date(year,month-1,d,12,0,0).getDay();
+    const key=`${ym}-${String(d).padStart(2,'0')}`;
+    const whole=exactText(day);
+    const hasBooking=/(^|\s)([1-9]\d*)팀\s*\/\s*([1-9]\d*)명/.test(whole)||/(확정|접수|보류|완료)\s*[1-9]\d*/.test(whole);
+    const holiday=day.classList.contains('holiday')||day.dataset.holiday==='true'||/공휴일/.test(whole);
+    day.classList.toggle('zr-cal-sun',dow===0);
+    day.classList.toggle('zr-cal-sat',dow===6);
+    day.classList.toggle('zr-cal-today',key===todayKey);
+    day.classList.toggle('zr-cal-has-booking',hasBooking);
+    day.classList.toggle('zr-cal-holiday',holiday);
+  });
 }
 function decorateActionButtons(){
   const root=$('adminView');if(!root)return;
@@ -53,7 +85,7 @@ function decorateActionButtons(){
     if(btn.id==='zrAdminShellRefresh')return;
     const text=exactText(btn),onclick=String(btn.getAttribute('onclick')||'');
     const payment=text==='실제결제'||btn.classList.contains('zr-settle-open');
-    const detail=text==='자세히'||text==='상세보기'||text==='상세' || /openAdminBookingDetail\s*\(/.test(onclick);
+    const detail=text==='자세히'||text==='상세보기'||text==='상세'||/openAdminBookingDetail\s*\(/.test(onclick);
     const popupText=['문의 보기','답변 보기','답변하기','가이드맵','주차 안내','예약 상세','예약 상세보기'];
     const popup=detail||popupText.includes(text)||/openModal\s*\(/.test(onclick);
     btn.classList.toggle('zr-safari-payment-trigger',payment);
@@ -98,10 +130,11 @@ function buildRefresh(){
   const edit=$('zrAdminShellHeaderEdit'),status=header.querySelector('.zr-admin-shell-status');
   header.insertBefore(btn,edit||status||null);return true;
 }
-function apply(){injectStyle();ensureSafariTheme();hideLegacyChrome();buildRefresh();decorateBrand();decorateActionButtons()}
+function apply(){injectStyle();ensureSafariTheme();hideLegacyChrome();buildRefresh();decorateBrand();decorateActionButtons();decorateCalendar()}
 function boot(){
   apply();let tries=0;const wait=setInterval(()=>{apply();if(($('zrAdminShellRefresh')&&$('adminView'))||++tries>120)clearInterval(wait)},100);
-  const admin=$('adminView');if(admin&&!observer){observer=new MutationObserver(()=>{hideLegacyChrome();decorateBrand();decorateActionButtons()});observer.observe(admin,{subtree:true,childList:true})}
+  const admin=$('adminView');if(admin&&!observer){observer=new MutationObserver(()=>{hideLegacyChrome();decorateBrand();decorateActionButtons();decorateCalendar()});observer.observe(admin,{subtree:true,childList:true})}
+  document.addEventListener('change',e=>{if(e.target?.id==='adminMonth')setTimeout(decorateCalendar,0)},true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,0),{once:true});
