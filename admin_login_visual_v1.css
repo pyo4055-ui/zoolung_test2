@@ -1,26 +1,272 @@
-/* Zoolung Dongtan admin login visual layer. UI only; no auth/data behavior. */
-html.zr-admin-login-clean,html.zr-admin-login-clean body{background:#38271e!important}
-html.zr-admin-login-clean body{overflow:hidden!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{position:fixed!important;inset:0!important;z-index:99999!important;width:100vw!important;height:100vh!important;height:100svh!important;display:grid!important;place-items:center!important;box-sizing:border-box!important;padding:24px!important;overflow:auto!important;background:#38271e!important;isolation:isolate!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before{content:"";position:fixed;inset:-4%;z-index:0!important;pointer-events:none;background-image:url("data:image/jpeg;base64,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");background-size:cover!important;background-position:center center!important;filter:blur(4px) saturate(.86) brightness(.82)!important;transform:scale(1.08)!important;opacity:1!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::after{content:"";position:fixed;inset:0;z-index:1!important;pointer-events:none;background:linear-gradient(180deg,rgba(61,35,18,.15),rgba(44,24,14,.30)),rgba(73,43,23,.12)}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{position:relative!important;z-index:2!important;width:min(530px,calc(100vw - 42px))!important;max-width:530px!important;min-height:620px!important;box-sizing:border-box!important;margin:0!important;padding:58px 50px 40px!important;border:1px solid rgba(102,62,35,.22)!important;border-radius:32px!important;background:rgba(255,253,250,.975)!important;box-shadow:0 30px 70px rgba(35,18,9,.32)!important;overflow:visible!important;text-align:center!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{content:""!important;position:static!important;display:block!important;width:240px!important;height:94px!important;margin:0 auto 15px!important;background:var(--zr-v3-logo) center/contain no-repeat!important;border:0!important;box-shadow:none!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::after{content:"내부 직원용"!important;display:block!important;margin-top:38px!important;color:#a49387!important;font-size:13px!important;font-weight:700!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] .zr-modal-ux-header{display:none!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2.zr-modal-ux-title-source{display:block!important;visibility:visible!important;position:static!important;width:auto!important;height:auto!important;margin:0 0 31px!important;padding:0!important;overflow:visible!important;clip:auto!important;white-space:normal!important;color:#4b0b0f!important;font-size:38px!important;line-height:1.14!important;font-weight:950!important;letter-spacing:-2.2px!important;text-align:center!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2::after{content:"동탄점 단체예약 관리자";display:block;margin-top:12px;color:#a28370;font-size:17px;line-height:1.4;font-weight:650;letter-spacing:-.5px}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] .zr-admin-identity-field{position:relative!important;display:block!important;margin:0 0 14px!important;padding:0!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] .zr-admin-identity-label,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card>label.req{display:none!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #zrAdminIdentity,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminPassword{display:block!important;width:100%!important;height:58px!important;min-height:58px!important;box-sizing:border-box!important;margin:0 0 14px!important;padding:0 18px 0 55px!important;border:1px solid #d9cabb!important;border-radius:12px!important;background-color:rgba(255,253,250,.9)!important;background-repeat:no-repeat!important;background-position:19px center!important;background-size:24px 24px!important;color:#4b3428!important;-webkit-text-fill-color:#4b3428!important;font-size:17px!important;font-weight:650!important;outline:none!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #zrAdminIdentity{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a58b77' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3Cpath d='M4 21a8 8 0 0 1 16 0'/%3E%3C/svg%3E")!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminPassword{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a58b77' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E")!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #zrAdminIdentity::placeholder,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminPassword::placeholder{color:#ad9a8b!important;-webkit-text-fill-color:#ad9a8b!important;opacity:1!important;font-weight:600!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #zrAdminIdentity:focus,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminPassword:focus{border-color:#875545!important;box-shadow:0 0 0 3px rgba(83,23,20,.08)!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminPwError,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #zrAdminIdentityError{margin:-5px 0 12px!important;text-align:left!important;color:#bd473d!important;font-size:12px!important;font-weight:800!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] .modal-actions{display:block!important;margin:16px 0 0!important;padding:0!important;border:0!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] [data-close="adminLoginModal"],html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] .zr-modal-ux-header-close{display:none!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminLoginSubmit{width:100%!important;height:58px!important;min-height:58px!important;margin:0!important;padding:0 20px!important;border:1px solid #4b0b0f!important;border-radius:12px!important;background:linear-gradient(180deg,#5b1215 0%,#47090d 100%)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:17px!important;font-weight:900!important;box-shadow:0 7px 18px rgba(69,11,14,.16)!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminLoginSubmit:hover{background:linear-gradient(180deg,#68171b 0%,#520b0f 100%)!important;border-color:#520b0f!important;transform:translateY(-1px)!important}
-html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] #adminLoginSubmit:disabled{opacity:.7!important;transform:none!important;cursor:wait!important}
-@media(max-width:640px){html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{padding:18px!important}html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{width:min(100%,460px)!important;min-height:0!important;padding:42px 28px 32px!important;border-radius:26px!important}html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{width:200px!important;height:78px!important;margin-bottom:12px!important}html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2,html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2.zr-modal-ux-title-source{font-size:31px!important;letter-spacing:-1.7px!important;margin-bottom:25px!important}html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"] h2::after{font-size:15px!important;margin-top:9px!important}html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::after{margin-top:28px!important}}
+/* Zoolung Dongtan admin login intro visual. UI only; auth/data behavior unchanged. */
+html.zr-admin-login-clean,
+html.zr-admin-login-clean body{
+  background:#38271e!important;
+}
+html.zr-admin-login-clean body{
+  overflow:hidden!important;
+}
+
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{
+  position:fixed!important;
+  inset:0!important;
+  z-index:99999!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100svh!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background-color:#38271e!important;
+  background-image:none!important;
+  isolation:isolate!important;
+}
+
+/* Disable all older pseudo/photo layers. The real intro is a DOM video layer. */
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before,
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+}
+
+#zrAdminLoginSceneV1{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#38271e;
+  pointer-events:none;
+}
+#zrAdminLoginSceneV1 video{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  background:#38271e;
+}
+#zrAdminLoginSceneV1::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    90deg,
+    rgba(34,18,10,.28) 0%,
+    rgba(34,18,10,.12) 33%,
+    rgba(10,14,14,.03) 64%,
+    rgba(10,14,14,.08) 100%
+  );
+  opacity:.28;
+  transition:opacity .65s ease;
+}
+html.zr-admin-login-intro-ready #zrAdminLoginSceneV1::after{
+  opacity:1;
+}
+
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  position:fixed!important;
+  z-index:2!important;
+  left:clamp(72px,13.5vw,280px)!important;
+  top:50%!important;
+  transform:translate(-18px,-50%)!important;
+  width:min(430px,calc(100vw - 56px))!important;
+  min-width:0!important;
+  max-width:none!important;
+  min-height:590px!important;
+  max-height:calc(100svh - 48px)!important;
+  margin:0!important;
+  padding:54px 42px 38px!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+  border:1px solid rgba(91,52,36,.10)!important;
+  border-radius:30px!important;
+  background:rgba(255,253,249,.965)!important;
+  box-shadow:0 28px 70px rgba(26,14,9,.26),0 5px 18px rgba(26,14,9,.10)!important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:
+    opacity .58s ease,
+    transform .68s cubic-bezier(.22,.8,.24,1),
+    visibility 0s linear .68s!important;
+}
+
+html.zr-admin-login-clean.zr-admin-login-intro-ready #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  transform:translate(0,-50%)!important;
+  transition-delay:0s!important;
+}
+
+/* Official color logo on the warm-white card. */
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{
+  content:""!important;
+  display:block!important;
+  position:static!important;
+  width:162px!important;
+  height:62px!important;
+  flex:0 0 62px!important;
+  margin:0 auto 18px!important;
+  background:
+    center/contain no-repeat
+    url("https://zoolungzoolung.com/wp-content/themes/zoolungzoolung/assets/images/zoolung_logo_color.svg")!important;
+  opacity:1!important;
+  filter:none!important;
+  transform:none!important;
+}
+
+html.zr-admin-login-clean #adminLoginModal .modal-card h2{
+  display:block!important;
+  margin:0 0 31px!important;
+  padding:0!important;
+  color:#651012!important;
+  font-size:29px!important;
+  line-height:1.22!important;
+  letter-spacing:-.045em!important;
+  text-align:center!important;
+  font-weight:850!important;
+}
+html.zr-admin-login-clean #adminLoginModal .modal-card h2::after{
+  content:"동탄점 단체예약 관리자";
+  display:block;
+  margin-top:8px;
+  color:#8a7469;
+  font-size:12px;
+  line-height:1.4;
+  letter-spacing:-.02em;
+  font-weight:650;
+}
+
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-field{
+  display:block!important;
+  margin:0 0 11px!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-label{
+  display:none!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity,
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  display:block!important;
+  width:100%!important;
+  height:51px!important;
+  min-height:51px!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  border:1px solid #e3d8d0!important;
+  border-radius:10px!important;
+  outline:none!important;
+  padding:0 14px 0 44px!important;
+  background-color:#fffdfa!important;
+  color:#38251d!important;
+  font:inherit!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+  transition:border-color .16s ease,box-shadow .16s ease!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 20c.8-4 3.2-6 7.5-6s6.7 2 7.5 6'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 8 0V10'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity::placeholder,
+html.zr-admin-login-clean #adminLoginModal #adminPassword::placeholder{
+  color:#aa968a!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity:focus,
+html.zr-admin-login-clean #adminLoginModal #adminPassword:focus{
+  border-color:#b9826e!important;
+  box-shadow:0 0 0 3px rgba(132,59,47,.08)!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-error{
+  margin:6px 0 0!important;
+  color:#b23838!important;
+  font-size:11px!important;
+  font-weight:750!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-error.hidden{
+  display:none!important;
+}
+
+/* Normalize legacy password wrapper spacing without changing its behavior. */
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  margin-bottom:0!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminLoginSubmit{
+  display:block!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:14px 0 0!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:#720b0f!important;
+  color:#fff!important;
+  font-size:14px!important;
+  line-height:1!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+  box-shadow:0 8px 16px rgba(91,13,15,.18)!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminLoginSubmit:active{
+  transform:translateY(1px)!important;
+}
+
+#zrAdminLoginEmployeeV1{
+  margin-top:auto;
+  padding-top:28px;
+  text-align:center;
+  color:#a28f84;
+  font-size:11px;
+  line-height:1.4;
+  font-weight:650;
+}
+
+@media(max-width:900px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    left:50%!important;
+    top:50%!important;
+    width:min(420px,calc(100vw - 36px))!important;
+    min-height:520px!important;
+    padding:42px 30px 30px!important;
+    border-radius:26px!important;
+    transform:translate(-50%,-50%)!important;
+  }
+  html.zr-admin-login-clean.zr-admin-login-intro-ready #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    transform:translate(-50%,-50%)!important;
+  }
+  #zrAdminLoginSceneV1::after{
+    background:rgba(31,17,11,.18);
+  }
+}
+
+@media(max-height:660px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    min-height:0!important;
+    padding-top:30px!important;
+    padding-bottom:26px!important;
+  }
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{
+    width:140px!important;
+    height:52px!important;
+    flex-basis:52px!important;
+    margin-bottom:12px!important;
+  }
+  html.zr-admin-login-clean #adminLoginModal .modal-card h2{
+    margin-bottom:18px!important;
+  }
+  #zrAdminLoginEmployeeV1{
+    padding-top:18px;
+  }
+}
