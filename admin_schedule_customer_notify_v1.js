@@ -88,9 +88,37 @@ function injectStyle(){
   const style=document.createElement('style');
   style.id=SCRIPT_STYLE_ID;
   style.textContent=`
-    #tab-schedule .zr-schedule-customer-notify{background:#eaf3fb!important;color:#2f6b9a!important;border:1px solid #c7dceb!important}
-    #tab-schedule .zr-schedule-customer-notify.done{background:#e9f3ed!important;color:#2f6b4f!important;border-color:#c6decf!important}
-    #tab-schedule .zr-schedule-customer-notify:disabled{background:#f1f3f2!important;color:#9aa29d!important;border-color:#dfe4e1!important;cursor:not-allowed!important;opacity:1!important}
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zr-schedule-customer-notify:not(:disabled):not(.done){
+      background:var(--zr-v3-blue,#2f6b86)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      border:1.5px solid var(--zr-v3-blue,#2f6b86)!important;
+      box-shadow:0 4px 10px rgba(47,107,134,.13)!important;
+      opacity:1!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zr-schedule-customer-notify:not(:disabled):not(.done):hover,
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zr-schedule-customer-notify:not(:disabled):not(.done):focus-visible{
+      background:#24566d!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      border-color:#24566d!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zr-schedule-customer-notify.done{
+      background:var(--zr-v3-green-soft,#eef6f1)!important;
+      color:var(--zr-v3-green,#004b2a)!important;
+      -webkit-text-fill-color:var(--zr-v3-green,#004b2a)!important;
+      border:1.5px solid #bdd5c7!important;
+      box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zr-schedule-customer-notify:disabled{
+      background:#f3f1ee!important;
+      color:#9b938c!important;
+      -webkit-text-fill-color:#9b938c!important;
+      border:1px solid #ded8d2!important;
+      cursor:not-allowed!important;
+      opacity:1!important;
+      box-shadow:none!important;
+    }
     #${SETTINGS_CARD_ID} textarea{min-height:135px;resize:vertical;line-height:1.55}
     #${SETTINGS_CARD_ID} .zr-schedule-notify-auto{margin-top:10px}
     @media(max-width:700px){
