@@ -7,6 +7,37 @@ const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 let FS=null,db=null,listObserver=null,observedList=null,retryTimer=null,retryCount=0;
 
+function injectStyle(){
+  if(document.getElementById('zrAdminSchedulePublishSyncV1Style'))return;
+  const s=document.createElement('style');
+  s.id='zrAdminSchedulePublishSyncV1Style';
+  s.textContent=`
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-actions [data-publish]{
+      background:var(--zr-v3-green,#004b2a)!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      box-shadow:0 4px 10px rgba(0,75,42,.13)!important;
+      opacity:1!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-actions [data-publish]:hover,
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-actions [data-publish]:focus-visible{
+      background:var(--zr-v3-green-dark,#003b21)!important;
+      border-color:var(--zr-v3-green-dark,#003b21)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-schedule .zrsc-actions button[disabled]:not(.zr-schedule-customer-notify){
+      background:var(--zr-v3-green-soft,#eef6f1)!important;
+      border:1.5px solid #bdd5c7!important;
+      color:var(--zr-v3-green,#004b2a)!important;
+      -webkit-text-fill-color:var(--zr-v3-green,#004b2a)!important;
+      opacity:1!important;
+      box-shadow:none!important;
+    }
+  `;
+  document.head.appendChild(s);
+}
 function allBookings(){
   try{
     const list=typeof window.bookings==='function'?window.bookings():[];
@@ -41,6 +72,7 @@ function waitAndSync(id,target,left=80){
   if(left>0)setTimeout(()=>waitAndSync(id,target,left-1),100);
 }
 function patchButtons(){
+  injectStyle();
   const list=document.getElementById('zrscList');if(!list)return false;
   list.querySelectorAll('[data-publish]').forEach(btn=>{
     if(btn.dataset.zrPublishSyncV1==='1')return;
@@ -69,7 +101,7 @@ function startRetries(){
     if(attachObserver()||retryCount>=80){clearInterval(retryTimer);retryTimer=null}
   },500);
 }
-function boot(){attachObserver();startRetries()}
+function boot(){injectStyle();attachObserver();startRetries()}
 document.addEventListener('zr:admin-runtime-ready',boot,{once:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
