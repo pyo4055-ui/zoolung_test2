@@ -39,10 +39,32 @@ function injectStyle(){
       opacity:1!important;
       visibility:visible!important;
     }
+    html.zr-admin-shell-mounted #adminView #tab-calendar button.zr-calendar-current-month-fix{
+      background:var(--zr-v3-green,#004b2a)!important;
+      border:1.5px solid var(--zr-v3-green,#004b2a)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+      opacity:1!important;
+      visibility:visible!important;
+      box-shadow:none!important;
+    }
+    html.zr-admin-shell-mounted #adminView #tab-calendar button.zr-calendar-current-month-fix:hover{
+      background:var(--zr-v3-green-dark,#003b21)!important;
+      border-color:var(--zr-v3-green-dark,#003b21)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+    }
     #zrTodayDbStatus[data-zr-retryable="1"]{cursor:pointer;user-select:none}
     #zrTodayDbStatus[data-zr-retryable="1"]:hover{border-color:var(--zr-v3-orange,#fc5404)!important}
   `;
   document.head.appendChild(s);
+}
+function markCalendarCurrentMonth(){
+  const tab=$('tab-calendar');if(!tab)return;
+  tab.querySelectorAll('button').forEach(btn=>{
+    const compact=String(btn.textContent||'').replace(/\s+/g,'').trim();
+    btn.classList.toggle('zr-calendar-current-month-fix',compact==='이번달');
+  });
 }
 function todayOpen(){
   const sec=$('tab-today');
@@ -77,6 +99,7 @@ function markManualRetry(){
 }
 function watch(){
   injectStyle();
+  markCalendarCurrentMonth();
   const st=$('zrTodayDbStatus'),date=$('zrTodayDate');
   if(!st||!date)return;
   if(date.value!==lastDate){lastDate=date.value;retryCount=0;lastLoadingAt=0}
@@ -105,6 +128,7 @@ function bindStatus(){
 }
 function boot(){
   injectStyle();
+  markCalendarCurrentMonth();
   if(!watchTimer)watchTimer=setInterval(()=>{bindStatus();watch()},700);
   window.addEventListener('online',()=>{retryCount=0;setTimeout(()=>triggerRetry('online'),100)});
   document.addEventListener('zr:customer-firebase-ready',()=>{retryCount=0;setTimeout(()=>triggerRetry('firebase-ready'),100)});
