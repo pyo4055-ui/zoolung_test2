@@ -2,6 +2,8 @@ import fs from 'node:fs';
 
 const admin=fs.readFileSync('admin.html','utf8');
 const adminBootstrap=fs.readFileSync('admin_entry_bootstrap_v1.js','utf8');
+const adminShell=fs.readFileSync('admin_shell_v1.js','utf8');
+const adminTokens=fs.readFileSync('admin_design_tokens_v1.css','utf8');
 const customer=fs.readFileSync('customer.html','utf8');
 const customerBootstrap=fs.readFileSync('customer_entry_bootstrap_v1.js','utf8');
 const customerLoader=fs.readFileSync('customer_features_loader_v1.js','utf8');
@@ -13,8 +15,10 @@ function need(ok,message){
   if(!ok){console.error(message);process.exit(1)}
 }
 
-need(admin.includes("fetch('./index.html?v=admin-entry-1'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
+need(admin.includes("fetch('./index.html?v=admin-entry-2'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
 need(admin.includes('admin_entry_bootstrap_v1.js?v=1'),'admin.html must inject the dedicated admin bootstrap.');
+need(admin.includes('admin_shell_v1.js?v=1'),'admin.html must inject the dedicated admin redevelopment shell.');
+need(admin.includes('admin_design_tokens_v1.css?v=1'),'admin.html must inject centralized administrator design tokens.');
 need(admin.includes('reservation_firebase_bridge.js?v=1'),'admin.html must preserve the existing administrator reservation Firebase bridge.');
 need(!admin.includes('setDoc(')&&!admin.includes('updateDoc(')&&!admin.includes('deleteDoc(')&&!admin.includes('setStore('),'admin.html must remain an entry-only compatibility shell with no data writes.');
 
@@ -25,6 +29,22 @@ need(adminBootstrap.includes("window.openModal==='function'"),'dedicated admin e
 need(adminBootstrap.includes("#startView")&&adminBootstrap.includes("#customerView")&&adminBootstrap.includes("#successView")&&adminBootstrap.includes("#cancelSuccessView"),'dedicated admin entry must hide customer-only surfaces.');
 need(adminBootstrap.includes("#adminLogout"),'dedicated admin entry must return logout to the admin login gate, not the customer landing page.');
 need(!adminBootstrap.includes('setDoc(')&&!adminBootstrap.includes('updateDoc(')&&!adminBootstrap.includes('deleteDoc(')&&!adminBootstrap.includes('setStore('),'admin entry bootstrap must be UI-only and must not write reservation data.');
+
+for(const label of ['오늘 운영','예약 캘린더','스케줄 관리','경고','예약 현황','식사 현황','과거 예약 정리','1:1 문의','사전답사 관리','고객 안내 관리','아웃소싱 결제대금','카페 메뉴 관리','예약설정']){
+  need(adminShell.includes(`label:'${label}'`),`admin shell missing top-level menu: ${label}`);
+}
+for(const required of [
+  "target.click()",
+  "#adminView .admin-tabs [data-tab=",
+  "sectionId:'tab-calendar'",
+  "sectionId:'tab-activity'",
+  "sectionId:'tab-schedule'",
+  "$('adminLogout')?.click()",
+  "document.documentElement.classList.toggle('zr-admin-shell-mounted',on)"
+])need(adminShell.includes(required),`admin shell forwarding contract missing: ${required}`);
+for(const forbidden of ['setDoc(','updateDoc(','deleteDoc(','setStore(','localStorage.setItem(','sessionStorage.setItem('])need(!adminShell.includes(forbidden),`admin shell must remain navigation/UI-only: ${forbidden}`);
+for(const token of ['--zr-operation:','--zr-reservation:','--zr-customer:','--zr-sales:','--zr-settings:','--zr-action-primary:','--zr-action-danger:','--zr-admin-rail-width:'])need(adminTokens.includes(token),`admin centralized design token missing: ${token}`);
+need(adminTokens.includes('#adminView .admin-tabs'),'desktop shell must visually replace, not delete, the legacy admin tab controls.');
 
 need(customer.includes("fetch('./index.html?v=customer-entry-2'"),'customer.html must reuse the frozen reservation runtime instead of copying booking business logic.');
 need(customer.includes("source.replace(adminLoader,customerLoader)"),'customer.html must replace the admin extension loader with the customer-only loader.');
@@ -97,4 +117,4 @@ need(index.includes("fetch('./data1.txt?v=27'")&&index.includes("fetch('./data2.
 need(index.includes('./admin_features_v2_loader.js?v=31')&&index.includes('./reservation_firebase_bridge.js?v=1'),'compatibility index dependencies changed unexpectedly before cutover.');
 need(index.includes(bridgeMarker),'entry compatibility injection point no longer exists in index.html.');
 
-console.log('OK: customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps; customer entry excludes administrator patch chains and customer zoo/playground guides acknowledge once per page.');
+console.log('OK: admin entry mounts a UI-only forwarding shell with centralized design tokens; customer and admin entries share Firestore/data contracts but use isolated Firebase Auth apps.');
