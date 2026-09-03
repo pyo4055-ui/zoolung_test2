@@ -10,12 +10,14 @@ const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const tel=v=>String(v||'').replace(/\D/g,'');
 
 function readList(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
-function writeInquiries(list){
+function writeList(key,list){
   try{
-    if(typeof window.setStore==='function')window.setStore(INQUIRY_KEY,list);
-    else localStorage.setItem(INQUIRY_KEY,JSON.stringify(list));
+    if(typeof window.setStore==='function')window.setStore(key,list);
+    else localStorage.setItem(key,JSON.stringify(list));
   }catch{}
 }
+function writeInquiries(list){writeList(INQUIRY_KEY,list)}
+function writeBookings(list){writeList(BOOKING_KEY,list)}
 function contentKey(item){for(const k of ['content','message','inquiry','text'])if(Object.prototype.hasOwnProperty.call(item||{},k))return k;return 'content'}
 function contentOf(item){return String(item?.[contentKey(item)]??'')}
 function mobileOf(item){for(const k of ['mobile','mobilePhone','cellphone','cellPhone','hp','inqMobile','contact','phone','inqPhone','tel','telephone']){const v=tel(item?.[k]);if(v)return v}return''}
@@ -26,6 +28,16 @@ function selectedBooking(){
   return readList(BOOKING_KEY).find(b=>b&&!b.__availabilityOnly&&String(b.id||'')===id)||null;
 }
 function requestDate(){return String($('inqVisitDate')?.value||($('inqVisitMonth')?.value&&$('inqVisitDay')?.value?`${$('inqVisitMonth').value}-${$('inqVisitDay').value}`:''))}
+function lineValue(text,label){
+  const target=`${label}:`;
+  const line=String(text||'').split(/\r?\n/).find(x=>x.trim().startsWith(target));
+  return line?line.trim().slice(target.length).trim():'';
+}
+function taggedBody(text){
+  const q=String(text||'').replace(/\r\n/g,'\n');
+  const marker=q.match(/\n단체 인원:\s*\d+명\n\n/);
+  return marker?q.slice((marker.index||0)+marker[0].length).trim():q.replace(/^\[[^\]]+\]\s*/,'').trim();
+}
 
 function syncInquiryType(){
   const type=$('inqType');if(!type)return;
@@ -53,6 +65,7 @@ function contextSnapshot(){
   const booking=selectedBooking();
   return {
     booking,
+    requestId:`cr_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
     org:norm($('inqOrgName')?.value||booking?.orgName),
     requestedDate:requestDate(),
     requestedTime:String($('inqVisitTime')?.value||''),
@@ -90,13 +103,31 @@ function structuredContent(ctx){
     ctx.body||''
   ].join('\n').trimEnd();
 }
+function attachBookingRequest(ctx){
+  const b=ctx.booking;if(!b?.id)return false;
+  const list=readList(BOOKING_KEY),index=list.findIndex(x=>x&&!x.__availabilityOnly&&String(x.id||'')===String(b.id));
+  if(index<0)return false;
+  const booking=list[index],now=new Date().toISOString();
+  booking.reservationChangeRequest={
+    id:String(ctx.requestId||`cr_${Date.now()}`),status:'pending',
+    oldDate:String(b.date||booking.date||''),oldEntryTime:String(b.entryTime||booking.entryTime||''),oldExitTime:String(b.exitTime||booking.exitTime||''),
+    requestedDate:String(ctx.requestedDate||''),requestedTime:String(ctx.requestedTime||''),
+    orgName:String(ctx.org||booking.orgName||''),requesterName:String(ctx.name||booking.managerName||''),requesterMobile:String(ctx.mobile||booking.contact||''),
+    people:Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
+    body:String(ctx.body||''),createdAt:now,updatedAt:now
+  };
+  writeBookings(list);
+  try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-shared',{detail:{bookingId:String(b.id),requestId:booking.reservationChangeRequest.id}}))}catch{}
+  return true;
+}
 function tagSavedInquiry(before,ctx){
   const list=readList(INQUIRY_KEY);if(list.length<=before.length)return false;
   const index=newInquiryIndex(before,list,ctx);if(index<0)return false;
-  const item=list[index];if(!item||item.changeRequest===true||/^\[예약 변경 요청\]/.test(contentOf(item)))return true;
+  const item=list[index];if(!item)return false;
   const key=contentKey(item),b=ctx.booking||{};
-  item[key]=structuredContent(ctx);
+  if(item.changeRequest!==true&&!/^\[예약 변경 요청\]/.test(contentOf(item)))item[key]=structuredContent(ctx);
   item.changeRequest=true;
+  item.changeRequestId=String(ctx.requestId||item.changeRequestId||'');
   item.changeRequestStatus='pending';
   item.changeBookingId=String(b.id||'');
   item.changeOldDate=String(b.date||'');
@@ -107,12 +138,32 @@ function tagSavedInquiry(before,ctx){
   item.changeRequestOrgName=String(ctx.org||b.orgName||'');
   item.changeRequestUpdatedAt=new Date().toISOString();
   writeInquiries(list);
+  attachBookingRequest(ctx);
   try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-tagged',{detail:{index,bookingId:item.changeBookingId}}))}catch{}
   return true;
 }
 function scheduleTag(before,ctx){
   let done=false;
-  for(const ms of [20,80,180,360])setTimeout(()=>{if(!done)done=tagSavedInquiry(before,ctx)},ms);
+  for(const ms of [20,80,180,360,700])setTimeout(()=>{if(!done)done=tagSavedInquiry(before,ctx)},ms);
+}
+
+function migrateLegacyLocalRequest(){
+  const inquiries=readList(INQUIRY_KEY),bookings=readList(BOOKING_KEY);
+  for(let i=inquiries.length-1;i>=0;i--){
+    const item=inquiries[i],text=contentOf(item);
+    if(!item||!(item.changeRequest===true||/^\[예약 변경 요청\]/.test(text)))continue;
+    const bookingId=String(item.changeBookingId||lineValue(text,'변경 대상 예약번호')||'');if(!bookingId)continue;
+    const booking=bookings.find(b=>b&&!b.__availabilityOnly&&String(b.id||'')===bookingId);if(!booking||booking.reservationChangeRequest)continue;
+    const ctx={
+      booking,requestId:String(item.changeRequestId||`cr_legacy_${Date.now()}_${i}`),
+      org:String(item.changeRequestOrgName||lineValue(text,'단체명')||booking.orgName||''),
+      requestedDate:String(item.changeRequestedDate||lineValue(text,'예약변경날짜')||''),
+      requestedTime:String(item.changeRequestedTime||lineValue(text,'예약변경시간')||''),
+      people:Number(lineValue(text,'단체 인원').replace(/[^0-9]/g,''))||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
+      body:taggedBody(text),name:String(item.name||item.customerName||item.managerName||item.inqName||booking.managerName||''),mobile:mobileOf(item)||tel(booking.contact)
+    };
+    attachBookingRequest(ctx);break;
+  }
 }
 function install(){
   document.addEventListener('click',e=>{
@@ -139,8 +190,9 @@ function install(){
     if(e.target?.id==='zrChangeBookingSelect'&&isChangeMode())setTimeout(syncInquiryType,0);
   },true);
   syncInquiryType();
+  [0,500,1500].forEach(ms=>setTimeout(migrateLegacyLocalRequest,ms));
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-document.addEventListener('zr:customer-runtime-ready',()=>{syncInquiryType();setTimeout(syncInquiryType,80)},{once:true});
+document.addEventListener('zr:customer-runtime-ready',()=>{syncInquiryType();setTimeout(syncInquiryType,80);[100,700,1800].forEach(ms=>setTimeout(migrateLegacyLocalRequest,ms))},{once:true});
 })();
