@@ -27,6 +27,16 @@ function installStyle(){
   body>#zrCustomerReturnHomeModal,
   body>#zrCustomerGroupGuideV2{z-index:2147483300!important}
 
+  /* Full-screen blur over the large animal scene is expensive, especially on
+     Safari and integrated GPUs. Keep the inquiry dimmer but avoid live blur. */
+  html.zr-customer-entry-v2 body>#inquiryModal{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    background:rgba(36,22,16,.76)!important;
+  }
+  html.zr-customer-entry-v2 body>#inquiryModal .modal-card{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  }
+
   #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{display:none!important}
   html.zr-customer-entry-v2.zr-customer-entry-v2-active.zr-customer-entry-lookup-open #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{
     display:block!important;box-sizing:border-box!important;background:rgba(255,253,249,.985)!important;
@@ -142,7 +152,6 @@ function surfaceInquiryModal(v){
   if(v?.name&&name&&!name.value){name.value=v.name;name.dispatchEvent(new Event('input',{bubbles:true}))}
   if(/^010\d{8}$/.test(v?.phone||'')&&mobile&&!mobile.value){mobile.value=v.phone;mobile.dispatchEvent(new Event('input',{bubbles:true}))}
   try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
-  setTimeout(()=>{try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}},70);
   return true;
 }
 function runInquiry(){
@@ -150,8 +159,8 @@ function runInquiry(){
   syncNative(v);
   const old=$('inquiryBtn');
   if(old){try{old.click()}catch{}}
-  [0,30,90].forEach(ms=>setTimeout(()=>surfaceInquiryModal(v),ms));
-  setTimeout(()=>{if(!surfaceInquiryModal(v)&&!old)toast('1:1 문의 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.')},150);
+  requestAnimationFrame(()=>surfaceInquiryModal(v));
+  setTimeout(()=>{if(!surfaceInquiryModal(v)&&!old)toast('1:1 문의 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.')},90);
 }
 
 function surfaceCancelUi(){
