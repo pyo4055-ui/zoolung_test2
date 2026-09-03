@@ -41,14 +41,14 @@ function injectStyle(){
     #zrMobileActivityToolbarV2{
       display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
       grid-template-areas:"start end" "basis status" "org org" "search today" "excel excel";
-      gap:10px!important;width:100%!important;min-width:0!important;margin:10px 0 12px!important;align-items:end!important
+      gap:10px!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:10px 0 12px!important;align-items:end!important
     }
-    #zrMobileActivityToolbarV2 .zrm-act-field{display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;width:100%!important;margin:0!important}
+    #zrMobileActivityToolbarV2 .zrm-act-field{display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;width:100%!important;max-width:100%!important;margin:0!important;overflow:hidden!important}
     #zrMobileActivityToolbarV2 .zrm-act-label{font-size:12px!important;font-weight:800!important;color:#332925!important;line-height:1.25!important;white-space:nowrap!important}
     #zrMobileActivityToolbarV2 .zrm-act-field input,
     #zrMobileActivityToolbarV2 .zrm-act-field select{
-      display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;
-      margin:0!important;padding:0 11px!important;border:1px solid #dfd2c8!important;border-radius:11px!important;background:#fff!important;color:#352b26!important;font-size:16px!important;box-shadow:none!important
+      display:block!important;width:100%!important;inline-size:100%!important;min-width:0!important;min-inline-size:0!important;max-width:100%!important;max-inline-size:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;
+      margin:0!important;padding:0 11px!important;border:1px solid #dfd2c8!important;border-radius:11px!important;background:#fff!important;color:#352b26!important;font-size:16px!important;box-shadow:none!important;box-sizing:border-box!important
     }
     #zrMobileActivityToolbarV2 .zrm-act-start{grid-area:start}.zrm-act-end{grid-area:end}.zrm-act-basis{grid-area:basis}.zrm-act-status{grid-area:status}
     #zrMobileActivityToolbarV2 .zrm-act-org{grid-area:org}.zrm-act-search{grid-area:search}.zrm-act-today{grid-area:today}.zrm-act-excel{grid-area:excel}
@@ -56,15 +56,20 @@ function injectStyle(){
       width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;margin:0!important;padding:0 12px!important;
       border-radius:11px!important;font-size:13px!important;font-weight:900!important;box-shadow:none!important
     }
-    #zrMobileActivityToolbarV2 .zrm-act-org{border:1px solid #dccfc6!important;background:#fffaf6!important;color:#6a5144!important}
     #zrMobileActivityToolbarV2 .zrm-act-search{border:1px solid #f26828!important;background:#f26828!important;color:#fff!important}
     #zrMobileActivityToolbarV2 .zrm-act-today{border:1px solid #195b37!important;background:#195b37!important;color:#fff!important}
     #zrMobileActivityToolbarV2 .zrm-act-excel{border:1px solid #195b37!important;background:#fff!important;color:#195b37!important}
-    #zrMobileActivityToolbarV2 .zrm-act-org:before{content:'단체명 검색'}
     #zrMobileActivityToolbarV2 .zrm-act-search:before{content:'조회하기'}
     #zrMobileActivityToolbarV2 .zrm-act-today:before{content:'오늘'}
     #zrMobileActivityToolbarV2 .zrm-act-excel:before{content:'엑셀 내려받기'}
     html.zr-admin-shell-mounted body #adminView #tab-activity .card{padding:14px!important}
+
+    /* Cleanup tabs: keep dynamic date controls inside the same left/right inset. */
+    html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-filters{width:100%!important;min-width:0!important;max-width:100%!important}
+    html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-field{width:100%!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}
+    html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-field input[type="date"]{
+      display:block!important;width:100%!important;inline-size:100%!important;min-width:0!important;min-inline-size:0!important;max-width:100%!important;max-inline-size:100%!important;margin:0!important;box-sizing:border-box!important
+    }
 
     /* Sales month controls stay exactly as approved. */
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard .zr-sales-filter{
@@ -103,7 +108,7 @@ function originalActivityControls(){
     end:$('activityEnd')||$('activityEndDate'),
     basis:$('activityDateBasis'),
     status:$('zrActivityStatusFilter'),
-    org:$('zrActivityOrgModalBtn'),
+    orgInput:$('zrActivityOrgSearch'),
     search:buttons.find(b=>textOf(b)==='조회하기'),
     today:buttons.find(b=>textOf(b)==='오늘'),
     excel:buttons.find(b=>textOf(b).includes('엑셀'))
@@ -112,18 +117,21 @@ function originalActivityControls(){
 function optionHtml(select){return select?[...select.options].map(o=>`<option value="${String(o.value).replace(/"/g,'&quot;')}">${String(o.textContent||'')}</option>`).join(''):''}
 function syncMobileActivityToolbar(){
   const c=originalActivityControls(),m=$('zrMobileActivityToolbarV2');if(!c||!m)return;
-  const map=[['zrMobActivityStart',c.start],['zrMobActivityEnd',c.end],['zrMobActivityBasis',c.basis],['zrMobActivityStatus',c.status]];
+  const map=[['zrMobActivityStart',c.start],['zrMobActivityEnd',c.end],['zrMobActivityBasis',c.basis],['zrMobActivityStatus',c.status],['zrMobActivityOrg',c.orgInput]];
   map.forEach(([id,orig])=>{const clone=$(id);if(clone&&orig&&document.activeElement!==clone)clone.value=orig.value||''});
 }
 function pushMobileActivityValues(){
   const c=originalActivityControls();if(!c)return c;
-  const pairs=[[c.start,$('zrMobActivityStart')],[c.end,$('zrMobActivityEnd')],[c.basis,$('zrMobActivityBasis')],[c.status,$('zrMobActivityStatus')]];
-  pairs.forEach(([orig,clone])=>{if(orig&&clone&&orig.value!==clone.value){orig.value=clone.value;orig.dispatchEvent(new Event('change',{bubbles:true}))}});
+  const pairs=[[c.start,$('zrMobActivityStart')],[c.end,$('zrMobActivityEnd')],[c.basis,$('zrMobActivityBasis')],[c.status,$('zrMobActivityStatus')],[c.orgInput,$('zrMobActivityOrg')]];
+  pairs.forEach(([orig,clone])=>{if(orig&&clone&&orig.value!==clone.value){orig.value=clone.value;orig.dispatchEvent(new Event(orig.type==='search'?'input':'change',{bubbles:true}))}});
   return c;
+}
+function runMobileActivitySearch(){
+  const x=pushMobileActivityValues();x?.search?.click();setTimeout(syncMobileActivityToolbar,60)
 }
 function ensureMobileActivityToolbar(){
   if(!mobile())return false;
-  const c=originalActivityControls();if(!c||!c.start||!c.end||!c.basis||!c.status||!c.org||!c.search||!c.today||!c.excel)return false;
+  const c=originalActivityControls();if(!c||!c.start||!c.end||!c.basis||!c.status||!c.orgInput||!c.search||!c.today||!c.excel)return false;
   let m=$('zrMobileActivityToolbarV2');
   if(!m){
     m=document.createElement('div');m.id='zrMobileActivityToolbarV2';m.setAttribute('aria-label','예약 현황 모바일 조회 조건');
@@ -132,15 +140,15 @@ function ensureMobileActivityToolbar(){
       <label class="zrm-act-field zrm-act-end"><span class="zrm-act-label">조회 종료일</span><input id="zrMobActivityEnd" type="date"></label>
       <label class="zrm-act-field zrm-act-basis"><span class="zrm-act-label">조회 기준</span><select id="zrMobActivityBasis">${optionHtml(c.basis)}</select></label>
       <label class="zrm-act-field zrm-act-status"><span class="zrm-act-label">처리 상태</span><select id="zrMobActivityStatus">${optionHtml(c.status)}</select></label>
-      <button type="button" class="zrm-act-btn zrm-act-org" aria-label="단체명 검색"></button>
+      <label class="zrm-act-field zrm-act-org"><span class="zrm-act-label">단체명 검색</span><input id="zrMobActivityOrg" type="search" autocomplete="off" placeholder="단체명 일부 입력"></label>
       <button type="button" class="zrm-act-btn zrm-act-search" aria-label="조회하기"></button>
       <button type="button" class="zrm-act-btn zrm-act-today" aria-label="오늘"></button>
       <button type="button" class="zrm-act-btn zrm-act-excel" aria-label="엑셀 내려받기"></button>`;
     c.toolbar.insertAdjacentElement('beforebegin',m);
     $('zrMobActivityBasis').addEventListener('change',()=>pushMobileActivityValues());
     $('zrMobActivityStatus').addEventListener('change',()=>pushMobileActivityValues());
-    m.querySelector('.zrm-act-org').addEventListener('click',()=>{const x=originalActivityControls();x?.org?.click()});
-    m.querySelector('.zrm-act-search').addEventListener('click',()=>{const x=pushMobileActivityValues();x?.search?.click();setTimeout(syncMobileActivityToolbar,60)});
+    $('zrMobActivityOrg').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runMobileActivitySearch()}});
+    m.querySelector('.zrm-act-search').addEventListener('click',runMobileActivitySearch);
     m.querySelector('.zrm-act-today').addEventListener('click',()=>{const x=originalActivityControls();x?.today?.click();setTimeout(syncMobileActivityToolbar,40);setTimeout(syncMobileActivityToolbar,160)});
     m.querySelector('.zrm-act-excel').addEventListener('click',()=>{const x=pushMobileActivityValues();x?.excel?.click()});
   }
@@ -155,6 +163,11 @@ function normalizeControls(){
     el.style.setProperty('height','44px','important');el.style.setProperty('min-height','44px','important');el.style.setProperty('max-height','44px','important');
     el.style.setProperty('padding-top','0','important');el.style.setProperty('padding-bottom','0','important');
     el.style.setProperty('line-height','44px','important');el.style.setProperty('box-sizing','border-box','important');
+  });
+  document.querySelectorAll('#zrMobileActivityToolbarV2 input[type="date"],#tab-cleanup .zr-cleanup-field input[type="date"]').forEach(el=>{
+    el.style.setProperty('display','block','important');el.style.setProperty('width','100%','important');el.style.setProperty('inline-size','100%','important');
+    el.style.setProperty('min-width','0','important');el.style.setProperty('min-inline-size','0','important');el.style.setProperty('max-width','100%','important');el.style.setProperty('max-inline-size','100%','important');
+    el.style.setProperty('margin','0','important');el.style.setProperty('box-sizing','border-box','important');
   });
   document.querySelectorAll('#tab-sales-dashboard input[type="month"]').forEach(el=>{
     el.style.setProperty('display','block','important');el.style.setProperty('width','100%','important');el.style.setProperty('inline-size','100%','important');
@@ -195,7 +208,7 @@ function boot(){
       document.documentElement.classList.add('zr-admin-mobile-switching');
       setTimeout(()=>document.documentElement.classList.remove('zr-admin-mobile-switching'),220);
     }
-    if(e.target?.closest?.('#zrAdminMobileBottomV1,#zrAdminMobileSubnavV3,#zrAdminMobileShellV1,#adminView .admin-tabs,#tab-sales-dashboard')){
+    if(e.target?.closest?.('#zrAdminMobileBottomV1,#zrAdminMobileSubnavV3,#zrAdminMobileShellV1,#adminView .admin-tabs,#tab-sales-dashboard,#tab-cleanup')){
       setTimeout(apply,60);setTimeout(apply,220);setTimeout(syncBottomVisual,420);
     }
   },true);
