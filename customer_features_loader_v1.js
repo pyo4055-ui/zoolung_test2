@@ -121,7 +121,8 @@ async function loadCustomerModules(){
     ['zrCustomerGroupMinimumV1','./customer_group_minimum_v1.js?v=1'],
     ['zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=12'],
     ['zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=3'],
-    ['zrCustomerScheduleUiV5','./customer_schedule_ui_v5.js?v=5']
+    ['zrCustomerScheduleUiV5','./customer_schedule_ui_v5.js?v=5'],
+    ['zrCustomerVisualThemeV1','./customer_visual_theme_v1.js?v=1']
   ];
   for(const [id,src] of modules)await loadScript(id,src);
 }
