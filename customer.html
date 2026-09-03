@@ -22,7 +22,7 @@ html,body{margin:0;min-height:100%;background:#38271e;font-family:-apple-system,
     if(!source.includes(adminLoader))throw new Error('고객 분리 연결 지점을 찾지 못했습니다.');
     source=source.replace(adminLoader,customerLoader);
     const bridgeMarker='<script src="./reservation_firebase_bridge.js?v=1"><\\/script></body>';
-    const customerMarker='<script src="./customer_reservation_firebase_bridge_v1.js?v=1"><\\/script><script src="./customer_entry_bootstrap_v1.js?v=1"><\\/script><script src="./customer_entry_visual_v2_bootstrap.js?v=3"><\\/script></body>';
+    const customerMarker='<script src="./customer_reservation_firebase_bridge_v1.js?v=1"><\\/script><script src="./customer_entry_bootstrap_v1.js?v=1"><\\/script><script src="./customer_entry_visual_v2_bootstrap.js?v=3"><\\/script><script src="./customer_reservation_change_request_tag_v1.js?v=1"><\\/script></body>';
     if(!source.includes(bridgeMarker))throw new Error('고객 전용 화면 연결 지점을 찾지 못했습니다.');
     source=source.replace(bridgeMarker,customerMarker);
     source=source.replace('<title>주렁주렁 단체예약 테스트</title>','<title>주렁주렁 동탄점 단체예약</title>');
