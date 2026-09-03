@@ -5,7 +5,7 @@ window.__ZR_ADMIN_MOBILE_SUBNAV_V3=true;
 
 const MAX_MOBILE=900;
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const mobile=()=>window.matchMedia(`(max-width:${MAX_MOBILE}px)`).matches;
 
@@ -75,10 +75,11 @@ function childKey(group,sectionIndex,childIndex){return `${group}:${sectionIndex
 
 function injectStyle(){
   if($('zrAdminMobileSubnavV3Style'))return;
-  const s=document.createElement('style');s.id='zrAdminMobileSubnavV3Style';s.textContent=`
+  const s=document.createElement('style');
+  s.id='zrAdminMobileSubnavV3Style';
+  s.textContent=`
   @media(max-width:${MAX_MOBILE}px){
     #zrAdminMobileQuickV1,#zrAdminMobileTouchMenuV2{display:none!important;visibility:hidden!important;pointer-events:none!important}
-
     html.zr-admin-shell-mounted body #adminView{padding-bottom:calc(82px + var(--zrm-subnav-height,170px) + env(safe-area-inset-bottom))!important}
 
     #zrAdminMobileSubnavV3{
@@ -110,15 +111,10 @@ function injectStyle(){
 
     #zrAdminMobileBottomV1 [data-mobile-category].is-category-active{color:#fff!important;background:linear-gradient(180deg,#7b1518,#650d10)!important;border-radius:12px!important;margin:5px 3px!important;padding-top:3px!important;padding-bottom:3px!important}
 
-    /* 모바일에서는 본문 안에 같은 서브탭을 중복 노출하지 않는다. */
-    #zrCleanupInnerTabs,
-    #zrInquiryReplyInnerTabs,
-    #zrPreviewNotifyInnerTabs,
-    #zrGuideSubtabsV1,
-    #zrSettingsSubtabsV1,
-    #tab-sales-dashboard .zr-sales-subtabs{display:none!important}
+    #zrCleanupInnerTabs,#zrInquiryReplyInnerTabs,#zrPreviewNotifyInnerTabs,#zrGuideSubtabsV1,#zrSettingsSubtabsV1,#tab-sales-dashboard .zr-sales-subtabs{display:none!important}
   }
-  `;document.head.appendChild(s);
+  `;
+  document.head.appendChild(s);
 }
 
 function updatePanelHeight(){
@@ -128,14 +124,27 @@ function updatePanelHeight(){
 }
 function ensurePanel(){
   if(panel)return panel;
-  panel=document.createElement('nav');panel.id='zrAdminMobileSubnavV3';panel.setAttribute('aria-label','모바일 관리자 메뉴');document.body.appendChild(panel);
+  panel=document.createElement('nav');
+  panel.id='zrAdminMobileSubnavV3';
+  panel.setAttribute('aria-label','모바일 관리자 메뉴');
+  document.body.appendChild(panel);
   panel.addEventListener('click',e=>{
     const main=e.target.closest('[data-zrm-main]');
-    if(main){e.preventDefault();activateMain(main.dataset.zrmGroup||'',Number(main.dataset.zrmSection||0));return}
-    const child=e.target.closest('[data-zrm-child]');
-    if(child){e.preventDefault();activateChild(child.dataset.zrmGroup||'',Number(child.dataset.zrmSection||0),Number(child.dataset.zrmChild||0))}
+    if(main){
+      e.preventDefault();
+      activateMain(main.dataset.zrmGroup||'',Number(main.dataset.zrmSection||0));
+      return;
+    }
+    const child=e.target.closest('[data-zrm-child-btn]');
+    if(child){
+      e.preventDefault();
+      activateChild(child.dataset.zrmGroup||'',Number(child.dataset.zrmSection||0),Number(child.dataset.zrmChildIndex||0));
+    }
   });
-  if('ResizeObserver'in window){resizeObserver=new ResizeObserver(updatePanelHeight);resizeObserver.observe(panel)}
+  if('ResizeObserver'in window){
+    resizeObserver=new ResizeObserver(updatePanelHeight);
+    resizeObserver.observe(panel);
+  }
   return panel;
 }
 
@@ -146,104 +155,154 @@ function render(group=currentGroup){
   root.innerHTML=`<div class="zrm-group-title">${esc(menu.label)} 메뉴</div>${menu.sections.map((section,si)=>{
     const children=Array.isArray(section.children)?section.children:[];
     const activeMain=activeParentId===section.parent;
-    return `<div class="zrm-section ${children.length?'':'no-children'}"><button type="button" class="zrm-main ${activeMain?'is-active':''}" data-zrm-main data-zrm-group="${group}" data-zrm-section="${si}">${esc(section.label)}</button>${children.length?`<div class="zrm-children">${children.map((child,ci)=>`<button type="button" class="zrm-child ${activeChildKey===childKey(group,si,ci)?'is-active':''}" data-zrm-child data-zrm-group="${group}" data-zrm-section="${si}" data-zrm-child="${ci}">${esc(child.label)}</button>`).join('')}</div>`:''}</div>`
+    const childHtml=children.length?`<div class="zrm-children">${children.map((child,ci)=>`<button type="button" class="zrm-child ${activeChildKey===childKey(group,si,ci)?'is-active':''}" data-zrm-child-btn data-zrm-group="${group}" data-zrm-section="${si}" data-zrm-child-index="${ci}">${esc(child.label)}</button>`).join('')}</div>`:'';
+    return `<div class="zrm-section ${children.length?'':'no-children'}"><button type="button" class="zrm-main ${activeMain?'is-active':''}" data-zrm-main data-zrm-group="${group}" data-zrm-section="${si}">${esc(section.label)}</button>${childHtml}</div>`;
   }).join('')}`;
-  syncBottom();requestAnimationFrame(updatePanelHeight);
+  syncBottom();
+  requestAnimationFrame(updatePanelHeight);
 }
 
 function syncBottom(){
   document.querySelectorAll('#zrAdminMobileBottomV1 [data-mobile-category]').forEach(btn=>{
-    btn.classList.toggle('is-category-active',btn.dataset.mobileCategory===currentGroup);btn.classList.remove('is-active');
+    btn.classList.toggle('is-category-active',btn.dataset.mobileCategory===currentGroup);
+    btn.classList.remove('is-active');
   });
 }
 
 function prepareBottom(){
-  const bottom=$('zrAdminMobileBottomV1');if(!bottom)return false;
-  const buttons=[...bottom.querySelectorAll('[data-mobile-group],[data-mobile-category]')];if(!buttons.length)return false;
+  const bottom=$('zrAdminMobileBottomV1');
+  if(!bottom)return false;
+  const buttons=[...bottom.querySelectorAll('[data-mobile-group],[data-mobile-category]')];
+  if(!buttons.length)return false;
   buttons.forEach(btn=>{
-    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';if(!MENUS[group])return;
-    btn.removeAttribute('data-mobile-group');btn.dataset.mobileCategory=group;
+    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';
+    if(!MENUS[group])return;
+    btn.removeAttribute('data-mobile-group');
+    btn.dataset.mobileCategory=group;
     if(btn.dataset.zrMobileSubnavBound==='1')return;
     btn.dataset.zrMobileSubnavBound='1';
     btn.addEventListener('click',e=>{
       if(!mobile())return;
-      e.preventDefault();e.stopPropagation();
-      currentGroup=group;activeChildKey='';
-      const rail=currentRailParent(),section=MENUS[group].sections.find(x=>x.parent===rail);
+      e.preventDefault();
+      e.stopPropagation();
+      currentGroup=group;
+      activeChildKey='';
+      const rail=currentRailParent();
+      const section=MENUS[group].sections.find(x=>x.parent===rail);
       if(section)activeParentId=section.parent;
       render(group);
     });
   });
-  syncFromCurrent(false);return true;
+  syncFromCurrent(false);
+  return true;
 }
 
 async function clickWhenReady(selector,attempts=44){
   for(let i=0;i<attempts;i++){
-    const el=document.querySelector(selector);if(el){el.click();return true}
+    const el=document.querySelector(selector);
+    if(el){el.click();return true}
     await wait(50);
   }
   return false;
 }
 
-async function navigateSection(group,section,child=null,childIndex=-1){
+async function navigateSection(group,sectionIndex,childIndex=-1){
+  const section=MENUS[group]?.sections?.[sectionIndex];
   if(!section)return;
-  currentGroup=group;activeParentId=section.parent;
-  if(child&&childIndex>=0)activeChildKey=childKey(group,MENUS[group].sections.indexOf(section),childIndex);else activeChildKey='';
+  const child=childIndex>=0?section.children?.[childIndex]:null;
+  currentGroup=group;
+  activeParentId=section.parent;
+  activeChildKey=child?childKey(group,sectionIndex,childIndex):'';
   updateActiveClasses();
-  const parent=railButton(section.parent);if(!parent)return;
+
+  const parent=railButton(section.parent);
+  if(!parent)return;
   if(!parent.classList.contains('is-active'))parent.click();
   if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
   else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
+  updateActiveClasses();
   window.scrollTo({top:0,behavior:'auto'});
 }
 
 function activateMain(group,sectionIndex){
-  const section=MENUS[group]?.sections?.[sectionIndex];if(!section)return;
-  const firstChild=section.children?.[0]||null;
-  navigateSection(group,section,firstChild,firstChild?0:-1);
+  const section=MENUS[group]?.sections?.[sectionIndex];
+  if(!section)return;
+  navigateSection(group,sectionIndex,section.children?.length?0:-1);
 }
 function activateChild(group,sectionIndex,childIndex){
-  const section=MENUS[group]?.sections?.[sectionIndex],child=section?.children?.[childIndex];if(!section||!child)return;
-  navigateSection(group,section,child,childIndex);
+  const section=MENUS[group]?.sections?.[sectionIndex];
+  const child=section?.children?.[childIndex];
+  if(!section||!child)return;
+  navigateSection(group,sectionIndex,childIndex);
 }
 
 function updateActiveClasses(){
   if(!panel)return;
   panel.querySelectorAll('[data-zrm-main]').forEach(btn=>{
-    const group=btn.dataset.zrmGroup||'',si=Number(btn.dataset.zrmSection||0),section=MENUS[group]?.sections?.[si];
+    const group=btn.dataset.zrmGroup||'';
+    const si=Number(btn.dataset.zrmSection||0);
+    const section=MENUS[group]?.sections?.[si];
     btn.classList.toggle('is-active',!!section&&section.parent===activeParentId);
   });
-  panel.querySelectorAll('[data-zrm-child]').forEach(btn=>{
-    const key=childKey(btn.dataset.zrmGroup||'',Number(btn.dataset.zrmSection||0),Number(btn.dataset.zrmChild||0));
+  panel.querySelectorAll('[data-zrm-child-btn]').forEach(btn=>{
+    const key=childKey(btn.dataset.zrmGroup||'',Number(btn.dataset.zrmSection||0),Number(btn.dataset.zrmChildIndex||0));
     btn.classList.toggle('is-active',key===activeChildKey);
   });
   syncBottom();
 }
 
 function syncFromCurrent(allowGroupChange=true){
-  const parent=currentRailParent();if(!parent)return;
+  const parent=currentRailParent();
+  if(!parent)return;
   const group=PARENT_GROUP[parent]||currentGroup;
-  if(allowGroupChange&&MENUS[group])currentGroup=group;
+  if(allowGroupChange&&MENUS[group]&&group!==currentGroup){
+    currentGroup=group;
+    activeChildKey='';
+    activeParentId=parent;
+    render(currentGroup);
+    return;
+  }
   const section=MENUS[currentGroup]?.sections?.find(x=>x.parent===parent);
-  if(section){activeParentId=parent;if(!Array.isArray(section.children)||!section.children.length)activeChildKey=''}
-  if(panel&&panel.childElementCount)updateActiveClasses();else render(currentGroup);
+  if(section){
+    activeParentId=parent;
+    if(!section.children?.length)activeChildKey='';
+  }
+  if(panel&&panel.childElementCount)updateActiveClasses();
+  else render(currentGroup);
 }
 
 function bindRail(){
-  const rail=$('zrAdminShellRail');if(!rail||rail.dataset.zrMobileSubnavRailBound==='1')return false;
+  const rail=$('zrAdminShellRail');
+  if(!rail||rail.dataset.zrMobileSubnavRailBound==='1')return false;
   rail.dataset.zrMobileSubnavRailBound='1';
   rail.addEventListener('click',()=>setTimeout(()=>{if(mobile())syncFromCurrent(true)},0));
   return true;
 }
 
 function boot(){
-  injectStyle();ensurePanel();
-  let tries=0;const timer=setInterval(()=>{
-    tries++;const ready=prepareBottom();bindRail();if(ready||tries>120)clearInterval(timer);
+  injectStyle();
+  ensurePanel();
+  let tries=0;
+  const timer=setInterval(()=>{
+    tries++;
+    const ready=prepareBottom();
+    bindRail();
+    if(ready||tries>120)clearInterval(timer);
   },100);
-  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{prepareBottom();bindRail();syncFromCurrent(true)},100),{once:true});
-  window.addEventListener('resize',()=>{if(mobile()){prepareBottom();syncFromCurrent(true);updatePanelHeight()}},{passive:true});
+  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{
+    prepareBottom();
+    bindRail();
+    syncFromCurrent(true);
+  },100),{once:true});
+  window.addEventListener('resize',()=>{
+    if(mobile()){
+      prepareBottom();
+      syncFromCurrent(true);
+      updatePanelHeight();
+    }
+  },{passive:true});
 }
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+else boot();
 })();
