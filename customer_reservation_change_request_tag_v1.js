@@ -39,6 +39,16 @@ function syncInquiryType(){
     type.disabled=false;type.removeAttribute('aria-disabled');
   }
 }
+function syncReviewType(){
+  if(!isChangeMode())return;
+  const card=$('zrInquiryReviewCard');if(!card)return;
+  for(const row of card.querySelectorAll('.zr-review-row')){
+    const label=norm(row.querySelector('.zr-review-label')?.textContent);
+    if(label==='문의 유형'){
+      const value=row.querySelector('.zr-review-value');if(value)value.textContent='예약 변경 요청';
+    }
+  }
+}
 function contextSnapshot(){
   const booking=selectedBooking();
   return {
@@ -113,7 +123,12 @@ function install(){
     if(e.target?.closest?.('#inquiryBtn,#zrCustomerEntryInquiryV2')){
       setTimeout(syncInquiryType,0);return;
     }
+    if(e.target?.closest?.('#submitInquiry')&&isChangeMode()){
+      for(const ms of [0,30,90])setTimeout(syncReviewType,ms);
+      return;
+    }
     if(e.target?.closest?.('#zrInquiryReviewSubmit')&&isChangeMode()){
+      syncReviewType();
       const ctx=contextSnapshot(),before=readList(INQUIRY_KEY);
       scheduleTag(before,ctx);
       return;
