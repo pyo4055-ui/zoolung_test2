@@ -32,13 +32,20 @@ function styleMarkup(){
 
 function fitOnePage(doc){
   const sheet=doc.getElementById('zrSalesPrintSheet');if(!sheet)return;
+  const mmPx=96/25.4,targetW=268*mmPx,targetH=181*mmPx;
   sheet.style.zoom='1';sheet.style.width='100%';
-  const mmPx=96/25.4,targetW=281*mmPx,targetH=194*mmPx;
-  const w=Math.max(sheet.scrollWidth,sheet.getBoundingClientRect().width,1);
-  const h=Math.max(sheet.scrollHeight,sheet.getBoundingClientRect().height,1);
-  const scale=Math.max(.38,Math.min(1,targetW/w,targetH/h));
-  sheet.style.zoom=String(scale);
-  sheet.style.width=`${100/scale}%`;
+  const baseW=Math.max(sheet.scrollWidth,sheet.getBoundingClientRect().width,1);
+  const baseH=Math.max(sheet.scrollHeight,sheet.getBoundingClientRect().height,1);
+  let scale=Math.max(.20,Math.min(1,targetW/baseW,targetH/baseH));
+  for(let i=0;i<3;i++){
+    sheet.style.zoom=String(scale);
+    sheet.style.width=`${100/scale}%`;
+    void sheet.offsetHeight;
+    const rect=sheet.getBoundingClientRect();
+    const correction=Math.min(1,targetW/Math.max(rect.width,1),targetH/Math.max(rect.height,1));
+    if(correction>.995)break;
+    scale=Math.max(.20,scale*correction*.985);
+  }
   doc.documentElement.style.overflow='hidden';doc.body.style.overflow='hidden';
 }
 
@@ -60,10 +67,10 @@ function standalonePrint(){
   const title=String(sec.querySelector('.zr-sales-title')?.textContent||'매출 현황').trim();
   doc.open();
   doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${title}</title>${styleMarkup()}<style>
-    @page{size:A4 landscape;margin:8mm}
+    @page{size:A4 landscape;margin:10mm}
     *{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0!important;padding:0!important;width:281mm!important;height:194mm!important;min-width:0!important;min-height:0!important;max-width:281mm!important;max-height:194mm!important;overflow:hidden!important;background:#fff!important}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif!important;color:#2f2b28!important}
+    html,body{margin:0!important;width:277mm!important;height:190mm!important;min-width:0!important;min-height:0!important;max-width:277mm!important;max-height:190mm!important;overflow:hidden!important;background:#fff!important}
+    body{padding:3mm!important;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif!important;color:#2f2b28!important}
     #zrSalesPrintSheet{transform-origin:top left!important;margin:0!important;padding:0!important}
     #tab-sales-dashboard{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
     #tab-sales-dashboard .zr-sales-print-title{font-size:18pt!important;font-weight:950!important;letter-spacing:-.04em!important;margin:0 0 4mm!important;color:#2f2b28!important}
@@ -85,6 +92,7 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-year-stepper,#tab-sales-dashboard .zr-sales-revisit-yearctl{display:block!important}
     #tab-sales-dashboard .zr-sales-change-chart{break-inside:avoid!important;overflow:visible!important;margin-top:3mm!important}
     #tab-sales-dashboard .zr-sales-change-chart-scroll{overflow:visible!important}#tab-sales-dashboard .zr-sales-change-bars{min-width:0!important}
+    #tab-sales-dashboard .zr-sales-daily-scroll{overflow:visible!important}#tab-sales-dashboard .zr-sales-daily-bars{min-width:0!important}
   </style></head><body><div id="zrSalesPrintSheet"><section id="tab-sales-dashboard"><div class="zr-sales-print-title">${title}</div>${clone.outerHTML}</section></div></body></html>`);
   doc.close();
 
@@ -98,7 +106,7 @@ function standalonePrint(){
       setTimeout(cleanup,120000);
     }catch{cleanup()}
   };
-  if(doc.readyState==='complete')setTimeout(run,120);else frame.onload=()=>setTimeout(run,120);
+  if(doc.readyState==='complete')setTimeout(run,160);else frame.onload=()=>setTimeout(run,160);
 }
 
 function replaceExistingPrintAction(){
