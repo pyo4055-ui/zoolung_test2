@@ -23,17 +23,6 @@ function installStyle(){
     background:#fff0f0!important;color:#a62525!important;font-size:13px!important;font-weight:800!important;line-height:1.45!important;
     word-break:keep-all!important;
   }
-  #zrCustomerValidationSummaryV1{
-    margin:0 0 18px!important;padding:14px 15px!important;border:1px solid #efaaaa!important;border-radius:14px!important;
-    background:#fff0f0!important;color:#8f2020!important;box-shadow:0 7px 20px rgba(137,31,31,.07)!important;
-  }
-  #zrCustomerValidationSummaryV1 strong{display:block;margin-bottom:7px!important;font-size:15px!important;color:#8f2020!important}
-  #zrCustomerValidationSummaryV1 ul{margin:0!important;padding-left:20px!important;font-size:13px!important;line-height:1.65!important}
-  #zrCustomerValidationSummaryV1 li{margin:0!important}
-  #zrCustomerValidationSummaryV1 button{
-    margin-top:10px!important;min-height:38px!important;padding:0 13px!important;border:1px solid #d93838!important;border-radius:9px!important;
-    background:#d93838!important;color:#fff!important;font-size:13px!important;font-weight:900!important;cursor:pointer!important;
-  }
   `;
   document.head.appendChild(s);
 }
@@ -102,25 +91,7 @@ function markField(el,msg,index){
   const note=document.createElement('div');
   note.id=id;note.className=ERROR_CLASS;note.setAttribute('role','alert');note.textContent=`⚠ ${msg}`;
   el.dataset.zrValidationErrorId=id;
-  const anchor=errorAnchor(el);
-  anchor.insertAdjacentElement('afterend',note);
-}
-function clearSummary(){
-  $('zrCustomerValidationSummaryV1')?.remove();
-}
-function summaryHost(root){
-  const firstCard=root.querySelector(':scope > .card,:scope > .calc,.card,.calc');
-  return firstCard||root;
-}
-function showSummary(root,issues){
-  clearSummary();
-  const box=document.createElement('div');
-  box.id='zrCustomerValidationSummaryV1';box.setAttribute('role','alert');
-  const items=issues.slice(0,6).map(x=>`<li>${String(x.message).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</li>`).join('');
-  box.innerHTML=`<strong>예약 신청 전 확인해주세요</strong><ul>${items}</ul><button type="button">첫 번째 미입력 항목으로 이동</button>`;
-  const host=summaryHost(root);
-  host.insertAdjacentElement('afterbegin',box);
-  box.querySelector('button')?.addEventListener('click',()=>focusIssue(issues[0]));
+  errorAnchor(el).insertAdjacentElement('afterend',note);
 }
 function collectIssues(root){
   const controls=[...root.querySelectorAll('input,select,textarea')];
@@ -158,18 +129,15 @@ function handleAttempt(e){
   const text=norm(btn.textContent||btn.value).replace(/\s+/g,'');
   if(text!=='예약신청하기')return;
   const issues=collectIssues(root);
-  if(!issues.length){clearSummary();return}
+  if(!issues.length)return;
   e.preventDefault();e.stopImmediatePropagation();
   issues.forEach((issue,i)=>markField(issue.el,issue.message,i));
-  showSummary(root,issues);
   focusIssue(issues[0]);
 }
 function clearOnEdit(e){
   const root=$(ROOT_ID);if(!root||!root.contains(e.target))return;
   if(!e.target.matches?.('input,select,textarea'))return;
   if(!invalid(e.target))clearField(e.target);
-  const remaining=[...root.querySelectorAll(`.${INVALID_CLASS}`)];
-  if(!remaining.length)clearSummary();
 }
 function boot(){
   installStyle();
