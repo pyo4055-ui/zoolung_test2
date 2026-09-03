@@ -18,11 +18,10 @@ let readyWaitStarted=0;
 function surfaceReady(){
   const root=document.documentElement;
   const hero=document.getElementById('zrCustomerEntryHeroV2');
-  const start=document.getElementById('startView');
-  return !!hero&&!!start&&start.parentElement===document.body&&
+  const overlay=document.getElementById('zrCustomerEntryOverlayV3');
+  return !!hero&&!!overlay&&hero.parentElement===overlay&&overlay.parentElement===document.body&&
     root.classList.contains('zr-customer-entry-v2-active')&&
-    root.classList.contains('zr-customer-entry-shell-stable')&&
-    root.classList.contains('zr-customer-entry-card-ready');
+    root.classList.contains('zr-customer-entry-shell-stable');
 }
 function signalVisualReady(force=false){
   if(window.__ZR_CUSTOMER_ENTRY_V2_READY)return;
@@ -40,7 +39,7 @@ function loadStability(){
   const q=document.createElement('script');
   q.id='zrCustomerEntryReloadStabilityV1Script';
   q.async=false;
-  q.src='./customer_entry_reload_stability_v1.js?v=1';
+  q.src='./customer_entry_reload_stability_v1.js?v=2';
   q.onload=()=>signalVisualReady(false);
   q.onerror=()=>{q.remove();signalVisualReady(false)};
   document.body.appendChild(q);
