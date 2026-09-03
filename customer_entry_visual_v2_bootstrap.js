@@ -8,7 +8,7 @@ function loadFix(){
   const p=document.createElement('script');
   p.id='zrCustomerEntryVisualV2FixV1Script';
   p.async=false;
-  p.src='./customer_entry_visual_v2_fix_v1.js?v=1';
+  p.src='./customer_entry_visual_v2_fix_v1.js?v=2';
   p.onerror=()=>p.remove();
   document.body.appendChild(p);
 }
@@ -27,6 +27,8 @@ function load(){
   document.body.appendChild(s);
 }
 
-if(window.__ZR_CUSTOMER_RUNTIME_READY)load();
-else document.addEventListener('zr:customer-runtime-ready',load,{once:true});
+/* Load before the customer runtime removes its pre-boot visibility guard.
+   This prevents the legacy reservation gate from flashing on first paint. */
+load();
+document.addEventListener('zr:customer-runtime-ready',load,{once:true});
 })();
