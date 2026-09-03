@@ -1,40 +1,42 @@
-/* Onsite schedule visual polish: unify payment/vendor controls and show compact edit metadata. */
+/* Onsite schedule visual polish: compact payment/vendor controls and edit metadata. */
 #list .zr-outsourcing-tag,
 #list .check{
-  min-height:28px!important;
-  height:28px!important;
-  padding:0 8px!important;
-  border-radius:8px!important;
+  min-height:23px!important;
+  height:23px!important;
+  padding:0 6px!important;
+  border-radius:6px!important;
   border-width:1px!important;
   border-style:solid!important;
-  font-size:8px!important;
+  font-size:7.5px!important;
   font-weight:850!important;
   line-height:1!important;
   box-shadow:none!important;
+  flex:none!important;
 }
 #list .zr-outsourcing-tag{
-  max-width:112px!important;
+  max-width:108px!important;
   border-color:#ecd6b8!important;
   background:#fff6e8!important;
   color:#93612b!important;
 }
 #list .zr-outsourcing-tag.self{
-  border-color:#e6dcd5!important;
+  border-color:#d8dfda!important;
   background:#fff!important;
-  color:#6f625a!important;
+  color:#606b63!important;
 }
 #list .zr-outsourcing-tag.editable:not(:disabled){border-style:dashed!important}
 #list .zr-outsourcing-select{
-  min-height:28px!important;
-  height:28px!important;
-  max-width:118px!important;
-  padding:0 22px 0 7px!important;
+  min-height:23px!important;
+  height:23px!important;
+  max-width:108px!important;
+  padding:0 20px 0 5px!important;
   border:1px solid #ecd6b8!important;
-  border-radius:8px!important;
+  border-radius:6px!important;
   background:#fff6e8!important;
   color:#93612b!important;
-  font-size:8px!important;
+  font-size:7.5px!important;
   font-weight:850!important;
+  flex:none!important;
 }
 #list .zr-last-edit{
   flex:1 0 100%!important;
@@ -43,8 +45,8 @@
   margin:0 0 1px!important;
   padding:0 1px!important;
   color:#9a8175!important;
-  font-size:8px!important;
-  line-height:1.25!important;
+  font-size:7.5px!important;
+  line-height:1.2!important;
   font-weight:750!important;
   letter-spacing:-.01em!important;
   text-align:left!important;
@@ -52,11 +54,8 @@
   overflow:hidden!important;
   text-overflow:ellipsis!important;
 }
-#list .zr-last-edit strong{
-  color:#765448!important;
-  font-weight:900!important;
-}
-@media(max-width:700px){
-  #list .zr-last-edit{font-size:7.5px!important;margin-bottom:2px!important}
-  #list .zr-outsourcing-tag,#list .check{min-height:30px!important;height:30px!important;font-size:8px!important}
+#list .zr-last-edit strong{color:#765448!important;font-weight:900!important}
+@media(max-width:430px){
+  #list .zr-last-edit{font-size:7px!important;margin-bottom:1px!important}
+  #list .zr-outsourcing-tag,#list .check{min-height:23px!important;height:23px!important;font-size:7.5px!important}
 }
