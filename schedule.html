@@ -24,12 +24,17 @@
 .comparePreview.changed .previewTimeline{box-shadow:0 0 0 1px rgba(154,90,0,.10) inset}
 .comparePreview .previewLabel{margin-top:0}
 .contentHelp{margin-top:8px!important}
+#staffId{margin-bottom:8px}
+#staffIdErr{margin-top:0;margin-bottom:2px}
+.scheduleUserBadge{display:inline-flex;align-items:center;max-width:150px;min-height:32px;padding:7px 9px;border:1px solid #e2d7cd;border-radius:9px;background:#f8f3ee;color:#5c4438;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scheduleUserBadge.empty{color:#8c8179;background:#f5f3f1;border-style:dashed}
+@media(max-width:430px){.scheduleUserBadge{max-width:88px;min-height:30px;padding:6px 7px;font-size:9px}}
 </style>
 </head>
 <body class="viewLocked">
-<div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>주렁주렁 동탄점 · 공용 스케줄 로그인</p><input id="pw" type="password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
+<div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>현장 직원 아이디와 비밀번호를 입력해주세요.</p><input id="staffId" type="text" maxlength="20" autocomplete="username" placeholder="아이디 (예: 제트)"><div class="error hidden" id="staffIdErr">아이디를 입력해주세요.</div><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
 
-<header><div class="top"><div class="brand">주렁주렁 동탄점 <small>현장 단체 스케줄 · 테스트 버전</small></div><div class="topRight"><button class="sharedMemoBtn" id="sharedMemoBtn">📝 공용 메모</button><button class="editLock locked" id="editLock">🔒 수정 불가</button></div></div></header>
+<header><div class="top"><div class="brand">주렁주렁 동탄점 <small>현장 단체 스케줄 · 테스트 버전</small></div><div class="topRight"><span class="scheduleUserBadge empty" id="scheduleUserBadge">접속자 미설정</span><button class="sharedMemoBtn" id="sharedMemoBtn">📝 공용 메모</button><button class="editLock locked" id="editLock">🔒 수정 불가</button></div></div></header>
 
 <main class="app">
 <div class="toolbar" id="toolbar">
@@ -102,7 +107,7 @@
 
 <div class="toast" id="toast"></div>
 <script src="./modal_ux_consistency_v1.js?v=2"></script>
-<script type="module" src="./schedule_refactor/app.js?v=1"></script>
+<script type="module" src="./schedule_refactor/app.js?v=2"></script>
 <script type="module" src="./schedule_refactor/quick_time_fix.js?v=1"></script>
 <script type="module" src="./schedule_refactor/outsource_display.js?v=1"></script>
 </body>
