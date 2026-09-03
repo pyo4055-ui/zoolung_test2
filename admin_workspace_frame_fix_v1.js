@@ -56,8 +56,15 @@ function frameEdges(){
     right:window.matchMedia('(min-width:1201px)').matches?'calc(var(--zr-admin-smart-width,300px) + (var(--zr-shell-gap,14px) * 2))':'var(--zr-shell-gap,14px)'
   };
 }
+function releaseMobileFrame(admin){
+  important(admin,'position','relative');important(admin,'top','auto');important(admin,'bottom','auto');important(admin,'left','auto');important(admin,'right','auto');
+  important(admin,'width','100%');important(admin,'height','auto');important(admin,'min-width','0');important(admin,'min-height','100svh');important(admin,'max-width','none');important(admin,'max-height','none');
+  important(admin,'margin','0');important(admin,'box-sizing','border-box');important(admin,'overflow-x','hidden');important(admin,'overflow-y','visible');important(admin,'overscroll-behavior','auto');
+  return true;
+}
 function forceFrame(){
   const admin=$('adminView');if(!admin)return false;
+  if(window.matchMedia('(max-width:900px)').matches)return releaseMobileFrame(admin);
   const e=frameEdges();
   important(admin,'position','fixed');important(admin,'top',e.top);important(admin,'bottom',e.bottom);important(admin,'left',e.left);important(admin,'right',e.right);
   important(admin,'width','auto');important(admin,'height','auto');important(admin,'min-width','0');important(admin,'min-height','0');important(admin,'max-width','none');important(admin,'max-height','none');
