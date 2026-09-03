@@ -15,7 +15,7 @@ function injectStyle(){
     html.zr-admin-shell-mounted body #adminView,
     html.zr-admin-shell-mounted body #adminView *{box-sizing:border-box}
 
-    /* Date controls: keep the now-approved vertical centering, without changing page layout. */
+    /* Approved iPhone date alignment. */
     html.zr-admin-shell-mounted body #adminView input[type="date"]{
       min-width:0!important;max-width:100%!important;
       height:44px!important;min-height:44px!important;max-height:44px!important;
@@ -28,9 +28,10 @@ function injectStyle(){
     }
     html.zr-admin-shell-mounted body #adminView input[type="date"]::-webkit-calendar-picker-indicator{margin:0!important;padding:4px!important}
 
-    /* Reservation status: target the real runtime classes/ids only. */
+    /* Reservation status: fixed mobile layout built from the actual runtime nodes. */
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar{
-      display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
       grid-template-areas:
         "start end"
         "basis status"
@@ -39,33 +40,35 @@ function injectStyle(){
         "excel excel"!important;
       gap:10px!important;align-items:end!important;width:100%!important;min-width:0!important
     }
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>*{min-width:0!important;max-width:100%!important;margin:0!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar .zr-act-start{grid-area:start!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar .zr-act-end{grid-area:end!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar #activityDateBasisWrap{grid-area:basis!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar #zrActivityStatusWrap{grid-area:status!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar #zrActivityOrgModalBtn{grid-area:org!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar .zr-act-search-btn{grid-area:search!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar .zr-act-today-btn{grid-area:today!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar .zr-act-excel-btn{grid-area:excel!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-start{grid-area:start!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-end{grid-area:end!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-basis{grid-area:basis!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-status{grid-area:status!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-org{grid-area:org!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-search{grid-area:search!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-today{grid-area:today!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-excel{grid-area:excel!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-extra{display:none!important}
 
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar :where(input,select,button){
-      width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;margin:0!important
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-start,.zr-mob-act-end,.zr-mob-act-basis,.zr-mob-act-status){
+      display:flex!important;flex-direction:column!important;gap:6px!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important
     }
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar :where(.zr-act-start,.zr-act-end,#activityDateBasisWrap,#zrActivityStatusWrap){
-      display:flex!important;flex-direction:column!important;gap:6px!important;width:100%!important
-    }
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar :where(.zr-act-start,.zr-act-end,#activityDateBasisWrap,#zrActivityStatusWrap)>:where(label,span){
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-start,.zr-mob-act-end,.zr-mob-act-basis,.zr-mob-act-status) :where(label,span){
       margin:0!important;line-height:1.25!important;white-space:nowrap!important
     }
-    /* Old inline org-name field must never compete with the dedicated modal button on mobile. */
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zrActivityOrgSearchWrap,
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zrActivityOrgSearch,
-    html.zr-admin-shell-mounted body #adminView #tab-activity .zr-activity-inline-search-disabled{display:none!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zrActivityOrgModalBtn{display:block!important;font-size:13px!important;font-weight:850!important}
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-start,.zr-mob-act-end,.zr-mob-act-basis,.zr-mob-act-status) :where(input,select){
+      display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;margin:0!important
+    }
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-org,.zr-mob-act-search,.zr-mob-act-today,.zr-mob-act-excel){
+      width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important
+    }
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-org,.zr-mob-act-search,.zr-mob-act-today,.zr-mob-act-excel) button,
+    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>button:is(.zr-mob-act-org,.zr-mob-act-search,.zr-mob-act-today,.zr-mob-act-excel){
+      width:100%!important;min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;margin:0!important
+    }
     html.zr-admin-shell-mounted body #adminView #tab-activity .card{padding:14px!important}
 
-    /* Sales month controls: iPhone month inputs have a stubborn intrinsic width, so contain them explicitly. */
+    /* Sales month controls are already approved; keep them contained without changing layout. */
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard .zr-sales-filter{
       display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:end!important;width:100%!important
     }
@@ -84,54 +87,61 @@ function injectStyle(){
       display:flex!important;align-items:center!important;width:100%!important;min-width:0!important;height:42px!important;margin:0!important;padding:0!important;line-height:42px!important;text-align:left!important
     }
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard .zr-sales-filter input[type="month"]::-webkit-calendar-picker-indicator{margin:0!important;padding:3px!important}
-
-    /* Single-month reports stay compact; comparison reports naturally use the two columns. */
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard #zrSalesMonthlyPanel .zr-sales-filter>label,
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard #zrSalesCafePanel .zr-sales-filter>label{grid-column:1/2!important}
-  }
-
-  @media(max-width:430px){
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar{gap:9px!important}
-    html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar :where(input,select,button){font-size:14px!important}
-    html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard .zr-sales-filter{gap:8px!important}
   }
   `;
   document.head.appendChild(s);
 }
 
+function directChildOf(el,parent){
+  let node=el;
+  while(node&&node.parentElement&&node.parentElement!==parent)node=node.parentElement;
+  return node?.parentElement===parent?node:null;
+}
+function textOf(el){return String(el?.textContent||'').replace(/\s+/g,'').trim()}
+function prepareActivityToolbar(){
+  if(!mobile())return;
+  const toolbar=$('zr11ActivityToolbar');
+  if(!toolbar)return;
+
+  const start=directChildOf($('activityStart')||$('activityStartDate'),toolbar);
+  const end=directChildOf($('activityEnd')||$('activityEndDate'),toolbar);
+  const basis=directChildOf($('activityDateBasisWrap')||$('activityDateBasis'),toolbar);
+  const status=directChildOf($('zrActivityStatusWrap')||$('zrActivityStatusFilter'),toolbar);
+  const org=directChildOf($('zrActivityOrgModalBtn'),toolbar);
+  const buttons=[...toolbar.querySelectorAll('button')];
+  const search=directChildOf(buttons.find(b=>textOf(b)==='조회하기'),toolbar);
+  const today=directChildOf(buttons.find(b=>textOf(b)==='오늘'),toolbar);
+  const excel=directChildOf(buttons.find(b=>textOf(b).includes('엑셀')),toolbar);
+
+  const roles=[[start,'zr-mob-act-start'],[end,'zr-mob-act-end'],[basis,'zr-mob-act-basis'],[status,'zr-mob-act-status'],[org,'zr-mob-act-org'],[search,'zr-mob-act-search'],[today,'zr-mob-act-today'],[excel,'zr-mob-act-excel']];
+  const keep=new Set(roles.map(([el])=>el).filter(Boolean));
+  [...toolbar.children].forEach(el=>{
+    el.classList.remove('zr-mob-act-start','zr-mob-act-end','zr-mob-act-basis','zr-mob-act-status','zr-mob-act-org','zr-mob-act-search','zr-mob-act-today','zr-mob-act-excel','zr-mob-act-extra');
+    if(!keep.has(el))el.classList.add('zr-mob-act-extra');
+  });
+  roles.forEach(([el,cls])=>{if(el)el.classList.add(cls)});
+  roles.forEach(([el])=>{if(el&&el.parentElement===toolbar)toolbar.appendChild(el)});
+}
+
 function normalizeControls(){
   if(!mobile())return;
   document.querySelectorAll('#adminView input[type="date"]').forEach(el=>{
-    el.style.setProperty('min-width','0','important');
-    el.style.setProperty('max-width','100%','important');
-    el.style.setProperty('height','44px','important');
-    el.style.setProperty('min-height','44px','important');
-    el.style.setProperty('max-height','44px','important');
-    el.style.setProperty('padding-top','0','important');
-    el.style.setProperty('padding-bottom','0','important');
-    el.style.setProperty('line-height','44px','important');
-    el.style.setProperty('box-sizing','border-box','important');
+    el.style.setProperty('min-width','0','important');el.style.setProperty('max-width','100%','important');
+    el.style.setProperty('height','44px','important');el.style.setProperty('min-height','44px','important');el.style.setProperty('max-height','44px','important');
+    el.style.setProperty('padding-top','0','important');el.style.setProperty('padding-bottom','0','important');
+    el.style.setProperty('line-height','44px','important');el.style.setProperty('box-sizing','border-box','important');
   });
   document.querySelectorAll('#tab-sales-dashboard input[type="month"]').forEach(el=>{
-    el.style.setProperty('display','block','important');
-    el.style.setProperty('width','100%','important');
-    el.style.setProperty('inline-size','100%','important');
-    el.style.setProperty('max-width','100%','important');
-    el.style.setProperty('max-inline-size','100%','important');
-    el.style.setProperty('min-width','0','important');
-    el.style.setProperty('min-inline-size','0','important');
-    el.style.setProperty('height','44px','important');
-    el.style.setProperty('min-height','44px','important');
-    el.style.setProperty('max-height','44px','important');
-    el.style.setProperty('padding','0 10px','important');
-    el.style.setProperty('line-height','42px','important');
-    el.style.setProperty('box-sizing','border-box','important');
-    el.style.setProperty('-webkit-appearance','none','important');
-    el.style.setProperty('appearance','none','important');
+    el.style.setProperty('display','block','important');el.style.setProperty('width','100%','important');el.style.setProperty('inline-size','100%','important');
+    el.style.setProperty('max-width','100%','important');el.style.setProperty('max-inline-size','100%','important');el.style.setProperty('min-width','0','important');el.style.setProperty('min-inline-size','0','important');
+    el.style.setProperty('height','44px','important');el.style.setProperty('min-height','44px','important');el.style.setProperty('max-height','44px','important');
+    el.style.setProperty('padding','0 10px','important');el.style.setProperty('line-height','42px','important');el.style.setProperty('box-sizing','border-box','important');
+    el.style.setProperty('-webkit-appearance','none','important');el.style.setProperty('appearance','none','important');
   });
 }
-
-function apply(){injectStyle();normalizeControls()}
+function apply(){injectStyle();prepareActivityToolbar();normalizeControls()}
 function boot(){
   apply();
   let tries=0;
@@ -145,6 +155,5 @@ function boot(){
   },true);
   document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(apply,0),{once:true});
 }
-
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
