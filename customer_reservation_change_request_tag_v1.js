@@ -8,6 +8,7 @@ const BOOKING_KEY='zr_bookings';
 const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const tel=v=>String(v||'').replace(/\D/g,'');
+let firebaseReadyMigrationDone=false;
 
 function readList(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
 function writeList(key,list){
@@ -18,6 +19,7 @@ function writeList(key,list){
 }
 function writeInquiries(list){writeList(INQUIRY_KEY,list)}
 function writeBookings(list){writeList(BOOKING_KEY,list)}
+function sharedBookingReady(){return !!(window.zrReservationFirebase&&window.setStore?.__zrCustomerFirebaseBridge)}
 function contentKey(item){for(const k of ['content','message','inquiry','text'])if(Object.prototype.hasOwnProperty.call(item||{},k))return k;return 'content'}
 function contentOf(item){return String(item?.[contentKey(item)]??'')}
 function mobileOf(item){for(const k of ['mobile','mobilePhone','cellphone','cellPhone','hp','inqMobile','contact','phone','inqPhone','tel','telephone']){const v=tel(item?.[k]);if(v)return v}return''}
@@ -103,18 +105,21 @@ function structuredContent(ctx){
     ctx.body||''
   ].join('\n').trimEnd();
 }
-function attachBookingRequest(ctx){
+function attachBookingRequest(ctx,force=false){
+  if(!sharedBookingReady())return false;
   const b=ctx.booking;if(!b?.id)return false;
   const list=readList(BOOKING_KEY),index=list.findIndex(x=>x&&!x.__availabilityOnly&&String(x.id||'')===String(b.id));
   if(index<0)return false;
-  const booking=list[index],now=new Date().toISOString();
+  const booking=list[index],existing=booking.reservationChangeRequest&&typeof booking.reservationChangeRequest==='object'?booking.reservationChangeRequest:null;
+  if(existing&&!force&&String(existing.id||'')===String(ctx.requestId||''))return true;
+  const now=new Date().toISOString();
   booking.reservationChangeRequest={
-    id:String(ctx.requestId||`cr_${Date.now()}`),status:'pending',
-    oldDate:String(b.date||booking.date||''),oldEntryTime:String(b.entryTime||booking.entryTime||''),oldExitTime:String(b.exitTime||booking.exitTime||''),
-    requestedDate:String(ctx.requestedDate||''),requestedTime:String(ctx.requestedTime||''),
-    orgName:String(ctx.org||booking.orgName||''),requesterName:String(ctx.name||booking.managerName||''),requesterMobile:String(ctx.mobile||booking.contact||''),
-    people:Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
-    body:String(ctx.body||''),createdAt:now,updatedAt:now
+    id:String(ctx.requestId||existing?.id||`cr_${Date.now()}`),status:String(existing?.status||'pending'),
+    oldDate:String(b.date||booking.date||existing?.oldDate||''),oldEntryTime:String(b.entryTime||booking.entryTime||existing?.oldEntryTime||''),oldExitTime:String(b.exitTime||booking.exitTime||existing?.oldExitTime||''),
+    requestedDate:String(ctx.requestedDate||existing?.requestedDate||''),requestedTime:String(ctx.requestedTime||existing?.requestedTime||''),
+    orgName:String(ctx.org||booking.orgName||existing?.orgName||''),requesterName:String(ctx.name||booking.managerName||existing?.requesterName||''),requesterMobile:String(ctx.mobile||booking.contact||existing?.requesterMobile||''),
+    people:Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:Number(existing?.people||0)||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
+    body:String(ctx.body||existing?.body||''),createdAt:String(existing?.createdAt||now),updatedAt:now
   };
   writeBookings(list);
   try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-shared',{detail:{bookingId:String(b.id),requestId:booking.reservationChangeRequest.id}}))}catch{}
@@ -138,7 +143,7 @@ function tagSavedInquiry(before,ctx){
   item.changeRequestOrgName=String(ctx.org||b.orgName||'');
   item.changeRequestUpdatedAt=new Date().toISOString();
   writeInquiries(list);
-  attachBookingRequest(ctx);
+  attachBookingRequest(ctx,false);
   try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-tagged',{detail:{index,bookingId:item.changeBookingId}}))}catch{}
   return true;
 }
@@ -147,23 +152,33 @@ function scheduleTag(before,ctx){
   for(const ms of [20,80,180,360,700])setTimeout(()=>{if(!done)done=tagSavedInquiry(before,ctx)},ms);
 }
 
-function migrateLegacyLocalRequest(){
+function migrateLegacyLocalRequest(force=false){
+  if(!sharedBookingReady())return false;
   const inquiries=readList(INQUIRY_KEY),bookings=readList(BOOKING_KEY);
   for(let i=inquiries.length-1;i>=0;i--){
     const item=inquiries[i],text=contentOf(item);
     if(!item||!(item.changeRequest===true||/^\[예약 변경 요청\]/.test(text)))continue;
     const bookingId=String(item.changeBookingId||lineValue(text,'변경 대상 예약번호')||'');if(!bookingId)continue;
-    const booking=bookings.find(b=>b&&!b.__availabilityOnly&&String(b.id||'')===bookingId);if(!booking||booking.reservationChangeRequest)continue;
+    const booking=bookings.find(b=>b&&!b.__availabilityOnly&&String(b.id||'')===bookingId);if(!booking)continue;
+    const requestId=String(item.changeRequestId||booking.reservationChangeRequest?.id||`cr_legacy_${Date.now()}_${i}`);
+    if(!force&&booking.reservationChangeRequest&&String(booking.reservationChangeRequest.id||'')===requestId)return true;
     const ctx={
-      booking,requestId:String(item.changeRequestId||`cr_legacy_${Date.now()}_${i}`),
+      booking,requestId,
       org:String(item.changeRequestOrgName||lineValue(text,'단체명')||booking.orgName||''),
       requestedDate:String(item.changeRequestedDate||lineValue(text,'예약변경날짜')||''),
       requestedTime:String(item.changeRequestedTime||lineValue(text,'예약변경시간')||''),
       people:Number(lineValue(text,'단체 인원').replace(/[^0-9]/g,''))||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
       body:taggedBody(text),name:String(item.name||item.customerName||item.managerName||item.inqName||booking.managerName||''),mobile:mobileOf(item)||tel(booking.contact)
     };
-    attachBookingRequest(ctx);break;
+    return attachBookingRequest(ctx,force);
   }
+  return false;
+}
+function runFirebaseReadyMigration(){
+  if(firebaseReadyMigrationDone||!sharedBookingReady())return;
+  firebaseReadyMigrationDone=true;
+  migrateLegacyLocalRequest(true);
+  [180,600,1400].forEach(ms=>setTimeout(()=>migrateLegacyLocalRequest(false),ms));
 }
 function install(){
   document.addEventListener('click',e=>{
@@ -190,9 +205,10 @@ function install(){
     if(e.target?.id==='zrChangeBookingSelect'&&isChangeMode())setTimeout(syncInquiryType,0);
   },true);
   syncInquiryType();
-  [0,500,1500].forEach(ms=>setTimeout(migrateLegacyLocalRequest,ms));
+  [200,800,1800].forEach(ms=>setTimeout(()=>{runFirebaseReadyMigration();if(firebaseReadyMigrationDone)migrateLegacyLocalRequest(false)},ms));
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-document.addEventListener('zr:customer-runtime-ready',()=>{syncInquiryType();setTimeout(syncInquiryType,80);[100,700,1800].forEach(ms=>setTimeout(migrateLegacyLocalRequest,ms))},{once:true});
+document.addEventListener('zr:customer-runtime-ready',()=>{syncInquiryType();setTimeout(syncInquiryType,80);[100,700,1800].forEach(ms=>setTimeout(()=>{runFirebaseReadyMigration();if(firebaseReadyMigrationDone)migrateLegacyLocalRequest(false)},ms))},{once:true});
+document.addEventListener('zr:customer-firebase-ready',()=>setTimeout(runFirebaseReadyMigration,0),{once:true});
 })();
