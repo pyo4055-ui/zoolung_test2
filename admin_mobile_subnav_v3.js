@@ -67,7 +67,7 @@ const PARENT_GROUP={
   salesDashboard:'sales',outsourcing:'sales',menuadmin:'sales',settings:'settings'
 };
 
-let panel=null,currentGroup='operation',menuGroup='',activeParentId='today',activeChildKey='',resizeObserver=null;
+let panel=null,currentGroup='operation',menuGroup='',activeParentId='today',activeChildKey='',resizeObserver=null,navigating=false;
 
 function railButton(id){return document.querySelector(`#zrAdminShellRail [data-zr-admin-item="${CSS.escape(id)}"]`)}
 function currentRailParent(){return document.querySelector('#zrAdminShellRail [data-zr-admin-item].is-active')?.dataset.zrAdminItem||''}
@@ -113,10 +113,8 @@ function injectStyle(){
     #zrAdminMobileBottomV1 [data-mobile-category].is-category-active{color:#fff!important;background:linear-gradient(180deg,#7b1518,#650d10)!important;border-radius:12px!important;margin:5px 3px!important;padding-top:3px!important;padding-bottom:3px!important}
     #zrAdminMobileBottomV1 [data-mobile-category].is-active:not(.is-category-active){color:#6f5d53!important;background:transparent!important;margin:0!important;padding:7px 2px 5px!important;border-radius:0!important}
 
-    /* 본문 내부의 중복 서브탭은 모바일에서 숨김. */
     #zrCleanupInnerTabs,#zrInquiryReplyInnerTabs,#zrPreviewNotifyInnerTabs,#zrGuideSubtabsV1,#zrSettingsSubtabsV1,#tab-sales-dashboard .zr-sales-subtabs{display:none!important}
 
-    /* 공통 모바일 폭 안전장치: PC용 최소폭 때문에 카드/입력칸이 찌그러지는 것을 방지. */
     html.zr-admin-shell-mounted #adminView [id^="tab-"],
     html.zr-admin-shell-mounted #adminView .card,
     html.zr-admin-shell-mounted #adminView .zr-today-shell,
@@ -146,21 +144,11 @@ function ensurePanel(){
   document.body.appendChild(panel);
   panel.addEventListener('click',e=>{
     const main=e.target.closest('[data-zrm-main]');
-    if(main){
-      e.preventDefault();
-      activateMain(main.dataset.zrmGroup||'',Number(main.dataset.zrmSection||0));
-      return;
-    }
+    if(main){e.preventDefault();activateMain(main.dataset.zrmGroup||'',Number(main.dataset.zrmSection||0));return}
     const child=e.target.closest('[data-zrm-child-btn]');
-    if(child){
-      e.preventDefault();
-      activateChild(child.dataset.zrmGroup||'',Number(child.dataset.zrmSection||0),Number(child.dataset.zrmChildIndex||0));
-    }
+    if(child){e.preventDefault();activateChild(child.dataset.zrmGroup||'',Number(child.dataset.zrmSection||0),Number(child.dataset.zrmChildIndex||0))}
   });
-  if('ResizeObserver'in window){
-    resizeObserver=new ResizeObserver(updatePanelHeight);
-    resizeObserver.observe(panel);
-  }
+  if('ResizeObserver'in window){resizeObserver=new ResizeObserver(updatePanelHeight);resizeObserver.observe(panel)}
   return panel;
 }
 
@@ -177,23 +165,9 @@ function render(group=menuGroup||currentGroup){
 }
 
 function menuOpen(){return !!panel?.classList.contains('is-open')}
-function openMenu(group){
-  if(!MENUS[group])return;
-  menuGroup=group;
-  render(group);
-  ensurePanel().classList.add('is-open');
-  syncBottom();
-  requestAnimationFrame(updatePanelHeight);
-}
-function closeMenu(){
-  panel?.classList.remove('is-open');
-  menuGroup='';
-  syncBottom();
-}
-function toggleMenu(group){
-  if(menuOpen()&&menuGroup===group){closeMenu();return}
-  openMenu(group);
-}
+function openMenu(group){if(!MENUS[group])return;menuGroup=group;render(group);ensurePanel().classList.add('is-open');syncBottom();requestAnimationFrame(updatePanelHeight)}
+function closeMenu(){panel?.classList.remove('is-open');menuGroup='';syncBottom()}
+function toggleMenu(group){if(menuOpen()&&menuGroup===group){closeMenu();return}openMenu(group)}
 
 function syncBottom(){
   const highlighted=menuOpen()&&menuGroup?menuGroup:currentGroup;
@@ -204,25 +178,16 @@ function syncBottom(){
 }
 
 function prepareBottom(){
-  const bottom=$('zrAdminMobileBottomV1');
-  if(!bottom)return false;
-  const buttons=[...bottom.querySelectorAll('[data-mobile-group],[data-mobile-category]')];
-  if(!buttons.length)return false;
+  const bottom=$('zrAdminMobileBottomV1');if(!bottom)return false;
+  const buttons=[...bottom.querySelectorAll('[data-mobile-group],[data-mobile-category]')];if(!buttons.length)return false;
   buttons.forEach(btn=>{
-    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';
-    if(!MENUS[group])return;
-    btn.removeAttribute('data-mobile-group');
-    btn.dataset.mobileCategory=group;
+    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';if(!MENUS[group])return;
+    btn.removeAttribute('data-mobile-group');btn.dataset.mobileCategory=group;
     if(btn.dataset.zrMobileSubnavBound==='1')return;
     btn.dataset.zrMobileSubnavBound='1';
-    btn.addEventListener('click',e=>{
-      if(!mobile())return;
-      e.preventDefault();
-      e.stopPropagation();
-      toggleMenu(group);
-    });
+    btn.addEventListener('click',e=>{if(!mobile())return;e.preventDefault();e.stopPropagation();toggleMenu(group)});
   });
-  syncFromCurrent();
+  syncBottom();
   return true;
 }
 
@@ -236,101 +201,72 @@ async function clickWhenReady(selector,attempts=44){
 }
 
 async function navigateSection(group,sectionIndex,childIndex=-1){
-  const section=MENUS[group]?.sections?.[sectionIndex];
-  if(!section)return;
+  if(navigating)return;
+  const section=MENUS[group]?.sections?.[sectionIndex];if(!section)return;
   const child=childIndex>=0?section.children?.[childIndex]:null;
+  navigating=true;
+  try{
+    currentGroup=group;
+    activeParentId=section.parent;
+    activeChildKey=child?childKey(group,sectionIndex,childIndex):'';
+    closeMenu();
+    syncBottom();
 
-  currentGroup=group;
-  activeParentId=section.parent;
-  activeChildKey=child?childKey(group,sectionIndex,childIndex):'';
-  closeMenu();
+    const parent=railButton(section.parent);
+    if(!parent)return;
+    /* Always click the real PC navigation item. Its active class can be stale after a sales submode switch. */
+    parent.click();
+    await wait(90);
 
-  const parent=railButton(section.parent);
-  if(!parent)return;
-  if(!parent.classList.contains('is-active'))parent.click();
-  if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
-  else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
+    if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
+    else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
 
-  syncFromCurrent();
-  window.scrollTo({top:0,behavior:'auto'});
+    currentGroup=group;
+    activeParentId=section.parent;
+    activeChildKey=child?childKey(group,sectionIndex,childIndex):'';
+    syncBottom();
+    window.scrollTo({top:0,behavior:'auto'});
+    setTimeout(()=>{if(!navigating)syncFromCurrent()},220);
+  }finally{
+    navigating=false;
+  }
 }
 
-function activateMain(group,sectionIndex){
-  /* 큰 메인탭은 그 메인 화면으로 이동만 하고 메뉴는 즉시 닫는다. */
-  navigateSection(group,sectionIndex,-1);
-}
+function activateMain(group,sectionIndex){navigateSection(group,sectionIndex,-1)}
 function activateChild(group,sectionIndex,childIndex){
-  const section=MENUS[group]?.sections?.[sectionIndex];
-  const child=section?.children?.[childIndex];
-  if(!section||!child)return;
-  navigateSection(group,sectionIndex,childIndex);
+  const section=MENUS[group]?.sections?.[sectionIndex],child=section?.children?.[childIndex];
+  if(!section||!child)return;navigateSection(group,sectionIndex,childIndex)
 }
 
 function syncFromCurrent(){
-  const parent=currentRailParent();
-  if(!parent)return;
-  const group=PARENT_GROUP[parent];
-  if(group&&MENUS[group])currentGroup=group;
-
+  if(navigating)return;
+  const parent=currentRailParent();if(!parent)return;
+  const group=PARENT_GROUP[parent];if(group&&MENUS[group])currentGroup=group;
   const section=MENUS[currentGroup]?.sections?.find(x=>x.parent===parent);
-  if(section){
-    if(activeParentId!==parent)activeChildKey='';
-    activeParentId=parent;
-  }
+  if(section){if(activeParentId!==parent)activeChildKey='';activeParentId=parent}
   syncBottom();
 }
 
 function bindRail(){
-  const rail=$('zrAdminShellRail');
-  if(!rail||rail.dataset.zrMobileSubnavRailBound==='1')return false;
+  const rail=$('zrAdminShellRail');if(!rail||rail.dataset.zrMobileSubnavRailBound==='1')return false;
   rail.dataset.zrMobileSubnavRailBound='1';
-  rail.addEventListener('click',()=>setTimeout(()=>{
-    if(!mobile())return;
-    /* 다른 경로(알림/전체메뉴 등)로 이동해도 열려 있던 하단 메뉴는 남지 않는다. */
-    closeMenu();
-    syncFromCurrent();
-  },0));
+  rail.addEventListener('click',()=>setTimeout(()=>{if(!mobile()||navigating)return;closeMenu();syncFromCurrent()},20));
   return true;
 }
 
 function bindOutsideClose(){
   if(document.documentElement.dataset.zrMobileSubnavOutsideBound==='1')return;
   document.documentElement.dataset.zrMobileSubnavOutsideBound='1';
-  document.addEventListener('click',e=>{
-    if(!mobile()||!menuOpen())return;
-    if(e.target?.closest?.('#zrAdminMobileSubnavV3,#zrAdminMobileBottomV1'))return;
-    closeMenu();
-  });
+  document.addEventListener('click',e=>{if(!mobile()||!menuOpen())return;if(e.target?.closest?.('#zrAdminMobileSubnavV3,#zrAdminMobileBottomV1'))return;closeMenu()});
 }
 
 function boot(){
-  injectStyle();
-  ensurePanel();
-  bindOutsideClose();
+  injectStyle();ensurePanel();bindOutsideClose();
   let tries=0;
-  const timer=setInterval(()=>{
-    tries++;
-    const ready=prepareBottom();
-    bindRail();
-    if(ready||tries>120)clearInterval(timer);
-  },100);
-  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{
-    prepareBottom();
-    bindRail();
-    syncFromCurrent();
-    closeMenu();
-  },100),{once:true});
-  window.addEventListener('resize',()=>{
-    if(!mobile()){
-      closeMenu();
-      return;
-    }
-    prepareBottom();
-    syncFromCurrent();
-    if(menuOpen())updatePanelHeight();
-  },{passive:true});
+  const timer=setInterval(()=>{tries++;const ready=prepareBottom();bindRail();if(ready||tries>120)clearInterval(timer)},100);
+  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{prepareBottom();bindRail();syncFromCurrent();closeMenu()},100),{once:true});
+  window.addEventListener('resize',()=>{if(!mobile()){closeMenu();return}prepareBottom();if(!navigating)syncFromCurrent();if(menuOpen())updatePanelHeight()},{passive:true});
 }
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
-else boot();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
