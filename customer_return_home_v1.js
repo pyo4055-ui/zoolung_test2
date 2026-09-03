@@ -43,7 +43,7 @@ function ensureStyle(){
     #zrCustomerReturnHomeBtn:hover{background:#f4f7f5}
     #zrCustomerReturnHomeModal{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(16,25,20,.58)}
     #zrCustomerReturnHomeModal.hidden{display:none!important}
-    #zrCustomerReturnHomeModal .zr-return-sheet{width:min(430px,100%);background:#fff;border-radius:18px;padding:23px 20px 18px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center}
+    #zrCustomerReturnHomeModal .zr-return-sheet{width:min(430px,100%);background:#fff;border-radius:18px;padding:23px 20px 18px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center;overflow:hidden}
     #zrCustomerReturnHomeModal h3{margin:0 0 10px;font-size:18px;color:#1f2a23}
     #zrCustomerReturnHomeModal p{margin:0;color:#58655d;font-size:13px;line-height:1.65;word-break:keep-all}
     #zrCustomerReturnHomeModal .zr-return-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px}
