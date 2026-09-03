@@ -8,6 +8,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
 let readyTimer=0;
 let scheduleStatusObserver=null;
+let activityClickBound=false;
 
 function injectStyle(){
   if($('zrAdminOperationalUiAlignmentV1Style'))return;
@@ -49,25 +50,13 @@ function injectStyle(){
       font-size:20px!important;line-height:1!important;box-shadow:none!important;
     }
 
-    /* 스케줄 연결 상태를 Today처럼 카드 밖 우측 독립 배지로 표시 */
+    /* 스케줄 연결 상태는 카드 밖 우측에 배치하고 실제 모양은 Today computed style을 그대로 복사 */
     html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1{
       display:flex!important;justify-content:flex-end!important;align-items:center!important;
       min-height:28px!important;margin:-5px 0 8px!important;padding:0!important;
     }
-    html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1 #zrscStatus.zrsc-status{
-      margin:0!important;min-height:0!important;height:auto!important;padding:6px 9px!important;
-      border-radius:999px!important;font-size:11px!important;font-weight:850!important;line-height:1.25!important;
-      background:#f2f4f2!important;border:1px solid #dfe5df!important;color:#6d756f!important;
-      box-shadow:none!important;white-space:nowrap!important;
-    }
-    html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1 #zrscStatus.zrsc-status.ok{
-      background:#e9f3ed!important;color:#2f6b4f!important;border-color:#c6decf!important;
-    }
-    html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1 #zrscStatus.zrsc-status.wait{
-      background:#f2f4f2!important;color:#6d756f!important;border-color:#dfe5df!important;
-    }
-    html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1 #zrscStatus.zrsc-status.err{
-      background:#fbecec!important;color:#a33b3b!important;border-color:#e8c6c6!important;
+    html.zr-admin-shell-mounted body #adminView #tab-schedule .zr-schedule-status-row-v1 #zrscStatus{
+      margin:0!important;white-space:nowrap!important;
     }
 
     @media(max-width:900px){
@@ -132,6 +121,16 @@ function renderOrgSearch(){
   root.innerHTML=list.length?list.map(bookingCard).join(''):`<div class="help">‘${esc(q)}’ 단체명을 포함한 예약이 없습니다.</div>`;
   return true;
 }
+function bindActivityDelegatedSearch(){
+  if(activityClickBound)return;
+  activityClickBound=true;
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#tab-activity button');if(!btn)return;
+    if(String(btn.textContent||'').replace(/\s+/g,'').trim()!=='조회하기')return;
+    const input=orgInput();if(!input||!String(input.value||'').trim())return;
+    e.preventDefault();e.stopImmediatePropagation();renderOrgSearch();
+  },true);
+}
 function prepareActivitySearch(){
   const toolbar=$('zr11ActivityToolbar'),wrap=$('zrActivityOrgSearchWrap');if(!toolbar||!wrap)return false;
   if(wrap.parentElement!==toolbar)toolbar.appendChild(wrap);
@@ -145,11 +144,6 @@ function prepareActivitySearch(){
   if(!input.dataset.zrOperationalSearchBound){
     input.dataset.zrOperationalSearchBound='1';
     input.addEventListener('keydown',e=>{if(e.key!=='Enter'||!String(input.value||'').trim())return;e.preventDefault();e.stopImmediatePropagation();renderOrgSearch()},true);
-  }
-  const search=[...($('tab-activity')?.querySelectorAll('button')||[])].find(b=>String(b.textContent||'').trim()==='조회하기');
-  if(search&&!search.dataset.zrOperationalStandaloneSearchBound){
-    search.dataset.zrOperationalStandaloneSearchBound='1';
-    search.addEventListener('click',e=>{if(!String(input.value||'').trim())return;e.preventDefault();e.stopImmediatePropagation();renderOrgSearch()},true);
   }
   $('zrActivityOrgSearchHint')?.classList.add('zr-admin-activity-legacy-help-hidden');
   const modalBtn=$('zrActivityOrgModalBtn');if(modalBtn){modalBtn.style.display='none';modalBtn.setAttribute('aria-hidden','true')}
@@ -174,20 +168,40 @@ function normalizedScheduleStatusText(text){
   if(/관리자 DB 로그인 필요/.test(raw))return '관리자 DB 로그인 필요';
   return raw;
 }
+function copyTodayStatusVisual(status){
+  const source=$('zrTodayDbStatus');if(!source||!status)return false;
+  const cs=getComputedStyle(source);
+  const props=[
+    'display','box-sizing','font-family','font-size','font-style','font-weight','letter-spacing','line-height','text-transform','white-space',
+    'padding-top','padding-right','padding-bottom','padding-left',
+    'border-top-width','border-top-style','border-top-color','border-right-width','border-right-style','border-right-color',
+    'border-bottom-width','border-bottom-style','border-bottom-color','border-left-width','border-left-style','border-left-color',
+    'border-top-left-radius','border-top-right-radius','border-bottom-right-radius','border-bottom-left-radius',
+    'background-color','background-image','color','box-shadow','opacity','min-height','height'
+  ];
+  props.forEach(p=>status.style.setProperty(p,cs.getPropertyValue(p),'important'));
+  status.style.setProperty('margin','0','important');
+  status.style.setProperty('width','auto','important');
+  status.style.setProperty('min-width','0','important');
+  return true;
+}
 function syncScheduleStatus(){
   const tab=$('tab-schedule'),status=$('zrscStatus'),head=tab?.querySelector(':scope > .zr-admin-section-head');if(!tab||!status||!head)return false;
   let row=$('zrScheduleStatusRowV1');
   if(!row){row=document.createElement('div');row.id='zrScheduleStatusRowV1';row.className='zr-schedule-status-row-v1';head.insertAdjacentElement('afterend',row)}
   if(status.parentElement!==row)row.appendChild(status);
-  const rewrite=()=>{const wanted='● '+normalizedScheduleStatusText(status.textContent);if(status.textContent!==wanted)status.textContent=wanted};
+  const rewrite=()=>{
+    const wanted='● '+normalizedScheduleStatusText(status.textContent);if(status.textContent!==wanted)status.textContent=wanted;
+    copyTodayStatusVisual(status);
+  };
   rewrite();
   if(!scheduleStatusObserver){scheduleStatusObserver=new MutationObserver(rewrite);scheduleStatusObserver.observe(status,{childList:true,characterData:true,subtree:true})}
-  return true;
+  return copyTodayStatusVisual(status);
 }
 
 function applyStableUi(){injectStyle();return prepareActivitySearch()&&compactTodayDateNav()&&syncScheduleStatus()}
 function boot(){
-  injectStyle();let stable=0,tries=0;
+  injectStyle();bindActivityDelegatedSearch();let stable=0,tries=0;
   readyTimer=setInterval(()=>{tries++;const ok=applyStableUi();stable=ok?stable+1:0;if(stable>=8||tries>=60){clearInterval(readyTimer);readyTimer=0}},200);
   document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(applyStableUi,50),{once:true});
 }
