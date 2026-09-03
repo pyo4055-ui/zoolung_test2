@@ -14,9 +14,9 @@ function installStyle(){
   const s=document.createElement('style');
   s.id='zrCustomerEntryActionBridgeV1Style';
   s.textContent=`
-  /* The customer landing sits at a very high z-index. Any customer modal opened
-     from that landing must sit above it, otherwise the click works but looks dead. */
   body>#inquiryModal,
+  body>#cancelConfirmModal,
+  body>.zr-cancel-select-modal,
   body>.modal:not(#adminLoginModal),
   body>.zr-customer-info-modal,
   body>.zr-customer-zoom,
@@ -25,9 +25,7 @@ function installStyle(){
   body>.zr-guide-modal,
   body>.zr14-modal,
   body>#zrCustomerReturnHomeModal,
-  body>#zrCustomerGroupGuideV2{
-    z-index:2147483300!important;
-  }
+  body>#zrCustomerGroupGuideV2{z-index:2147483300!important}
 
   #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{display:none!important}
   html.zr-customer-entry-v2.zr-customer-entry-v2-active.zr-customer-entry-lookup-open #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{
@@ -36,9 +34,17 @@ function installStyle(){
   }
   @media(min-width:901px){
     html.zr-customer-entry-v2.zr-customer-entry-v2-active.zr-customer-entry-lookup-open #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{
-      position:absolute!important;z-index:6!important;right:clamp(30px,4.2vw,84px)!important;top:50%!important;
-      transform:translateY(-50%)!important;width:min(720px,45vw)!important;max-height:calc(100svh - 56px)!important;
+      position:absolute!important;z-index:6!important;
+      left:calc(clamp(72px,13.5vw,280px) + 528px)!important;right:auto!important;top:50%!important;
+      transform:translateY(-50%)!important;
+      width:min(680px,calc(100vw - (clamp(72px,13.5vw,280px) + 570px)))!important;
+      min-width:420px!important;max-height:calc(100svh - 56px)!important;
       margin:0!important;padding:24px!important;overflow:auto!important;border-radius:26px!important;-webkit-overflow-scrolling:touch;
+    }
+  }
+  @media(max-width:1180px) and (min-width:901px){
+    html.zr-customer-entry-v2.zr-customer-entry-v2-active.zr-customer-entry-lookup-open #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{
+      left:auto!important;right:24px!important;width:min(520px,43vw)!important;min-width:0!important;
     }
   }
   @media(max-width:900px){
@@ -50,7 +56,7 @@ function installStyle(){
     }
     html.zr-customer-entry-v2.zr-customer-entry-v2-active.zr-customer-entry-lookup-open #zrCustomerEntryOverlayV3 #zrCustomerEntryResultsV2{
       position:relative!important;z-index:6!important;width:min(calc(100% - 24px),720px)!important;max-height:none!important;
-      margin:12px auto 0!important;padding:18px!important;overflow:visible!important;border-radius:20px!important;transform:none!important;
+      min-width:0!important;margin:12px auto 0!important;padding:18px!important;overflow:visible!important;border-radius:20px!important;transform:none!important;
     }
   }
   `;
@@ -59,10 +65,7 @@ function installStyle(){
 
 function visible(el){
   if(!el||el.classList?.contains('hidden'))return false;
-  try{
-    const s=getComputedStyle(el);
-    return s.display!=='none'&&s.visibility!=='hidden'&&el.getClientRects().length>0;
-  }catch{return true}
+  try{const s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&el.getClientRects().length>0}catch{return true}
 }
 function entryValues(){
   const name=$('zrCustomerEntryNameV2'),phone=$('zrCustomerEntryPhoneV2'),err=$('zrCustomerEntryErrorV2');
@@ -93,15 +96,15 @@ function ensureResultsRegion(){
 function syncLookupState(){
   const region=ensureResultsRegion();if(!region)return false;
   const existing=$('existingActions'),list=$('existingBookingList');
-  const has=visible(existing)||visible(list);
-  ROOT.classList.toggle('zr-customer-entry-lookup-open',has);
-  $('startView')?.classList.toggle('zr-v2-has-results',has);
+  const has=(existing&&!existing.classList.contains('hidden'))||(list&&!list.classList.contains('hidden')&&list.childElementCount>0);
+  ROOT.classList.toggle('zr-customer-entry-lookup-open',!!has);
+  $('startView')?.classList.toggle('zr-v2-has-results',!!has);
   if(has){
     $('newBookingActions')?.classList.add('hidden');
     try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
     if(innerWidth<=900)setTimeout(()=>{try{region.scrollIntoView({behavior:'smooth',block:'start'})}catch{}},40);
   }
-  return has;
+  return !!has;
 }
 function runLookup(){
   const v=entryValues();if(!v)return;
@@ -109,7 +112,6 @@ function runLookup(){
   const lookup=$('lookupBooking');
   if(!lookup){toast('예약 조회 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.');return}
   try{lookup.click()}catch{}
-
   let checkClicked=false;
   const step=()=>{
     ensureResultsRegion();
@@ -152,6 +154,28 @@ function runInquiry(){
   setTimeout(()=>{if(!surfaceInquiryModal(v)&&!old)toast('1:1 문의 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.')},150);
 }
 
+function surfaceCancelUi(){
+  const modal=$('cancelConfirmModal');
+  if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);
+  if(modal)modal.style.setProperty('z-index','2147483300','important');
+  document.querySelectorAll('.zr-cancel-select-modal').forEach(el=>{
+    if(el.parentElement!==document.body)document.body.appendChild(el);
+    el.style.setProperty('z-index','2147483300','important');
+  });
+  try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
+}
+function installCancelSurface(){
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#zrCustomerEntryResultsV2 button,#zrCustomerEntryResultsV2 a');
+    if(!btn)return;
+    const t=norm(btn.textContent||btn.value);
+    if(!/취소/.test(t))return;
+    [0,30,90,180].forEach(ms=>setTimeout(surfaceCancelUi,ms));
+  },false);
+  const observer=new MutationObserver(()=>surfaceCancelUi());
+  observer.observe(document.body,{childList:true,subtree:false});
+}
+
 function bindButtons(){
   const lookup=$('zrCustomerEntryLookupV2'),inq=$('zrCustomerEntryInquiryV2');
   if(lookup&&!lookup.dataset.zrActionBridge){
@@ -166,6 +190,7 @@ function bindButtons(){
 }
 
 installStyle();
+installCancelSurface();
 bindButtons();
 requestAnimationFrame(bindButtons);
 [80,180,350,700,1200,2000].forEach(ms=>setTimeout(bindButtons,ms));
