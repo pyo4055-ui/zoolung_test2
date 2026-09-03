@@ -24,24 +24,26 @@ html.zr-admin-login-v4-booting #adminLoginModal[data-zr-login-visual="1"]>.modal
   pointer-events:none!important;
 }
 
-/* Match the approved preview's centered 16:9 frame exactly.
-   Wide screens get brown side gutters; tall screens get brown top/bottom gutters. */
+/* The original 16:9 HTML now owns its own sizing/playback inside an isolated
+   iframe. The parent only supplies the full-screen brown stage. */
 #zrAdminLoginSceneV1{
-  display:grid!important;
-  place-items:center!important;
+  display:block!important;
   overflow:hidden!important;
   background:#38271e!important;
 }
 
-#zrAdminLoginSceneV1 video{
-  width:min(100vw,calc(100svh * 16 / 9))!important;
-  height:auto!important;
-  max-width:none!important;
-  max-height:100svh!important;
-  aspect-ratio:16 / 9!important;
+#zrAdminLoginSceneV1 iframe{
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  width:100%!important;
+  height:100%!important;
   display:block!important;
-  object-fit:contain!important;
+  border:0!important;
+  margin:0!important;
+  padding:0!important;
   background:#38271e!important;
+  pointer-events:none!important;
 }
 
 /* Preview v4: the gradient is always present, then a very light warm veil
