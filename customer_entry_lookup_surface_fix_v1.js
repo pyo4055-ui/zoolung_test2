@@ -42,7 +42,7 @@ function sync(){
   const existing=$('existingActions');
   const list=$('existingBookingList');
   const listHasContent=!!list&&list.children.length>0;
-  const open=logicalOpen(existing)||logicalOpen(list)||listHasContent;
+  const open=logicalOpen(existing)||(logicalOpen(list)&&listHasContent);
   ROOT.classList.toggle('zr-customer-entry-lookup-open',open);
   $('startView')?.classList.toggle('zr-v2-has-results',open);
   if(open&&innerWidth<=900){
@@ -51,6 +51,9 @@ function sync(){
       region.dataset.zrLookupScrolled='1';
       setTimeout(()=>{try{region.scrollIntoView({behavior:'smooth',block:'start'})}catch{}},40);
     }
+  }else{
+    const region=$('zrCustomerEntryResultsV2');
+    if(region)delete region.dataset.zrLookupScrolled;
   }
 }
 function observe(){
