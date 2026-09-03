@@ -55,6 +55,10 @@
   text-overflow:ellipsis!important;
 }
 #list .zr-last-edit strong{color:#765448!important;font-weight:900!important}
+
+/* Onsite manual schedule creation is intentionally hidden from the field UI. */
+.fab{display:none!important}
+
 @media(max-width:430px){
   #list .zr-last-edit{font-size:7px!important;margin-bottom:1px!important}
   #list .zr-outsourcing-tag,#list .check{min-height:23px!important;height:23px!important;font-size:7.5px!important}
