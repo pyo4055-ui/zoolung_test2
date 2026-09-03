@@ -13,178 +13,123 @@
     height:100%;
     background:var(--bg);
   }
-  body{overflow:hidden}
+  body{
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+  }
 
+  /* All supplied PNGs share one canvas/coordinate system.
+     Keep that canvas intact and only move whole layers for the intro motion. */
   .intro-frame{
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
-    height:100svh;
+    position:relative;
+    width:min(100vw,calc(100vh * 16 / 9));
+    aspect-ratio:16/9;
     overflow:hidden;
     isolation:isolate;
     background:var(--bg);
   }
 
-  .animal-panel{
-    position:absolute;
-    inset:-2px;
-    overflow:hidden;
-    pointer-events:none;
-  }
-  .animal-panel img{
+  .intro-layer{
     position:absolute;
     inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    will-change:transform,opacity;
+  }
+  .intro-layer img{
+    position:absolute;
+    inset:0;
+    display:block;
     width:100%;
     height:100%;
     max-width:none;
-    display:block;
-    object-fit:cover;
+    object-fit:fill;
     user-select:none;
     -webkit-user-drag:none;
-    will-change:transform,opacity;
-    filter:saturate(.96) contrast(1.02) brightness(.92);
   }
 
-  /* Final state: three diagonal photo panels fill the entire viewport. */
-  .penguin-panel{
-    z-index:1;
-    clip-path:polygon(0 0,39% 0,30% 100%,0 100%);
-  }
-  .otter-panel{
-    z-index:2;
-    clip-path:polygon(39% 0,73% 0,64% 100%,30% 100%);
-  }
-  .capybara-panel{
-    z-index:3;
-    clip-path:polygon(73% 0,100% 0,100% 100%,64% 100%);
-  }
+  .penguin-layer{z-index:1;transform:translate3d(0,105%,0)}
+  .otter-layer{z-index:2;transform:translate3d(0,-105%,0)}
+  .capybara-layer{z-index:3;transform:translate3d(-105%,0,0)}
+  .copy-layer{z-index:4;opacity:0}
 
-  .penguin{
-    object-position:28% 58%;
-    transform:translate3d(0,105%,0) scale(1.03);
-    opacity:0;
-    animation:penguinIn 1.10s cubic-bezier(.18,.72,.22,1) .18s forwards;
+  .intro-frame.run .penguin-layer{
+    animation:penguinIn 1.10s cubic-bezier(.18,.72,.22,1) .12s forwards;
   }
-  .otter{
-    object-position:51% 46%;
-    transform:translate3d(0,-105%,0) scale(1.03);
-    opacity:0;
-    animation:otterIn 1.10s cubic-bezier(.18,.72,.22,1) 1.20s forwards;
+  .intro-frame.run .otter-layer{
+    animation:otterIn 1.10s cubic-bezier(.18,.72,.22,1) 1.18s forwards;
   }
-  .capybara{
-    object-position:76% 55%;
-    transform:translate3d(-105%,0,0) scale(1.03);
-    opacity:0;
-    animation:capybaraIn 1.16s cubic-bezier(.18,.72,.22,1) 2.22s forwards;
+  .intro-frame.run .capybara-layer{
+    animation:capybaraIn 1.16s cubic-bezier(.18,.72,.22,1) 2.24s forwards;
   }
-
-  /* Small warm overlay keeps the three different photos visually tied together. */
-  .warm-vignette{
-    position:absolute;
-    inset:0;
-    z-index:4;
-    pointer-events:none;
-    background:
-      linear-gradient(90deg,rgba(48,27,17,.13),rgba(36,19,12,.02) 48%,rgba(42,23,14,.10)),
-      radial-gradient(circle at 50% 45%,rgba(255,235,207,.06),rgba(22,11,7,.06) 72%);
-  }
-
-  .intro-copy{
-    position:absolute;
-    z-index:5;
-    left:50%;
-    top:50%;
-    width:min(42vw,760px);
-    height:min(48vh,500px);
-    transform:translate(-50%,-47%) scale(.94);
-    opacity:0;
-    pointer-events:none;
-    display:grid;
-    place-items:center;
-    overflow:visible;
-    animation:copyIn .86s cubic-bezier(.2,.76,.24,1) 3.42s forwards;
-  }
-  .intro-copy img{
-    display:block;
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    user-select:none;
-    -webkit-user-drag:none;
-    transform:scale(2.35);
-    filter:drop-shadow(0 12px 26px rgba(12,6,4,.18));
+  .intro-frame.run .copy-layer{
+    animation:copyIn .82s cubic-bezier(.2,.76,.24,1) 3.48s forwards;
   }
 
   @keyframes penguinIn{
-    0%{transform:translate3d(0,105%,0) scale(1.03);opacity:0}
-    16%{opacity:1}
-    80%{transform:translate3d(0,-1.6%,0) scale(1.03);opacity:1}
-    100%{transform:translate3d(0,0,0) scale(1.03);opacity:1}
+    0%{transform:translate3d(0,105%,0)}
+    82%{transform:translate3d(0,-1.4%,0)}
+    100%{transform:translate3d(0,0,0)}
   }
   @keyframes otterIn{
-    0%{transform:translate3d(0,-105%,0) scale(1.03);opacity:0}
-    16%{opacity:1}
-    80%{transform:translate3d(0,1.6%,0) scale(1.03);opacity:1}
-    100%{transform:translate3d(0,0,0) scale(1.03);opacity:1}
+    0%{transform:translate3d(0,-105%,0)}
+    82%{transform:translate3d(0,1.4%,0)}
+    100%{transform:translate3d(0,0,0)}
   }
   @keyframes capybaraIn{
-    0%{transform:translate3d(-105%,0,0) scale(1.03);opacity:0}
-    16%{opacity:1}
-    80%{transform:translate3d(1.6%,0,0) scale(1.03);opacity:1}
-    100%{transform:translate3d(0,0,0) scale(1.03);opacity:1}
+    0%{transform:translate3d(-105%,0,0)}
+    82%{transform:translate3d(1.4%,0,0)}
+    100%{transform:translate3d(0,0,0)}
   }
   @keyframes copyIn{
-    0%{transform:translate(-50%,-44%) scale(.94);opacity:0}
-    100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+    0%{opacity:0;transform:scale(.985)}
+    100%{opacity:1;transform:scale(1)}
   }
 
   @media(max-width:900px){
-    .penguin-panel{clip-path:polygon(0 0,43% 0,31% 100%,0 100%)}
-    .otter-panel{clip-path:polygon(43% 0,78% 0,66% 100%,31% 100%)}
-    .capybara-panel{clip-path:polygon(78% 0,100% 0,100% 100%,66% 100%)}
-    .penguin{object-position:31% 58%}
-    .otter{object-position:52% 48%}
-    .capybara{object-position:72% 55%}
-    .intro-copy{
-      width:min(68vw,600px);
-      height:min(38vh,390px);
+    .intro-frame{
+      width:100vw;
+      height:100svh;
+      aspect-ratio:auto;
     }
-    .intro-copy img{transform:scale(2.15)}
   }
 
   @media(prefers-reduced-motion:reduce){
-    .penguin,.otter,.capybara,.intro-copy{animation-duration:.01ms!important;animation-delay:0s!important}
+    .penguin-layer,.otter-layer,.capybara-layer{transform:none!important}
+    .copy-layer{opacity:1!important}
+    .intro-frame.run .intro-layer{animation:none!important}
   }
 </style>
 </head>
 <body>
-  <main class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
-    <div class="animal-panel penguin-panel">
-      <img class="penguin" src="https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png" alt="" decoding="async">
+  <main id="introFrame" class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
+    <div class="intro-layer penguin-layer">
+      <img src="https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png" alt="" decoding="async">
     </div>
-    <div class="animal-panel otter-panel">
-      <img class="otter" src="https://i.ibb.co/XkpnjP9r/1-otter-transparent.png" alt="" decoding="async">
+    <div class="intro-layer otter-layer">
+      <img src="https://i.ibb.co/XkpnjP9r/1-otter-transparent.png" alt="" decoding="async">
     </div>
-    <div class="animal-panel capybara-panel">
-      <img class="capybara" src="https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png" alt="" decoding="async">
+    <div class="intro-layer capybara-layer">
+      <img src="https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png" alt="" decoding="async">
     </div>
-    <div class="warm-vignette"></div>
-    <div class="intro-copy">
+    <div class="intro-layer copy-layer">
       <img src="https://i.ibb.co/LDPssRz1/asdd.png" alt="주렁주렁" decoding="async">
     </div>
   </main>
 <script>
-  const notify=event=>{
-    try{window.parent.postMessage({source:'zr-admin-intro-html-v1',event},'*')}catch{}
-  };
-
-  const preload=[
+  const frame=document.getElementById('introFrame');
+  const sources=[
     'https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png',
     'https://i.ibb.co/XkpnjP9r/1-otter-transparent.png',
     'https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png',
     'https://i.ibb.co/LDPssRz1/asdd.png'
   ];
+
+  const notify=event=>{
+    try{window.parent.postMessage({source:'zr-admin-intro-html-v1',event},'*')}catch{}
+  };
 
   let finished=false;
   const finish=()=>{
@@ -195,11 +140,14 @@
 
   const start=()=>{
     notify('ready');
-    notify('playing');
-    setTimeout(finish,5350);
+    requestAnimationFrame(()=>{
+      frame.classList.add('run');
+      notify('playing');
+      setTimeout(finish,5200);
+    });
   };
 
-  Promise.all(preload.map(src=>new Promise(resolve=>{
+  Promise.all(sources.map(src=>new Promise(resolve=>{
     const img=new Image();
     img.onload=resolve;
     img.onerror=resolve;
