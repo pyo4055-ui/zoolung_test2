@@ -15,7 +15,6 @@ function matchingBookings(){
   if(!manager||!contact)return [];
   return readBookings().filter(b=>b&&!b.__availabilityOnly&&norm(b.managerName)===manager&&tel(b.contact)===contact&&!['cancelled','rejected'].includes(String(b.status||'')));
 }
-function currentBooking(){const list=matchingBookings();return list.length===1?list[0]:null}
 
 function installStyle(){
   if($('zrReservationChangeRequestV1Style'))return;
@@ -101,11 +100,15 @@ function prepareChangeInquiry(){
   if(name&&manager&&!name.value)name.value=manager;
   if(mobile&&/^010\d{8}$/.test(contact)&&!mobile.value)mobile.value=contact;
   if(org&&booking?.orgName&&!org.value)org.value=booking.orgName;
-  if(content&&(!norm(content.value)||/^\[예약 변경 요청\]/.test(content.value)))content.value=bookingReferenceText(booking,matches);
+  if(content)content.value=bookingReferenceText(booking,matches);
   try{modal.querySelector('.modal-card')?.scrollTo?.({top:0,behavior:'auto'})}catch{}
   return true;
 }
-function resetNormalMode(){changeMode=false;setModeCopy(false)}
+function resetNormalMode(){
+  changeMode=false;setModeCopy(false);
+  const content=$('inqContent');
+  if(content&&/^\[예약 변경 요청\]/.test(String(content.value||'')))content.value='';
+}
 
 function continueChangeRequest(){
   closeNotice();
