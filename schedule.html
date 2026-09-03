@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#f6f7f4">
 <title>주렁주렁 동탄점 현장 스케줄</title>
 <link rel="stylesheet" href="schedule_v4.css?v=7">
+<link rel="stylesheet" href="schedule_login_admin_style_v1.css?v=1">
 <style>
 @media(max-width:430px){.card{min-height:0!important}}
 .appearanceTag{cursor:pointer;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#eef4f7;color:#49616f}
@@ -32,7 +33,7 @@
 </style>
 </head>
 <body class="viewLocked">
-<div class="login" id="login"><div class="loginbox"><h1>현장 스케줄 로그인</h1><p>현장 직원 아이디와 비밀번호를 입력해주세요.</p><input id="staffId" type="text" maxlength="20" autocomplete="username" placeholder="아이디 (예: 제트)"><div class="error hidden" id="staffIdErr">아이디를 입력해주세요.</div><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button></div></div>
+<div class="login" id="login"><div class="loginbox"><h1>현장스케줄 로그인</h1><p>동탄점 현장 운영 스케줄</p><input id="staffId" type="text" maxlength="20" autocomplete="username" placeholder="아이디"><div class="error hidden" id="staffIdErr">아이디를 입력해주세요.</div><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button><div class="scheduleLoginEmployee">내부 직원용</div></div></div>
 
 <header><div class="top"><div class="brand">주렁주렁 동탄점 <small>현장 단체 스케줄 · 테스트 버전</small></div><div class="topRight"><span class="scheduleUserBadge empty" id="scheduleUserBadge">접속자 미설정</span><button class="sharedMemoBtn" id="sharedMemoBtn">📝 공용 메모</button><button class="editLock locked" id="editLock">🔒 수정 불가</button></div></div></header>
 
