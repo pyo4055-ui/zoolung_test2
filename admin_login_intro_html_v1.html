@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>주렁주렁 인트로</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: #38271e;
+  }
+  body {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .intro-frame {
+    width: min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #38271e;
+  }
+  video {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    background: #38271e;
+  }
+</style>
+</head>
+<body>
+  <main class="intro-frame">
+    <video
+      id="introVideo"
+      autoplay
+      muted
+      playsinline
+      preload="auto"
+      disablepictureinpicture
+      controlslist="nodownload noplaybackrate noremoteplayback"
+      aria-label="주렁주렁 인트로 애니메이션"
+    >
+      <source src="./admin_login_intro_v1.mp4?v=4" type="video/mp4">
+    </video>
+  </main>
+<script>
+  const video = document.getElementById('introVideo');
+  video.muted = true;
+  video.defaultMuted = true;
+
+  const notify = event => {
+    try { window.parent.postMessage({ source:'zr-admin-intro-html-v1', event }, '*'); } catch {}
+  };
+
+  const start = () => {
+    video.play().catch(() => {
+      const resume = () => video.play().catch(() => {});
+      window.addEventListener('pointerdown', resume, { once:true });
+      window.addEventListener('touchstart', resume, { once:true });
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+
+  window.addEventListener('load', () => notify('ready'), { once:true });
+  video.addEventListener('playing', () => notify('playing'), { once:true });
+  video.addEventListener('ended', () => {
+    video.pause();
+    notify('ended');
+  });
+  video.addEventListener('error', () => notify('error'), { once:true });
+</script>
+</body>
+</html>
