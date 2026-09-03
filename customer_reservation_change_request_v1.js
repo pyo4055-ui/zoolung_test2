@@ -6,6 +6,7 @@ window.__ZR_CUSTOMER_RESERVATION_CHANGE_REQUEST_V1=true;
 const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const tel=v=>String(v||'').replace(/\D/g,'');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let changeMode=false;
 
 function readBookings(){try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
@@ -14,6 +15,10 @@ function matchingBookings(){
   const contact=tel($('startContact')?.value||$('zrCustomerEntryPhoneV2')?.value);
   if(!manager||!contact)return [];
   return readBookings().filter(b=>b&&!b.__availabilityOnly&&norm(b.managerName)===manager&&tel(b.contact)===contact&&!['cancelled','rejected'].includes(String(b.status||'')));
+}
+function selectedBooking(){
+  const id=String($('zrChangeBookingSelect')?.value||'');
+  return matchingBookings().find(b=>String(b.id||'')===id)||null;
 }
 
 function installStyle(){
@@ -31,10 +36,30 @@ function installStyle(){
   #zrReservationChangeNoticeV1 button{min-height:50px;border-radius:12px;font:inherit;font-size:14px;font-weight:900;cursor:pointer;touch-action:manipulation}
   #zrReservationChangeNoticeCancel{border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
   #zrReservationChangeNoticeConfirm{border:1px solid #fc5404;background:#fc5404;color:#fff}
+
   #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields{border-color:#f2c4ad!important;background:#fffaf6!important}
   #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-section-title{color:#651012!important}
   #inquiryModal.zr-reservation-change-mode #inqType{pointer-events:none;background:#f7f3ef;color:#635850}
-  @media(max-width:520px){#zrReservationChangeNoticeV1{padding:12px}#zrReservationChangeNoticeV1 .zr-change-notice-head{padding:16px 17px;font-size:18px}#zrReservationChangeNoticeV1 .zr-change-notice-body{padding:18px 17px 7px;font-size:13.5px}#zrReservationChangeNoticeV1 .zr-change-notice-actions{grid-template-columns:1fr;padding:12px 17px 18px}#zrReservationChangeNoticeV1 button{min-height:48px}}
+  #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:minmax(330px,1.32fr) minmax(230px,1fr)!important;gap:14px!important}
+  #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects{grid-template-columns:minmax(190px,1.35fr) minmax(110px,.65fr)!important;gap:9px!important}
+  #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-visit-grid label{font-size:14px!important;font-weight:900!important;color:#49352c!important;white-space:nowrap}
+  #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects select,
+  #inquiryModal.zr-reservation-change-mode #inqVisitTime{min-height:50px!important;height:50px!important;font-size:15px!important;padding-left:12px!important;padding-right:36px!important}
+  #zrChangeBookingField{margin:0 0 16px;padding:13px 14px;border:1px solid #ead8cc;border-radius:12px;background:#fff}
+  #zrChangeBookingField label{display:block;margin:0 0 7px;font-size:14px;font-weight:900;color:#651012}
+  #zrChangeBookingSelect{width:100%;min-height:50px;height:50px;font-size:14px;font-weight:750;background:#fff}
+  #zrChangeBookingHelp{margin-top:7px;color:#74655d;font-size:11.5px;line-height:1.5}
+  #zrChangeReviewBooking{grid-column:1/-1!important;background:#fff7f0!important;border:1px solid #f0d4c3!important;border-radius:10px!important;padding:10px 11px!important;margin:4px 0!important}
+
+  @media(max-width:800px){
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr!important;gap:12px!important}
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects{grid-template-columns:minmax(0,1.3fr) minmax(96px,.7fr)!important}
+  }
+  @media(max-width:520px){
+    #zrReservationChangeNoticeV1{padding:12px}#zrReservationChangeNoticeV1 .zr-change-notice-head{padding:16px 17px;font-size:18px}#zrReservationChangeNoticeV1 .zr-change-notice-body{padding:18px 17px 7px;font-size:13.5px}#zrReservationChangeNoticeV1 .zr-change-notice-actions{grid-template-columns:1fr;padding:12px 17px 18px}#zrReservationChangeNoticeV1 button{min-height:48px}
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects{grid-template-columns:1fr 96px!important;gap:7px!important}
+    #zrChangeBookingField{padding:12px}
+  }
   `;document.head.appendChild(s);
 }
 
@@ -64,50 +89,97 @@ function setModeCopy(on){
   const title=$('zrInquiryFormStage')?.querySelector(':scope > h2');
   const intro=title?.nextElementSibling?.classList?.contains('help')?title.nextElementSibling:null;
   if(title)title.textContent=on?'예약 변경 요청':'1:1 문의하기';
-  if(intro)intro.textContent=on?'변경을 희망하는 날짜와 시간을 입력해주세요. 접수 후 담당자가 가능 여부를 확인합니다.':'사전답사 또는 단체 관련 문의를 남겨주세요.';
+  if(intro)intro.textContent=on?'변경할 예약을 선택한 뒤 희망 날짜와 시간을 입력해주세요. 접수 후 담당자가 가능 여부를 확인합니다.':'사전답사 또는 단체 관련 문의를 남겨주세요.';
   const review=$('zrInquiryReviewStage');
   const complete=$('zrInquiryCompleteStage');
   if(review){const h=review.querySelector('h2');if(h)h.textContent=on?'예약 변경 요청 확인':'문의 내용 확인';const b=$('zrInquiryReviewSubmit');if(b)b.textContent=on?'변경 요청 접수하기':'문의하기'}
   if(complete){const h=complete.querySelector('h2'),help=complete.querySelector('.zr-review-help');if(h)h.textContent=on?'예약 변경 요청이 접수됐습니다.':'문의하기가 완료됐습니다.';if(help)help.textContent=on?'아직 예약이 변경된 것은 아닙니다. 담당자 확인 후 가능 여부를 안내드리며, 변경이 확정되면 예약 확정 문자를 다시 보내드립니다.':'문의 내용을 확인한 후 입력하신 연락처로 안내드리겠습니다.'}
 }
+function ensureBookingSelector(){
+  const fields=$('zrInquiryVisitFields');if(!fields)return null;
+  let wrap=$('zrChangeBookingField');
+  if(!wrap){
+    wrap=document.createElement('div');wrap.id='zrChangeBookingField';wrap.className='hidden';
+    wrap.innerHTML='<label class="req" for="zrChangeBookingSelect">변경할 예약 선택</label><select id="zrChangeBookingSelect"><option value="">변경할 예약을 선택해주세요</option></select><div id="zrChangeBookingHelp">예약이 여러 건이면 변경하려는 예약을 직접 선택해주세요.</div>';
+    const title=fields.querySelector('.zr-inquiry-section-title');
+    title?.insertAdjacentElement('afterend',wrap);
+    $('zrChangeBookingSelect')?.addEventListener('change',()=>{
+      const b=selectedBooking(),org=$('inqOrgName');
+      if(b?.orgName&&org)org.value=b.orgName;
+    });
+  }
+  return wrap;
+}
+function populateBookingSelector(){
+  const wrap=ensureBookingSelector(),select=$('zrChangeBookingSelect');if(!wrap||!select)return;
+  const matches=[...matchingBookings()].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.entryTime||'').localeCompare(String(b.entryTime||'')));
+  const old=select.value;
+  select.innerHTML='<option value="">변경할 예약을 선택해주세요</option>'+matches.map(b=>`<option value="${esc(b.id||'')}">${esc(`${b.date||'-'} · ${b.entryTime||'--:--'}~${b.exitTime||'--:--'} · ${b.orgName||'단체 예약'}`)}</option>`).join('');
+  if(matches.some(b=>String(b.id||'')===old))select.value=old;
+  else if(matches.length===1)select.value=String(matches[0].id||'');
+  else select.value='';
+  select.disabled=matches.length===0;
+  const help=$('zrChangeBookingHelp');
+  if(help)help.textContent=matches.length>1?'예약이 여러 건 조회되었습니다. 변경하려는 예약을 직접 선택해주세요.':matches.length===1?'조회된 예약이 자동으로 선택되었습니다.':'변경 가능한 예약을 찾지 못했습니다.';
+  wrap.classList.toggle('hidden',!changeMode);
+  const b=selectedBooking(),org=$('inqOrgName');if(b?.orgName&&org&&!org.value)org.value=b.orgName;
+}
 function decorateReview(){
   if(!changeMode)return;
   setModeCopy(true);
-  $('zrInquiryReviewCard')?.querySelectorAll('.zr-review-label').forEach(el=>{
+  const card=$('zrInquiryReviewCard');
+  card?.querySelectorAll('.zr-review-label').forEach(el=>{
     const t=norm(el.textContent);
     if(t==='방문 희망일')el.textContent='예약변경날짜';
     if(t==='방문 희망시간')el.textContent='예약변경시간';
   });
-}
-function bookingReferenceText(booking,matches){
-  if(booking){
-    return `[예약 변경 요청]\n예약번호: ${booking.id||'-'}\n현재 예약일: ${booking.date||'-'}\n현재 예약시간: ${booking.entryTime||'--:--'} ~ ${booking.exitTime||'--:--'}\n\n변경 요청은 담당자 확인 후 확정되는 것을 확인했습니다.`;
+  card?.querySelector('#zrChangeReviewBooking')?.remove();
+  const b=selectedBooking(),grid=card?.querySelector('.zr-review-grid');
+  if(b&&grid){
+    const row=document.createElement('div');row.id='zrChangeReviewBooking';row.className='zr-review-row full';
+    row.innerHTML=`<span class="zr-review-label">변경 대상 예약</span><div class="zr-review-value">${esc(`${b.date||'-'} · ${b.entryTime||'--:--'}~${b.exitTime||'--:--'} · ${b.orgName||'단체 예약'}`)}</div>`;
+    grid.insertBefore(row,grid.firstChild);
   }
-  if(matches.length>1){
-    const refs=matches.slice(0,5).map(b=>`- ${b.date||'-'} ${b.entryTime||'--:--'}~${b.exitTime||'--:--'} · ${b.orgName||'단체 예약'} · ${b.id||'-'}`).join('\n');
-    return `[예약 변경 요청]\n조회된 예약이 여러 건입니다. 변경하려는 예약을 문의내용에 적어주세요.\n${refs}\n\n변경 요청은 담당자 확인 후 확정되는 것을 확인했습니다.`;
-  }
-  return '[예약 변경 요청]\n변경하려는 기존 예약을 확인할 수 있도록 예약 정보를 문의내용에 적어주세요.\n\n변경 요청은 담당자 확인 후 확정되는 것을 확인했습니다.';
 }
 function prepareChangeInquiry(){
   const modal=$('inquiryModal');if(!modal)return false;
-  changeMode=true;setModeCopy(true);
+  changeMode=true;setModeCopy(true);ensureBookingSelector();populateBookingSelector();
   const type=$('inqType');if(type){type.value='group';type.dispatchEvent(new Event('change',{bubbles:true}))}
   const manager=norm($('startManager')?.value||$('zrCustomerEntryNameV2')?.value);
   const contact=tel($('startContact')?.value||$('zrCustomerEntryPhoneV2')?.value);
-  const matches=matchingBookings(),booking=matches.length===1?matches[0]:null;
-  const name=$('inqName'),mobile=$('inqMobile'),org=$('inqOrgName'),content=$('inqContent');
+  const name=$('inqName'),mobile=$('inqMobile'),content=$('inqContent');
   if(name&&manager&&!name.value)name.value=manager;
   if(mobile&&/^010\d{8}$/.test(contact)&&!mobile.value)mobile.value=contact;
-  if(org&&booking?.orgName&&!org.value)org.value=booking.orgName;
-  if(content)content.value=bookingReferenceText(booking,matches);
+  if(content){
+    if(!content.dataset.zrDefaultPlaceholder)content.dataset.zrDefaultPlaceholder=content.getAttribute('placeholder')||'';
+    content.placeholder='변경 문의 내용을 적어주세요.';
+    if(modal.dataset.zrChangeContentPrepared!=='1'){
+      content.value='';modal.dataset.zrChangeContentPrepared='1';
+    }
+  }
+  const b=selectedBooking(),org=$('inqOrgName');if(b?.orgName&&org&&!org.value)org.value=b.orgName;
   try{modal.querySelector('.modal-card')?.scrollTo?.({top:0,behavior:'auto'})}catch{}
   return true;
 }
 function resetNormalMode(){
   changeMode=false;setModeCopy(false);
-  const content=$('inqContent');
-  if(content&&/^\[예약 변경 요청\]/.test(String(content.value||'')))content.value='';
+  const modal=$('inquiryModal'),wrap=$('zrChangeBookingField'),content=$('inqContent');
+  if(modal)delete modal.dataset.zrChangeContentPrepared;
+  wrap?.classList.add('hidden');
+  if(content){content.value='';content.placeholder=content.dataset.zrDefaultPlaceholder||'문의 내용을 입력해주세요.'}
+  $('zrChangeReviewBooking')?.remove();
+}
+function injectHiddenChangeContext(){
+  if(!changeMode)return;
+  const stage=$('zrInquiryFormStage');
+  if(!stage?.classList.contains('hidden'))return;
+  const content=$('inqContent'),b=selectedBooking();if(!content||!b)return;
+  const text=String(content.value||'');
+  if(!text.startsWith('[단체 문의]')||text.includes('\n[예약 변경 정보]\n'))return;
+  const re=/^(\[단체 문의\]\n단체명:\s*.*\n방문 희망일:\s*.*\n방문 희망시간:\s*.*\n단체 인원:\s*.*?)(?:\n\n)([\s\S]*)$/;
+  const m=text.match(re);if(!m)return;
+  const meta=`[예약 변경 정보]\n대상 예약번호: ${b.id||'-'}\n현재 예약일: ${b.date||'-'}\n현재 예약시간: ${b.entryTime||'--:--'} ~ ${b.exitTime||'--:--'}`;
+  content.value=`${m[1]}\n\n${meta}\n\n${m[2]}`;
 }
 
 function continueChangeRequest(){
@@ -128,7 +200,11 @@ function bind(){
       e.preventDefault();e.stopImmediatePropagation();openNotice();return;
     }
     if(e.target?.closest?.('#inquiryBtn,#zrCustomerEntryInquiryV2')){resetNormalMode();return}
-    if(changeMode&&e.target?.closest?.('#submitInquiry'))setTimeout(decorateReview,0);
+    if(changeMode&&e.target?.closest?.('#submitInquiry')){
+      injectHiddenChangeContext();
+      setTimeout(decorateReview,0);
+    }
+    if(changeMode&&e.target?.closest?.('[data-close="inquiryModal"]'))setTimeout(resetNormalMode,0);
   },true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('zrReservationChangeNoticeV1')?.classList.contains('hidden'))closeNotice()});
 }
