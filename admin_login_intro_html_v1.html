@@ -13,18 +13,17 @@
     height:100%;
     background:var(--bg);
   }
-  body{
-    display:grid;
-    place-items:center;
-    overflow:hidden;
-  }
+  body{overflow:hidden}
 
   /* All supplied PNGs share one canvas/coordinate system.
-     Keep that canvas intact and only move whole layers for the intro motion. */
+     Keep every layer perfectly aligned, but scale that shared canvas as one
+     cover surface so wide monitors never reveal brown side bars. */
   .intro-frame{
-    position:relative;
-    width:min(100vw,calc(100vh * 16 / 9));
-    aspect-ratio:16/9;
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    height:100svh;
     overflow:hidden;
     isolation:isolate;
     background:var(--bg);
@@ -45,7 +44,8 @@
     width:100%;
     height:100%;
     max-width:none;
-    object-fit:fill;
+    object-fit:cover;
+    object-position:center center;
     user-select:none;
     -webkit-user-drag:none;
   }
@@ -86,14 +86,6 @@
   @keyframes copyIn{
     0%{opacity:0;transform:scale(.985)}
     100%{opacity:1;transform:scale(1)}
-  }
-
-  @media(max-width:900px){
-    .intro-frame{
-      width:100vw;
-      height:100svh;
-      aspect-ratio:auto;
-    }
   }
 
   @media(prefers-reduced-motion:reduce){
