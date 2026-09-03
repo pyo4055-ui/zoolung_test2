@@ -114,7 +114,9 @@ export function currentList(){
 }
 export async function savePatch(gid,patch){
   setSync("저장 중","wait");
-  await F.setDoc(F.doc(db,"scheduleGroups",gid),cleanObj({...patch,updatedAt:F.serverTimestamp()}),{merge:true});
+  const by=String(window.zrScheduleIdentity?.()||"").replace(/\s+/g," ").trim().slice(0,20);
+  const onsiteMeta=by?{onsiteLastModifiedBy:by,onsiteLastModifiedAt:F.serverTimestamp()}:{};
+  await F.setDoc(F.doc(db,"scheduleGroups",gid),cleanObj({...patch,...onsiteMeta,updatedAt:F.serverTimestamp()}),{merge:true});
   setSync("실시간 연결됨","ok");
 }
 export function writeError(e){
