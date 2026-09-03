@@ -23,6 +23,13 @@ function surfaceReady(){
     root.classList.contains('zr-customer-entry-v2-active')&&
     root.classList.contains('zr-customer-entry-shell-stable');
 }
+function releaseBootCover(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.getElementById('zrCustomerLandingBootGuard')?.remove();
+    document.getElementById('zrCustomerLandingBootCover')?.remove();
+    try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
+  }));
+}
 function signalVisualReady(force=false){
   if(window.__ZR_CUSTOMER_ENTRY_V2_READY)return;
   if(!force&&!surfaceReady()){
@@ -30,8 +37,7 @@ function signalVisualReady(force=false){
     if(Date.now()-readyWaitStarted<6000){requestAnimationFrame(()=>signalVisualReady(false));return}
   }
   window.__ZR_CUSTOMER_ENTRY_V2_READY=true;
-  document.getElementById('zrCustomerLandingBootGuard')?.remove();
-  try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
+  releaseBootCover();
 }
 
 function loadLookupSurfaceFix(){
@@ -50,7 +56,7 @@ function loadActionBridge(){
   const a=document.createElement('script');
   a.id='zrCustomerEntryActionBridgeV1Script';
   a.async=false;
-  a.src='./customer_entry_action_bridge_v1.js?v=1';
+  a.src='./customer_entry_action_bridge_v1.js?v=2';
   a.onload=loadLookupSurfaceFix;
   a.onerror=()=>{a.remove();loadLookupSurfaceFix()};
   document.body.appendChild(a);
