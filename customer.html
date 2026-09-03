@@ -14,7 +14,7 @@ html,body{margin:0;min-height:100%;background:#38271e;font-family:-apple-system,
 <script>
 (async()=>{
   try{
-    const r=await fetch('./index.html?v=customer-entry-3',{cache:'no-store'});
+    const r=await fetch('./index.html?v=customer-entry-2',{cache:'no-store'});
     if(!r.ok)throw new Error('공통 예약 런타임을 불러오지 못했습니다.');
     let source=await r.text();
     const adminLoader='./admin_features_v2_loader.js?v=31';
