@@ -34,14 +34,25 @@ function signalVisualReady(force=false){
   try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
 }
 
+function loadActionBridge(){
+  if(window.__ZR_CUSTOMER_ENTRY_ACTION_BRIDGE_V1||document.getElementById('zrCustomerEntryActionBridgeV1Script')){signalVisualReady();return}
+  const a=document.createElement('script');
+  a.id='zrCustomerEntryActionBridgeV1Script';
+  a.async=false;
+  a.src='./customer_entry_action_bridge_v1.js?v=1';
+  a.onload=()=>signalVisualReady(false);
+  a.onerror=()=>{a.remove();signalVisualReady(false)};
+  document.body.appendChild(a);
+}
+
 function loadStability(){
-  if(window.__ZR_CUSTOMER_ENTRY_RELOAD_STABILITY_V1||document.getElementById('zrCustomerEntryReloadStabilityV1Script')){signalVisualReady();return}
+  if(window.__ZR_CUSTOMER_ENTRY_RELOAD_STABILITY_V1||document.getElementById('zrCustomerEntryReloadStabilityV1Script')){loadActionBridge();return}
   const q=document.createElement('script');
   q.id='zrCustomerEntryReloadStabilityV1Script';
   q.async=false;
   q.src='./customer_entry_reload_stability_v1.js?v=2';
-  q.onload=()=>signalVisualReady(false);
-  q.onerror=()=>{q.remove();signalVisualReady(false)};
+  q.onload=loadActionBridge;
+  q.onerror=()=>{q.remove();loadActionBridge()};
   document.body.appendChild(q);
 }
 
