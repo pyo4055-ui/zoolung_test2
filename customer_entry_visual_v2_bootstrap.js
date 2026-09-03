@@ -6,6 +6,7 @@ window.__ZR_CUSTOMER_ENTRY_VISUAL_V2_BOOTSTRAP=true;
 function signalVisualReady(){
   if(window.__ZR_CUSTOMER_ENTRY_V2_READY)return;
   window.__ZR_CUSTOMER_ENTRY_V2_READY=true;
+  document.getElementById('zrCustomerLandingBootGuard')?.remove();
   try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
 }
 
@@ -35,8 +36,7 @@ function load(){
 }
 
 /* Wait until the existing customer runtime is ready so the approved landing
-   layout is built against the complete reservation DOM. The pre-boot guard is
-   released only after this visual layer signals that it is ready. */
+   layout is built against the complete reservation DOM. */
 if(window.__ZR_CUSTOMER_RUNTIME_READY)load();
 else document.addEventListener('zr:customer-runtime-ready',load,{once:true});
 })();
