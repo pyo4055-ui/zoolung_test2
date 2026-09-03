@@ -48,10 +48,52 @@ function ensureStyle(){
     #zrCustomerReturnHomeModal p{margin:0;color:#58655d;font-size:13px;line-height:1.65;word-break:keep-all}
     #zrCustomerReturnHomeModal .zr-return-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px}
     #zrCustomerReturnHomeModal button{min-height:43px;border-radius:11px;font-size:13px;font-weight:900;cursor:pointer}
-    #zrCustomerReturnHomeNo{border:1px solid #d7ded9;background:#fff;color:#4f5b54}
-    #zrCustomerReturnHomeYes{border:1px solid #315f49;background:#315f49;color:#fff}
+    #zrCustomerReturnHomeNo{border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
+    #zrCustomerReturnHomeYes{border:1px solid #fc5404;background:#fc5404;color:#fff}
   `;
   document.head.appendChild(s);
+}
+function resetCustomerInputs(){
+  const root=$('customerView');if(!root)return;
+  root.querySelectorAll('form').forEach(form=>{try{form.reset()}catch{}});
+  root.querySelectorAll('input,textarea,select').forEach(el=>{
+    if(el.type==='button'||el.type==='submit'||el.type==='hidden')return;
+    if(el.tagName==='SELECT')el.selectedIndex=0;
+    else if(el.type==='checkbox'||el.type==='radio')el.checked=false;
+    else el.value='';
+    try{el.setCustomValidity?.('')}catch{}
+  });
+}
+function resetToLanding(){
+  const hero=$('zrCustomerEntryHeroV2');
+  if(!hero){window.location.reload();return}
+
+  resetCustomerInputs();
+  for(const id of ['customerView','successView','cancelSuccessView']){
+    const el=$(id);if(el){el.classList.add('hidden');el.style.removeProperty('display')}
+  }
+  const admin=$('adminView');if(admin)admin.style.display='none';
+  const start=$('startView');
+  if(start){start.classList.remove('hidden','zr-v2-has-results');start.style.removeProperty('display')}
+
+  for(const id of ['existingActions','newBookingActions','existingBookingList']){
+    const el=$(id);if(el)el.classList.add('hidden');
+  }
+  const region=$('zrCustomerEntryResultsV2');if(region)region.scrollTop=0;
+
+  for(const id of ['startManager','startContact','zrCustomerEntryNameV2','zrCustomerEntryPhoneV2']){
+    const el=$(id);if(el)el.value='';
+  }
+  const err=$('zrCustomerEntryErrorV2');if(err)err.textContent='';
+
+  const root=document.documentElement;
+  root.classList.add('zr-customer-entry-v2','zr-customer-entry-v2-active','zr-customer-entry-card-ready');
+  document.body.style.removeProperty('overflow');
+  closeModal(false);
+  requestAnimationFrame(()=>{
+    window.scrollTo?.({top:0,left:0,behavior:'auto'});
+    $('zrCustomerEntryNameV2')?.focus?.({preventScroll:true});
+  });
 }
 function ensureModal(){
   let modal=$('zrCustomerReturnHomeModal');if(modal)return modal;
@@ -69,7 +111,7 @@ function ensureModal(){
   $('zrCustomerReturnHomeYes').addEventListener('click',()=>{
     const yes=$('zrCustomerReturnHomeYes');const no=$('zrCustomerReturnHomeNo');
     if(yes)yes.disabled=true;if(no)no.disabled=true;
-    window.location.reload();
+    try{resetToLanding()}finally{if(yes)yes.disabled=false;if(no)no.disabled=false}
   });
   return modal;
 }
@@ -79,10 +121,10 @@ function openModal(){
   modal.classList.remove('hidden');
   requestAnimationFrame(()=>$('zrCustomerReturnHomeNo')?.focus());
 }
-function closeModal(){
+function closeModal(refocus=true){
   const modal=$('zrCustomerReturnHomeModal');if(!modal)return;
   modal.classList.add('hidden');
-  $('zrCustomerReturnHomeBtn')?.focus();
+  if(refocus)$('zrCustomerReturnHomeBtn')?.focus();
 }
 function ensureButton(){
   if(!customerVisible())return false;
