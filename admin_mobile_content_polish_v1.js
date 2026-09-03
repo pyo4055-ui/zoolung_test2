@@ -5,6 +5,14 @@ window.__ZR_ADMIN_MOBILE_CONTENT_POLISH_V1=true;
 
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
+const VISIBLE_GROUPS=[
+  ['tab-today','operation'],['tab-calendar','operation'],['tab-schedule','operation'],['tab-warning','operation'],
+  ['tab-activity','reservation'],['tab-meals','reservation'],['tab-cleanup','reservation'],
+  ['tab-inquiries','customer'],['tab-preview-visit','customer'],['zrGuideAdminSection','customer'],
+  ['tab-sales-dashboard','sales'],['tab-outsourcing','sales'],['tab-menuadmin','sales'],['tab-settings','settings']
+];
+let visibleObserver=null;
+const observedSections=new WeakSet();
 
 function injectStyle(){
   if($('zrAdminMobileContentPolishV1Style'))return;
@@ -15,12 +23,9 @@ function injectStyle(){
     html.zr-admin-shell-mounted body #adminView,
     html.zr-admin-shell-mounted body #adminView *{box-sizing:border-box}
 
-    /* Approved iPhone date alignment. */
     html.zr-admin-shell-mounted body #adminView input[type="date"]{
-      min-width:0!important;max-width:100%!important;
-      height:44px!important;min-height:44px!important;max-height:44px!important;
-      padding-top:0!important;padding-bottom:0!important;
-      font-size:16px!important;line-height:44px!important;box-sizing:border-box!important
+      min-width:0!important;max-width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;
+      padding-top:0!important;padding-bottom:0!important;font-size:16px!important;line-height:44px!important;box-sizing:border-box!important
     }
     html.zr-admin-shell-mounted body #adminView input[type="date"]::-webkit-date-and-time-value{
       display:flex!important;align-items:center!important;width:100%!important;height:42px!important;min-height:42px!important;
@@ -28,16 +33,9 @@ function injectStyle(){
     }
     html.zr-admin-shell-mounted body #adminView input[type="date"]::-webkit-calendar-picker-indicator{margin:0!important;padding:4px!important}
 
-    /* Reservation status: fixed mobile layout built from the actual runtime nodes. */
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar{
-      display:grid!important;
-      grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
-      grid-template-areas:
-        "start end"
-        "basis status"
-        "org org"
-        "search today"
-        "excel excel"!important;
+      display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+      grid-template-areas:"start end" "basis status" "org org" "search today" "excel excel"!important;
       gap:10px!important;align-items:end!important;width:100%!important;min-width:0!important
     }
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-start{grid-area:start!important}
@@ -49,7 +47,6 @@ function injectStyle(){
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-today{grid-area:today!important}
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-excel{grid-area:excel!important}
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>.zr-mob-act-extra{display:none!important}
-
     html.zr-admin-shell-mounted body #adminView #tab-activity #zr11ActivityToolbar>:where(.zr-mob-act-start,.zr-mob-act-end,.zr-mob-act-basis,.zr-mob-act-status){
       display:flex!important;flex-direction:column!important;gap:6px!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important
     }
@@ -68,7 +65,6 @@ function injectStyle(){
     }
     html.zr-admin-shell-mounted body #adminView #tab-activity .card{padding:14px!important}
 
-    /* Sales month controls are already approved; keep them contained without changing layout. */
     html.zr-admin-shell-mounted body #adminView #tab-sales-dashboard .zr-sales-filter{
       display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:end!important;width:100%!important
     }
@@ -94,17 +90,11 @@ function injectStyle(){
   document.head.appendChild(s);
 }
 
-function directChildOf(el,parent){
-  let node=el;
-  while(node&&node.parentElement&&node.parentElement!==parent)node=node.parentElement;
-  return node?.parentElement===parent?node:null;
-}
+function directChildOf(el,parent){let node=el;while(node&&node.parentElement&&node.parentElement!==parent)node=node.parentElement;return node?.parentElement===parent?node:null}
 function textOf(el){return String(el?.textContent||'').replace(/\s+/g,'').trim()}
 function prepareActivityToolbar(){
   if(!mobile())return;
-  const toolbar=$('zr11ActivityToolbar');
-  if(!toolbar)return;
-
+  const toolbar=$('zr11ActivityToolbar');if(!toolbar)return;
   const start=directChildOf($('activityStart')||$('activityStartDate'),toolbar);
   const end=directChildOf($('activityEnd')||$('activityEndDate'),toolbar);
   const basis=directChildOf($('activityDateBasisWrap')||$('activityDateBasis'),toolbar);
@@ -114,7 +104,6 @@ function prepareActivityToolbar(){
   const search=directChildOf(buttons.find(b=>textOf(b)==='조회하기'),toolbar);
   const today=directChildOf(buttons.find(b=>textOf(b)==='오늘'),toolbar);
   const excel=directChildOf(buttons.find(b=>textOf(b).includes('엑셀')),toolbar);
-
   const roles=[[start,'zr-mob-act-start'],[end,'zr-mob-act-end'],[basis,'zr-mob-act-basis'],[status,'zr-mob-act-status'],[org,'zr-mob-act-org'],[search,'zr-mob-act-search'],[today,'zr-mob-act-today'],[excel,'zr-mob-act-excel']];
   const keep=new Set(roles.map(([el])=>el).filter(Boolean));
   [...toolbar.children].forEach(el=>{
@@ -141,7 +130,32 @@ function normalizeControls(){
     el.style.setProperty('-webkit-appearance','none','important');el.style.setProperty('appearance','none','important');
   });
 }
-function apply(){injectStyle();prepareActivityToolbar();normalizeControls()}
+
+function elementVisible(el){
+  if(!el||el.classList.contains('hidden'))return false;
+  try{return getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden'}catch{return false}
+}
+function visibleGroup(){
+  for(const [id,group] of VISIBLE_GROUPS){if(elementVisible($(id)))return group}
+  return'';
+}
+function syncBottomVisual(){
+  if(!mobile())return;
+  if($('zrAdminMobileSubnavV3')?.classList.contains('is-open'))return;
+  const group=visibleGroup();if(!group)return;
+  document.querySelectorAll('#zrAdminMobileBottomV1 [data-mobile-category]').forEach(btn=>{
+    btn.classList.remove('is-active','is-category-active');
+    if(btn.dataset.mobileCategory===group)btn.classList.add('is-category-active');
+  });
+}
+function bindVisibleSync(){
+  if(!visibleObserver)visibleObserver=new MutationObserver(()=>requestAnimationFrame(syncBottomVisual));
+  for(const [id] of VISIBLE_GROUPS){
+    const el=$(id);if(!el||observedSections.has(el))continue;
+    observedSections.add(el);visibleObserver.observe(el,{attributes:true,attributeFilter:['class','hidden']});
+  }
+}
+function apply(){injectStyle();prepareActivityToolbar();normalizeControls();bindVisibleSync();syncBottomVisual()}
 function boot(){
   apply();
   let tries=0;
@@ -150,7 +164,7 @@ function boot(){
   document.addEventListener('click',e=>{
     if(!mobile())return;
     if(e.target?.closest?.('#zrAdminMobileBottomV1,#zrAdminMobileSubnavV3,#zrAdminMobileShellV1,#adminView .admin-tabs,#tab-sales-dashboard')){
-      setTimeout(apply,60);setTimeout(apply,220);
+      setTimeout(apply,60);setTimeout(apply,220);setTimeout(syncBottomVisual,420);
     }
   },true);
   document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(apply,0),{once:true});
