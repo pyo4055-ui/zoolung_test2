@@ -41,7 +41,8 @@ function injectStyle(){
     #zrMobileActivityToolbarV2{
       display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
       grid-template-areas:"start end" "basis status" "org org" "search today" "excel excel";
-      gap:10px!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:10px 0 12px!important;align-items:end!important
+      gap:10px!important;width:100%!important;min-width:0!important;max-width:100%!important;
+      margin:10px 0 12px!important;padding:0 8px 0 0!important;align-items:end!important;box-sizing:border-box!important
     }
     #zrMobileActivityToolbarV2 .zrm-act-field{display:flex!important;flex-direction:column!important;gap:6px!important;min-width:0!important;width:100%!important;max-width:100%!important;margin:0!important;overflow:hidden!important}
     #zrMobileActivityToolbarV2 .zrm-act-label{font-size:12px!important;font-weight:800!important;color:#332925!important;line-height:1.25!important;white-space:nowrap!important}
@@ -65,7 +66,9 @@ function injectStyle(){
     html.zr-admin-shell-mounted body #adminView #tab-activity .card{padding:14px!important}
 
     /* Cleanup tabs: keep dynamic date controls inside the same left/right inset. */
-    html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-filters{width:100%!important;min-width:0!important;max-width:100%!important}
+    html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-filters{
+      width:100%!important;min-width:0!important;max-width:100%!important;padding-right:8px!important;box-sizing:border-box!important
+    }
     html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-field{width:100%!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}
     html.zr-admin-shell-mounted body #adminView #tab-cleanup .zr-cleanup-field input[type="date"]{
       display:block!important;width:100%!important;inline-size:100%!important;min-width:0!important;min-inline-size:0!important;max-width:100%!important;max-inline-size:100%!important;margin:0!important;box-sizing:border-box!important
@@ -127,7 +130,9 @@ function pushMobileActivityValues(){
   return c;
 }
 function runMobileActivitySearch(){
-  const x=pushMobileActivityValues();x?.search?.click();setTimeout(syncMobileActivityToolbar,60)
+  const x=pushMobileActivityValues(),input=x?.orgInput;
+  if(!input)return;
+  input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',bubbles:true,cancelable:true}));
 }
 function ensureMobileActivityToolbar(){
   if(!mobile())return false;
