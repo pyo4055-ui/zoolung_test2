@@ -34,14 +34,25 @@ function signalVisualReady(force=false){
   try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
 }
 
+function loadLookupSurfaceFix(){
+  if(window.__ZR_CUSTOMER_ENTRY_LOOKUP_SURFACE_FIX_V1||document.getElementById('zrCustomerEntryLookupSurfaceFixV1Script')){signalVisualReady();return}
+  const l=document.createElement('script');
+  l.id='zrCustomerEntryLookupSurfaceFixV1Script';
+  l.async=false;
+  l.src='./customer_entry_lookup_surface_fix_v1.js?v=1';
+  l.onload=()=>signalVisualReady(false);
+  l.onerror=()=>{l.remove();signalVisualReady(false)};
+  document.body.appendChild(l);
+}
+
 function loadActionBridge(){
-  if(window.__ZR_CUSTOMER_ENTRY_ACTION_BRIDGE_V1||document.getElementById('zrCustomerEntryActionBridgeV1Script')){signalVisualReady();return}
+  if(window.__ZR_CUSTOMER_ENTRY_ACTION_BRIDGE_V1||document.getElementById('zrCustomerEntryActionBridgeV1Script')){loadLookupSurfaceFix();return}
   const a=document.createElement('script');
   a.id='zrCustomerEntryActionBridgeV1Script';
   a.async=false;
   a.src='./customer_entry_action_bridge_v1.js?v=1';
-  a.onload=()=>signalVisualReady(false);
-  a.onerror=()=>{a.remove();signalVisualReady(false)};
+  a.onload=loadLookupSurfaceFix;
+  a.onerror=()=>{a.remove();loadLookupSurfaceFix()};
   document.body.appendChild(a);
 }
 
