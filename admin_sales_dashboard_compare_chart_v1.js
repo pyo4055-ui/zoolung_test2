@@ -44,20 +44,20 @@ function injectStyle(){
 
 function rateInfo(text,currentText,baseText){
   const raw=String(text||'').trim();
-  if(raw.includes('신규'))return {kind:'up',rate:null,label:'신규',newItem:true};
+  if(raw.includes('신규'))return {kind:'up',rate:null,rateLabel:'신규',newItem:true};
   const n=parseFloat(raw.replace(/[^0-9+\-.]/g,''));
-  if(Number.isFinite(n))return {kind:n>0?'up':n<0?'down':'zero',rate:n,label:`${n>0?'+':''}${n.toFixed(1)}%`,newItem:false};
+  if(Number.isFinite(n))return {kind:n>0?'up':n<0?'down':'zero',rate:n,rateLabel:`${n>0?'+':''}${n.toFixed(1)}%`,newItem:false};
   const cur=Number(String(currentText||'').replace(/[^0-9.-]/g,''))||0;
   const base=Number(String(baseText||'').replace(/[^0-9.-]/g,''))||0;
-  if(base===0&&cur>0)return {kind:'up',rate:null,label:'신규',newItem:true};
-  return {kind:'zero',rate:0,label:'0.0%',newItem:false};
+  if(base===0&&cur>0)return {kind:'up',rate:null,rateLabel:'신규',newItem:true};
+  return {kind:'zero',rate:0,rateLabel:'0.0%',newItem:false};
 }
 
 function tableData(table){
   return [...table.querySelectorAll('tbody tr')].map(row=>{
     const cells=[...row.children];if(cells.length<5)return null;
     return {
-      label:String(cells[0].textContent||'').trim(),
+      name:String(cells[0].textContent||'').trim(),
       ...rateInfo(cells[4].textContent,cells[1].textContent,cells[2].textContent)
     };
   }).filter(Boolean).slice(0,5);
@@ -70,7 +70,7 @@ function chartHtml(data,title){
     const magnitude=x.newItem?maxRate:Math.abs(Number(x.rate||0));
     const h=x.kind==='zero'?4:Math.max(14,Math.min(70,Math.round(magnitude/maxRate*70)));
     const cls=x.kind==='up'?'is-up':x.kind==='down'?'is-down':'is-zero';
-    return `<div class="zr-sales-change-item"><div class="zr-sales-change-value">${x.label}</div><div class="zr-sales-change-plot"><div class="zr-sales-change-zero"></div><i class="zr-sales-change-bar ${cls}" style="height:${h}px"></i></div><div class="zr-sales-change-label" title="${x.label}">${x.label?x.label:''}</div></div>`;
+    return `<div class="zr-sales-change-item"><div class="zr-sales-change-value">${x.rateLabel}</div><div class="zr-sales-change-plot"><div class="zr-sales-change-zero"></div><i class="zr-sales-change-bar ${cls}" style="height:${h}px"></i></div><div class="zr-sales-change-label" title="${x.name}">${x.name}</div></div>`;
   }).join('');
   return `<div class="zr-sales-change-chart-head"><h3>${title}</h3><div class="zr-sales-change-chart-legend"><span><i style="background:${POS}"></i>증가</span><span><i style="background:${NEG}"></i>감소</span></div></div><div class="zr-sales-change-chart-scroll"><div class="zr-sales-change-bars">${items}</div></div>`;
 }
@@ -81,7 +81,7 @@ function enhanceTable(table){
   const id=String(panel.id||'');
   if(!/prev|year/i.test(id))return;
   const data=tableData(table);if(!data.length)return;
-  const sig=JSON.stringify(data.map(x=>[x.label,x.label,x.rate,x.kind,x.newItem]));
+  const sig=JSON.stringify(data.map(x=>[x.name,x.rateLabel,x.rate,x.kind,x.newItem]));
   const card=table.closest('.zr-sales-card');if(!card)return;
   let chart=card.nextElementSibling;
   if(!chart?.classList?.contains('zr-sales-change-chart')){
