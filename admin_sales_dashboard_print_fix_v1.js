@@ -30,6 +30,18 @@ function styleMarkup(){
   return [...document.head.querySelectorAll('style,link[rel="stylesheet"]')].map(el=>el.outerHTML).join('\n');
 }
 
+function fitOnePage(doc){
+  const sheet=doc.getElementById('zrSalesPrintSheet');if(!sheet)return;
+  sheet.style.zoom='1';sheet.style.width='100%';
+  const mmPx=96/25.4,targetW=281*mmPx,targetH=194*mmPx;
+  const w=Math.max(sheet.scrollWidth,sheet.getBoundingClientRect().width,1);
+  const h=Math.max(sheet.scrollHeight,sheet.getBoundingClientRect().height,1);
+  const scale=Math.max(.38,Math.min(1,targetW/w,targetH/h));
+  sheet.style.zoom=String(scale);
+  sheet.style.width=`${100/scale}%`;
+  doc.documentElement.style.overflow='hidden';doc.body.style.overflow='hidden';
+}
+
 function standalonePrint(){
   const sec=$('tab-sales-dashboard');
   const panel=sec?.querySelector('.zr-sales-panel.active');
@@ -42,16 +54,17 @@ function standalonePrint(){
 
   const frame=document.createElement('iframe');
   frame.setAttribute('aria-hidden','true');
-  frame.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+  frame.style.cssText='position:fixed;left:-12000px;top:0;width:1200px;height:800px;border:0;opacity:0;pointer-events:none';
   document.body.appendChild(frame);
   const doc=frame.contentDocument||frame.contentWindow?.document;if(!doc){frame.remove();return}
   const title=String(sec.querySelector('.zr-sales-title')?.textContent||'매출 현황').trim();
   doc.open();
   doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${title}</title>${styleMarkup()}<style>
     @page{size:A4 landscape;margin:8mm}
-    *{box-sizing:border-box!important}
-    html,body{margin:0!important;padding:0!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;overflow:visible!important;background:#fff!important}
+    *{box-sizing:border-box!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    html,body{margin:0!important;padding:0!important;width:281mm!important;height:194mm!important;min-width:0!important;min-height:0!important;max-width:281mm!important;max-height:194mm!important;overflow:hidden!important;background:#fff!important}
     body{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif!important;color:#2f2b28!important}
+    #zrSalesPrintSheet{transform-origin:top left!important;margin:0!important;padding:0!important}
     #tab-sales-dashboard{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
     #tab-sales-dashboard .zr-sales-print-title{font-size:18pt!important;font-weight:950!important;letter-spacing:-.04em!important;margin:0 0 4mm!important;color:#2f2b28!important}
     #tab-sales-dashboard .zr-sales-subtitle,#tab-sales-dashboard .zr-sales-subtabs,#zrSalesPrintBtn{display:none!important}
@@ -62,7 +75,7 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-kpi{min-width:0!important;min-height:0!important;padding:2.5mm!important;border-radius:2mm!important;box-shadow:none!important;break-inside:avoid!important}
     #tab-sales-dashboard .zr-sales-kpi span{font-size:7pt!important}#tab-sales-dashboard .zr-sales-kpi strong{font-size:12pt!important}#tab-sales-dashboard .zr-sales-kpi small{font-size:6pt!important}
     #tab-sales-dashboard .zr-sales-grid2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3mm!important;overflow:visible!important}
-    #tab-sales-dashboard .zr-sales-card{min-width:0!important;height:auto!important;max-height:none!important;padding:3mm!important;border-radius:2mm!important;box-shadow:none!important;overflow:visible!important;break-inside:avoid-page!important}
+    #tab-sales-dashboard .zr-sales-card{min-width:0!important;height:auto!important;max-height:none!important;padding:3mm!important;border-radius:2mm!important;box-shadow:none!important;overflow:visible!important;break-inside:avoid!important}
     #tab-sales-dashboard .zr-sales-card h3{font-size:10pt!important}#tab-sales-dashboard .zr-sales-card .help{font-size:6.5pt!important}
     #tab-sales-dashboard .zr-sales-table-scroll{width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;border-radius:2mm!important}
     #tab-sales-dashboard table{width:100%!important;max-width:100%!important;table-layout:auto!important;font-size:7pt!important}#tab-sales-dashboard table th,#tab-sales-dashboard table td{padding:1.6mm 1.8mm!important}
@@ -70,21 +83,22 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-note{font-size:6.5pt!important;padding:2mm 0!important;background:transparent!important}
     #tab-sales-dashboard .zr-sales-year-stepper button,#tab-sales-dashboard [data-zr-revisit-step]{display:none!important}
     #tab-sales-dashboard .zr-sales-year-stepper,#tab-sales-dashboard .zr-sales-revisit-yearctl{display:block!important}
-    #tab-sales-dashboard .zr-sales-change-chart{break-inside:avoid-page!important;overflow:visible!important}
+    #tab-sales-dashboard .zr-sales-change-chart{break-inside:avoid!important;overflow:visible!important;margin-top:3mm!important}
     #tab-sales-dashboard .zr-sales-change-chart-scroll{overflow:visible!important}#tab-sales-dashboard .zr-sales-change-bars{min-width:0!important}
-  </style></head><body><section id="tab-sales-dashboard"><div class="zr-sales-print-title">${title}</div>${clone.outerHTML}</section></body></html>`);
+  </style></head><body><div id="zrSalesPrintSheet"><section id="tab-sales-dashboard"><div class="zr-sales-print-title">${title}</div>${clone.outerHTML}</section></div></body></html>`);
   doc.close();
 
   const cleanup=()=>{try{frame.remove()}catch{}};
   const run=()=>{
     try{
+      fitOnePage(doc);
       frame.contentWindow?.addEventListener('afterprint',cleanup,{once:true});
       frame.contentWindow?.focus();
       frame.contentWindow?.print();
       setTimeout(cleanup,120000);
     }catch{cleanup()}
   };
-  if(doc.readyState==='complete')setTimeout(run,80);else frame.onload=()=>setTimeout(run,80);
+  if(doc.readyState==='complete')setTimeout(run,120);else frame.onload=()=>setTimeout(run,120);
 }
 
 function replaceExistingPrintAction(){
