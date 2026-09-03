@@ -55,17 +55,20 @@
   .capybara-layer{z-index:3;transform:translate3d(-105%,0,0)}
   .copy-layer{z-index:4;opacity:0}
 
-  .intro-frame.run .penguin-layer{
-    animation:penguinIn 1.10s cubic-bezier(.18,.72,.22,1) .12s forwards;
-  }
-  .intro-frame.run .otter-layer{
-    animation:otterIn 1.10s cubic-bezier(.18,.72,.22,1) 1.18s forwards;
-  }
+  /* All three animals enter together; only their directions differ. */
+  .intro-frame.run .penguin-layer,
+  .intro-frame.run .otter-layer,
   .intro-frame.run .capybara-layer{
-    animation:capybaraIn 1.16s cubic-bezier(.18,.72,.22,1) 2.24s forwards;
+    animation-duration:.88s;
+    animation-timing-function:cubic-bezier(.18,.72,.22,1);
+    animation-delay:.06s;
+    animation-fill-mode:forwards;
   }
+  .intro-frame.run .penguin-layer{animation-name:penguinIn}
+  .intro-frame.run .otter-layer{animation-name:otterIn}
+  .intro-frame.run .capybara-layer{animation-name:capybaraIn}
   .intro-frame.run .copy-layer{
-    animation:copyIn .82s cubic-bezier(.2,.76,.24,1) 3.48s forwards;
+    animation:copyIn .52s cubic-bezier(.2,.76,.24,1) 1.02s forwards;
   }
 
   @keyframes penguinIn{
@@ -135,7 +138,8 @@
     requestAnimationFrame(()=>{
       frame.classList.add('run');
       notify('playing');
-      setTimeout(finish,5200);
+      /* Start the parent login-card reveal at the same moment as the logo. */
+      setTimeout(finish,1020);
     });
   };
 
@@ -146,7 +150,7 @@
     img.src=src;
   }))).then(start).catch(start);
 
-  setTimeout(finish,8000);
+  setTimeout(finish,4000);
 </script>
 </body>
 </html>
