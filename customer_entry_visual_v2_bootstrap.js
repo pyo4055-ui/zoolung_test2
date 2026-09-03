@@ -8,48 +8,8 @@ function installViewportShell(){
   const s=document.createElement('style');
   s.id='zrCustomerEntryViewportShellV1';
   s.textContent=`
-  /* The legacy reservation page remains underneath for its logic only.
-     While the new landing is active, force the visible surface onto the real
-     browser viewport so old header/container widths cannot leak through. */
-  html.zr-customer-entry-v2.zr-customer-entry-v2-active body header{display:none!important}
+  html.zr-customer-entry-v2 body>header{display:none!important}
   html.zr-customer-entry-v2.zr-customer-entry-v2-active body{margin:0!important;background:#38271e!important}
-
-  @media(min-width:901px){
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView{
-      position:fixed!important;inset:0!important;z-index:2147480800!important;
-      width:100vw!important;max-width:none!important;height:100vh!important;height:100svh!important;
-      min-height:100vh!important;min-height:100svh!important;margin:0!important;padding:0!important;
-      overflow:hidden!important;background:#38271e!important;border:0!important;border-radius:0!important;box-shadow:none!important;
-    }
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #zrCustomerEntryHeroV2{
-      position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;
-      height:100%!important;min-height:100%!important;margin:0!important;
-    }
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView.zr-v2-has-results #zrCustomerEntryResultsV2{
-      position:absolute!important;z-index:2147480900!important;
-    }
-  }
-
-  @media(max-width:900px){
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView:not(.zr-v2-has-results){
-      position:fixed!important;inset:0!important;z-index:2147480800!important;
-      width:100vw!important;max-width:none!important;height:100vh!important;height:100svh!important;
-      min-height:100vh!important;min-height:100svh!important;margin:0!important;padding:0!important;
-      overflow:hidden!important;background:#38271e!important;border:0!important;border-radius:0!important;box-shadow:none!important;
-    }
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView:not(.zr-v2-has-results) #zrCustomerEntryHeroV2{
-      position:absolute!important;inset:0!important;width:100%!important;max-width:none!important;
-      height:100%!important;min-height:100%!important;margin:0!important;
-    }
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView.zr-v2-has-results{
-      position:relative!important;inset:auto!important;width:100%!important;max-width:none!important;height:auto!important;min-height:100svh!important;
-      margin:0!important;padding:0!important;overflow:visible!important;
-    }
-    html.zr-customer-entry-v2.zr-customer-entry-v2-active #startView.zr-v2-has-results #zrCustomerEntryHeroV2{
-      position:relative!important;inset:auto!important;width:100vw!important;max-width:none!important;
-      height:100vh!important;height:100svh!important;min-height:100vh!important;min-height:100svh!important;margin:0!important;
-    }
-  }
   `;
   document.head.appendChild(s);
 }
@@ -59,27 +19,41 @@ function surfaceReady(){
   const root=document.documentElement;
   const hero=document.getElementById('zrCustomerEntryHeroV2');
   const start=document.getElementById('startView');
-  return !!hero&&!!start&&root.classList.contains('zr-customer-entry-v2-active');
+  return !!hero&&!!start&&start.parentElement===document.body&&
+    root.classList.contains('zr-customer-entry-v2-active')&&
+    root.classList.contains('zr-customer-entry-shell-stable')&&
+    root.classList.contains('zr-customer-entry-card-ready');
 }
 function signalVisualReady(force=false){
   if(window.__ZR_CUSTOMER_ENTRY_V2_READY)return;
   if(!force&&!surfaceReady()){
     if(!readyWaitStarted)readyWaitStarted=Date.now();
-    if(Date.now()-readyWaitStarted<5000){requestAnimationFrame(()=>signalVisualReady(false));return}
+    if(Date.now()-readyWaitStarted<6000){requestAnimationFrame(()=>signalVisualReady(false));return}
   }
   window.__ZR_CUSTOMER_ENTRY_V2_READY=true;
   document.getElementById('zrCustomerLandingBootGuard')?.remove();
   try{document.dispatchEvent(new CustomEvent('zr:customer-entry-v2-ready'))}catch{}
 }
 
+function loadStability(){
+  if(window.__ZR_CUSTOMER_ENTRY_RELOAD_STABILITY_V1||document.getElementById('zrCustomerEntryReloadStabilityV1Script')){signalVisualReady();return}
+  const q=document.createElement('script');
+  q.id='zrCustomerEntryReloadStabilityV1Script';
+  q.async=false;
+  q.src='./customer_entry_reload_stability_v1.js?v=1';
+  q.onload=()=>signalVisualReady(false);
+  q.onerror=()=>{q.remove();signalVisualReady(false)};
+  document.body.appendChild(q);
+}
+
 function loadFix(){
-  if(window.__ZR_CUSTOMER_ENTRY_VISUAL_V2_FIX_V1||document.getElementById('zrCustomerEntryVisualV2FixV1Script')){signalVisualReady();return}
+  if(window.__ZR_CUSTOMER_ENTRY_VISUAL_V2_FIX_V1||document.getElementById('zrCustomerEntryVisualV2FixV1Script')){loadStability();return}
   const p=document.createElement('script');
   p.id='zrCustomerEntryVisualV2FixV1Script';
   p.async=false;
   p.src='./customer_entry_visual_v2_fix_v1.js?v=3';
-  p.onload=()=>signalVisualReady(false);
-  p.onerror=()=>{p.remove();signalVisualReady(false)};
+  p.onload=loadStability;
+  p.onerror=()=>{p.remove();loadStability()};
   document.body.appendChild(p);
 }
 
