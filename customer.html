@@ -26,6 +26,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-s
     if(!source.includes(bridgeMarker))throw new Error('고객 전용 화면 연결 지점을 찾지 못했습니다.');
     source=source.replace(bridgeMarker,customerMarker);
     source=source.replace('<title>주렁주렁 단체예약 테스트</title>','<title>주렁주렁 동탄점 단체예약</title>');
+    const landingGuard='<style id="zrCustomerLandingBootGuard">body{visibility:hidden!important}</style>';
+    if(!source.includes('id="zrCustomerLandingBootGuard"'))source=source.replace('</head>',landingGuard+'</head>');
     document.open();document.write(source);document.close();
   }catch(e){
     document.getElementById('error').innerHTML='<p style="color:#b23838;font-size:13px;line-height:1.6">고객 예약 화면 로딩 실패<br>'+String(e.message||e)+'</p>';
