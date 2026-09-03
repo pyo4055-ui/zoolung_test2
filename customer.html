@@ -26,6 +26,17 @@ html,body{margin:0;min-height:100%;background:#38271e;font-family:-apple-system,
     if(!source.includes(bridgeMarker))throw new Error('고객 전용 화면 연결 지점을 찾지 못했습니다.');
     source=source.replace(bridgeMarker,customerMarker);
     source=source.replace('<title>주렁주렁 단체예약 테스트</title>','<title>주렁주렁 동탄점 단체예약</title>');
+
+    /* index.html restores the real reservation page with a second document.write().
+       The outer customer guard is lost at that point on a cold first visit, which
+       is why the legacy reservation screen could flash once before the new landing.
+       Patch the restored inner document as well and keep this cover until the V2
+       landing bootstrap explicitly releases it. */
+    const innerWrite='    document.open();document.write(html);document.close();';
+    const innerBoot=`    const zrCustomerInnerGuard='<style id="zrCustomerLandingBootGuard">html{background:#38271e!important}body{background:#38271e!important}body>*{visibility:hidden!important}body>#zrCustomerLandingBootCover,body>#zrCustomerEntryOverlayV3,body>#zrCustomerEntryOverlayV3 *{visibility:visible!important}</style>';\n    if(!html.includes('id="zrCustomerLandingBootGuard"'))html=html.replace('</head>',zrCustomerInnerGuard+'</head>');\n    const zrCustomerInnerCover='<div id="zrCustomerLandingBootCover" aria-hidden="true" style="position:fixed;inset:0;z-index:2147483646;background:#38271e;visibility:visible!important;pointer-events:auto"></div>';\n    if(!html.includes('id="zrCustomerLandingBootCover"'))html=html.replace(/<body([^>]*)>/i,(m)=>m+zrCustomerInnerCover);\n`;
+    if(!source.includes(innerWrite))throw new Error('고객 초기 화면 보호 지점을 찾지 못했습니다.');
+    source=source.replace(innerWrite,innerBoot+innerWrite);
+
     const landingGuard='<style id="zrCustomerLandingBootGuard">html{background:#38271e!important}body{background:#38271e!important}body>*{visibility:hidden!important}body>#zrCustomerLandingBootCover,body>#zrCustomerEntryOverlayV3,body>#zrCustomerEntryOverlayV3 *{visibility:visible!important}</style>';
     if(!source.includes('id="zrCustomerLandingBootGuard"'))source=source.replace('</head>',landingGuard+'</head>');
     const bootCover='<div id="zrCustomerLandingBootCover" aria-hidden="true" style="position:fixed;inset:0;z-index:2147483646;background:#38271e;visibility:visible!important;pointer-events:auto"></div>';
