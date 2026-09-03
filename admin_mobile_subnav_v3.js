@@ -5,47 +5,59 @@ window.__ZR_ADMIN_MOBILE_SUBNAV_V3=true;
 
 const MAX_MOBILE=900;
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const mobile=()=>window.matchMedia(`(max-width:${MAX_MOBILE}px)`).matches;
 
-const LEAVES={
-  operation:{label:'운영',items:[
+const MENUS={
+  operation:{label:'운영',sections:[
     {label:'오늘 운영',parent:'today'},
     {label:'예약 캘린더',parent:'calendar'},
     {label:'스케줄 관리',parent:'schedule'},
     {label:'경고',parent:'warning'}
   ]},
-  reservation:{label:'예약',items:[
+  reservation:{label:'예약',sections:[
     {label:'예약 현황',parent:'activity'},
     {label:'식사 현황',parent:'meals'},
-    {label:'예약 정리',parent:'cleanup',targetId:'zrCleanupSubtab'},
-    {label:'취소 정리',parent:'cleanup',targetId:'zrCancelCleanupSubtab'},
-    {label:'정리 내역',parent:'cleanup',targetId:'zrCleanupHistorySubtab'}
+    {label:'과거 예약 정리',parent:'cleanup',children:[
+      {label:'예약 정리',targetId:'zrCleanupSubtab'},
+      {label:'취소 정리',targetId:'zrCancelCleanupSubtab'},
+      {label:'정리 내역',targetId:'zrCleanupHistorySubtab'}
+    ]}
   ]},
-  customer:{label:'고객',items:[
-    {label:'문의 현황',parent:'inquiries',targetId:'zrInquiryReplyInquirySubtab'},
-    {label:'답변 예시',parent:'inquiries',targetId:'zrInquiryReplyExampleSubtab'},
-    {label:'사전답사 현황',parent:'previewVisit',targetId:'zrPreviewNotifyVisitSubtab'},
-    {label:'확정문자 예시',parent:'previewVisit',targetId:'zrPreviewNotifyTemplateSubtab'},
-    {label:'이용 안내',parent:'guide',targetId:'zrGuideInfoSubtabV1'},
-    {label:'가이드맵',parent:'guide',targetId:'zrGuideMapSubtabV1'},
-    {label:'주차 안내',parent:'guide',targetId:'zrGuideParkingSubtabV1'}
+  customer:{label:'고객',sections:[
+    {label:'1:1 문의',parent:'inquiries',children:[
+      {label:'문의 현황',targetId:'zrInquiryReplyInquirySubtab'},
+      {label:'답변 예시',targetId:'zrInquiryReplyExampleSubtab'}
+    ]},
+    {label:'사전답사 관리',parent:'previewVisit',children:[
+      {label:'사전답사 현황',targetId:'zrPreviewNotifyVisitSubtab'},
+      {label:'확정문자 예시',targetId:'zrPreviewNotifyTemplateSubtab'}
+    ]},
+    {label:'고객 안내 관리',parent:'guide',children:[
+      {label:'이용 안내',targetId:'zrGuideInfoSubtabV1'},
+      {label:'가이드맵',targetId:'zrGuideMapSubtabV1'},
+      {label:'주차 안내',targetId:'zrGuideParkingSubtabV1'}
+    ]}
   ]},
-  sales:{label:'매출',items:[
-    {label:'월매출',parent:'salesDashboard',salesMode:'monthly'},
-    {label:'전월매출',parent:'salesDashboard',salesMode:'prev'},
-    {label:'전년매출',parent:'salesDashboard',salesMode:'year'},
-    {label:'단체 카페매출',parent:'salesDashboard',salesMode:'cafe'},
-    {label:'재방문율',parent:'salesDashboard',salesMode:'revisit'},
+  sales:{label:'매출',sections:[
+    {label:'매출 현황',parent:'salesDashboard',children:[
+      {label:'월매출',salesMode:'monthly'},
+      {label:'전월매출',salesMode:'prev'},
+      {label:'전년매출',salesMode:'year'},
+      {label:'단체 카페매출',salesMode:'cafe'},
+      {label:'재방문율',salesMode:'revisit'}
+    ]},
     {label:'아웃소싱 결제대금',parent:'outsourcing'},
     {label:'카페 메뉴 관리',parent:'menuadmin'}
   ]},
-  settings:{label:'설정',items:[
-    {label:'예약 운영',parent:'settings',targetId:'zrSettingsOperationSubtabV1'},
-    {label:'스케줄 알림 문자',parent:'settings',targetId:'zrSettingsScheduleSmsSubtabV1'},
-    {label:'아웃소싱 업체 설정',parent:'settings',targetId:'zrSettingsOutsourceSubtabV1'},
-    {label:'예약 확정 문자',parent:'settings',targetId:'zrSettingsConfirmSmsSubtabV1'}
+  settings:{label:'설정',sections:[
+    {label:'예약설정',parent:'settings',children:[
+      {label:'예약 운영',targetId:'zrSettingsOperationSubtabV1'},
+      {label:'스케줄 알림 문자',targetId:'zrSettingsScheduleSmsSubtabV1'},
+      {label:'아웃소싱 업체 설정',targetId:'zrSettingsOutsourceSubtabV1'},
+      {label:'예약 확정 문자',targetId:'zrSettingsConfirmSmsSubtabV1'}
+    ]}
   ]}
 };
 const PARENT_GROUP={
@@ -55,43 +67,50 @@ const PARENT_GROUP={
   salesDashboard:'sales',outsourcing:'sales',menuadmin:'sales',settings:'settings'
 };
 
-let bar=null,currentGroup='operation',activeKey='operation:0',railObserver=null;
+let panel=null,currentGroup='operation',activeParentId='today',activeChildKey='',resizeObserver=null;
 
 function railButton(id){return document.querySelector(`#zrAdminShellRail [data-zr-admin-item="${CSS.escape(id)}"]`)}
-function activeParent(){return document.querySelector('#zrAdminShellRail [data-zr-admin-item].is-active')?.dataset.zrAdminItem||''}
-function leafKey(group,index){return `${group}:${index}`}
+function currentRailParent(){return document.querySelector('#zrAdminShellRail [data-zr-admin-item].is-active')?.dataset.zrAdminItem||''}
+function childKey(group,sectionIndex,childIndex){return `${group}:${sectionIndex}:${childIndex}`}
 
 function injectStyle(){
   if($('zrAdminMobileSubnavV3Style'))return;
   const s=document.createElement('style');s.id='zrAdminMobileSubnavV3Style';s.textContent=`
   @media(max-width:${MAX_MOBILE}px){
-    /* v1/v2 popup-style mobile submenu is retired. */
     #zrAdminMobileQuickV1,#zrAdminMobileTouchMenuV2{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
-    html.zr-admin-shell-mounted body #adminView{padding-bottom:calc(126px + env(safe-area-inset-bottom))!important}
+    html.zr-admin-shell-mounted body #adminView{padding-bottom:calc(82px + var(--zrm-subnav-height,170px) + env(safe-area-inset-bottom))!important}
 
     #zrAdminMobileSubnavV3{
-      display:flex;position:fixed;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));z-index:184;
-      height:48px;box-sizing:border-box;align-items:center;gap:6px;padding:6px 10px;
-      overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
-      background:rgba(255,253,249,.985);border-top:1px solid #eaded5;border-bottom:1px solid #eaded5;
-      box-shadow:0 -4px 16px rgba(64,42,31,.035);scrollbar-width:none
+      display:block;position:fixed;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom));z-index:184;
+      max-height:min(34svh,230px);box-sizing:border-box;padding:7px 9px 8px;overflow-y:auto;overflow-x:hidden;
+      overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:rgba(255,253,249,.99);
+      border-top:1px solid #eaded5;border-bottom:1px solid #eaded5;box-shadow:0 -5px 18px rgba(64,42,31,.055)
     }
-    #zrAdminMobileSubnavV3::-webkit-scrollbar{display:none}
-    #zrAdminMobileSubnavV3 .zrm-subnav-label{flex:0 0 auto;padding:0 2px;color:#701418;font-size:10px;font-weight:950;white-space:nowrap}
-    #zrAdminMobileSubnavV3 .zrm-subnav-btn{
-      flex:0 0 auto;height:34px;min-width:max-content;margin:0!important;padding:0 12px!important;
-      border:1px solid #e6d9cf!important;border-radius:999px!important;background:#fffaf6!important;color:#645148!important;
-      box-shadow:none!important;font-size:11px!important;font-weight:850!important;line-height:32px!important;white-space:nowrap!important;
-      touch-action:manipulation;-webkit-tap-highlight-color:transparent
+    #zrAdminMobileSubnavV3 .zrm-group-title{display:flex;align-items:center;gap:7px;padding:1px 4px 6px;color:#701418;font-size:10px;font-weight:950;letter-spacing:-.02em}
+    #zrAdminMobileSubnavV3 .zrm-group-title:after{content:'';height:1px;flex:1;background:#efe4dc}
+    #zrAdminMobileSubnavV3 .zrm-section{display:grid;grid-template-columns:minmax(98px,118px) minmax(0,1fr);gap:7px;align-items:center;padding:5px 2px;border-top:1px solid #f3eae3}
+    #zrAdminMobileSubnavV3 .zrm-section:first-of-type{border-top:0}
+    #zrAdminMobileSubnavV3 .zrm-section.no-children{grid-template-columns:minmax(0,1fr)}
+    #zrAdminMobileSubnavV3 .zrm-main{
+      min-height:36px;margin:0!important;padding:7px 10px!important;border:1px solid #e5d8cf!important;border-radius:10px!important;
+      background:#fffaf6!important;color:#57443a!important;box-shadow:none!important;text-align:left!important;font-size:11px!important;
+      font-weight:900!important;line-height:1.2!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent
     }
-    #zrAdminMobileSubnavV3 .zrm-subnav-btn.is-active{background:#78171a!important;border-color:#78171a!important;color:#fff!important}
-    #zrAdminMobileSubnavV3 .zrm-subnav-btn:active{transform:none!important;background:#f7e8dd!important;color:#701418!important}
+    #zrAdminMobileSubnavV3 .zrm-main.is-active{background:#fff0e3!important;border-color:#dfa77f!important;color:#701418!important;box-shadow:inset 3px 0 0 #f26828!important}
+    #zrAdminMobileSubnavV3 .zrm-children{display:flex;align-items:center;gap:5px;min-width:0;overflow-x:auto;overflow-y:hidden;padding:1px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+    #zrAdminMobileSubnavV3 .zrm-children::-webkit-scrollbar{display:none}
+    #zrAdminMobileSubnavV3 .zrm-child{
+      flex:0 0 auto;min-height:30px;margin:0!important;padding:5px 9px!important;border:1px solid #e8ddd5!important;border-radius:999px!important;
+      background:#fff!important;color:#735e53!important;box-shadow:none!important;font-size:10px!important;font-weight:850!important;line-height:1.2!important;
+      white-space:nowrap!important;touch-action:manipulation;-webkit-tap-highlight-color:transparent
+    }
+    #zrAdminMobileSubnavV3 .zrm-child.is-active{background:#78171a!important;border-color:#78171a!important;color:#fff!important}
+    #zrAdminMobileSubnavV3 button:active{transform:none!important}
 
-    /* Bottom bar becomes category selector only; no popup/overlay. */
     #zrAdminMobileBottomV1 [data-mobile-category].is-category-active{color:#fff!important;background:linear-gradient(180deg,#7b1518,#650d10)!important;border-radius:12px!important;margin:5px 3px!important;padding-top:3px!important;padding-bottom:3px!important}
 
-    /* Native inner subtabs stay functional but are not duplicated inside mobile content. */
+    /* 모바일에서는 본문 안에 같은 서브탭을 중복 노출하지 않는다. */
     #zrCleanupInnerTabs,
     #zrInquiryReplyInnerTabs,
     #zrPreviewNotifyInnerTabs,
@@ -102,37 +121,39 @@ function injectStyle(){
   `;document.head.appendChild(s);
 }
 
-function ensureBar(){
-  if(bar)return bar;
-  bar=document.createElement('nav');
-  bar.id='zrAdminMobileSubnavV3';
-  bar.setAttribute('aria-label','모바일 관리자 세부 메뉴');
-  document.body.appendChild(bar);
-  bar.addEventListener('click',e=>{
-    const btn=e.target.closest('[data-zrm-subnav-group]');if(!btn)return;
-    e.preventDefault();
-    const group=btn.dataset.zrmSubnavGroup||'',index=Number(btn.dataset.zrmSubnavIndex||0);
-    activate(group,index);
+function updatePanelHeight(){
+  if(!panel||!mobile())return;
+  const h=Math.min(230,Math.max(0,Math.ceil(panel.getBoundingClientRect().height)));
+  document.documentElement.style.setProperty('--zrm-subnav-height',`${h}px`);
+}
+function ensurePanel(){
+  if(panel)return panel;
+  panel=document.createElement('nav');panel.id='zrAdminMobileSubnavV3';panel.setAttribute('aria-label','모바일 관리자 메뉴');document.body.appendChild(panel);
+  panel.addEventListener('click',e=>{
+    const main=e.target.closest('[data-zrm-main]');
+    if(main){e.preventDefault();activateMain(main.dataset.zrmGroup||'',Number(main.dataset.zrmSection||0));return}
+    const child=e.target.closest('[data-zrm-child]');
+    if(child){e.preventDefault();activateChild(child.dataset.zrmGroup||'',Number(child.dataset.zrmSection||0),Number(child.dataset.zrmChild||0))}
   });
-  return bar;
+  if('ResizeObserver'in window){resizeObserver=new ResizeObserver(updatePanelHeight);resizeObserver.observe(panel)}
+  return panel;
 }
 
 function render(group=currentGroup){
-  if(!mobile()||!LEAVES[group])return;
+  if(!mobile()||!MENUS[group])return;
   currentGroup=group;
-  const g=LEAVES[group],root=ensureBar();
-  root.innerHTML=`<span class="zrm-subnav-label">${esc(g.label)}</span>${g.items.map((item,i)=>`<button type="button" class="zrm-subnav-btn ${activeKey===leafKey(group,i)?'is-active':''}" data-zrm-subnav-group="${group}" data-zrm-subnav-index="${i}">${esc(item.label)}</button>`).join('')}`;
-  syncBottom();
-  requestAnimationFrame(()=>{
-    const active=root.querySelector('.zrm-subnav-btn.is-active');
-    active?.scrollIntoView?.({block:'nearest',inline:'nearest'});
-  });
+  const root=ensurePanel(),menu=MENUS[group];
+  root.innerHTML=`<div class="zrm-group-title">${esc(menu.label)} 메뉴</div>${menu.sections.map((section,si)=>{
+    const children=Array.isArray(section.children)?section.children:[];
+    const activeMain=activeParentId===section.parent;
+    return `<div class="zrm-section ${children.length?'':'no-children'}"><button type="button" class="zrm-main ${activeMain?'is-active':''}" data-zrm-main data-zrm-group="${group}" data-zrm-section="${si}">${esc(section.label)}</button>${children.length?`<div class="zrm-children">${children.map((child,ci)=>`<button type="button" class="zrm-child ${activeChildKey===childKey(group,si,ci)?'is-active':''}" data-zrm-child data-zrm-group="${group}" data-zrm-section="${si}" data-zrm-child="${ci}">${esc(child.label)}</button>`).join('')}</div>`:''}</div>`
+  }).join('')}`;
+  syncBottom();requestAnimationFrame(updatePanelHeight);
 }
 
 function syncBottom(){
   document.querySelectorAll('#zrAdminMobileBottomV1 [data-mobile-category]').forEach(btn=>{
-    btn.classList.toggle('is-category-active',btn.dataset.mobileCategory===currentGroup);
-    btn.classList.remove('is-active');
+    btn.classList.toggle('is-category-active',btn.dataset.mobileCategory===currentGroup);btn.classList.remove('is-active');
   });
 }
 
@@ -140,76 +161,88 @@ function prepareBottom(){
   const bottom=$('zrAdminMobileBottomV1');if(!bottom)return false;
   const buttons=[...bottom.querySelectorAll('[data-mobile-group],[data-mobile-category]')];if(!buttons.length)return false;
   buttons.forEach(btn=>{
-    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';
-    if(!LEAVES[group])return;
-    btn.removeAttribute('data-mobile-group');
-    btn.dataset.mobileCategory=group;
+    const group=btn.dataset.mobileCategory||btn.dataset.mobileGroup||'';if(!MENUS[group])return;
+    btn.removeAttribute('data-mobile-group');btn.dataset.mobileCategory=group;
     if(btn.dataset.zrMobileSubnavBound==='1')return;
     btn.dataset.zrMobileSubnavBound='1';
     btn.addEventListener('click',e=>{
       if(!mobile())return;
       e.preventDefault();e.stopPropagation();
-      currentGroup=group;
-      const parent=activeParent();
-      const idx=LEAVES[group].items.findIndex(x=>x.parent===parent);
-      if(idx>=0)activeKey=leafKey(group,idx);
+      currentGroup=group;activeChildKey='';
+      const rail=currentRailParent(),section=MENUS[group].sections.find(x=>x.parent===rail);
+      if(section)activeParentId=section.parent;
       render(group);
     });
   });
-  syncFromCurrent();
-  return true;
+  syncFromCurrent(false);return true;
 }
 
 async function clickWhenReady(selector,attempts=44){
   for(let i=0;i<attempts;i++){
-    const el=document.querySelector(selector);
-    if(el){el.click();return true}
+    const el=document.querySelector(selector);if(el){el.click();return true}
     await wait(50);
   }
   return false;
 }
 
-async function activate(group,index){
-  const leaf=LEAVES[group]?.items?.[index];if(!leaf)return;
-  currentGroup=group;activeKey=leafKey(group,index);render(group);
-  const parent=railButton(leaf.parent);if(!parent)return;
+async function navigateSection(group,section,child=null,childIndex=-1){
+  if(!section)return;
+  currentGroup=group;activeParentId=section.parent;
+  if(child&&childIndex>=0)activeChildKey=childKey(group,MENUS[group].sections.indexOf(section),childIndex);else activeChildKey='';
+  updateActiveClasses();
+  const parent=railButton(section.parent);if(!parent)return;
   if(!parent.classList.contains('is-active'))parent.click();
-  if(leaf.targetId)await clickWhenReady(`#${CSS.escape(leaf.targetId)}`);
-  else if(leaf.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(leaf.salesMode)}"]`);
-  activeKey=leafKey(group,index);render(group);
+  if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
+  else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
   window.scrollTo({top:0,behavior:'auto'});
 }
 
-function syncFromCurrent(){
-  const parent=activeParent();
-  const group=PARENT_GROUP[parent]||currentGroup||'operation';
-  currentGroup=group;
-  const idx=LEAVES[group]?.items?.findIndex(x=>x.parent===parent)??-1;
-  if(idx>=0){
-    /* Keep a specifically chosen nested leaf highlighted when its parent remains active. */
-    if(!activeKey.startsWith(`${group}:`)||LEAVES[group].items[Number(activeKey.split(':')[1])]?.parent!==parent){activeKey=leafKey(group,idx)}
-  }
-  render(group);
+function activateMain(group,sectionIndex){
+  const section=MENUS[group]?.sections?.[sectionIndex];if(!section)return;
+  const firstChild=section.children?.[0]||null;
+  navigateSection(group,section,firstChild,firstChild?0:-1);
+}
+function activateChild(group,sectionIndex,childIndex){
+  const section=MENUS[group]?.sections?.[sectionIndex],child=section?.children?.[childIndex];if(!section||!child)return;
+  navigateSection(group,section,child,childIndex);
 }
 
-function observeRail(){
-  const rail=$('zrAdminShellRail');if(!rail||railObserver)return false;
-  railObserver=new MutationObserver(()=>{if(mobile())syncFromCurrent()});
-  railObserver.observe(rail,{subtree:true,attributes:true,attributeFilter:['class','aria-selected']});
+function updateActiveClasses(){
+  if(!panel)return;
+  panel.querySelectorAll('[data-zrm-main]').forEach(btn=>{
+    const group=btn.dataset.zrmGroup||'',si=Number(btn.dataset.zrmSection||0),section=MENUS[group]?.sections?.[si];
+    btn.classList.toggle('is-active',!!section&&section.parent===activeParentId);
+  });
+  panel.querySelectorAll('[data-zrm-child]').forEach(btn=>{
+    const key=childKey(btn.dataset.zrmGroup||'',Number(btn.dataset.zrmSection||0),Number(btn.dataset.zrmChild||0));
+    btn.classList.toggle('is-active',key===activeChildKey);
+  });
+  syncBottom();
+}
+
+function syncFromCurrent(allowGroupChange=true){
+  const parent=currentRailParent();if(!parent)return;
+  const group=PARENT_GROUP[parent]||currentGroup;
+  if(allowGroupChange&&MENUS[group])currentGroup=group;
+  const section=MENUS[currentGroup]?.sections?.find(x=>x.parent===parent);
+  if(section){activeParentId=parent;if(!Array.isArray(section.children)||!section.children.length)activeChildKey=''}
+  if(panel&&panel.childElementCount)updateActiveClasses();else render(currentGroup);
+}
+
+function bindRail(){
+  const rail=$('zrAdminShellRail');if(!rail||rail.dataset.zrMobileSubnavRailBound==='1')return false;
+  rail.dataset.zrMobileSubnavRailBound='1';
+  rail.addEventListener('click',()=>setTimeout(()=>{if(mobile())syncFromCurrent(true)},0));
   return true;
 }
 
 function boot(){
-  injectStyle();ensureBar();
-  let tries=0;
-  const timer=setInterval(()=>{
-    tries++;
-    const ready=prepareBottom();
-    observeRail();
-    if(ready||tries>120)clearInterval(timer);
+  injectStyle();ensurePanel();
+  let tries=0;const timer=setInterval(()=>{
+    tries++;const ready=prepareBottom();bindRail();if(ready||tries>120)clearInterval(timer);
   },100);
-  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{prepareBottom();observeRail();syncFromCurrent()},100),{once:true});
-  window.addEventListener('resize',()=>{if(mobile()){prepareBottom();syncFromCurrent()}},{passive:true});
+  document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{prepareBottom();bindRail();syncFromCurrent(true)},100),{once:true});
+  window.addEventListener('resize',()=>{if(mobile()){prepareBottom();syncFromCurrent(true);updatePanelHeight()}},{passive:true});
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
