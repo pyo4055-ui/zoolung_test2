@@ -10,9 +10,9 @@
   min-height:100svh!important;
   display:flex!important;
   align-items:center!important;
-  justify-content:center!important;
+  justify-content:flex-start!important;
   box-sizing:border-box!important;
-  padding:24px!important;
+  padding:24px clamp(28px,6vw,96px)!important;
   overflow:auto!important;
   background:#38271e!important;
 }
@@ -154,12 +154,22 @@
 }
 
 @media(max-width:900px){
-  #login.login{padding:18px!important}
+  #login.login{padding:18px 28px!important}
   #login .loginbox{
-    width:min(420px,calc(100vw - 36px))!important;
+    width:min(420px,calc(100vw - 56px))!important;
     min-height:520px!important;
     padding:42px 30px 30px!important;
     border-radius:26px!important;
+  }
+}
+
+@media(max-width:700px){
+  #login.login{
+    justify-content:center!important;
+    padding:18px!important;
+  }
+  #login .loginbox{
+    width:min(420px,calc(100vw - 36px))!important;
   }
 }
 
