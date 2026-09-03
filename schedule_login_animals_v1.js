@@ -7,6 +7,7 @@ const INTRO_URL='./admin_login_intro_html_v1.html?v=1';
 let observer=null;
 let playToken=0;
 let fallbackTimer=0;
+let wasVisible=null;
 
 function installStyle(){
   if(document.getElementById('zrScheduleLoginAnimalsV1Style'))return;
@@ -46,7 +47,7 @@ function parts(){
   return {login,box,scene,frame:document.getElementById('zrScheduleLoginAnimalsFrameV1')};
 }
 
-function loginVisible(login){return login&&!login.classList.contains('hidden')}
+function loginVisible(login){return !!login&&!login.classList.contains('hidden')}
 function clearFallback(){if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=0}}
 function reveal(token){
   if(token!==playToken)return;
@@ -65,10 +66,13 @@ function play(){
   p.frame.src=INTRO_URL+'&surface=schedule&session='+token+'&t='+Date.now();
   fallbackTimer=setTimeout(()=>reveal(token),1800);
 }
-function sync(){
+function syncVisibility(force=false){
   installStyle();
   const p=parts();if(!p)return;
-  if(loginVisible(p.login))play();
+  const visible=loginVisible(p.login);
+  if(!force&&visible===wasVisible)return;
+  wasVisible=visible;
+  if(visible)play();
   else{
     ++playToken;
     clearFallback();
@@ -87,21 +91,10 @@ function boot(){
   const p=parts();if(!p)return;
   window.addEventListener('message',handleMessage);
   if(!observer){
-    observer=new MutationObserver(records=>{
-      for(const record of records){
-        if(record.type!=='attributes'||record.attributeName!=='class')continue;
-        const login=record.target;
-        if(loginVisible(login))play();
-        else{
-          ++playToken;
-          clearFallback();
-          login.classList.remove('zr-schedule-login-animals-booting','zr-schedule-login-animals-ready');
-        }
-      }
-    });
+    observer=new MutationObserver(()=>syncVisibility(false));
     observer.observe(p.login,{attributes:true,attributeFilter:['class']});
   }
-  if(loginVisible(p.login))play();
+  syncVisibility(true);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
