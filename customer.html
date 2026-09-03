@@ -26,7 +26,7 @@ html,body{margin:0;min-height:100%;background:#38271e;font-family:-apple-system,
     if(!source.includes(bridgeMarker))throw new Error('고객 전용 화면 연결 지점을 찾지 못했습니다.');
     source=source.replace(bridgeMarker,customerMarker);
     source=source.replace('<title>주렁주렁 단체예약 테스트</title>','<title>주렁주렁 동탄점 단체예약</title>');
-    const landingGuard='<style id="zrCustomerLandingBootGuard">html{background:#38271e!important}body{visibility:hidden!important;background:#38271e!important}</style>';
+    const landingGuard='<style id="zrCustomerLandingBootGuard">html{background:#38271e!important}body{background:#38271e!important}body>*{visibility:hidden!important}body>#zrCustomerEntryOverlayV3,body>#zrCustomerEntryOverlayV3 *{visibility:visible!important}</style>';
     if(!source.includes('id="zrCustomerLandingBootGuard"'))source=source.replace('</head>',landingGuard+'</head>');
     document.open();document.write(source);document.close();
   }catch(e){
