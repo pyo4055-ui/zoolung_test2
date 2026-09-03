@@ -19,6 +19,15 @@
 
 #login.login.hidden{display:none!important}
 
+/* Hide the legacy/plain login card from the very first paint. The animal
+   intro script adds the ready class after its scene has played (or fallback
+   timeout fires), so users only see brown stage -> animals -> login card. */
+#login.login:not(.hidden):not(.zr-schedule-login-animals-ready) .loginbox{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+
 #login .loginbox{
   display:flex!important;
   flex-direction:column!important;
@@ -36,6 +45,12 @@
   box-shadow:0 28px 70px rgba(26,14,9,.26),0 5px 18px rgba(26,14,9,.10)!important;
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
+}
+
+#login.login.zr-schedule-login-animals-ready .loginbox{
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
 }
 
 #login .loginbox::before{
