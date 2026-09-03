@@ -1,0 +1,188 @@
+/* Onsite schedule login card matched to the approved administrator login visual.
+   Visual-only layer: existing Firebase authentication and schedule data behavior stay unchanged. */
+
+#login.login{
+  position:fixed!important;
+  inset:0!important;
+  z-index:300!important;
+  width:100vw!important;
+  min-height:100vh!important;
+  min-height:100svh!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  padding:24px!important;
+  overflow:auto!important;
+  background:#38271e!important;
+}
+
+#login.login.hidden{display:none!important}
+
+#login .loginbox{
+  display:flex!important;
+  flex-direction:column!important;
+  width:min(430px,calc(100vw - 56px))!important;
+  min-width:0!important;
+  min-height:590px!important;
+  max-height:calc(100svh - 48px)!important;
+  margin:0!important;
+  padding:54px 42px 38px!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+  border:1px solid rgba(91,52,36,.10)!important;
+  border-radius:30px!important;
+  background:rgba(255,253,249,.965)!important;
+  box-shadow:0 28px 70px rgba(26,14,9,.26),0 5px 18px rgba(26,14,9,.10)!important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+#login .loginbox::before{
+  content:"";
+  display:block;
+  flex:0 0 62px;
+  width:162px;
+  height:62px;
+  margin:0 auto 18px;
+  background:center/contain no-repeat url("https://zoolungzoolung.com/wp-content/themes/zoolungzoolung/assets/images/zoolung_logo_color.svg");
+}
+
+#login .loginbox h1{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  color:#651012!important;
+  font-size:29px!important;
+  line-height:1.22!important;
+  letter-spacing:-.045em!important;
+  text-align:center!important;
+  font-weight:850!important;
+}
+
+#login .loginbox p{
+  display:block!important;
+  margin:8px 0 31px!important;
+  color:#8a7469!important;
+  font-size:12px!important;
+  line-height:1.4!important;
+  letter-spacing:-.02em!important;
+  text-align:center!important;
+  font-weight:650!important;
+}
+
+#login #staffId,
+#login #pw{
+  display:block!important;
+  width:100%!important;
+  height:51px!important;
+  min-height:51px!important;
+  box-sizing:border-box!important;
+  border:1px solid #e3d8d0!important;
+  border-radius:10px!important;
+  outline:none!important;
+  padding:0 14px 0 44px!important;
+  background-color:#fffdfa!important;
+  color:#38251d!important;
+  font:inherit!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+  transition:border-color .16s ease,box-shadow .16s ease!important;
+}
+
+#login #staffId{
+  margin:0 0 11px!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 20c.8-4 3.2-6 7.5-6s6.7 2 7.5 6'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+
+#login #pw{
+  margin:0!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 8 0V10'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+
+#login #staffId::placeholder,
+#login #pw::placeholder{color:#aa968a!important}
+
+#login #staffId:focus,
+#login #pw:focus{
+  border-color:#b9826e!important;
+  box-shadow:0 0 0 3px rgba(132,59,47,.08)!important;
+}
+
+#login .error{
+  margin:6px 0 9px!important;
+  color:#b23838!important;
+  font-size:11px!important;
+  line-height:1.35!important;
+  font-weight:750!important;
+}
+
+#login .error.hidden{display:none!important}
+
+#login #loginBtn{
+  display:block!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:14px 0 0!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:#720b0f!important;
+  color:#fff!important;
+  font-size:14px!important;
+  line-height:1!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+  box-shadow:0 8px 16px rgba(91,13,15,.18)!important;
+}
+
+#login #loginBtn:active{transform:translateY(1px)!important}
+#login #loginBtn:disabled{opacity:.68!important;cursor:wait!important}
+
+#login .scheduleLoginEmployee{
+  margin-top:auto!important;
+  padding-top:28px!important;
+  text-align:center!important;
+  color:#a28f84!important;
+  font-size:11px!important;
+  line-height:1.4!important;
+  font-weight:650!important;
+}
+
+@media(max-width:900px){
+  #login.login{padding:18px!important}
+  #login .loginbox{
+    width:min(420px,calc(100vw - 36px))!important;
+    min-height:520px!important;
+    padding:42px 30px 30px!important;
+    border-radius:26px!important;
+  }
+}
+
+@media(max-width:430px){
+  #login.login{padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom))!important}
+  #login .loginbox{
+    width:min(420px,calc(100vw - 20px))!important;
+    max-height:calc(100svh - 20px)!important;
+  }
+}
+
+@media(max-height:660px){
+  #login .loginbox{
+    min-height:0!important;
+    padding-top:30px!important;
+    padding-bottom:26px!important;
+  }
+  #login .loginbox::before{
+    width:140px!important;
+    height:52px!important;
+    flex-basis:52px!important;
+    margin-bottom:12px!important;
+  }
+  #login .loginbox p{margin-bottom:18px!important}
+  #login .scheduleLoginEmployee{padding-top:18px!important}
+}
