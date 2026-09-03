@@ -46,8 +46,6 @@
     filter:drop-shadow(0 14px 22px rgba(21,10,6,.12));
   }
 
-  /* Three independent diagonal windows. Their overlap is intentionally clipped,
-     so no animal can leak into a neighbouring section. */
   .penguin-panel{
     z-index:1;
     clip-path:polygon(0 0,39% 0,31% 100%,0 100%);
@@ -169,17 +167,17 @@
 <body>
   <main class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
     <div class="animal-panel penguin-panel">
-      <img class="penguin" src="./3_penguin_transparent.webp" alt="" decoding="async">
+      <img class="penguin" src="https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png" alt="" decoding="async">
     </div>
     <div class="animal-panel otter-panel">
-      <img class="otter" src="./1_otter_transparent.webp" alt="" decoding="async">
+      <img class="otter" src="https://i.ibb.co/XkpnjP9r/1-otter-transparent.png" alt="" decoding="async">
     </div>
     <div class="animal-panel capybara-panel">
-      <img class="capybara" src="./2_capybara_transparent.webp" alt="" decoding="async">
+      <img class="capybara" src="https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png" alt="" decoding="async">
     </div>
     <div class="warm-vignette"></div>
     <div class="intro-copy">
-      <img src="./intro_text.webp" alt="주렁주렁" decoding="async">
+      <img src="https://i.ibb.co/LDPssRz1/asdd.png" alt="주렁주렁" decoding="async">
     </div>
   </main>
 <script>
@@ -188,10 +186,10 @@
   };
 
   const preload=[
-    './3_penguin_transparent.webp',
-    './1_otter_transparent.webp',
-    './2_capybara_transparent.webp',
-    './intro_text.webp'
+    'https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png',
+    'https://i.ibb.co/XkpnjP9r/1-otter-transparent.png',
+    'https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png',
+    'https://i.ibb.co/LDPssRz1/asdd.png'
   ];
 
   let finished=false;
@@ -214,8 +212,6 @@
     img.src=src;
   }))).then(start).catch(start);
 
-  /* Hard fallback: the login must never remain hidden because an image host or
-     browser animation event failed. */
   setTimeout(finish,8000);
 </script>
 </body>
