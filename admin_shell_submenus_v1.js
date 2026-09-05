@@ -35,7 +35,7 @@ const SUBMENUS={
   ]
 };
 const $=id=>document.getElementById(id);
-let rail=null,admin=null,observer=null,scheduled=false,hoverTimer=0,hoverPendingId='',suppressParentToggle=false;
+let rail=null,admin=null,observer=null,headerObserver=null,scheduled=false,hoverTimer=0,hoverPendingId='',suppressParentToggle=false;
 const wrappers=new Map();
 const openIds=new Set();
 
@@ -87,8 +87,8 @@ function syncReservationChangeShell(){
   if(!active)return;
   rail?.querySelector('[data-zr-admin-item="inquiries"]')?.classList.remove('is-active');
   const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
-  if(title)title.textContent='예약변경현황';
-  if(path)path.textContent='고객 / 예약변경현황';
+  if(title&&title.textContent!=='예약변경현황')title.textContent='예약변경현황';
+  if(path&&path.textContent!=='고객 / 예약변경현황')path.textContent='고객 / 예약변경현황';
 
   const main=$('tab-inquiry-reply-v1');
   if(main){
@@ -258,11 +258,17 @@ function installMenus(){
   return wrappers.size>0;
 }
 function installObserver(){
-  if(observer||!rail||!admin)return;
-  observer=new MutationObserver(scheduleSync);
-  observer.observe(rail,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected']});
-  observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']});
-  document.addEventListener('click',e=>{if(!e.target?.closest?.('.zr-admin-shell-item-wrap'))cancelHover()},true);
+  if(!observer&&rail&&admin){
+    observer=new MutationObserver(scheduleSync);
+    observer.observe(rail,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected']});
+    observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']});
+    document.addEventListener('click',e=>{if(!e.target?.closest?.('.zr-admin-shell-item-wrap'))cancelHover()},true);
+  }
+  const header=$('zrAdminShellHeader');
+  if(header&&!headerObserver){
+    headerObserver=new MutationObserver(()=>{if(reservationChangeActive())scheduleSync()});
+    headerObserver.observe(header,{subtree:true,childList:true,characterData:true});
+  }
 }
 function boot(){
   if(installMenus()){installObserver();return}
