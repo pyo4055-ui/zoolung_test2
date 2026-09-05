@@ -35,7 +35,7 @@ const SUBMENUS={
   ]
 };
 const $=id=>document.getElementById(id);
-let rail=null,admin=null,observer=null,headerObserver=null,scheduled=false,hoverTimer=0,hoverPendingId='',suppressParentToggle=false;
+let rail=null,admin=null,observer=null,headerObserver=null,changeListObserver=null,scheduled=false,hoverTimer=0,hoverPendingId='',suppressParentToggle=false;
 const wrappers=new Map();
 const openIds=new Set();
 
@@ -65,6 +65,16 @@ function injectStyle(){
     .zr-admin-shell-subitem.is-active:before{opacity:1}
     #zrChangeSidebarRequests,#zrChangeSidebarSms{display:none!important}
     #zrInquiryReplyInnerTabs .zr-change-inner-tab{display:none!important}
+
+    /* Reservation-change actions: support both the old local renderer and the shared renderer
+       while the shared renderer takes ownership of the list. */
+    #zrReservationChangeAdminList [data-change-apply],#zrReservationChangeAdminList [data-zr-shared-apply]{background:#fc5404!important;border-color:#fc5404!important;color:#fff!important}
+    #zrReservationChangeAdminList [data-change-detail],#zrReservationChangeAdminList [data-zr-shared-detail]{background:#f5f1ee!important;border-color:#ddd1c9!important;color:#5b463b!important}
+    #zrReservationChangeAdminList [data-change-sms],#zrReservationChangeAdminList [data-zr-shared-sms]{background:#651012!important;border-color:#651012!important;color:#fff!important}
+    #zrReservationChangeAdminList [data-change-done],#zrReservationChangeAdminList [data-zr-shared-done]{background:#8a5a44!important;border-color:#8a5a44!important;color:#fff!important}
+    #zrReservationChangeAdminList .zr-cr-status.done{background:#e7f5ed!important;border-color:#b9dcc7!important;color:#1f7a4d!important}
+    #zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) [data-change-done],#zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) [data-zr-shared-done],#zrReservationChangeAdminList [data-zr-shared-done].is-done{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}
+
     html.zr-admin-shell-collapsed .zr-admin-shell-item-wrap .zr-admin-shell-submenu,html.zr-admin-shell-collapsed .zr-admin-shell-submenu-chevron{display:none!important}
     @media(max-width:900px){.zr-admin-shell-submenu{display:none!important}}
     @media(prefers-reduced-motion:reduce){.zr-admin-shell-submenu,.zr-admin-shell-submenu-chevron{transition:none!important}}
@@ -103,7 +113,7 @@ function syncReservationChangeShell(){
   if(smsActive){$('zrReservationChangeAdminPanel')?.classList.add('hidden');$('zrReservationChangeSmsPanel')?.classList.remove('hidden')}
 }
 function stabilizeReservationChangeRoute(){
-  for(const delay of [0,80,180,320])setTimeout(()=>{syncReservationChangeShell();scheduleSync()},delay);
+  for(const delay of [0,60,140,260])setTimeout(()=>{syncReservationChangeShell();scheduleSync();repairLegacyChangeList()},delay);
 }
 function scheduleSync(){
   if(scheduled)return;scheduled=true;
@@ -161,6 +171,12 @@ function routeReservationChangeDefault(){
   openIds.delete('inquiries');openIds.add('reservationChange');
   $('zrReservationChangeAdminRequestSubtab')?.click();
   stabilizeReservationChangeRoute();
+}
+function routeInquiryDefault(){
+  openIds.delete('reservationChange');openIds.add('inquiries');
+  const target=$('zrInquiryReplyInquirySubtab');
+  if(target)target.click();
+  scheduleSync();
 }
 async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
@@ -224,6 +240,10 @@ function createSubmenu(parentId,parent){
     if(!suppressParentToggle)toggleSubmenu(parentId);
   },true);
   parent.addEventListener('click',()=>{
+    if(parentId==='inquiries'&&!suppressParentToggle){
+      setTimeout(routeInquiryDefault,0);
+      setTimeout(routeInquiryDefault,80);
+    }
     setTimeout(scheduleSync,0);setTimeout(scheduleSync,120);
   });
 }
@@ -257,24 +277,47 @@ function installMenus(){
   syncAll();
   return wrappers.size>0;
 }
+function repairLegacyChangeList(){
+  const host=$('zrReservationChangeAdminList');
+  if(!host||!window.__ZR_ADMIN_RESERVATION_CHANGE_REQUESTS_SHARED_V1)return;
+  if(!host.querySelector('[data-change-apply],[data-change-detail],[data-change-sms],[data-change-done]'))return;
+  try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-admin-updated'))}catch{}
+}
+function installChangeListGuard(){
+  const host=$('zrReservationChangeAdminList');
+  if(!host||changeListObserver)return false;
+  changeListObserver=new MutationObserver(()=>repairLegacyChangeList());
+  changeListObserver.observe(host,{childList:true,subtree:true});
+  [0,80,200,500,1000].forEach(ms=>setTimeout(repairLegacyChangeList,ms));
+  return true;
+}
 function installObserver(){
   if(!observer&&rail&&admin){
-    observer=new MutationObserver(scheduleSync);
+    observer=new MutationObserver(()=>{scheduleSync();installChangeListGuard()});
     observer.observe(rail,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected']});
     observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']});
     document.addEventListener('click',e=>{if(!e.target?.closest?.('.zr-admin-shell-item-wrap'))cancelHover()},true);
   }
   const header=$('zrAdminShellHeader');
   if(header&&!headerObserver){
-    headerObserver=new MutationObserver(()=>{if(reservationChangeActive())scheduleSync()});
+    headerObserver=new MutationObserver(()=>{if(reservationChangeActive())syncReservationChangeShell()});
     headerObserver.observe(header,{subtree:true,childList:true,characterData:true});
   }
+  installChangeListGuard();
 }
 function boot(){
-  if(installMenus()){installObserver();return}
+  if(installMenus()){
+    installObserver();
+    [150,350,700,1200].forEach(ms=>setTimeout(()=>{installChangeListGuard();repairLegacyChangeList()},ms));
+    return;
+  }
   let tries=0;
   const timer=setInterval(()=>{
-    if(installMenus()){installObserver();clearInterval(timer);return}
+    if(installMenus()){
+      installObserver();
+      [150,350,700,1200].forEach(ms=>setTimeout(()=>{installChangeListGuard();repairLegacyChangeList()},ms));
+      clearInterval(timer);return;
+    }
     if(++tries>120)clearInterval(timer);
   },100);
 }
