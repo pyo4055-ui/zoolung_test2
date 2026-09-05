@@ -5,7 +5,7 @@ window.__ZR_ADMIN_MOBILE_SUBNAV_V3=true;
 
 const MAX_MOBILE=900;
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const mobile=()=>window.matchMedia(`(max-width:${MAX_MOBILE}px)`).matches;
 
