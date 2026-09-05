@@ -42,6 +42,12 @@ function installStyle(){
   if($('zrAdminReservationChangeSharedStyleV1'))return;
   const s=document.createElement('style');s.id='zrAdminReservationChangeSharedStyleV1';s.textContent=`
   #zrReservationChangeAdminList .zr-cr-shared-note{margin:0 0 10px;padding:9px 11px;border-radius:10px;background:#fff8f2;border:1px solid #f0d2bc;color:#765445;font-size:12px;font-weight:800}
+  #zrReservationChangeAdminList .zr-cr-status.done{background:#e7f5ed!important;border-color:#b9dcc7!important;color:#1f7a4d!important}
+  #zrReservationChangeAdminList .zr-cr-detail{background:#f5f1ee!important;border-color:#ddd1c9!important;color:#5b463b!important}
+  #zrReservationChangeAdminList .zr-cr-sms{background:#651012!important;border-color:#651012!important;color:#fff!important}
+  #zrReservationChangeAdminList .zr-cr-done{background:#8a5a44!important;border-color:#8a5a44!important;color:#fff!important}
+  #zrReservationChangeAdminList .zr-cr-done.is-done{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}
+  #zrReservationChangeAdminList .zr-cr-done.is-done:hover{background:#19663f!important;border-color:#19663f!important}
   #zrSharedReservationChangeApplyModal .modal-card,#zrSharedReservationChangeDetailModal .modal-card{width:min(620px,100%)}
   #zrSharedReservationChangeApplyModal .zr-cr-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   #zrSharedReservationChangeApplyModal input{min-height:48px}
@@ -58,7 +64,7 @@ function renderRequests(){
   const all=requests(),filter=$('zrReservationChangeStatusFilter')?.value||'all',rows=filter==='all'?all:all.filter(x=>x.status===filter);
   if($('zrReservationChangeCount'))$('zrReservationChangeCount').textContent=`${rows.length}건 / 전체 ${all.length}건`;
   if(!rows.length){host.innerHTML='<div class="zr-cr-empty">조건에 맞는 예약 변경 요청이 없습니다.</div>';return}
-  host.innerHTML=rows.map(r=>`<article class="zr-cr-card" data-zr-shared-booking="${esc(r.bookingId)}"><div class="zr-cr-card-head"><span class="zr-cr-status ${statusClass(r.status)}">${statusLabel(r.status)}</span><span class="zr-cr-org">${esc(r.org)}</span>${r.created?`<span class="zr-cr-created">접수 ${esc(formatCreated(r.created))}</span>`:''}</div><div class="zr-cr-route"><div class="zr-cr-box"><strong>기존 예약</strong><b>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</b></div><div class="zr-cr-arrow">→</div><div class="zr-cr-box requested"><strong>변경 요청</strong><b>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</b></div></div><div class="zr-cr-meta"><span>문의자 ${esc(r.name)}</span><span>연락처 ${esc(r.mobile||'-')}</span><span>예약번호 ${esc(r.bookingId||'-')}</span></div><div class="zr-cr-body" title="${esc(r.body||'변경 문의 내용 없음')}">${esc(r.body||'변경 문의 내용 없음')}</div><div class="zr-cr-actions"><button type="button" class="btn-primary zr-cr-apply" data-zr-shared-apply="${esc(r.bookingId)}">예약 반영</button><button type="button" class="btn-gray" data-zr-shared-detail="${esc(r.bookingId)}">자세히</button><button type="button" class="btn-gray zr-cr-sms" data-zr-shared-sms="${esc(r.bookingId)}">확정문자</button><button type="button" class="btn-gray" data-zr-shared-done="${esc(r.bookingId)}">${r.status==='done'?'처리완료됨':'처리완료'}</button></div></article>`).join('');
+  host.innerHTML=rows.map(r=>`<article class="zr-cr-card" data-zr-shared-booking="${esc(r.bookingId)}"><div class="zr-cr-card-head"><span class="zr-cr-status ${statusClass(r.status)}">${statusLabel(r.status)}</span><span class="zr-cr-org">${esc(r.org)}</span>${r.created?`<span class="zr-cr-created">접수 ${esc(formatCreated(r.created))}</span>`:''}</div><div class="zr-cr-route"><div class="zr-cr-box"><strong>기존 예약</strong><b>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</b></div><div class="zr-cr-arrow">→</div><div class="zr-cr-box requested"><strong>변경 요청</strong><b>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</b></div></div><div class="zr-cr-meta"><span>문의자 ${esc(r.name)}</span><span>연락처 ${esc(r.mobile||'-')}</span><span>예약번호 ${esc(r.bookingId||'-')}</span></div><div class="zr-cr-body" title="${esc(r.body||'변경 문의 내용 없음')}">${esc(r.body||'변경 문의 내용 없음')}</div><div class="zr-cr-actions"><button type="button" class="btn-primary zr-cr-apply" data-zr-shared-apply="${esc(r.bookingId)}">예약 반영</button><button type="button" class="btn-gray zr-cr-detail" data-zr-shared-detail="${esc(r.bookingId)}">자세히</button><button type="button" class="btn-gray zr-cr-sms" data-zr-shared-sms="${esc(r.bookingId)}">확정문자</button><button type="button" class="btn-gray zr-cr-done${r.status==='done'?' is-done':''}" data-zr-shared-done="${esc(r.bookingId)}">${r.status==='done'?'처리완료됨':'처리완료'}</button></div></article>`).join('');
 }
 
 function ensureApplyModal(){
@@ -115,6 +121,21 @@ function simplifySmsPanel(){
   panel.dataset.zrSharedSmsOnly='1';panel.innerHTML=`<div class="zr-cr-head"><div><h2>예약변경 확정문자</h2><div class="help" style="margin-top:5px">변경 확정 시 사용할 문자 문구만 관리합니다. 변경요청 목록의 확정문자 버튼을 누르면 문자 앱으로 바로 연결되고 처리완료로 표시됩니다.</div></div></div><div class="zr-cr-sms-box zr-cr-shared-sms-only"><label>확정문자 문구</label><textarea id="zrSharedReservationChangeSmsTemplate"></textarea><div class="help">사용 가능: {단체명} · {예약자} · {변경일} · {변경시간}</div><div class="zr-cr-shared-sms-actions"><button type="button" class="btn-primary" id="zrSharedReservationChangeSmsSave">문구 저장</button></div></div>`;
   $('zrSharedReservationChangeSmsTemplate').value=smsTemplate();$('zrSharedReservationChangeSmsSave').onclick=()=>{const text=$('zrSharedReservationChangeSmsTemplate')?.value.trim()||'';if(!text){toastSafe('확정문자 문구를 입력해주세요.');return}localStorage.setItem(SMS_KEY,text);toastSafe('예약변경 확정문자를 저장했습니다.')};
 }
+function setSubtabClasses(active){
+  const pairs=[['zrInquiryReplyInquirySubtab',false],['zrInquiryReplyExampleSubtab',false],['zrReservationChangeAdminRequestSubtab',active==='requests'],['zrReservationChangeAdminSmsSubtab',active==='sms']];
+  pairs.forEach(([id,on])=>{const b=$(id);if(!b)return;b.className=(on?'btn-primary':'btn-gray')+(id.startsWith('zrReservationChange')?' zr-change-inner-tab':'')});
+}
+function showSharedMode(mode){
+  const main=$('tab-inquiry-reply-v1'),examples=$('tab-inquiry-reply-examples'),requestsPanel=$('zrReservationChangeAdminPanel'),smsPanel=$('zrReservationChangeSmsPanel');
+  if(!main)return;
+  [...main.children].forEach(el=>{if(el.classList?.contains('zr-ir-panel'))el.classList.add('hidden')});
+  examples?.classList.add('hidden');setSubtabClasses(mode);
+  if(mode==='requests'){
+    requestsPanel?.classList.remove('hidden');smsPanel?.classList.add('hidden');renderRequests();
+  }else{
+    requestsPanel?.classList.add('hidden');smsPanel?.classList.remove('hidden');simplifySmsPanel();
+  }
+}
 
 function bind(){
   const host=$('zrReservationChangeAdminList');if(host&&host.dataset.zrSharedBound!=='1'){
@@ -125,12 +146,18 @@ function bind(){
       const done=e.target.closest('[data-zr-shared-done]');if(done){if(confirm('이 예약 변경 요청을 처리완료로 표시할까요?'))markDone(done.dataset.zrSharedDone);}
     });
   }
+  const requestTab=$('zrReservationChangeAdminRequestSubtab');
+  if(requestTab&&requestTab.dataset.zrSharedRouteBound!=='1'){
+    requestTab.dataset.zrSharedRouteBound='1';requestTab.addEventListener('click',e=>{e.stopImmediatePropagation();showSharedMode('requests')},true);
+  }
+  const smsTab=$('zrReservationChangeAdminSmsSubtab');
+  if(smsTab&&smsTab.dataset.zrSharedRouteBound!=='1'){
+    smsTab.dataset.zrSharedRouteBound='1';smsTab.addEventListener('click',e=>{e.stopImmediatePropagation();showSharedMode('sms')},true);
+  }
   $('zrReservationChangeStatusFilter')?.addEventListener('change',()=>setTimeout(renderRequests,0));
-  $('zrReservationChangeAdminRequestSubtab')?.addEventListener('click',()=>setTimeout(renderRequests,0));
-  $('zrReservationChangeAdminSmsSubtab')?.addEventListener('click',()=>setTimeout(simplifySmsPanel,0));
   document.addEventListener('zr:reservation-change-request-admin-updated',()=>setTimeout(renderRequests,0));
   window.addEventListener('storage',e=>{if(e.key===BOOKING_KEY)setTimeout(renderRequests,0)});
-  document.addEventListener('click',e=>{const b=e.target?.closest?.('#zrChangeSidebarRequests,#zrMobileChangeRequests');if(b)setTimeout(renderRequests,120);const s=e.target?.closest?.('#zrChangeSidebarSms,#zrMobileChangeSms');if(s)setTimeout(simplifySmsPanel,120)},true);
+  document.addEventListener('click',e=>{const b=e.target?.closest?.('#zrChangeSidebarRequests,#zrMobileChangeRequests');if(b)setTimeout(()=>showSharedMode('requests'),0);const s=e.target?.closest?.('#zrChangeSidebarSms,#zrMobileChangeSms');if(s)setTimeout(()=>showSharedMode('sms'),0)},true);
 }
 function install(){
   if(installed)return true;
