@@ -5,7 +5,7 @@ window.__ZR_ADMIN_MOBILE_SUBNAV_V3=true;
 
 const MAX_MOBILE=900;
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const mobile=()=>window.matchMedia(`(max-width:${MAX_MOBILE}px)`).matches;
 
@@ -29,6 +29,10 @@ const MENUS={
     {label:'1:1 문의',parent:'inquiries',children:[
       {label:'문의 현황',targetId:'zrInquiryReplyInquirySubtab'},
       {label:'답변 예시',targetId:'zrInquiryReplyExampleSubtab'}
+    ]},
+    {label:'예약변경현황',parent:'reservationChange',children:[
+      {label:'예약변경요청 관리',targetId:'zrReservationChangeAdminRequestSubtab'},
+      {label:'예약변경 확정문자',targetId:'zrReservationChangeAdminSmsSubtab'}
     ]},
     {label:'사전답사 관리',parent:'previewVisit',children:[
       {label:'사전답사 현황',targetId:'zrPreviewNotifyVisitSubtab'},
@@ -63,7 +67,7 @@ const MENUS={
 const PARENT_GROUP={
   today:'operation',calendar:'operation',schedule:'operation',warning:'operation',
   activity:'reservation',meals:'reservation',cleanup:'reservation',
-  inquiries:'customer',previewVisit:'customer',guide:'customer',
+  inquiries:'customer',reservationChange:'customer',previewVisit:'customer',guide:'customer',
   salesDashboard:'sales',outsourcing:'sales',menuadmin:'sales',settings:'settings'
 };
 
@@ -80,6 +84,7 @@ function injectStyle(){
   s.textContent=`
   @media(max-width:${MAX_MOBILE}px){
     #zrAdminMobileQuickV1,#zrAdminMobileTouchMenuV2{display:none!important;visibility:hidden!important;pointer-events:none!important}
+    #zrMobileChangeRequests,#zrMobileChangeSms{display:none!important}
     html.zr-admin-shell-mounted body #adminView{padding-bottom:calc(82px + env(safe-area-inset-bottom))!important}
 
     #zrAdminMobileSubnavV3{
