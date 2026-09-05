@@ -80,13 +80,30 @@ function reservationChangeActive(){
 function syncReservationChangeShell(){
   const custom=rail?.querySelector('[data-zr-admin-item="reservationChange"]');
   if(!custom)return;
-  const active=reservationChangeActive();
+  const requestActive=isTargetActive($('zrReservationChangeAdminRequestSubtab'));
+  const smsActive=isTargetActive($('zrReservationChangeAdminSmsSubtab'));
+  const active=requestActive||smsActive;
   custom.classList.toggle('is-active',active);
   if(!active)return;
   rail?.querySelector('[data-zr-admin-item="inquiries"]')?.classList.remove('is-active');
   const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
   if(title)title.textContent='예약변경현황';
   if(path)path.textContent='고객 / 예약변경현황';
+
+  const main=$('tab-inquiry-reply-v1');
+  if(main){
+    [...main.children].forEach(el=>{
+      if(!el.classList?.contains('zr-ir-panel'))return;
+      if(el.id==='zrReservationChangeAdminPanel'||el.id==='zrReservationChangeSmsPanel')return;
+      el.classList.add('hidden');
+    });
+  }
+  $('tab-inquiry-reply-examples')?.classList.add('hidden');
+  if(requestActive){$('zrReservationChangeAdminPanel')?.classList.remove('hidden');$('zrReservationChangeSmsPanel')?.classList.add('hidden')}
+  if(smsActive){$('zrReservationChangeAdminPanel')?.classList.add('hidden');$('zrReservationChangeSmsPanel')?.classList.remove('hidden')}
+}
+function stabilizeReservationChangeRoute(){
+  for(const delay of [0,80,180,320])setTimeout(()=>{syncReservationChangeShell();scheduleSync()},delay);
 }
 function scheduleSync(){
   if(scheduled)return;scheduled=true;
@@ -143,7 +160,7 @@ function routeReservationChangeDefault(){
   }
   openIds.delete('inquiries');openIds.add('reservationChange');
   $('zrReservationChangeAdminRequestSubtab')?.click();
-  scheduleSync();
+  stabilizeReservationChangeRoute();
 }
 async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
@@ -158,6 +175,7 @@ async function activateSubitem(parentId,sub){
   let target=$(sub.targetId);
   if(target){
     target.click();
+    if(parentId==='reservationChange')stabilizeReservationChangeRoute();
     await wait(30);scheduleSync();return;
   }
   for(let i=0;!target&&i<28;i++){
@@ -165,6 +183,7 @@ async function activateSubitem(parentId,sub){
   }
   if(!target){console.debug('admin shell submenu target not ready',parentId,sub.targetId);return}
   target.click();
+  if(parentId==='reservationChange')stabilizeReservationChangeRoute();
   await wait(30);scheduleSync();
 }
 function createSubmenu(parentId,parent){
