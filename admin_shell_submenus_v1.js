@@ -14,6 +14,10 @@ const SUBMENUS={
     {id:'inquiry-list',label:'문의 현황',targetId:'zrInquiryReplyInquirySubtab'},
     {id:'inquiry-examples',label:'답변 예시',targetId:'zrInquiryReplyExampleSubtab'}
   ],
+  reservationChange:[
+    {id:'reservation-change-list',label:'예약변경요청 관리',targetId:'zrReservationChangeAdminRequestSubtab'},
+    {id:'reservation-change-sms',label:'예약변경 확정문자',targetId:'zrReservationChangeAdminSmsSubtab'}
+  ],
   previewVisit:[
     {id:'preview-visit-list',label:'사전답사 현황',targetId:'zrPreviewNotifyVisitSubtab'},
     {id:'preview-visit-sms',label:'확정문자 예시',targetId:'zrPreviewNotifyTemplateSubtab'}
@@ -59,6 +63,8 @@ function injectStyle(){
     .zr-admin-shell-subitem:hover{background:var(--zr-sub-soft)!important;color:var(--zr-sub-color)!important}
     .zr-admin-shell-subitem.is-active{background:var(--zr-sub-soft)!important;color:var(--zr-sub-color)!important;font-weight:900!important}
     .zr-admin-shell-subitem.is-active:before{opacity:1}
+    #zrChangeSidebarRequests,#zrChangeSidebarSms{display:none!important}
+    #zrInquiryReplyInnerTabs .zr-change-inner-tab{display:none!important}
     html.zr-admin-shell-collapsed .zr-admin-shell-item-wrap .zr-admin-shell-submenu,html.zr-admin-shell-collapsed .zr-admin-shell-submenu-chevron{display:none!important}
     @media(max-width:900px){.zr-admin-shell-submenu{display:none!important}}
     @media(prefers-reduced-motion:reduce){.zr-admin-shell-submenu,.zr-admin-shell-submenu-chevron{transition:none!important}}
@@ -67,6 +73,20 @@ function injectStyle(){
 }
 function isTargetActive(target){
   return !!target&&(target.classList.contains('btn-primary')||target.classList.contains('zr-subtab-active')||target.getAttribute('aria-selected')==='true');
+}
+function reservationChangeActive(){
+  return isTargetActive($('zrReservationChangeAdminRequestSubtab'))||isTargetActive($('zrReservationChangeAdminSmsSubtab'));
+}
+function syncReservationChangeShell(){
+  const custom=rail?.querySelector('[data-zr-admin-item="reservationChange"]');
+  if(!custom)return;
+  const active=reservationChangeActive();
+  custom.classList.toggle('is-active',active);
+  if(!active)return;
+  rail?.querySelector('[data-zr-admin-item="inquiries"]')?.classList.remove('is-active');
+  const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
+  if(title)title.textContent='예약변경현황';
+  if(path)path.textContent='고객 / 예약변경현황';
 }
 function scheduleSync(){
   if(scheduled)return;scheduled=true;
@@ -86,6 +106,7 @@ function syncAll(){
       button.classList.toggle('is-active',isTargetActive(target));
     });
   });
+  syncReservationChangeShell();
 }
 function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
 function cancelHover(parentId=''){
@@ -113,6 +134,16 @@ function scheduleHover(parentId,wrap){
     if(!wrap.matches(':hover'))return;
     openSubmenu(parentId);
   },HOVER_OPEN_DELAY_MS);
+}
+function routeReservationChangeDefault(){
+  const inquiryParent=rail?.querySelector('[data-zr-admin-item="inquiries"]');
+  if(inquiryParent){
+    suppressParentToggle=true;
+    try{inquiryParent.click()}finally{suppressParentToggle=false}
+  }
+  openIds.delete('inquiries');openIds.add('reservationChange');
+  $('zrReservationChangeAdminRequestSubtab')?.click();
+  scheduleSync();
 }
 async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
@@ -177,14 +208,33 @@ function createSubmenu(parentId,parent){
     setTimeout(scheduleSync,0);setTimeout(scheduleSync,120);
   });
 }
+function ensureReservationChangeParent(){
+  if(wrappers.has('reservationChange'))return true;
+  const customer=rail?.querySelector('.zr-admin-shell-group[data-group="customer"]');
+  if(!customer)return false;
+  let parent=customer.querySelector('[data-zr-admin-item="reservationChange"]');
+  if(!parent){
+    parent=document.createElement('button');
+    parent.type='button';parent.className='zr-admin-shell-item';parent.dataset.zrAdminItem='reservationChange';parent.dataset.group='customer';
+    parent.innerHTML='<span class="zr-admin-shell-item-dot" aria-hidden="true"></span><span class="zr-admin-shell-item-label">예약변경현황</span>';
+    parent.addEventListener('click',routeReservationChangeDefault);
+    const preview=customer.querySelector('[data-zr-admin-item="previewVisit"]');
+    const anchor=preview?.closest('.zr-admin-shell-item-wrap')||preview;
+    customer.insertBefore(parent,anchor||null);
+  }
+  createSubmenu('reservationChange',parent);
+  return wrappers.has('reservationChange');
+}
 function installMenus(){
   rail=$('zrAdminShellRail');admin=$('adminView');
   if(!rail||!admin)return false;
   injectStyle();
   for(const parentId of Object.keys(SUBMENUS)){
+    if(parentId==='reservationChange')continue;
     const parent=rail.querySelector(`[data-zr-admin-item="${CSS.escape(parentId)}"]`);
     if(parent)createSubmenu(parentId,parent);
   }
+  ensureReservationChangeParent();
   syncAll();
   return wrappers.size>0;
 }
