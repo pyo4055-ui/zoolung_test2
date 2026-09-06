@@ -13,7 +13,6 @@ const ADMIN_PAGE=/\/admin\.html(?:$|[?#])/i.test(location.pathname+location.sear
 let F=null,auth=null,db=null,currentUser=null,stopSnapshot=null;
 let originalSetStore=null,applyingRemote=false,started=false,scanTimer=0,writeChain=Promise.resolve();
 
-const clone=v=>JSON.parse(JSON.stringify(v));
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const isStaff=u=>!!u&&String(u.email||'').toLowerCase()===STAFF_EMAIL.toLowerCase();
 const readLocal=()=>{try{const v=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return[]}};
@@ -112,10 +111,11 @@ async function migrateLegacy(user){
   const local=readLocal();
   const legacy=local.filter(x=>x&&typeof x==='object'&&!x.sharedInquiryId);
   if(!legacy.length)return;
+  const legacyIds=new Set(legacy.map(x=>'inq_'+stableHash(legacySeed(x))));
   const prepared=markList(local,user.uid);
   directWrite(prepared,'legacy-tag');
   for(const item of prepared){
-    if(!legacy.some(old=>stableHash(legacySeed(old))===String(item.sharedInquiryId||'').replace(/^inq_/,'')))continue;
+    if(!legacyIds.has(String(item.sharedInquiryId||'')))continue;
     try{await upsertItem(item,user)}catch(e){console.error('inquiry legacy migration',e)}
   }
 }
@@ -188,9 +188,14 @@ async function connect(){
 }
 function boot(){
   patchSetStore();
-  if(connect())return;
   let tries=0;
-  const timer=setInterval(()=>{if(connect()||++tries>120)clearInterval(timer)},250);
+  const attempt=async()=>{
+    const ok=await connect();
+    if(ok)return;
+    if(++tries>120)return;
+    setTimeout(attempt,250);
+  };
+  attempt();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:customer-firebase-ready',()=>setTimeout(connect,0));
