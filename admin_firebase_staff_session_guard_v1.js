@@ -7,6 +7,7 @@ const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 let pendingPassword='';
 let attemptToken=0;
+let runningToken=0;
 let authModPromise=null;
 
 const bridge=()=>window.zrReservationFirebase||null;
@@ -17,20 +18,24 @@ const adminVisible=()=>{
 const clearPending=()=>{pendingPassword='';attemptToken++};
 const emitReady=()=>{try{document.dispatchEvent(new CustomEvent('zr:admin-firebase-staff-ready'))}catch{}};
 const authModule=()=>authModPromise||(authModPromise=import(`https://www.gstatic.com/firebasejs/${FV}/firebase-auth.js`));
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function ensureStaff(token){
-  if(token!==attemptToken||!pendingPassword||!adminVisible())return false;
+  if(token!==attemptToken||!pendingPassword||runningToken===token)return false;
+  runningToken=token;
   const started=Date.now();
-  while(token===attemptToken&&Date.now()-started<10000){
-    const z=bridge();
-    if(z?.auth){
+  try{
+    while(token===attemptToken&&pendingPassword&&Date.now()-started<10000){
+      if(!adminVisible()){await wait(100);continue}
+      const z=bridge();
+      if(!z?.auth){await wait(100);continue}
       if(z.isStaff?.()){
         clearPending();emitReady();return true;
       }
+      const A=await authModule();
+      if(token!==attemptToken||!pendingPassword||!adminVisible())return false;
+      const password=pendingPassword;
       try{
-        const A=await authModule();
-        if(token!==attemptToken||!pendingPassword||!adminVisible())return false;
-        const password=pendingPassword;
         await A.setPersistence(z.auth,A.browserLocalPersistence);
         await A.signInWithEmailAndPassword(z.auth,STAFF_EMAIL,password);
         clearPending();emitReady();return true;
@@ -39,15 +44,13 @@ async function ensureStaff(token){
         clearPending();return false;
       }
     }
-    await new Promise(r=>setTimeout(r,100));
+    if(token===attemptToken)clearPending();
+    return false;
+  }finally{
+    if(runningToken===token)runningToken=0;
   }
-  return false;
 }
 
-function scheduleEnsure(){
-  const token=attemptToken;
-  for(const delay of [250,700,1400,2600])setTimeout(()=>ensureStaff(token),delay);
-}
 function captureLogin(){
   document.addEventListener('click',e=>{
     if(e.target?.closest?.('#adminLogout')){clearPending();return}
@@ -56,7 +59,8 @@ function captureLogin(){
     if(!pw)return;
     pendingPassword=pw;
     attemptToken++;
-    scheduleEnsure();
+    const token=attemptToken;
+    setTimeout(()=>ensureStaff(token),50);
   },true);
 }
 function boot(){
