@@ -76,6 +76,42 @@ service cloud.firestore {
 
 
     // =========================
+    // 고객 1:1 문의 공유 DB
+    // PC/모바일 관리자에서 같은 문의를 조회하고 답변 상태를 공유
+    // =========================
+    match /customerInquiries/{inquiryId} {
+
+      // 관리자는 전체 조회
+      // 고객은 본인 브라우저 인증 UID로 접수한 문의만 조회
+      allow read: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+        );
+
+      // 고객은 자기 UID로 문의 생성 가능
+      // 관리자는 기존 로컬 문의의 1회 마이그레이션 가능
+      allow create: if isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 관리자 답변/상태 변경 가능
+      // 고객은 자기 문의만 수정 가능
+      allow update: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+        );
+
+      // 문의 삭제는 관리자만 가능
+      allow delete: if isScheduleStaff();
+    }
+
+
+    // =========================
     // 현장 스케줄
     // =========================
     match /scheduleGroups/{groupId} {
