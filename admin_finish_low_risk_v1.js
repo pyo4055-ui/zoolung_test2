@@ -5,7 +5,7 @@ window.__ZR_ADMIN_FINISH_LOW_RISK_V1=true;
 
 const $=id=>document.getElementById(id);
 const MAX_MOBILE=900;
-let memoModal=null,memoHome=null,pendingRouteToken=0;
+let memoModal=null,memoHome=null,shortcutRouteToken=0;
 
 function mobile(){try{return matchMedia(`(max-width:${MAX_MOBILE}px)`).matches}catch{return innerWidth<=MAX_MOBILE}}
 function noteIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>'}
@@ -73,34 +73,61 @@ function prepareMemoTrigger(){
 }
 
 function norm(s){return String(s||'').replace(/\s+/g,' ').trim()}
-function pendingShortcut(target){
-  const pc=target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="reservation"]');
-  if(pc)return pc;
-  const mobileRow=target?.closest?.('#zrAdminMobileAlertsV1 .zr-admin-mobile-alert-row[data-mobile-go="activity"]');
-  if(mobileRow&&/예약\s*대기/.test(norm(mobileRow.textContent)))return mobileRow;
-  return null;
+function pendingShortcutKind(target){
+  if(target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="reservation"]'))return 'reservation';
+  if(target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="inquiry"]'))return 'inquiry';
+  if(target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="preview"]'))return 'preview';
+  const mobileRow=target?.closest?.('#zrAdminMobileAlertsV1 .zr-admin-mobile-alert-row');
+  if(!mobileRow)return '';
+  const go=String(mobileRow.dataset.mobileGo||'');
+  if(go==='activity'&&/예약\s*대기/.test(norm(mobileRow.textContent)))return 'reservation';
+  if(go==='inquiries')return 'inquiry';
+  if(go==='previewVisit')return 'preview';
+  return '';
+}
+function clearDateControl(el){
+  if(!el)return;
+  el.value='';el.dispatchEvent(new Event('change',{bubbles:true}));
 }
 function applyPendingOnly(){
   const tab=$('tab-activity');if(!tab)return false;
   const start=$('activityStart')||$('activityStartDate'),end=$('activityEnd')||$('activityEndDate'),status=$('zrActivityStatusFilter');
   if(!status)return false;
-  if(start){start.value='';start.dispatchEvent(new Event('change',{bubbles:true}))}
-  if(end){end.value='';end.dispatchEvent(new Event('change',{bubbles:true}))}
+  clearDateControl(start);clearDateControl(end);
   status.value='pending';status.dispatchEvent(new Event('change',{bubbles:true}));
   const search=[...tab.querySelectorAll('button')].find(b=>norm(b.textContent)==='조회하기');
   if(!search)return false;
-  search.click();
-  return true;
+  search.click();return true;
 }
-function schedulePendingRoute(){
-  const token=++pendingRouteToken;
-  [0,60,160,320,650].forEach(ms=>setTimeout(()=>{
-    if(token!==pendingRouteToken)return;
-    if(applyPendingOnly())pendingRouteToken=0;
+function applyInquiryPendingOnly(){
+  const start=$('zrInquiryStart'),end=$('zrInquiryEnd'),status=$('zrInquiryStatus'),search=$('zrInquiryApply');
+  if(!start||!end||!status||!search)return false;
+  clearDateControl(start);clearDateControl(end);
+  status.value='pending';status.dispatchEvent(new Event('change',{bubbles:true}));
+  search.click();return true;
+}
+function applyPreviewPendingOnly(){
+  const start=$('zrPreviewStartDateFilter'),end=$('zrPreviewEndDateFilter'),status=$('zrPreviewStatusFilter'),search=$('zrPreviewApplyFilter');
+  if(!start||!end||!status||!search)return false;
+  clearDateControl(start);clearDateControl(end);
+  status.value='received';status.dispatchEvent(new Event('change',{bubbles:true}));
+  search.click();return true;
+}
+function applyShortcut(kind){
+  if(kind==='reservation')return applyPendingOnly();
+  if(kind==='inquiry')return applyInquiryPendingOnly();
+  if(kind==='preview')return applyPreviewPendingOnly();
+  return false;
+}
+function schedulePendingRoute(kind){
+  const token=++shortcutRouteToken;
+  [0,60,160,320,650,1000].forEach(ms=>setTimeout(()=>{
+    if(token!==shortcutRouteToken)return;
+    if(applyShortcut(kind))shortcutRouteToken=0;
   },ms));
 }
 function bindPendingRoute(){
-  document.addEventListener('click',e=>{if(pendingShortcut(e.target))schedulePendingRoute()},true);
+  document.addEventListener('click',e=>{const kind=pendingShortcutKind(e.target);if(kind)schedulePendingRoute(kind)},true);
 }
 function boot(){
   injectStyle();bindPendingRoute();
