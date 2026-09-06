@@ -6,23 +6,10 @@ window.__ZR_ADMIN_RESERVATION_CHANGE_ROUTE_ADAPTER_V1=true;
 const $=id=>document.getElementById(id);
 let mode='';
 let headerObserver=null;
+let reservationParentRouting=false;
 
-function changeModeFromTarget(target){
-  if(target==='zrReservationChangeAdminSmsSubtab')return 'sms';
-  return 'requests';
-}
-function rootInquiryButton(){
-  return document.querySelector('#adminView .admin-tabs [data-tab="inquiries"]')||[...document.querySelectorAll('#adminView .admin-tabs button')].find(b=>(b.textContent||'').trim()==='1:1 문의')||null;
-}
 function shellItem(id){return document.querySelector(`#zrAdminShellRail [data-zr-admin-item="${id}"]`)}
 function shellWrap(id){return document.querySelector(`.zr-admin-shell-item-wrap[data-zr-submenu-parent="${id}"]`)}
-function setShellOpen(id){
-  for(const key of ['inquiries','reservationChange']){
-    const wrap=shellWrap(key),item=shellItem(key),on=key===id;
-    wrap?.classList.toggle('is-submenu-open',on);
-    item?.setAttribute('aria-expanded',on?'true':'false');
-  }
-}
 function setShellActive(id){
   for(const key of ['inquiries','reservationChange'])shellItem(key)?.classList.toggle('is-active',key===id);
 }
@@ -31,6 +18,23 @@ function clearChangeActive(){
     const b=$(id);if(!b)continue;
     b.classList.remove('btn-primary','zr-subtab-active');
     b.classList.add('btn-gray','zr-change-inner-tab');
+    b.setAttribute('aria-selected','false');
+  }
+}
+function setChangeActive(which){
+  const request=$('zrReservationChangeAdminRequestSubtab'),sms=$('zrReservationChangeAdminSmsSubtab');
+  for(const [b,on] of [[request,which==='requests'],[sms,which==='sms']]){
+    if(!b)continue;
+    b.classList.toggle('btn-primary',on);
+    b.classList.toggle('btn-gray',!on);
+    b.classList.toggle('zr-subtab-active',on);
+    b.setAttribute('aria-selected',on?'true':'false');
+  }
+  const inquiry=$('zrInquiryReplyInquirySubtab'),example=$('zrInquiryReplyExampleSubtab');
+  for(const b of [inquiry,example]){
+    if(!b)continue;
+    b.classList.remove('btn-primary','zr-subtab-active');
+    b.classList.add('btn-gray');
     b.setAttribute('aria-selected','false');
   }
 }
@@ -55,43 +59,40 @@ function directInquiryPanels(){
 }
 function forceInquirySurface(which='inquiry'){
   const examples=which==='examples';
+  clearChangeActive();
   $('zrReservationChangeAdminPanel')?.classList.add('hidden');
   $('zrReservationChangeSmsPanel')?.classList.add('hidden');
   directInquiryPanels().forEach(el=>el.classList.toggle('hidden',examples));
   $('tab-inquiry-reply-examples')?.classList.toggle('hidden',!examples);
   const inquiry=$('zrInquiryReplyInquirySubtab'),example=$('zrInquiryReplyExampleSubtab');
-  if(inquiry){inquiry.classList.toggle('btn-primary',!examples);inquiry.classList.toggle('btn-gray',examples)}
-  if(example){example.classList.toggle('btn-primary',examples);example.classList.toggle('btn-gray',!examples)}
+  if(inquiry){inquiry.classList.toggle('btn-primary',!examples);inquiry.classList.toggle('btn-gray',examples);inquiry.setAttribute('aria-selected',examples?'false':'true')}
+  if(example){example.classList.toggle('btn-primary',examples);example.classList.toggle('btn-gray',!examples);example.setAttribute('aria-selected',examples?'true':'false')}
+  setShellActive('inquiries');
+  enforceHeader();
 }
-function openInquiry(which='inquiry'){
-  mode=which==='examples'?'examples':'inquiry';
-  clearChangeActive();
-  setShellOpen('inquiries');setShellActive('inquiries');
-  rootInquiryButton()?.click();
-  setTimeout(()=>{
-    clearChangeActive();
-    const target=$(which==='examples'?'zrInquiryReplyExampleSubtab':'zrInquiryReplyInquirySubtab');
-    target?.click();
-    forceInquirySurface(which);
-    setShellActive('inquiries');enforceHeader();
-  },20);
-  [80,180,420].forEach(ms=>setTimeout(()=>{if(mode===which||mode===(which==='examples'?'examples':'inquiry')){forceInquirySurface(which);setShellActive('inquiries');enforceHeader()}},ms));
+function forceReservationSurface(which='requests'){
+  const main=$('tab-inquiry-reply-v1');
+  if(!main)return;
+  directInquiryPanels().forEach(el=>el.classList.add('hidden'));
+  $('tab-inquiry-reply-examples')?.classList.add('hidden');
+  const requests=$('zrReservationChangeAdminPanel'),sms=$('zrReservationChangeSmsPanel');
+  requests?.classList.toggle('hidden',which!=='requests');
+  sms?.classList.toggle('hidden',which!=='sms');
+  setChangeActive(which);
+  setShellActive('reservationChange');
+  enforceHeader();
 }
-function openReservation(which='requests'){
-  mode=which==='sms'?'sms':'requests';
-  setShellOpen('reservationChange');setShellActive('reservationChange');
-  rootInquiryButton()?.click();
-  setTimeout(()=>{
-    mode=which==='sms'?'sms':'requests';
-    const target=$(which==='sms'?'zrReservationChangeAdminSmsSubtab':'zrReservationChangeAdminRequestSubtab');
-    target?.click();
-    setShellActive('reservationChange');enforceHeader();
-  },20);
-  [80,180,420].forEach(ms=>setTimeout(()=>{if(mode===which){setShellActive('reservationChange');enforceHeader()}},ms));
+function scheduleSurface(expected){
+  for(const delay of [0,70,180])setTimeout(()=>{
+    if(mode!==expected)return;
+    if(expected==='inquiry'||expected==='examples')forceInquirySurface(expected);
+    else forceReservationSurface(expected);
+  },delay);
 }
 function leaveSpecialMode(){
-  if(!mode)return;
-  mode='';clearChangeActive();
+  mode='';
+  reservationParentRouting=false;
+  clearChangeActive();
   shellItem('reservationChange')?.classList.remove('is-active');
 }
 function installStyle(){
@@ -105,40 +106,48 @@ function installStyle(){
   #zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-zr-shared-done],#zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-change-done],#zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-done].is-done{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}
   `;document.head.appendChild(s);
 }
-function interceptShellClick(e){
-  const item=e.target?.closest?.('#zrAdminShellRail [data-zr-admin-item]');
+function observeRouteClick(e){
   const sub=e.target?.closest?.('#zrAdminShellRail [data-zr-admin-subitem]');
   if(sub){
     const id=sub.dataset.zrAdminSubitem||'';
-    if(id==='inquiry-list'||id==='inquiry-examples'||id==='reservation-change-list'||id==='reservation-change-sms'){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-      if(id==='inquiry-list')openInquiry('inquiry');
-      else if(id==='inquiry-examples')openInquiry('examples');
-      else if(id==='reservation-change-sms')openReservation('sms');
-      else openReservation('requests');
-      return;
-    }
+    if(id==='inquiry-list'){mode='inquiry';clearChangeActive();scheduleSurface('inquiry');return}
+    if(id==='inquiry-examples'){mode='examples';clearChangeActive();scheduleSurface('examples');return}
+    if(id==='reservation-change-list'){mode='requests';scheduleSurface('requests');return}
+    if(id==='reservation-change-sms'){mode='sms';scheduleSurface('sms');return}
   }
+
+  const item=e.target?.closest?.('#zrAdminShellRail [data-zr-admin-item]');
   if(item){
     const id=item.dataset.zrAdminItem||'';
-    if(id==='inquiries'||id==='reservationChange'){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-      if(id==='inquiries')openInquiry('inquiry');else openReservation('requests');
+    if(id==='reservationChange'){
+      reservationParentRouting=true;
+      mode='requests';
+      setTimeout(()=>{reservationParentRouting=false;if(mode==='requests')forceReservationSurface('requests')},0);
+      scheduleSurface('requests');
+      return;
+    }
+    if(id==='inquiries'){
+      if(reservationParentRouting)return;
+      mode='inquiry';
+      clearChangeActive();
+      scheduleSurface('inquiry');
       return;
     }
     leaveSpecialMode();
     return;
   }
+
   const inner=e.target?.closest?.('#zrInquiryReplyInquirySubtab,#zrInquiryReplyExampleSubtab,#zrReservationChangeAdminRequestSubtab,#zrReservationChangeAdminSmsSubtab');
   if(inner){
-    if(inner.id==='zrInquiryReplyInquirySubtab'){mode='inquiry';clearChangeActive();setTimeout(()=>{forceInquirySurface('inquiry');enforceHeader()},0)}
-    else if(inner.id==='zrInquiryReplyExampleSubtab'){mode='examples';clearChangeActive();setTimeout(()=>{forceInquirySurface('examples');enforceHeader()},0)}
-    else {mode=changeModeFromTarget(inner.id);setTimeout(()=>{setShellActive('reservationChange');enforceHeader()},0)}
+    if(inner.id==='zrInquiryReplyInquirySubtab'){mode='inquiry';clearChangeActive();scheduleSurface('inquiry')}
+    else if(inner.id==='zrInquiryReplyExampleSubtab'){mode='examples';clearChangeActive();scheduleSurface('examples')}
+    else if(inner.id==='zrReservationChangeAdminSmsSubtab'){mode='sms';scheduleSurface('sms')}
+    else {mode='requests';scheduleSurface('requests')}
   }
 }
 function boot(){
   installStyle();installHeaderGuard();
-  document.addEventListener('click',interceptShellClick,true);
+  document.addEventListener('click',observeRouteClick,true);
   let tries=0;const timer=setInterval(()=>{installHeaderGuard();if(++tries>80)clearInterval(timer)},100);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
