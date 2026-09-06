@@ -55,10 +55,35 @@ function changedTop(prev,next){
   }
   return out;
 }
+function timeToMin(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return m?Number(m[1])*60+Number(m[2]):NaN}
+function minToTime(n){if(!Number.isFinite(n)||n<0||n>=1440)return'';return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
+function changePlayHold(b){
+  const r=b?.reservationChangeRequest;
+  if(!r||typeof r!=='object'||String(r.status||'pending')!=='pending')return {active:false};
+  const date=String(r.requestedDate||b.date||'');
+  const changed=r.changePlay===true;
+  const use=changed?String(r.playUse||'no'):String(b.playUse||'no');
+  if(use!=='yes'||!date)return {active:false};
+  const start=String(changed?r.playStart||'':b.playStart||'');
+  let end=String(changed?r.playEnd||'':b.playEnd||'');
+  const duration=Number(changed?r.playDuration||0:b.playDuration||0);
+  const sm=timeToMin(start);
+  if(!end&&Number.isFinite(sm)&&[30,60].includes(duration))end=minToTime(sm+duration);
+  const em=timeToMin(end);
+  if(!Number.isFinite(sm)||!Number.isFinite(em)||em<=sm)return {active:false};
+  return {active:true,requestId:String(r.id||''),date,start,end,duration:em-sm};
+}
 function availabilityPatch(b,ownerUid){
+  const hold=changePlayHold(b);
   return clean({
     id:b.id,ownerUid,date:b.date||'',status:b.status||'pending',
     playUse:b.playUse||'no',playStart:b.playStart||'',playEnd:b.playEnd||'',
+    changePlayHoldActive:hold.active===true,
+    changePlayHoldRequestId:hold.active?hold.requestId:'',
+    changePlayHoldDate:hold.active?hold.date:'',
+    changePlayHoldStart:hold.active?hold.start:'',
+    changePlayHoldEnd:hold.active?hold.end:'',
+    changePlayHoldDuration:hold.active?hold.duration:0,
     bridgeVersion:BRIDGE_VERSION
   });
 }
@@ -71,17 +96,33 @@ function availabilityPlaceholder(a){
     orgName:'',managerName:'',contact:'',email:'',notes:'',__availabilityOnly:true
   };
 }
+function changePlayHoldPlaceholder(a){
+  if(a?.changePlayHoldActive!==true)return null;
+  const sourceId=String(a.id||''),requestId=String(a.changePlayHoldRequestId||'');
+  const date=String(a.changePlayHoldDate||''),start=String(a.changePlayHoldStart||''),end=String(a.changePlayHoldEnd||'');
+  if(!sourceId||!date||!start||!end)return null;
+  return {
+    id:`${sourceId}__change_play_hold__${requestId||'pending'}`,sourceBookingId:sourceId,
+    date,status:'pending',playUse:'yes',playStart:start,playEnd:end,playDuration:Number(a.changePlayHoldDuration||0),
+    paidCount:0,chaperoneCount:0,freeChaperone:0,paidChaperone:0,
+    entryTime:'',exitTime:'',mealType:'none',mealStart:'',mealEnd:'',
+    orgName:'',managerName:'',contact:'',email:'',notes:'',__availabilityOnly:true,__changePlayHold:true
+  };
+}
 function refreshUi(){
   try{if(typeof window.renderVisitDays==='function')window.renderVisitDays()}catch(e){console.debug('renderVisitDays',e)}
   try{if(typeof window.refreshPlayStarts==='function')window.refreshPlayStarts()}catch(e){console.debug('refreshPlayStarts',e)}
+  try{document.dispatchEvent(new CustomEvent('zr:reservation-availability-updated'))}catch{}
 }
 function applyCustomerCache(){
   const full=[...ownFull.values()].map(x=>clone(x));
   const ids=new Set(full.map(x=>String(x.id)));
   const legacy=[...legacyLocal.values()].filter(x=>!ids.has(String(x.id))).map(x=>({...clone(x),__legacyLocal:true}));
   legacy.forEach(x=>ids.add(String(x.id)));
-  const shadows=[...availability.values()].filter(x=>!ids.has(String(x.id))).map(availabilityPlaceholder);
-  directWriteLocal([...full,...legacy,...shadows]);
+  const allAvailability=[...availability.values()];
+  const shadows=allAvailability.filter(x=>!ids.has(String(x.id))).map(availabilityPlaceholder);
+  const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean);
+  directWriteLocal([...full,...legacy,...shadows,...holds]);
   refreshUi();
 }
 function stopListeners(){
