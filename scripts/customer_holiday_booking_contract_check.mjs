@@ -5,11 +5,13 @@ let failed=false;
 const fail=m=>{failed=true;console.error('FAIL:',m)};
 const ok=m=>console.log('OK:',m);
 const file='customer_holiday_booking_setting_v1.js';
+const adminHolidayFile='admin_holiday_settings_v1.js';
 const syncFile='reservation_settings_firebase_sync_v1.js';
 const s=fs.readFileSync(file,'utf8');
+const adminHoliday=fs.readFileSync(adminHolidayFile,'utf8');
 const sync=fs.readFileSync(syncFile,'utf8');
 
-for(const f of [file,syncFile,'admin_features_v2_loader.js']){
+for(const f of [file,adminHolidayFile,syncFile,'admin_features_v2_loader.js']){
   try{execFileSync(process.execPath,['--check',f],{stdio:'pipe'});ok(`syntax ${f}`)}
   catch(e){fail(`syntax ${f}: ${e.stderr?.toString()||e.message}`)}
 }
@@ -31,6 +33,11 @@ for(const needle of [
   "FIXED_HOLIDAY_MD",
   "'05-01'",
   "'07-17'",
+  "holidayDatesByYear",
+  "configuredDatesForYear",
+  "effectiveDatesForYear",
+  "window.zrHolidayBookingSettingV1Api",
+  "admin_holiday_settings_v1.js?v=1",
   "zrHolidayBookingSettingWrap",
   "zrHolidayBookingAllowed",
   "공휴일 예약 가능 여부",
@@ -77,6 +84,38 @@ for(const forbidden of [
 ])if(s.includes(forbidden))fail(`holiday booking setting performance/safety contract violated: ${forbidden}`);
 
 for(const needle of [
+  "AUTO_API_BASE='https://date.nager.at/api/v3/PublicHolidays'",
+  "zrSettingsHolidaySubtabV1",
+  "zrSettingsHolidayPanelV1",
+  "zrHolidaySettingsCardV1",
+  "공휴일 설정",
+  "공휴일 불러오기",
+  "공휴일 설정 저장",
+  "holidayDatesByYear",
+  "map[year]=clean",
+  "writeSettings({...current,holidayDatesByYear:map})",
+  "data-zr-admin-subitem=\"settings-holiday\"",
+  "data-zr-holiday-mobile=\"1\"",
+  "ensurePcSidebarItem",
+  "ensureMobileItem",
+  "installMobileObserver",
+  "decorateAdminCalendar",
+  "window.renderVisitDays?.()",
+  "window.renderAdmin?.()",
+  "저장 버튼을 눌러야 실제 예약 설정에 반영됩니다."
+])if(!adminHoliday.includes(needle))fail(`admin holiday settings contract missing: ${needle}`);
+for(const forbidden of [
+  'setDoc(',
+  'updateDoc(',
+  'deleteDoc(',
+  'writeBatch(',
+  "localStorage.setItem('zr_bookings'",
+  "const COLLECTION='reservations'",
+  "const COLLECTION='reservationAvailability'",
+  'scheduleGroups'
+])if(adminHoliday.includes(forbidden))fail(`admin holiday settings safety contract violated: ${forbidden}`);
+
+for(const needle of [
   "window.__ZR_RESERVATION_SETTINGS_FIREBASE_SYNC_V1=true",
   "const COLLECTION='customerGuides'",
   "const DOC_ID='main'",
@@ -114,4 +153,4 @@ for(const date of ['2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-
 }
 
 if(failed)process.exit(1);
-ok('customer booking shares reservation settings after explicit staff save, covers 2027 holidays, preserves configurable holiday behavior, and avoids reservation-data writes');
+ok('customer booking shares reservation settings after explicit staff save, supports managed yearly holiday dates and reviewed auto-import, preserves configurable holiday behavior, and avoids reservation-data writes');
