@@ -20,13 +20,11 @@ function injectStyle(){
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-head{padding:18px 20px 12px;text-align:center}
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-title{margin:0;color:#470910;font-size:21px;font-weight:950;letter-spacing:-.03em}
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-text{margin:5px 0 0;padding:0 20px 20px;text-align:center;color:#554841;font-size:15px;font-weight:800;line-height:1.65;word-break:keep-all}
-    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;padding:0 20px 20px}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions{display:block!important;width:170px!important;max-width:calc(100% - 40px)!important;margin:0 auto!important;padding:0 0 20px!important;box-sizing:border-box!important}
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions button{min-height:48px;border-radius:11px;font-size:14px;font-weight:900;cursor:pointer}
-    #zrCustomerLookupNoResultCloseV1{border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
-    #zrCustomerLookupNoResultApplyV1{grid-column:1/-1;justify-self:center;width:170px;max-width:100%;border:1px solid #fc5404;background:#fc5404;color:#fff;box-shadow:0 8px 16px rgba(252,84,4,.18)}
+    #zrCustomerLookupNoResultCloseV1{display:none!important;border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
+    #zrCustomerLookupNoResultApplyV1{display:block!important;width:100%!important;max-width:100%!important;margin:0!important;border:1px solid #fc5404;background:#fc5404;color:#fff;box-shadow:0 8px 16px rgba(252,84,4,.18)}
     #zrCustomerLookupNoResultApplyV1:hover{border-color:#e24600;background:#e24600}
-    body #${NO_RESULT_MODAL_ID} .zr-lookup-empty-sheet .zr-lookup-empty-actions{display:flex!important;justify-content:center!important;align-items:center!important;gap:0!important}
-    body #${NO_RESULT_MODAL_ID} .zr-lookup-empty-sheet #zrCustomerLookupNoResultApplyV1{display:block!important;flex:0 0 170px!important;width:170px!important;max-width:100%!important;margin:0 auto!important;justify-self:auto!important}
     html.zr-customer-entry-booking-transition #zrCustomerEntryResultsV2,
     html.zr-customer-entry-booking-transition #existingActions,
     html.zr-customer-entry-booking-transition #existingBookingList{display:none!important;visibility:hidden!important;pointer-events:none!important}
@@ -82,16 +80,18 @@ function forceNoResultActionCenter(){
   const modal=$(NO_RESULT_MODAL_ID);if(!modal)return;
   const actions=modal.querySelector('.zr-lookup-empty-actions'),btn=$('zrCustomerLookupNoResultApplyV1');
   if(actions){
-    actions.style.setProperty('display','flex','important');
-    actions.style.setProperty('justify-content','center','important');
-    actions.style.setProperty('align-items','center','important');
-    actions.style.setProperty('gap','0','important');
+    actions.style.setProperty('display','block','important');
+    actions.style.setProperty('width','170px','important');
+    actions.style.setProperty('max-width','calc(100% - 40px)','important');
+    actions.style.setProperty('margin','0 auto','important');
+    actions.style.setProperty('padding','0 0 20px','important');
+    actions.style.setProperty('box-sizing','border-box','important');
   }
   if(btn){
     btn.style.setProperty('display','block','important');
-    btn.style.setProperty('width','170px','important');
+    btn.style.setProperty('width','100%','important');
     btn.style.setProperty('max-width','100%','important');
-    btn.style.setProperty('margin','0 auto','important');
+    btn.style.setProperty('margin','0','important');
   }
 }
 function hideNoResultPopup(){
@@ -170,7 +170,18 @@ function bindLookup(){
     hideNoResultPopup();
     noResultDismissedUntil=0;
     suppressNoResultToastUntil=Date.now()+5500;
-    const token=++lookupToken;patchToast();observeLookupResult(token);
+    const token=++lookupToken;patchToast();
+    setTimeout(()=>{
+      if(token!==lookupToken)return;
+      const entryError=norm($('zrCustomerEntryErrorV2')?.textContent);
+      if(entryError){
+        lookupToken=0;
+        suppressNoResultToastUntil=0;
+        hideNoResultPopup();
+        return;
+      }
+      observeLookupResult(token);
+    },0);
   },true);
 }
 function bindBookingTransition(){
