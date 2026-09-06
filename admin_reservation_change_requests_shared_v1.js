@@ -26,6 +26,8 @@ function reqOf(booking,index){
     bookingId:String(booking.id||''),org:String(r.orgName||booking.orgName||'단체명 미입력'),
     oldDate:String(r.oldDate||booking.date||''),oldEntry:String(r.oldEntryTime||booking.entryTime||''),oldExit:String(r.oldExitTime||booking.exitTime||''),
     requestedDate:String(r.requestedDate||''),requestedTime:String(r.requestedTime||''),
+    changePlay:r.changePlay===true,playUse:String(r.playUse||'no'),playStart:String(r.playStart||''),playEnd:String(r.playEnd||''),playDuration:Number(r.playDuration||0),
+    changeMeal:r.changeMeal===true,mealType:String(r.mealType||'none'),mealStart:String(r.mealStart||''),mealEnd:String(r.mealEnd||''),
     body:String(r.body||''),name:String(r.requesterName||booking.managerName||'문의자 미입력'),mobile:tel(r.requesterMobile||booking.contact),
     created:String(r.createdAt||r.updatedAt||''),appliedDate:String(r.appliedDate||''),appliedTime:String(r.appliedTime||'')
   };
@@ -37,6 +39,12 @@ function formatCreated(v){if(!v)return'';const d=new Date(v);if(Number.isNaN(d.g
 function findBooking(id){const list=readBookings(),index=list.findIndex(b=>b&&!b.__availabilityOnly&&String(b.id||'')===String(id));return {list,index,booking:index>=0?list[index]:null}}
 function timeToMin(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return m?Number(m[1])*60+Number(m[2]):NaN}
 function minToTime(n){if(!Number.isFinite(n)||n<0||n>=1440)return'';return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
+function mealLabel(v){return ({lunchbox:'도시락 지참',cafe:'내부 카페 주문',none:'식사 안 함'})[String(v||'none')]||'식사 안 함'}
+function playText(r){if(!r?.changePlay)return'현재 예약 유지';if(r.playUse!=='yes')return'이용 안 함';return `이용함${r.playStart?` · ${r.playStart}${r.playEnd?`~${r.playEnd}`:''}`:''}`}
+function mealText(r){if(!r?.changeMeal)return'현재 예약 유지';return `${mealLabel(r.mealType)}${r.mealType!=='none'&&r.mealStart?` · ${r.mealStart}${r.mealEnd?`~${r.mealEnd}`:''}`:''}`}
+function currentPlayText(b){if(String(b?.playUse||'no')!=='yes')return'이용 안 함';const s=String(b?.playStart||''),e=String(b?.playEnd||'');return `이용함${s?` · ${s}${e?`~${e}`:''}`:''}`}
+function currentMealText(b){const type=String(b?.mealType||'none'),s=String(b?.mealStart||''),e=String(b?.mealEnd||'');return `${mealLabel(type)}${type!=='none'&&s?` · ${s}${e?`~${e}`:''}`:''}`}
+function optionChips(r){const out=[];if(r.changePlay)out.push(`<span class="zr-cr-option-chip"><b>놀이터</b> ${esc(playText(r))}</span>`);if(r.changeMeal)out.push(`<span class="zr-cr-option-chip"><b>식사</b> ${esc(mealText(r))}</span>`);return out.length?`<div class="zr-cr-option-changes">${out.join('')}</div>`:''}
 
 function installStyle(){
   if($('zrAdminReservationChangeSharedStyleV1'))return;
@@ -48,9 +56,15 @@ function installStyle(){
   #zrReservationChangeAdminList .zr-cr-done{background:#8a5a44!important;border-color:#8a5a44!important;color:#fff!important}
   #zrReservationChangeAdminList .zr-cr-done.is-done{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}
   #zrReservationChangeAdminList .zr-cr-done.is-done:hover{background:#19663f!important;border-color:#19663f!important}
-  #zrSharedReservationChangeApplyModal .modal-card,#zrSharedReservationChangeDetailModal .modal-card{width:min(620px,100%)}
+  #zrReservationChangeAdminList .zr-cr-option-changes{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  #zrReservationChangeAdminList .zr-cr-option-chip{display:inline-flex;gap:5px;align-items:center;padding:7px 9px;border:1px solid #dbe5de;border-radius:9px;background:#f5faf6;color:#40564a;font-size:11.5px}
+  #zrSharedReservationChangeApplyModal .modal-card,#zrSharedReservationChangeDetailModal .modal-card{width:min(680px,100%)}
   #zrSharedReservationChangeApplyModal .zr-cr-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  #zrSharedReservationChangeApplyModal input{min-height:48px}
+  #zrSharedReservationChangeApplyModal input,#zrSharedReservationChangeApplyModal select{min-height:48px;height:48px;box-sizing:border-box}
+  #zrSharedReservationChangeApplyModal .zr-cr-apply-option{margin-top:13px;padding:12px;border:1px solid #dfe6e1;border-radius:12px;background:#fafcf9}
+  #zrSharedReservationChangeApplyModal .zr-cr-apply-option h3{margin:0 0 9px;font-size:14px;color:#31433a}
+  #zrSharedReservationChangeApplyModal .zr-cr-apply-option.hidden{display:none!important}
+  #zrSharedReservationChangeApplyModal .zr-cr-apply-option .help{margin:0 0 9px}
   #zrSharedReservationChangeDetailBody{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   #zrReservationChangeSmsPanel .zr-cr-shared-sms-only{max-width:760px}
   #zrReservationChangeSmsPanel .zr-cr-shared-sms-only textarea{width:100%;min-height:220px;box-sizing:border-box;resize:vertical}
@@ -64,34 +78,68 @@ function renderRequests(){
   const all=requests(),filter=$('zrReservationChangeStatusFilter')?.value||'all',rows=filter==='all'?all:all.filter(x=>x.status===filter);
   if($('zrReservationChangeCount'))$('zrReservationChangeCount').textContent=`${rows.length}건 / 전체 ${all.length}건`;
   if(!rows.length){host.innerHTML='<div class="zr-cr-empty">조건에 맞는 예약 변경 요청이 없습니다.</div>';return}
-  host.innerHTML=rows.map(r=>`<article class="zr-cr-card" data-zr-shared-booking="${esc(r.bookingId)}"><div class="zr-cr-card-head"><span class="zr-cr-status ${statusClass(r.status)}">${statusLabel(r.status)}</span><span class="zr-cr-org">${esc(r.org)}</span>${r.created?`<span class="zr-cr-created">접수 ${esc(formatCreated(r.created))}</span>`:''}</div><div class="zr-cr-route"><div class="zr-cr-box"><strong>기존 예약</strong><b>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</b></div><div class="zr-cr-arrow">→</div><div class="zr-cr-box requested"><strong>변경 요청</strong><b>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</b></div></div><div class="zr-cr-meta"><span>문의자 ${esc(r.name)}</span><span>연락처 ${esc(r.mobile||'-')}</span><span>예약번호 ${esc(r.bookingId||'-')}</span></div><div class="zr-cr-body" title="${esc(r.body||'변경 문의 내용 없음')}">${esc(r.body||'변경 문의 내용 없음')}</div><div class="zr-cr-actions"><button type="button" class="btn-primary zr-cr-apply" data-zr-shared-apply="${esc(r.bookingId)}">예약 반영</button><button type="button" class="btn-gray zr-cr-detail" data-zr-shared-detail="${esc(r.bookingId)}">자세히</button><button type="button" class="btn-gray zr-cr-sms" data-zr-shared-sms="${esc(r.bookingId)}">확정문자</button><button type="button" class="btn-gray zr-cr-done${r.status==='done'?' is-done':''}" data-zr-shared-done="${esc(r.bookingId)}">${r.status==='done'?'처리완료됨':'처리완료'}</button></div></article>`).join('');
+  host.innerHTML=rows.map(r=>`<article class="zr-cr-card" data-zr-shared-booking="${esc(r.bookingId)}"><div class="zr-cr-card-head"><span class="zr-cr-status ${statusClass(r.status)}">${statusLabel(r.status)}</span><span class="zr-cr-org">${esc(r.org)}</span>${r.created?`<span class="zr-cr-created">접수 ${esc(formatCreated(r.created))}</span>`:''}</div><div class="zr-cr-route"><div class="zr-cr-box"><strong>기존 예약</strong><b>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</b></div><div class="zr-cr-arrow">→</div><div class="zr-cr-box requested"><strong>변경 요청</strong><b>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</b></div></div>${optionChips(r)}<div class="zr-cr-meta"><span>문의자 ${esc(r.name)}</span><span>연락처 ${esc(r.mobile||'-')}</span><span>예약번호 ${esc(r.bookingId||'-')}</span></div><div class="zr-cr-body" title="${esc(r.body||'변경 문의 내용 없음')}">${esc(r.body||'변경 문의 내용 없음')}</div><div class="zr-cr-actions"><button type="button" class="btn-primary zr-cr-apply" data-zr-shared-apply="${esc(r.bookingId)}">예약 반영</button><button type="button" class="btn-gray zr-cr-detail" data-zr-shared-detail="${esc(r.bookingId)}">자세히</button><button type="button" class="btn-gray zr-cr-sms" data-zr-shared-sms="${esc(r.bookingId)}">확정문자</button><button type="button" class="btn-gray zr-cr-done${r.status==='done'?' is-done':''}" data-zr-shared-done="${esc(r.bookingId)}">${r.status==='done'?'처리완료됨':'처리완료'}</button></div></article>`).join('');
 }
 
 function ensureApplyModal(){
   if($('zrSharedReservationChangeApplyModal'))return;
-  const m=document.createElement('div');m.id='zrSharedReservationChangeApplyModal';m.className='modal hidden';m.innerHTML=`<div class="modal-card"><h2 style="margin:0">예약 날짜·시간 반영</h2><div class="help" id="zrSharedChangeApplyHelp" style="margin-top:7px"></div><div class="zr-cr-form-grid" style="margin-top:15px"><div><label class="req">변경예약날짜</label><input type="date" id="zrSharedChangeApplyDate"></div><div><label class="req">변경예약시간</label><input type="time" step="1800" id="zrSharedChangeApplyTime"></div></div><div class="help" style="margin-top:10px">입장시간을 변경하면 기존 체류시간을 유지해 퇴장시간도 함께 이동합니다. 확정 스케줄이 있는 예약은 스케줄 관리에서 한 번 더 확인해주세요.</div><div class="modal-actions"><button type="button" class="btn-gray" id="zrSharedChangeApplyCancel">취소</button><button type="button" class="btn-primary" id="zrSharedChangeApplyConfirm">예약에 반영</button></div></div>`;document.body.appendChild(m);
+  const m=document.createElement('div');m.id='zrSharedReservationChangeApplyModal';m.className='modal hidden';m.innerHTML=`<div class="modal-card"><h2 style="margin:0">예약 변경 반영</h2><div class="help" id="zrSharedChangeApplyHelp" style="margin-top:7px"></div><div class="zr-cr-form-grid" style="margin-top:15px"><div><label class="req">변경예약날짜</label><input type="date" id="zrSharedChangeApplyDate"></div><div><label class="req">변경예약시간</label><input type="time" step="1800" id="zrSharedChangeApplyTime"></div></div><section class="zr-cr-apply-option hidden" id="zrSharedChangeApplyPlayWrap"><h3>놀이터 변경</h3><div class="help" id="zrSharedChangeApplyPlayHelp"></div><div class="zr-cr-form-grid"><div><label>이용 여부</label><select id="zrSharedChangeApplyPlayUse"><option value="yes">이용함</option><option value="no">이용 안 함</option></select></div><div></div><div id="zrSharedChangeApplyPlayStartWrap"><label>시작시간</label><input type="time" step="1800" id="zrSharedChangeApplyPlayStart"></div><div id="zrSharedChangeApplyPlayEndWrap"><label>종료시간</label><input type="time" step="1800" id="zrSharedChangeApplyPlayEnd"></div></div></section><section class="zr-cr-apply-option hidden" id="zrSharedChangeApplyMealWrap"><h3>식사 변경</h3><div class="help" id="zrSharedChangeApplyMealHelp"></div><div class="zr-cr-form-grid"><div><label>식사 선택</label><select id="zrSharedChangeApplyMealType"><option value="lunchbox">도시락 지참</option><option value="cafe">내부 카페 주문</option><option value="none">식사 안 함</option></select></div><div></div><div id="zrSharedChangeApplyMealStartWrap"><label>식사 시작</label><input type="time" step="1800" id="zrSharedChangeApplyMealStart"></div><div id="zrSharedChangeApplyMealEndWrap"><label>식사 종료</label><input type="time" step="1800" id="zrSharedChangeApplyMealEnd"></div></div></section><div class="help" style="margin-top:10px">입장시간을 변경하면 기존 체류시간을 유지해 퇴장시간도 함께 이동합니다. 놀이터는 변경일의 예약 중복 여부를 확인하고, 확정 스케줄이 있는 예약은 스케줄 관리에서 한 번 더 확인해주세요.</div><div class="modal-actions"><button type="button" class="btn-gray" id="zrSharedChangeApplyCancel">취소</button><button type="button" class="btn-primary" id="zrSharedChangeApplyConfirm">예약에 반영</button></div></div>`;document.body.appendChild(m);
   $('zrSharedChangeApplyCancel').onclick=()=>m.classList.add('hidden');$('zrSharedChangeApplyConfirm').onclick=applyBookingChange;
+  $('zrSharedChangeApplyPlayUse').onchange=syncApplyOptionVisibility;$('zrSharedChangeApplyMealType').onchange=syncApplyOptionVisibility;
+}
+function syncApplyOptionVisibility(){
+  const playYes=String($('zrSharedChangeApplyPlayUse')?.value||'no')==='yes',meal=String($('zrSharedChangeApplyMealType')?.value||'none');
+  $('zrSharedChangeApplyPlayStartWrap')?.classList.toggle('hidden',!playYes);$('zrSharedChangeApplyPlayEndWrap')?.classList.toggle('hidden',!playYes);
+  const mealNone=meal==='none';$('zrSharedChangeApplyMealStartWrap')?.classList.toggle('hidden',mealNone);$('zrSharedChangeApplyMealEndWrap')?.classList.toggle('hidden',mealNone);
 }
 function openApply(id){
   const found=findBooking(id),req=found.booking?reqOf(found.booking,found.index):null;if(!req){toastSafe('변경 요청 정보를 찾지 못했습니다.');return}
   ensureApplyModal();currentBookingId=id;
   $('zrSharedChangeApplyDate').value=req.requestedDate||found.booking.date||'';$('zrSharedChangeApplyTime').value=req.requestedTime||found.booking.entryTime||'';
   $('zrSharedChangeApplyHelp').textContent=`기존 ${req.oldDate||'-'} ${req.oldEntry||'--:--'} → 고객 요청 ${req.requestedDate||'-'} ${req.requestedTime||'--:--'}`;
-  $('zrSharedReservationChangeApplyModal').classList.remove('hidden');
+  const playWrap=$('zrSharedChangeApplyPlayWrap'),mealWrap=$('zrSharedChangeApplyMealWrap');
+  playWrap?.classList.toggle('hidden',!req.changePlay);mealWrap?.classList.toggle('hidden',!req.changeMeal);
+  if(req.changePlay){$('zrSharedChangeApplyPlayUse').value=req.playUse==='yes'?'yes':'no';$('zrSharedChangeApplyPlayStart').value=req.playStart||'';$('zrSharedChangeApplyPlayEnd').value=req.playEnd||'';$('zrSharedChangeApplyPlayHelp').textContent=`현재 예약: ${currentPlayText(found.booking)} → 고객 요청: ${playText(req)}`}
+  if(req.changeMeal){$('zrSharedChangeApplyMealType').value=['lunchbox','cafe','none'].includes(req.mealType)?req.mealType:'none';$('zrSharedChangeApplyMealStart').value=req.mealStart||'';$('zrSharedChangeApplyMealEnd').value=req.mealEnd||'';$('zrSharedChangeApplyMealHelp').textContent=`현재 예약: ${currentMealText(found.booking)} → 고객 요청: ${mealText(req)}`}
+  syncApplyOptionVisibility();$('zrSharedReservationChangeApplyModal').classList.remove('hidden');
 }
 function applyBookingChange(){
   if(!currentBookingId)return;
-  const found=findBooking(currentBookingId),booking=found.booking,req=booking?.reservationChangeRequest;if(!booking||!req){toastSafe('연결된 예약을 찾지 못했습니다.');return}
-  const date=$('zrSharedChangeApplyDate')?.value||'',entry=$('zrSharedChangeApplyTime')?.value||'';
+  const found=findBooking(currentBookingId),booking=found.booking,raw=booking?.reservationChangeRequest;if(!booking||!raw){toastSafe('연결된 예약을 찾지 못했습니다.');return}
+  const req=reqOf(booking,found.index),date=$('zrSharedChangeApplyDate')?.value||'',entry=$('zrSharedChangeApplyTime')?.value||'';
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toastSafe('변경예약날짜를 확인해주세요.');return}
   const newMin=timeToMin(entry);if(!Number.isFinite(newMin)){toastSafe('변경예약시간을 확인해주세요.');return}
   const oldStart=timeToMin(booking.entryTime),oldEnd=timeToMin(booking.exitTime),duration=Number.isFinite(oldStart)&&Number.isFinite(oldEnd)&&oldEnd>oldStart?oldEnd-oldStart:NaN;
   const exit=Number.isFinite(duration)?minToTime(newMin+duration):String(booking.exitTime||'');
   if(Number.isFinite(duration)&&!exit){toastSafe('퇴장시간이 하루를 넘어갑니다. 변경시간을 다시 확인해주세요.');return}
+
+  let appliedPlayUse='',appliedPlayStart='',appliedPlayEnd='',appliedPlayDuration=0;
+  if(req.changePlay){
+    appliedPlayUse=String($('zrSharedChangeApplyPlayUse')?.value||'no');
+    if(appliedPlayUse==='yes'){
+      appliedPlayStart=String($('zrSharedChangeApplyPlayStart')?.value||'');appliedPlayEnd=String($('zrSharedChangeApplyPlayEnd')?.value||'');
+      const ps=timeToMin(appliedPlayStart),pe=timeToMin(appliedPlayEnd),pd=pe-ps;
+      if(!Number.isFinite(ps)||!Number.isFinite(pe)||![30,60].includes(pd)){toastSafe('놀이터 이용시간은 30분 또는 60분으로 확인해주세요.');return}
+      appliedPlayDuration=pd;
+    }
+  }
+  let appliedMealType='',appliedMealStart='',appliedMealEnd='';
+  if(req.changeMeal){
+    appliedMealType=String($('zrSharedChangeApplyMealType')?.value||'none');
+    if(!['lunchbox','cafe','none'].includes(appliedMealType))appliedMealType='none';
+    if(appliedMealType!=='none'){
+      appliedMealStart=String($('zrSharedChangeApplyMealStart')?.value||'');appliedMealEnd=String($('zrSharedChangeApplyMealEnd')?.value||'');
+      const ms=timeToMin(appliedMealStart),me=timeToMin(appliedMealEnd);
+      if(!Number.isFinite(ms)||!Number.isFinite(me)||me<=ms){toastSafe('식사 시작·종료시간을 확인해주세요.');return}
+    }
+  }
+
   booking.date=date;booking.entryTime=entry;if(exit)booking.exitTime=exit;
-  booking.reservationChangeRequest={...req,status:'applied',appliedDate:date,appliedTime:entry,appliedExitTime:exit||booking.exitTime,appliedAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  if(req.changePlay){booking.playUse=appliedPlayUse;if(appliedPlayUse==='yes'){booking.playStart=appliedPlayStart;booking.playEnd=appliedPlayEnd;booking.playDuration=appliedPlayDuration}else{booking.playStart='';booking.playEnd='';booking.playDuration=0}}
+  if(req.changeMeal){booking.mealType=appliedMealType;if(appliedMealType==='none'){booking.mealStart='';booking.mealEnd=''}else{booking.mealStart=appliedMealStart;booking.mealEnd=appliedMealEnd}if(appliedMealType!=='cafe'&&booking.cafe&&typeof booking.cafe==='object'){booking.cafe={...booking.cafe,items:[]}}}
+  booking.reservationChangeRequest={...raw,status:'applied',appliedDate:date,appliedTime:entry,appliedExitTime:exit||booking.exitTime,appliedPlayUse:req.changePlay?booking.playUse:undefined,appliedPlayStart:req.changePlay?booking.playStart:undefined,appliedPlayEnd:req.changePlay?booking.playEnd:undefined,appliedMealType:req.changeMeal?booking.mealType:undefined,appliedMealStart:req.changeMeal?booking.mealStart:undefined,appliedMealEnd:req.changeMeal?booking.mealEnd:undefined,appliedAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   found.list[found.index]=booking;writeBookings(found.list);
-  $('zrSharedReservationChangeApplyModal').classList.add('hidden');currentBookingId='';renderRequests();toastSafe('예약 날짜와 시간을 반영했습니다.');
+  $('zrSharedReservationChangeApplyModal').classList.add('hidden');currentBookingId='';renderRequests();toastSafe('예약 변경 내용을 반영했습니다.');
 }
 
 function ensureDetailModal(){
@@ -100,7 +148,7 @@ function ensureDetailModal(){
 }
 function openDetail(id){
   const found=findBooking(id),r=found.booking?reqOf(found.booking,found.index):null;if(!r)return;ensureDetailModal();
-  $('zrSharedReservationChangeDetailBody').innerHTML=`<div class="zr-cr-detail-row"><span>처리상태</span><div>${esc(statusLabel(r.status))}</div></div><div class="zr-cr-detail-row"><span>예약번호</span><div>${esc(r.bookingId)}</div></div><div class="zr-cr-detail-row"><span>단체명</span><div>${esc(r.org)}</div></div><div class="zr-cr-detail-row"><span>문의자 / 연락처</span><div>${esc(r.name)} · ${esc(r.mobile||'-')}</div></div><div class="zr-cr-detail-row"><span>기존 예약</span><div>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</div></div><div class="zr-cr-detail-row"><span>변경 요청</span><div>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</div></div><div class="zr-cr-detail-row full"><span>현재 저장된 예약</span><div>${esc(found.booking.date||'-')} · ${esc(found.booking.entryTime||'--:--')}${found.booking.exitTime?` ~ ${esc(found.booking.exitTime)}`:''}</div></div><div class="zr-cr-detail-row full"><span>변경 문의 내용</span><div>${esc(r.body||'변경 문의 내용 없음')}</div></div>`;
+  $('zrSharedReservationChangeDetailBody').innerHTML=`<div class="zr-cr-detail-row"><span>처리상태</span><div>${esc(statusLabel(r.status))}</div></div><div class="zr-cr-detail-row"><span>예약번호</span><div>${esc(r.bookingId)}</div></div><div class="zr-cr-detail-row"><span>단체명</span><div>${esc(r.org)}</div></div><div class="zr-cr-detail-row"><span>문의자 / 연락처</span><div>${esc(r.name)} · ${esc(r.mobile||'-')}</div></div><div class="zr-cr-detail-row"><span>기존 예약</span><div>${esc(r.oldDate||'-')} · ${esc(r.oldEntry||'--:--')}${r.oldExit?` ~ ${esc(r.oldExit)}`:''}</div></div><div class="zr-cr-detail-row"><span>변경 요청</span><div>${esc(r.requestedDate||'-')} · ${esc(r.requestedTime||'--:--')}</div></div><div class="zr-cr-detail-row"><span>놀이터 변경</span><div>${esc(playText(r))}</div></div><div class="zr-cr-detail-row"><span>식사 변경</span><div>${esc(mealText(r))}</div></div><div class="zr-cr-detail-row full"><span>현재 저장된 예약</span><div>${esc(found.booking.date||'-')} · ${esc(found.booking.entryTime||'--:--')}${found.booking.exitTime?` ~ ${esc(found.booking.exitTime)}`:''}\n놀이터: ${esc(currentPlayText(found.booking))}\n식사: ${esc(currentMealText(found.booking))}</div></div><div class="zr-cr-detail-row full"><span>변경 문의 내용</span><div>${esc(r.body||'변경 문의 내용 없음')}</div></div>`;
   $('zrSharedReservationChangeDetailModal').classList.remove('hidden');
 }
 function markDone(id,silent=false){
