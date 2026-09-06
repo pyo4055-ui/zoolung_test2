@@ -5,7 +5,7 @@ window.__ZR_ADMIN_FINISH_LOW_RISK_V1=true;
 
 const $=id=>document.getElementById(id);
 const MAX_MOBILE=900;
-let memoModal=null,memoHome=null,shortcutRouteToken=0;
+let memoModal=null,memoHome=null,shortcutRouteToken=0,previewShortcutUntil=0;
 
 function mobile(){try{return matchMedia(`(max-width:${MAX_MOBILE}px)`).matches}catch{return innerWidth<=MAX_MOBILE}}
 function noteIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>'}
@@ -73,6 +73,16 @@ function prepareMemoTrigger(){
 }
 
 function norm(s){return String(s||'').replace(/\s+/g,' ').trim()}
+function seoulDate(){
+  try{
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const get=t=>parts.find(x=>x.type===t)?.value||'';
+    const y=get('year'),m=get('month'),d=get('day');
+    if(y&&m&&d)return `${y}-${m}-${d}`;
+  }catch{}
+  const now=new Date(),pad=n=>String(n).padStart(2,'0');
+  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+}
 function pendingShortcutKind(target){
   if(target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="reservation"]'))return 'reservation';
   if(target?.closest?.('#zrAdminSmartPanelV1 .zr-admin-smart-pending-row[data-kind="inquiry"]'))return 'inquiry';
@@ -113,6 +123,17 @@ function applyPreviewPendingOnly(){
   status.value='received';status.dispatchEvent(new Event('change',{bubbles:true}));
   search.click();return true;
 }
+function restorePreviewDefaultAfterShortcut(){
+  if(Date.now()<=previewShortcutUntil)return;
+  const start=$('zrPreviewStartDateFilter'),end=$('zrPreviewEndDateFilter'),status=$('zrPreviewStatusFilter');
+  if(!start||!end||!status||start.value||end.value)return;
+  const today=seoulDate();
+  start.value=`${today.slice(0,8)}01`;start.dispatchEvent(new Event('change',{bubbles:true}));
+  end.value=today;end.dispatchEvent(new Event('change',{bubbles:true}));
+  if(status.value==='received'){
+    status.value='all';status.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+}
 function applyShortcut(kind){
   if(kind==='reservation')return applyPendingOnly();
   if(kind==='inquiry')return applyInquiryPendingOnly();
@@ -127,7 +148,14 @@ function schedulePendingRoute(kind){
   },ms));
 }
 function bindPendingRoute(){
-  document.addEventListener('click',e=>{const kind=pendingShortcutKind(e.target);if(kind)schedulePendingRoute(kind)},true);
+  document.addEventListener('click',e=>{
+    const kind=pendingShortcutKind(e.target);
+    if(kind){
+      if(kind==='preview')previewShortcutUntil=Date.now()+1800;
+      schedulePendingRoute(kind);return;
+    }
+    if(e.target?.closest?.('#zrPreviewVisitTabBtn'))restorePreviewDefaultAfterShortcut();
+  },true);
 }
 function boot(){
   injectStyle();bindPendingRoute();
