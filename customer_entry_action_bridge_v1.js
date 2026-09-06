@@ -130,7 +130,7 @@ function runLookup(){
     if(check&&!checkClicked){checkClicked=true;try{check.click()}catch{}}
     syncLookupState();
   };
-  [20,70,150,280,500,850,1300].forEach(ms=>setTimeout(step,ms));
+  [20,70,150,280,450,700,1000].forEach(ms=>setTimeout(step,ms));
   setTimeout(()=>{
     if(syncLookupState())return;
     let count=0;
@@ -139,7 +139,7 @@ function runLookup(){
       count=(Array.isArray(list)?list:[]).filter(b=>b&&!b.__availabilityOnly&&norm(b.managerName)===v.name&&tel(b.contact)===v.phone&&String(b.status||'')!=='rejected').length;
     }catch{}
     toast(count?'예약 내역을 불러오는 중입니다. 잠시 후 다시 눌러주세요.':'일치하는 예약 내역이 없습니다.');
-  },1550);
+  },1200);
 }
 function surfaceInquiryModal(v){
   const modal=$('inquiryModal');if(!modal)return false;
