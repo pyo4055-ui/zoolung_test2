@@ -38,8 +38,11 @@ for(const needle of [
   'zrPreviewEndDateFilter',
   'zrPreviewStatusFilter',
   'zrPreviewApplyFilter',
+  'previewShortcutUntil',
+  'restorePreviewDefaultAfterShortcut',
   "status.value='pending'",
   "status.value='received'",
+  "status.value='all'",
   "norm(b.textContent)==='조회하기'"
 ])if(!admin.includes(needle))fail(`admin low-risk batch missing: ${needle}`);
 
@@ -48,8 +51,10 @@ for(const needle of [
   'zr-final-privacy-invalid',
   'zrPrivacyAttempted',
   "btn.id==='submitBooking'",
+  'zrCustomerLookupNoResultModalV1',
   '현재 예약하신 내역이 없습니다.',
-  'zrCustomerEntryResultsV2',
+  'zrCustomerLookupNoResultApplyV1',
+  'zrCustomerEntryApplyV2',
   '.existing-card',
   '일치하는 예약 내역이 없습니다',
   '유료인원 합계 15명 이상',
@@ -73,4 +78,4 @@ for(const needle of [
 ])if(!minimum.includes(needle))fail(`minimum calculation contract changed unexpectedly: ${needle}`);
 
 if(failed)process.exit(1);
-ok('final low-risk UX batch keeps data contracts intact while adding mobile memo, direct privacy emphasis, empty lookup surface, concise minimum copy, and all-date pending routing');
+ok('final low-risk UX batch keeps data contracts intact while preserving pending shortcuts, restoring normal preview filters, and surfacing empty reservation lookup as a direct-action popup');
