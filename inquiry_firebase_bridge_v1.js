@@ -11,7 +11,7 @@ const BRIDGE_VERSION=1;
 const ADMIN_PAGE=/\/admin\.html(?:$|[?#])/i.test(location.pathname+location.search+location.hash)||document.title.includes('예약관리');
 
 let F=null,auth=null,db=null,currentUser=null,stopSnapshot=null;
-let originalSetStore=null,applyingRemote=false,started=false,scanTimer=0,writeChain=Promise.resolve();
+let originalSetStore=null,applyingRemote=false,started=false,scanTimer=0,writeChain=Promise.resolve(),retryNeeded=false;
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const isStaff=u=>!!u&&String(u.email||'').toLowerCase()===STAFF_EMAIL.toLowerCase();
@@ -109,15 +109,20 @@ async function migrateLegacy(user){
   if(!user)return;
   if(ADMIN_PAGE&&!isStaff(user))return;
   const local=readLocal();
-  const legacy=local.filter(x=>x&&typeof x==='object'&&!x.sharedInquiryId);
-  if(!legacy.length)return;
-  const legacyIds=new Set(legacy.map(x=>'inq_'+stableHash(legacySeed(x))));
-  const prepared=markList(local,user.uid);
-  directWrite(prepared,'legacy-tag');
-  for(const item of prepared){
-    if(!legacyIds.has(String(item.sharedInquiryId||'')))continue;
-    try{await upsertItem(item,user)}catch(e){console.error('inquiry legacy migration',e)}
+  const next=local.slice();
+  let changed=false,failed=false;
+  for(let i=0;i<local.length;i++){
+    const item=local[i];
+    if(!item||typeof item!=='object'||item.sharedInquiryId)continue;
+    const prepared=ensureSharedMeta(item,user.uid);
+    try{
+      const ok=await upsertItem(prepared,user);
+      if(ok){next[i]=prepared;changed=true}
+      else if(!prepared.ownerUid||prepared.ownerUid===user.uid)failed=true;
+    }catch(e){failed=true;console.error('inquiry legacy migration',e)}
   }
+  if(changed)directWrite(next,'legacy-migrated');
+  if(failed)retryNeeded=true;
 }
 async function syncList(list){
   writeChain=writeChain.then(async()=>{
@@ -126,10 +131,15 @@ async function syncList(list){
     if(ADMIN_PAGE&&!isStaff(user))return;
     const prepared=markList(list,user.uid);
     if(!same(prepared,readLocal()))directWrite(prepared,'local-tag');
+    let failed=false;
     for(const item of prepared){
-      try{await upsertItem(item,user)}catch(e){console.error('inquiry firebase write',e)}
+      try{
+        const ok=await upsertItem(item,user);
+        if(!ok&&(!item.ownerUid||item.ownerUid===user.uid))failed=true;
+      }catch(e){failed=true;console.error('inquiry firebase write',e)}
     }
-  }).catch(e=>console.error('inquiry sync chain',e));
+    retryNeeded=failed;
+  }).catch(e=>{retryNeeded=true;console.error('inquiry sync chain',e)});
   return writeChain;
 }
 function patchSetStore(){
@@ -163,8 +173,8 @@ async function startListening(user){
     stopSnapshot=F.onSnapshot(ref,snap=>{
       const rows=snap.docs.map(d=>({sharedInquiryId:d.id,...d.data()}));
       directWrite(mergeRemote(rows),'firestore');
-    },e=>console.error('inquiry firebase listener',e));
-  }catch(e){console.error('inquiry listener start',e)}
+    },e=>{stopSnapshot=null;retryNeeded=true;console.error('inquiry firebase listener',e)});
+  }catch(e){stopSnapshot=null;retryNeeded=true;console.error('inquiry listener start',e)}
 }
 async function connect(){
   if(started)return true;
@@ -179,12 +189,19 @@ async function connect(){
     F={...authMod,...fsMod};
     patchSetStore();
     const patchTimer=setInterval(patchSetStore,500);setTimeout(()=>clearInterval(patchTimer),15000);
-    authMod.onAuthStateChanged(auth,user=>startListening(user).catch(e=>console.error('inquiry auth state',e)));
+    authMod.onAuthStateChanged(auth,user=>startListening(user).catch(e=>{retryNeeded=true;console.error('inquiry auth state',e)}));
     if(auth.currentUser)await startListening(auth.currentUser);
-    if(!scanTimer)scanTimer=setInterval(()=>{patchSetStore();const u=currentUser||auth?.currentUser;if(u)migrateLegacy(u).catch(()=>{})},3000);
+    if(!scanTimer)scanTimer=setInterval(()=>{
+      patchSetStore();
+      const u=currentUser||auth?.currentUser;
+      if(!u)return;
+      if(retryNeeded)syncList(readLocal());
+      else migrateLegacy(u).catch(()=>{retryNeeded=true});
+      if(!stopSnapshot&&(!ADMIN_PAGE||isStaff(u)))startListening(u).catch(()=>{retryNeeded=true});
+    },3000);
     try{document.dispatchEvent(new CustomEvent('zr:inquiry-shared-ready'))}catch{}
     return true;
-  }catch(e){started=false;console.error('inquiry firebase bridge boot',e);return false}
+  }catch(e){started=false;retryNeeded=true;console.error('inquiry firebase bridge boot',e);return false}
 }
 function boot(){
   patchSetStore();
