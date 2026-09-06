@@ -4,9 +4,8 @@ if(window.__ZR_CUSTOMER_FINISH_LOW_RISK_V1)return;
 window.__ZR_CUSTOMER_FINISH_LOW_RISK_V1=true;
 
 const $=id=>document.getElementById(id);
-const ROOT=document.documentElement;
-const NO_RESULT_ID='zrCustomerLookupNoResultV1';
-let suppressNoResultToastUntil=0,lookupToken=0,toastPatchTimer=null;
+const NO_RESULT_MODAL_ID='zrCustomerLookupNoResultModalV1';
+let suppressNoResultToastUntil=0,lookupToken=0;
 
 function norm(v){return String(v||'').replace(/\s+/g,' ').trim()}
 function injectStyle(){
@@ -15,11 +14,18 @@ function injectStyle(){
     #customerView .zr-final-privacy-invalid{border:1px solid #f0b4b4!important;border-radius:11px!important;background:#fff0f0!important;box-shadow:0 0 0 3px rgba(217,56,56,.08)!important;padding:10px!important}
     #customerView .zr-final-privacy-invalid label,#customerView .zr-final-privacy-invalid .help{color:#a62525!important}
     #inquiryModal .zr-final-privacy-invalid{border:1px solid #f0b4b4!important;border-radius:11px!important;background:#fff0f0!important;box-shadow:0 0 0 3px rgba(217,56,56,.08)!important;padding:10px!important}
-    #${NO_RESULT_ID}{display:none;margin:0;padding:24px 18px;border:1px solid #e5ddd6;border-radius:15px;background:#fff;text-align:center;color:#403a35}
-    #${NO_RESULT_ID}.is-visible{display:block}
-    #${NO_RESULT_ID} .zr-lookup-empty-title{font-size:19px;font-weight:950;color:#332f2b;margin-bottom:8px}
-    #${NO_RESULT_ID} .zr-lookup-empty-text{font-size:14px;font-weight:800;line-height:1.6;color:#665e57}
-    @media(max-width:900px){#${NO_RESULT_ID}{padding:22px 14px}}
+    #${NO_RESULT_MODAL_ID}{position:fixed;inset:0;z-index:2147483400;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(36,22,16,.66)}
+    #${NO_RESULT_MODAL_ID}.hidden{display:none!important}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-sheet{width:min(460px,100%);border:1px solid #eaded5;border-radius:20px;background:#fff;box-shadow:0 26px 80px rgba(35,18,10,.30);overflow:hidden}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-head{padding:18px 20px 12px;text-align:center}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-title{margin:0;color:#470910;font-size:21px;font-weight:950;letter-spacing:-.03em}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-text{margin:5px 0 0;padding:0 20px 20px;text-align:center;color:#554841;font-size:15px;font-weight:800;line-height:1.65;word-break:keep-all}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;padding:0 20px 20px}
+    #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions button{min-height:48px;border-radius:11px;font-size:14px;font-weight:900;cursor:pointer}
+    #zrCustomerLookupNoResultCloseV1{border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
+    #zrCustomerLookupNoResultApplyV1{border:1px solid #fc5404;background:#fc5404;color:#fff;box-shadow:0 8px 16px rgba(252,84,4,.18)}
+    #zrCustomerLookupNoResultApplyV1:hover{border-color:#e24600;background:#e24600}
+    @media(max-width:900px){#${NO_RESULT_MODAL_ID}{padding:14px}#${NO_RESULT_MODAL_ID} .zr-lookup-empty-sheet{border-radius:18px}}
   `;document.head.appendChild(s);
 }
 
@@ -59,7 +65,6 @@ function bindPrivacyAttempts(){
   },true);
 }
 
-function resultRegion(){return $('zrCustomerEntryResultsV2')}
 function visible(el){
   if(!el||el.classList?.contains('hidden'))return false;
   try{const s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&el.getClientRects().length>0}catch{return true}
@@ -68,35 +73,40 @@ function realResultsVisible(){
   const list=$('existingBookingList');if(!visible(list))return false;
   return [...list.querySelectorAll('.existing-card')].some(visible);
 }
-function ensureNoResult(){
-  const region=resultRegion();if(!region)return null;
-  let box=$(NO_RESULT_ID);
-  if(!box){box=document.createElement('div');box.id=NO_RESULT_ID;box.innerHTML='<div class="zr-lookup-empty-title">예약 조회</div><div class="zr-lookup-empty-text">현재 예약하신 내역이 없습니다.</div>';region.appendChild(box)}
-  return box;
-}
-function hideNoResult(){
-  $(NO_RESULT_ID)?.classList.remove('is-visible');
-  if(!realResultsVisible()){
-    ROOT.classList.remove('zr-customer-entry-lookup-open');
-    $('startView')?.classList.remove('zr-v2-has-results');
-  }
-}
-function showNoResult(){
-  if(realResultsVisible())return false;
-  const box=ensureNoResult(),region=resultRegion();if(!box||!region)return false;
-  box.classList.add('is-visible');
-  $('newBookingActions')?.classList.add('hidden');
-  ROOT.classList.add('zr-customer-entry-lookup-open');
-  $('startView')?.classList.add('zr-v2-has-results');
+function closeNoResultPopup(){
+  const modal=$(NO_RESULT_MODAL_ID);if(!modal)return;
+  modal.classList.add('hidden');modal.setAttribute('aria-hidden','true');
   try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
-  if(innerWidth<=900)setTimeout(()=>{try{region.scrollIntoView({behavior:'smooth',block:'start'})}catch{}},40);
+}
+function startReservationFromPopup(){
+  closeNoResultPopup();lookupToken=0;
+  setTimeout(()=>{
+    const btn=$('zrCustomerEntryApplyV2');
+    if(btn){btn.click();return}
+    try{window.toast?.('예약 접수 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.')}catch{}
+  },0);
+}
+function ensureNoResultPopup(){
+  let modal=$(NO_RESULT_MODAL_ID);if(modal)return modal;
+  modal=document.createElement('div');modal.id=NO_RESULT_MODAL_ID;modal.className='modal hidden';modal.setAttribute('aria-hidden','true');
+  modal.innerHTML='<div class="modal-card zr-lookup-empty-sheet" role="dialog" aria-modal="true" aria-labelledby="zrCustomerLookupNoResultTitleV1"><div class="zr-lookup-empty-head"><h2 class="zr-lookup-empty-title" id="zrCustomerLookupNoResultTitleV1">예약 조회</h2></div><p class="zr-lookup-empty-text">현재 예약하신 내역이 없습니다.</p><div class="zr-lookup-empty-actions"><button type="button" id="zrCustomerLookupNoResultCloseV1">닫기</button><button type="button" id="zrCustomerLookupNoResultApplyV1">예약 접수</button></div></div>';
+  document.body.appendChild(modal);
+  $('zrCustomerLookupNoResultCloseV1')?.addEventListener('click',closeNoResultPopup);
+  $('zrCustomerLookupNoResultApplyV1')?.addEventListener('click',startReservationFromPopup);
+  return modal;
+}
+function showNoResultPopup(){
+  if(realResultsVisible())return false;
+  const modal=ensureNoResultPopup();
+  modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');
+  try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
   return true;
 }
 function observeLookupResult(token){
-  [500,900,1400,1900,2600,3400].forEach(ms=>setTimeout(()=>{
+  [500,950,1500,2300,3200].forEach(ms=>setTimeout(()=>{
     if(token!==lookupToken)return;
-    if(realResultsVisible()){hideNoResult();lookupToken=0;return}
-    if(ms>=1900)showNoResult();
+    if(realResultsVisible()){closeNoResultPopup();lookupToken=0;return}
+    if(ms>=2300)showNoResultPopup();
   },ms));
 }
 function patchToast(){
@@ -105,7 +115,7 @@ function patchToast(){
   const wrapped=function(message){
     const text=norm(message);
     if(Date.now()<suppressNoResultToastUntil&&/(일치하는 예약 내역이 없습니다|현재 예약하신 내역이 없습니다)/.test(text)){
-      showNoResult();return;
+      showNoResultPopup();return;
     }
     return current.apply(this,arguments);
   };
@@ -115,9 +125,9 @@ function patchToast(){
 function bindLookup(){
   document.addEventListener('click',e=>{
     const btn=e.target?.closest?.('#zrCustomerEntryLookupV2');if(!btn)return;
-    hideNoResult();
-    suppressNoResultToastUntil=Date.now()+4500;
-    const token=++lookupToken;observeLookupResult(token);patchToast();
+    closeNoResultPopup();
+    suppressNoResultToastUntil=Date.now()+5500;
+    const token=++lookupToken;patchToast();observeLookupResult(token);
   },true);
 }
 
@@ -137,14 +147,16 @@ function simplifyMinimumCopy(){
   });
 }
 function watchUi(){
-  const observer=new MutationObserver(()=>{syncPrivacyHighlight();simplifyMinimumCopy();if(realResultsVisible())hideNoResult()});
+  const observer=new MutationObserver(()=>{
+    syncPrivacyHighlight();simplifyMinimumCopy();
+    if(realResultsVisible()){closeNoResultPopup();lookupToken=0}
+  });
   observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','aria-invalid']});
   let tries=0;const t=setInterval(()=>{
     patchToast();syncPrivacyHighlight();simplifyMinimumCopy();
-    if(realResultsVisible())hideNoResult();
-    if(++tries>160){clearInterval(t);if(toastPatchTimer)clearInterval(toastPatchTimer)}
+    if(realResultsVisible()){closeNoResultPopup();lookupToken=0}
+    if(++tries>160)clearInterval(t);
   },125);
-  toastPatchTimer=setInterval(patchToast,600);
 }
 function boot(){injectStyle();patchToast();bindLookup();bindPrivacyAttempts();watchUi();syncPrivacyHighlight();simplifyMinimumCopy()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
