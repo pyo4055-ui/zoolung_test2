@@ -13,20 +13,43 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrAdminHolidaySettingsPolishV1Style';
   s.textContent=`
-    #zrHolidayAutoLoadV1{
-      background:#195b37!important;border-color:#195b37!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
-      box-shadow:0 3px 9px rgba(25,91,55,.12)!important;font-weight:900!important
+    html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1{
+      width:min(760px,100%)!important;max-width:760px!important;margin:0 auto 0 0!important;padding:18px!important
     }
-    #zrHolidayAutoLoadV1:hover{background:#12462b!important;border-color:#12462b!important}
-    #zrHolidayAddV1{
-      background:#f26828!important;border-color:#f26828!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
-      box-shadow:0 3px 9px rgba(242,104,40,.14)!important;font-weight:900!important
+    html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar{
+      display:grid!important;grid-template-columns:190px 170px 140px!important;gap:10px!important;align-items:end!important;justify-content:start!important
     }
-    #zrHolidayAddV1:hover{background:#d9571d!important;border-color:#d9571d!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1{
+      display:inline-flex!important;align-items:center!important;justify-content:center!important;
+      min-width:170px!important;width:170px!important;height:42px!important;padding:0 16px!important;
+      background:#195b37!important;border:1px solid #195b37!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
+      box-shadow:0 3px 9px rgba(25,91,55,.16)!important;font-weight:900!important;opacity:1!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1:hover{background:#12462b!important;border-color:#12462b!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1{
+      display:inline-flex!important;align-items:center!important;justify-content:center!important;
+      min-width:140px!important;width:140px!important;height:42px!important;padding:0 14px!important;
+      background:#f26828!important;border:1px solid #f26828!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
+      box-shadow:0 3px 9px rgba(242,104,40,.18)!important;font-weight:900!important;opacity:1!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1:hover{background:#d9571d!important;border-color:#d9571d!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1{width:100%!important;max-width:100%!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row{
+      grid-template-columns:minmax(0,1fr) 62px!important;gap:8px!important;padding:8px 9px!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row input[type="date"]{height:40px!important;min-height:40px!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row button{min-width:62px!important;width:62px!important}
     .zr-holiday-pending-row{border-style:dashed!important;border-color:#e2b38e!important;background:#fff8f1!important}
     .zr-holiday-pending-picker{display:flex;align-items:center;gap:10px;min-width:0}
     .zr-holiday-pending-picker>span{flex:0 0 auto;font-size:12px;font-weight:900;color:#78451f;white-space:nowrap}
     .zr-holiday-pending-picker>input{min-width:0;flex:1}
+    @media(max-width:900px){
+      html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1{width:100%!important;max-width:none!important;padding:14px!important}
+      html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar{grid-template-columns:1fr 1fr!important}
+      html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar label{grid-column:1/-1!important}
+      html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1,
+      html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1{width:100%!important;min-width:0!important}
+    }
     @media(max-width:520px){
       .zr-holiday-pending-picker{display:grid;grid-template-columns:1fr;gap:5px}
       .zr-holiday-pending-picker>span{font-size:11px}
@@ -100,11 +123,22 @@ function showPendingPicker(){
   row.querySelector('[data-zr-cancel-new-holiday]')?.addEventListener('click',removePending);
   requestAnimationFrame(()=>{input?.focus?.();try{input?.showPicker?.()}catch{}});
 }
+function forceButtonVisual(button,kind){
+  if(!button)return;
+  const auto=kind==='auto';
+  button.textContent=auto?'공휴일 불러오기':'+ 날짜 추가';
+  button.style.setProperty('background',auto?'#195b37':'#f26828','important');
+  button.style.setProperty('border',`1px solid ${auto?'#195b37':'#f26828'}`,'important');
+  button.style.setProperty('color','#fff','important');
+  button.style.setProperty('-webkit-text-fill-color','#fff','important');
+  button.style.setProperty('opacity','1','important');
+  button.style.setProperty('font-weight','900','important');
+}
 function prepare(){
   injectStyle();
   const auto=$('zrHolidayAutoLoadV1'),add=$('zrHolidayAddV1');
-  if(auto){auto.title='선택한 연도의 공휴일을 자동으로 불러옵니다.';auto.setAttribute('aria-label','공휴일 자동 불러오기')}
-  if(add){add.title='직접 공휴일 날짜를 추가합니다.';add.setAttribute('aria-label','공휴일 날짜 추가')}
+  if(auto){forceButtonVisual(auto,'auto');auto.title='선택한 연도의 공휴일을 자동으로 불러옵니다.';auto.setAttribute('aria-label','공휴일 자동 불러오기')}
+  if(add){forceButtonVisual(add,'add');add.title='직접 공휴일 날짜를 추가합니다.';add.setAttribute('aria-label','공휴일 날짜 추가')}
 }
 function boot(){
   prepare();
