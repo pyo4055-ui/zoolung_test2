@@ -130,7 +130,7 @@ async function migrateStaffLocal(user){
       }else{
         ownerUid=snap.data().ownerUid||user.uid;
       }
-      const aref=F.doc(db,F,AVAIL_COLLECTION,String(b.id));
+      const aref=F.doc(db,AVAIL_COLLECTION,String(b.id));
       const asnap=await F.getDoc(aref);
       if(!asnap.exists())await F.setDoc(aref,{...availabilityPatch(b,ownerUid),updatedAt:F.serverTimestamp()});
     }catch(e){console.warn('legacy booking migration skipped',b?.id,e)}
