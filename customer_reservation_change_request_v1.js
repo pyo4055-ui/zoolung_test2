@@ -7,7 +7,7 @@ const $=id=>document.getElementById(id);
 const norm=v=>String(v||'').replace(/\s+/g,' ').trim();
 const tel=v=>String(v||'').replace(/\D/g,'');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let changeMode=false;
+let changeMode=false,extraBookingId='';
 
 function readBookings(){try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
 function matchingBookings(){
@@ -20,6 +20,25 @@ function selectedBooking(){
   const id=String($('zrChangeBookingSelect')?.value||'');
   return matchingBookings().find(b=>String(b.id||'')===id)||null;
 }
+function timeToMin(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return m?Number(m[1])*60+Number(m[2]):NaN}
+function minToTime(n){if(!Number.isFinite(n)||n<0||n>=1440)return'';return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
+function durationFromRange(start,end,fallback=30){const s=timeToMin(start),e=timeToMin(end);return Number.isFinite(s)&&Number.isFinite(e)&&e>s&&[30,60].includes(e-s)?e-s:Number(fallback)===60?60:30}
+function mealLabel(v){return ({lunchbox:'도시락 지참',cafe:'내부 카페 주문',none:'식사 안 함'})[String(v||'none')]||'식사 안 함'}
+function currentPlayText(b){if(String(b?.playUse||'no')!=='yes')return '현재: 이용 안 함';const s=String(b?.playStart||''),e=String(b?.playEnd||'');return `현재: 이용함${s?` · ${s}${e?`~${e}`:''}`:''}`}
+function currentMealText(b){const type=String(b?.mealType||'none'),s=String(b?.mealStart||''),e=String(b?.mealEnd||'');return `현재: ${mealLabel(type)}${type!=='none'&&s?` · ${s}${e?`~${e}`:''}`:''}`}
+function extraRequestSnapshot(){
+  const b=selectedBooking()||{};
+  const playMode=String($('zrChangePlayMode')?.value||'keep'),mealMode=String($('zrChangeMealMode')?.value||'keep');
+  const changePlay=playMode!=='keep',changeMeal=mealMode!=='keep';
+  const playStart=changePlay&&playMode==='yes'?String($('zrChangePlayStart')?.value||''):'';
+  const playDuration=changePlay&&playMode==='yes'?Number($('zrChangePlayDuration')?.value||30):0;
+  const playEnd=playStart&&playDuration?minToTime(timeToMin(playStart)+playDuration):'';
+  const mealStart=changeMeal&&mealMode!=='none'?String($('zrChangeMealStart')?.value||''):'';
+  const mealEnd=changeMeal&&mealMode!=='none'?String($('zrChangeMealEnd')?.value||''):'';
+  return {b,changePlay,playUse:changePlay?playMode:String(b.playUse||'no'),playStart,playEnd,playDuration,changeMeal,mealType:changeMeal?mealMode:String(b.mealType||'none'),mealStart,mealEnd};
+}
+function playRequestText(x=extraRequestSnapshot()){if(!x.changePlay)return '현재 예약 유지';if(x.playUse!=='yes')return '이용 안 함';return `이용함${x.playStart?` · ${x.playStart}${x.playEnd?`~${x.playEnd}`:''}`:''}`}
+function mealRequestText(x=extraRequestSnapshot()){if(!x.changeMeal)return '현재 예약 유지';return `${mealLabel(x.mealType)}${x.mealType!=='none'&&x.mealStart?` · ${x.mealStart}${x.mealEnd?`~${x.mealEnd}`:''}`:''}`}
 
 function installStyle(){
   if($('zrReservationChangeRequestV1Style'))return;
@@ -49,16 +68,27 @@ function installStyle(){
   #zrChangeBookingField label{display:block;margin:0 0 7px;font-size:14px;font-weight:900;color:#651012}
   #zrChangeBookingSelect{width:100%;min-height:50px;height:50px;font-size:14px;font-weight:750;background:#fff}
   #zrChangeBookingHelp{margin-top:7px;color:#74655d;font-size:11.5px;line-height:1.5}
-  #zrChangeReviewBooking{grid-column:1/-1!important;background:#fff7f0!important;border:1px solid #f0d4c3!important;border-radius:10px!important;padding:10px 11px!important;margin:4px 0!important}
+  #zrChangeExtraFields{margin:15px 0 0;padding:14px;border:1px solid #dfe5df;border-radius:13px;background:#fff}
+  #zrChangeExtraFields .zr-change-extra-title{margin:0 0 10px;font-size:14px;font-weight:950;color:#31433a}
+  #zrChangeExtraFields .zr-change-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  #zrChangeExtraFields .zr-change-extra-card{padding:12px;border:1px solid #e4e9e6;border-radius:11px;background:#fafcf9}
+  #zrChangeExtraFields label{display:block;margin:0 0 6px;font-size:12px;font-weight:900;color:#31433a}
+  #zrChangeExtraFields select,#zrChangeExtraFields input{width:100%;min-height:44px;height:44px;box-sizing:border-box;font-size:13px;background:#fff}
+  #zrChangeExtraFields .zr-change-extra-current{margin-top:6px;color:#68766e;font-size:11.5px;line-height:1.45}
+  #zrChangeExtraFields .zr-change-extra-times{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  #zrChangeExtraFields .zr-change-extra-foot{margin-top:10px;color:#68766e;font-size:11.5px;line-height:1.55}
+  #zrChangeReviewBooking,#zrChangeReviewPlay,#zrChangeReviewMeal{grid-column:1/-1!important;background:#fff7f0!important;border:1px solid #f0d4c3!important;border-radius:10px!important;padding:10px 11px!important;margin:4px 0!important}
 
   @media(max-width:800px){
     #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:1fr!important;gap:12px!important}
     #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects{grid-template-columns:minmax(0,1.3fr) minmax(96px,.7fr)!important}
+    #zrChangeExtraFields .zr-change-extra-grid{grid-template-columns:1fr}
   }
   @media(max-width:520px){
     #zrReservationChangeNoticeV1{padding:12px}#zrReservationChangeNoticeV1 .zr-change-notice-head{padding:16px 17px;font-size:18px}#zrReservationChangeNoticeV1 .zr-change-notice-body{padding:18px 17px 7px;font-size:13.5px}#zrReservationChangeNoticeV1 .zr-change-notice-actions{grid-template-columns:1fr;padding:12px 17px 18px}#zrReservationChangeNoticeV1 button{min-height:48px}
     #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-date-selects{grid-template-columns:1fr 96px!important;gap:7px!important}
-    #zrChangeBookingField{padding:12px}
+    #zrChangeBookingField,#zrChangeExtraFields{padding:12px}
+    #zrChangeExtraFields .zr-change-extra-times{grid-template-columns:1fr}
   }
   `;document.head.appendChild(s);
 }
@@ -66,7 +96,7 @@ function installStyle(){
 function ensureNotice(){
   let modal=$('zrReservationChangeNoticeV1');if(modal)return modal;
   modal=document.createElement('div');modal.id='zrReservationChangeNoticeV1';modal.className='hidden';
-  modal.innerHTML=`<div class="zr-change-notice-card" role="dialog" aria-modal="true" aria-labelledby="zrReservationChangeNoticeTitle"><div class="zr-change-notice-head" id="zrReservationChangeNoticeTitle">예약 변경 전 확인</div><div class="zr-change-notice-body"><strong>예약 변경 요청은 즉시 예약이 변경되는 기능이 아닙니다.</strong><ul class="zr-change-notice-points"><li>변경을 요청한 날짜의 단체 예약 현황에 따라 변경이 불가할 수 있습니다.</li><li>담당자가 변경 가능 여부를 확인한 뒤 안내드립니다.</li><li>변경이 확정되면 예약 확정 문자를 다시 보내드립니다.</li></ul><div style="margin-top:13px">위 내용을 확인하고 예약 변경 요청을 접수하시겠습니까?</div></div><div class="zr-change-notice-actions"><button type="button" id="zrReservationChangeNoticeCancel">아니오</button><button type="button" id="zrReservationChangeNoticeConfirm">확인하고 변경 요청하기</button></div></div>`;
+  modal.innerHTML=`<div class="zr-change-notice-card" role="dialog" aria-modal="true" aria-labelledby="zrReservationChangeNoticeTitle"><div class="zr-change-notice-head" id="zrReservationChangeNoticeTitle">예약 변경 전 확인</div><div class="zr-change-notice-body"><strong>예약 변경 요청은 즉시 예약이 변경되는 기능이 아닙니다.</strong><ul class="zr-change-notice-points"><li>변경을 요청한 날짜의 단체 예약 현황에 따라 변경이 불가할 수 있습니다.</li><li>놀이터와 식사 변경도 담당자가 운영 가능 여부를 확인한 뒤 확정됩니다.</li><li>변경이 확정되면 예약 확정 문자를 다시 보내드립니다.</li></ul><div style="margin-top:13px">위 내용을 확인하고 예약 변경 요청을 접수하시겠습니까?</div></div><div class="zr-change-notice-actions"><button type="button" id="zrReservationChangeNoticeCancel">아니오</button><button type="button" id="zrReservationChangeNoticeConfirm">확인하고 변경 요청하기</button></div></div>`;
   document.body.appendChild(modal);
   $('zrReservationChangeNoticeCancel').onclick=()=>modal.classList.add('hidden');
   $('zrReservationChangeNoticeConfirm').onclick=continueChangeRequest;
@@ -89,7 +119,7 @@ function setModeCopy(on){
   const title=$('zrInquiryFormStage')?.querySelector(':scope > h2');
   const intro=title?.nextElementSibling?.classList?.contains('help')?title.nextElementSibling:null;
   if(title)title.textContent=on?'예약 변경 요청':'1:1 문의하기';
-  if(intro)intro.textContent=on?'변경할 예약을 선택한 뒤 희망 날짜와 시간을 입력해주세요. 접수 후 담당자가 가능 여부를 확인합니다.':'사전답사 또는 단체 관련 문의를 남겨주세요.';
+  if(intro)intro.textContent=on?'변경할 예약을 선택한 뒤 희망 날짜·시간과 필요한 경우 놀이터·식사 변경 내용을 입력해주세요. 접수 후 담당자가 가능 여부를 확인합니다.':'사전답사 또는 단체 관련 문의를 남겨주세요.';
   const review=$('zrInquiryReviewStage');
   const complete=$('zrInquiryCompleteStage');
   if(review){const h=review.querySelector('h2');if(h)h.textContent=on?'예약 변경 요청 확인':'문의 내용 확인';const b=$('zrInquiryReviewSubmit');if(b)b.textContent=on?'변경 요청 접수하기':'문의하기'}
@@ -106,9 +136,38 @@ function ensureBookingSelector(){
     $('zrChangeBookingSelect')?.addEventListener('change',()=>{
       const b=selectedBooking(),org=$('inqOrgName');
       if(b?.orgName&&org)org.value=b.orgName;
+      syncChangeExtraFields(true);
     });
   }
   return wrap;
+}
+function ensureChangeExtraFields(){
+  const fields=$('zrInquiryVisitFields');if(!fields)return null;
+  let wrap=$('zrChangeExtraFields');if(wrap)return wrap;
+  wrap=document.createElement('div');wrap.id='zrChangeExtraFields';wrap.className='hidden';
+  wrap.innerHTML=`<div class="zr-change-extra-title">추가 변경 항목</div><div class="zr-change-extra-grid"><div class="zr-change-extra-card"><label for="zrChangePlayMode">놀이터 변경</label><select id="zrChangePlayMode"><option value="keep">현재 예약 유지</option><option value="yes">이용함</option><option value="no">이용 안 함</option></select><div class="zr-change-extra-current" id="zrChangePlayCurrent"></div><div class="zr-change-extra-times hidden" id="zrChangePlayTimes"><div><label for="zrChangePlayStart">시작시간</label><input type="time" step="1800" id="zrChangePlayStart"></div><div><label for="zrChangePlayDuration">이용시간</label><select id="zrChangePlayDuration"><option value="30">30분</option><option value="60">60분</option></select></div></div></div><div class="zr-change-extra-card"><label for="zrChangeMealMode">식사 변경</label><select id="zrChangeMealMode"><option value="keep">현재 예약 유지</option><option value="lunchbox">도시락 지참</option><option value="cafe">내부 카페 주문</option><option value="none">식사 안 함</option></select><div class="zr-change-extra-current" id="zrChangeMealCurrent"></div><div class="zr-change-extra-times hidden" id="zrChangeMealTimes"><div><label for="zrChangeMealStart">식사 시작</label><input type="time" step="1800" id="zrChangeMealStart"></div><div><label for="zrChangeMealEnd">식사 종료</label><input type="time" step="1800" id="zrChangeMealEnd"></div></div></div></div><div class="zr-change-extra-foot">변경하지 않을 항목은 <b>현재 예약 유지</b>로 두세요. 놀이터·식사 변경은 운영 가능 여부 확인 후 확정됩니다.</div>`;
+  const grid=fields.querySelector('.zr-inquiry-visit-grid');grid?.insertAdjacentElement('afterend',wrap);
+  $('zrChangePlayMode')?.addEventListener('change',()=>syncChangeExtraVisibility());
+  $('zrChangeMealMode')?.addEventListener('change',()=>syncChangeExtraVisibility());
+  return wrap;
+}
+function syncChangeExtraVisibility(){
+  const play=String($('zrChangePlayMode')?.value||'keep'),meal=String($('zrChangeMealMode')?.value||'keep');
+  $('zrChangePlayTimes')?.classList.toggle('hidden',play!=='yes');
+  $('zrChangeMealTimes')?.classList.toggle('hidden',!['lunchbox','cafe'].includes(meal));
+}
+function syncChangeExtraFields(force=false){
+  const wrap=ensureChangeExtraFields();if(!wrap)return;
+  const b=selectedBooking(),id=String(b?.id||'');
+  if(!b){extraBookingId='';wrap.classList.toggle('hidden',!changeMode);$('zrChangePlayCurrent').textContent='예약을 먼저 선택해주세요.';$('zrChangeMealCurrent').textContent='예약을 먼저 선택해주세요.';return}
+  const reset=force||id!==extraBookingId;extraBookingId=id;
+  if(reset){
+    $('zrChangePlayMode').value='keep';$('zrChangeMealMode').value='keep';
+    $('zrChangePlayStart').value=String(b.playStart||'');$('zrChangePlayDuration').value=String(durationFromRange(b.playStart,b.playEnd,b.playDuration));
+    $('zrChangeMealStart').value=String(b.mealStart||'');$('zrChangeMealEnd').value=String(b.mealEnd||'');
+  }
+  $('zrChangePlayCurrent').textContent=currentPlayText(b);$('zrChangeMealCurrent').textContent=currentMealText(b);
+  wrap.classList.toggle('hidden',!changeMode);syncChangeExtraVisibility();
 }
 function populateBookingSelector(){
   const wrap=ensureBookingSelector(),select=$('zrChangeBookingSelect');if(!wrap||!select)return;
@@ -123,6 +182,19 @@ function populateBookingSelector(){
   if(help)help.textContent=matches.length>1?'예약이 여러 건 조회되었습니다. 변경하려는 예약을 직접 선택해주세요.':matches.length===1?'조회된 예약이 자동으로 선택되었습니다.':'변경 가능한 예약을 찾지 못했습니다.';
   wrap.classList.toggle('hidden',!changeMode);
   const b=selectedBooking(),org=$('inqOrgName');if(b?.orgName&&org&&!org.value)org.value=b.orgName;
+  syncChangeExtraFields(false);
+}
+function validateExtraChanges(){
+  if(!changeMode)return true;
+  const x=extraRequestSnapshot();
+  if(x.changePlay&&x.playUse==='yes'){
+    if(!x.playStart||![30,60].includes(x.playDuration)||!x.playEnd){try{$('zrChangePlayStart')?.focus()}catch{};try{window.toast?.('놀이터 시작시간과 이용시간을 확인해주세요.')}catch{};return false}
+  }
+  if(x.changeMeal&&['lunchbox','cafe'].includes(x.mealType)){
+    const s=timeToMin(x.mealStart),e=timeToMin(x.mealEnd);
+    if(!Number.isFinite(s)||!Number.isFinite(e)||e<=s){try{$('zrChangeMealStart')?.focus()}catch{};try{window.toast?.('식사 시작·종료시간을 확인해주세요.')}catch{};return false}
+  }
+  return true;
 }
 function decorateReview(){
   if(!changeMode)return;
@@ -133,17 +205,19 @@ function decorateReview(){
     if(t==='방문 희망일')el.textContent='예약변경날짜';
     if(t==='방문 희망시간')el.textContent='예약변경시간';
   });
-  card?.querySelector('#zrChangeReviewBooking')?.remove();
-  const b=selectedBooking(),grid=card?.querySelector('.zr-review-grid');
+  ['zrChangeReviewBooking','zrChangeReviewPlay','zrChangeReviewMeal'].forEach(id=>card?.querySelector('#'+id)?.remove());
+  const b=selectedBooking(),grid=card?.querySelector('.zr-review-grid'),x=extraRequestSnapshot();
   if(b&&grid){
-    const row=document.createElement('div');row.id='zrChangeReviewBooking';row.className='zr-review-row full';
-    row.innerHTML=`<span class="zr-review-label">변경 대상 예약</span><div class="zr-review-value">${esc(`${b.date||'-'} · ${b.entryTime||'--:--'}~${b.exitTime||'--:--'} · ${b.orgName||'단체 예약'}`)}</div>`;
-    grid.insertBefore(row,grid.firstChild);
+    const bookingRow=document.createElement('div');bookingRow.id='zrChangeReviewBooking';bookingRow.className='zr-review-row full';
+    bookingRow.innerHTML=`<span class="zr-review-label">변경 대상 예약</span><div class="zr-review-value">${esc(`${b.date||'-'} · ${b.entryTime||'--:--'}~${b.exitTime||'--:--'} · ${b.orgName||'단체 예약'}`)}</div>`;
+    const playRow=document.createElement('div');playRow.id='zrChangeReviewPlay';playRow.className='zr-review-row full';playRow.innerHTML=`<span class="zr-review-label">놀이터 변경</span><div class="zr-review-value">${esc(playRequestText(x))}</div>`;
+    const mealRow=document.createElement('div');mealRow.id='zrChangeReviewMeal';mealRow.className='zr-review-row full';mealRow.innerHTML=`<span class="zr-review-label">식사 변경</span><div class="zr-review-value">${esc(mealRequestText(x))}</div>`;
+    grid.insertBefore(mealRow,grid.firstChild);grid.insertBefore(playRow,grid.firstChild);grid.insertBefore(bookingRow,grid.firstChild);
   }
 }
 function prepareChangeInquiry(){
   const modal=$('inquiryModal');if(!modal)return false;
-  changeMode=true;setModeCopy(true);ensureBookingSelector();populateBookingSelector();
+  changeMode=true;setModeCopy(true);ensureBookingSelector();ensureChangeExtraFields();populateBookingSelector();
   const type=$('inqType');if(type){type.value='group';type.dispatchEvent(new Event('change',{bubbles:true}))}
   const manager=norm($('startManager')?.value||$('zrCustomerEntryNameV2')?.value);
   const contact=tel($('startContact')?.value||$('zrCustomerEntryPhoneV2')?.value);
@@ -158,16 +232,17 @@ function prepareChangeInquiry(){
     }
   }
   const b=selectedBooking(),org=$('inqOrgName');if(b?.orgName&&org&&!org.value)org.value=b.orgName;
+  syncChangeExtraFields(false);
   try{modal.querySelector('.modal-card')?.scrollTo?.({top:0,behavior:'auto'})}catch{}
   return true;
 }
 function resetNormalMode(){
-  changeMode=false;setModeCopy(false);
-  const modal=$('inquiryModal'),wrap=$('zrChangeBookingField'),content=$('inqContent');
+  changeMode=false;setModeCopy(false);extraBookingId='';
+  const modal=$('inquiryModal'),wrap=$('zrChangeBookingField'),extra=$('zrChangeExtraFields'),content=$('inqContent');
   if(modal)delete modal.dataset.zrChangeContentPrepared;
-  wrap?.classList.add('hidden');
+  wrap?.classList.add('hidden');extra?.classList.add('hidden');
   if(content){content.value='';content.placeholder=content.dataset.zrDefaultPlaceholder||'문의 내용을 입력해주세요.'}
-  $('zrChangeReviewBooking')?.remove();
+  ['zrChangeReviewBooking','zrChangeReviewPlay','zrChangeReviewMeal'].forEach(id=>$(id)?.remove());
 }
 function injectHiddenChangeContext(){
   if(!changeMode)return;
@@ -178,7 +253,8 @@ function injectHiddenChangeContext(){
   if(!text.startsWith('[단체 문의]')||text.includes('\n[예약 변경 정보]\n'))return;
   const re=/^(\[단체 문의\]\n단체명:\s*.*\n방문 희망일:\s*.*\n방문 희망시간:\s*.*\n단체 인원:\s*.*?)(?:\n\n)([\s\S]*)$/;
   const m=text.match(re);if(!m)return;
-  const meta=`[예약 변경 정보]\n대상 예약번호: ${b.id||'-'}\n현재 예약일: ${b.date||'-'}\n현재 예약시간: ${b.entryTime||'--:--'} ~ ${b.exitTime||'--:--'}`;
+  const x=extraRequestSnapshot();
+  const meta=`[예약 변경 정보]\n대상 예약번호: ${b.id||'-'}\n현재 예약일: ${b.date||'-'}\n현재 예약시간: ${b.entryTime||'--:--'} ~ ${b.exitTime||'--:--'}\n놀이터 변경: ${playRequestText(x)}\n식사 변경: ${mealRequestText(x)}`;
   content.value=`${m[1]}\n\n${meta}\n\n${m[2]}`;
 }
 
@@ -201,6 +277,7 @@ function bind(){
     }
     if(e.target?.closest?.('#inquiryBtn,#zrCustomerEntryInquiryV2')){resetNormalMode();return}
     if(changeMode&&e.target?.closest?.('#submitInquiry')){
+      if(!validateExtraChanges()){e.preventDefault();e.stopImmediatePropagation();return}
       injectHiddenChangeContext();
       setTimeout(decorateReview,0);
     }
