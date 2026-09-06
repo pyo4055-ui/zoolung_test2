@@ -70,9 +70,16 @@ function playSlotState(start,duration){
 function syncChangePlayAvailability(){
   const select=$('zrChangePlayStart'),duration=$('zrChangePlayDuration'),help=$('zrChangePlayAvailabilityHelp');
   if(!select||!duration)return;
-  const playMode=String($('zrChangePlayMode')?.value||'keep');
-  if(playMode!=='yes'){select.disabled=true;duration.disabled=true;if(help)help.textContent='';return}
-  const date=requestDate();
+  const playMode=String($('zrChangePlayMode')?.value||'keep'),date=requestDate(),b=selectedBooking();
+  if(playMode==='keep'){
+    select.disabled=true;duration.disabled=true;
+    if(String(b?.playUse||'no')!=='yes'){if(help)help.textContent='현재 예약의 놀이터 이용 안 함이 그대로 유지됩니다.';return}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){if(help)help.textContent='예약변경날짜를 선택하면 현재 놀이터 시간도 새 날짜에서 이용 가능한지 확인합니다.';return}
+    const mins=durationFromRange(b.playStart,b.playEnd,b.playDuration),state=playSlotState(b.playStart,mins),end=b.playEnd||minToTime(timeToMin(b.playStart)+mins),range=`${b.playStart||'--:--'}${end?`~${end}`:''}`;
+    if(help)help.textContent=state.ok?`현재 놀이터 ${range}도 변경 날짜에 그대로 유지 가능합니다.`:`현재 놀이터 ${range}는 변경 날짜에 ${state.reason==='full'?'이미 마감되었습니다.':'변경된 입장·퇴장시간과 맞지 않습니다.'} 놀이터 변경을 '이용함'으로 선택해 다른 시간을 골라주세요.`;
+    return;
+  }
+  if(playMode!=='yes'){select.disabled=true;duration.disabled=true;if(help)help.textContent='놀이터 이용 안 함으로 변경됩니다.';return}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
     select.innerHTML='<option value="">예약변경날짜를 먼저 선택해주세요</option>';select.disabled=true;duration.disabled=true;
     if(help)help.textContent='예약변경날짜를 선택하면 해당 날짜의 놀이터 예약 가능 시간을 확인할 수 있습니다.';
@@ -89,7 +96,7 @@ function syncChangePlayAvailability(){
   }).join('');
   if(old&&[...select.options].some(o=>o.value===old&&!o.disabled))select.value=old;else select.value='';
   select.disabled=false;
-  if(help)help.textContent=available?`예약 가능한 시간만 선택할 수 있습니다. 마감된 시간은 선택할 수 없습니다.`:'선택한 날짜와 이용시간에 예약 가능한 놀이터 시간이 없습니다.';
+  if(help)help.textContent=available?'예약 가능한 시간만 선택할 수 있습니다. 마감된 시간은 선택할 수 없습니다.':'선택한 날짜와 이용시간에 예약 가능한 놀이터 시간이 없습니다.';
 }
 
 function extraRequestSnapshot(){
@@ -196,7 +203,11 @@ function populateBookingSelector(){
   const help=$('zrChangeBookingHelp');if(help)help.textContent=matches.length>1?'예약이 여러 건 조회되었습니다. 변경하려는 예약을 직접 선택해주세요.':matches.length===1?'조회된 예약이 자동으로 선택되었습니다.':'변경 가능한 예약을 찾지 못했습니다.';wrap.classList.toggle('hidden',!changeMode);const b=selectedBooking(),org=$('inqOrgName');if(b?.orgName&&org&&!org.value)org.value=b.orgName;syncChangeExtraFields(false);
 }
 function validateExtraChanges(){
-  if(!changeMode)return true;const x=extraRequestSnapshot();
+  if(!changeMode)return true;const x=extraRequestSnapshot(),date=requestDate();
+  if(!x.changePlay&&String(x.b?.playUse||'no')==='yes'&&/^\d{4}-\d{2}-\d{2}$/.test(date)){
+    const mins=durationFromRange(x.b.playStart,x.b.playEnd,x.b.playDuration),state=playSlotState(x.b.playStart,mins);
+    if(!state.ok){try{$('zrChangePlayMode')?.focus()}catch{};try{window.toast?.(state.reason==='full'?'현재 예약의 놀이터 시간은 변경 날짜에 이미 마감되었습니다. 놀이터 변경을 이용함으로 선택해 다른 시간을 골라주세요.':'현재 예약의 놀이터 시간이 변경된 입장·퇴장시간과 맞지 않습니다. 놀이터 시간을 다시 선택해주세요.')}catch{};return false}
+  }
   if(x.changePlay&&x.playUse==='yes'){
     syncChangePlayAvailability();
     if(!x.playStart||![30,60].includes(x.playDuration)||!x.playEnd){try{$('zrChangePlayStart')?.focus()}catch{};try{window.toast?.('놀이터 시작시간과 이용시간을 확인해주세요.')}catch{};return false}
