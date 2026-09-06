@@ -106,8 +106,8 @@ service cloud.firestore {
           && request.resource.data.ownerUid == request.auth.uid
         );
 
-      // 문의 삭제는 관리자만 가능
-      allow delete: if isScheduleStaff();
+      // 문의는 기록 보존을 위해 영구 삭제하지 않음
+      allow delete: if false;
     }
 
 
