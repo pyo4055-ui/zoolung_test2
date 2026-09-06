@@ -8,10 +8,9 @@ const COLLECTION='customerGuides';
 const DOC_ID='main';
 const FIELD='adminOperationalSettings';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
-const KEYS=[
-  'zr_inquiry_reply_templates_v1',
-  'zr_reservation_change_confirm_sms_v1'
-];
+const TEMPLATE_KEY='zr_inquiry_reply_templates_v1';
+const SMS_KEY='zr_reservation_change_confirm_sms_v1';
+const KEYS=[TEMPLATE_KEY,SMS_KEY];
 
 let F=null,Auth=null,unsub=null,remote={},remoteReady=false,applyingRemote=false;
 let writeChain=Promise.resolve(),lastLocal=new Map(),started=false;
@@ -24,7 +23,15 @@ const isStaff=()=>{
 const rawLocal=key=>{try{return localStorage.getItem(key)}catch{return null}};
 const hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o||{},k);
 
+function refreshVisibleUi(key,value){
+  if(key===SMS_KEY){
+    for(const id of ['zrSharedReservationChangeSmsTemplate','zrReservationChangeSmsTemplate']){
+      const el=document.getElementById(id);if(el&&document.activeElement!==el)el.value=value;
+    }
+  }
+}
 function emitStorage(key,oldValue,newValue){
+  refreshVisibleUi(key,newValue);
   try{window.dispatchEvent(new StorageEvent('storage',{key,oldValue,newValue,storageArea:localStorage,url:location.href}))}
   catch{
     try{
@@ -40,7 +47,7 @@ function emitStorage(key,oldValue,newValue){
 function applyLocal(key,value){
   if(!KEYS.includes(key)||typeof value!=='string')return;
   const before=rawLocal(key);
-  if(before===value){lastLocal.set(key,value);return}
+  if(before===value){lastLocal.set(key,value);refreshVisibleUi(key,value);return}
   applyingRemote=true;
   try{localStorage.setItem(key,value)}finally{applyingRemote=false}
   lastLocal.set(key,value);
