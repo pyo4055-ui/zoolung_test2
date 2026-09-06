@@ -135,15 +135,16 @@ function attachBookingRequest(ctx,force=false){
   const booking=list[index],existing=booking.reservationChangeRequest&&typeof booking.reservationChangeRequest==='object'?booking.reservationChangeRequest:null;
   if(existing&&!force&&String(existing.id||'')===String(ctx.requestId||''))return true;
   const now=new Date().toISOString();
+  const requestId=String(ctx.requestId||existing?.id||`cr_${Date.now()}`),sameRequest=!!existing&&String(existing.id||'')===requestId;
   booking.reservationChangeRequest={
-    id:String(ctx.requestId||existing?.id||`cr_${Date.now()}`),status:String(existing?.status||'pending'),
+    id:requestId,status:sameRequest?String(existing?.status||'pending'):'pending',
     oldDate:String(b.date||booking.date||existing?.oldDate||''),oldEntryTime:String(b.entryTime||booking.entryTime||existing?.oldEntryTime||''),oldExitTime:String(b.exitTime||booking.exitTime||existing?.oldExitTime||''),
     requestedDate:String(ctx.requestedDate||existing?.requestedDate||''),requestedTime:String(ctx.requestedTime||existing?.requestedTime||''),
     changePlay:ctx.changePlay===true,playUse:String(ctx.playUse||'no'),playStart:String(ctx.playStart||''),playEnd:String(ctx.playEnd||''),playDuration:Number(ctx.playDuration||0),
     changeMeal:ctx.changeMeal===true,mealType:String(ctx.mealType||'none'),mealStart:String(ctx.mealStart||''),mealEnd:String(ctx.mealEnd||''),
     orgName:String(ctx.org||booking.orgName||existing?.orgName||''),requesterName:String(ctx.name||booking.managerName||existing?.requesterName||''),requesterMobile:String(ctx.mobile||booking.contact||existing?.requesterMobile||''),
     people:Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:Number(existing?.people||0)||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
-    body:String(ctx.body||existing?.body||''),createdAt:String(existing?.createdAt||now),updatedAt:now
+    body:String(ctx.body||existing?.body||''),createdAt:String(sameRequest?existing?.createdAt||now:now),updatedAt:now
   };
   writeBookings(list);
   try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-shared',{detail:{bookingId:String(b.id),requestId:booking.reservationChangeRequest.id}}))}catch{}
