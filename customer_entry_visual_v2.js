@@ -80,10 +80,11 @@ function injectStyle(){
   .zr-entry-title-v2{margin:0;text-align:center;color:var(--zr-v2-wine);font-size:29px;line-height:1.22;letter-spacing:-.045em;font-weight:900}
   .zr-entry-sub-v2{margin:7px 0 18px;text-align:center;color:#8a7469;font-size:12px;line-height:1.45;font-weight:700}
   #zrCustomerGroupGuideOpenV2{
-    width:100%;min-height:42px;margin:0 0 19px;padding:0 14px;border:1px solid #ead4c3;border-radius:10px;
-    background:#fff3e9;color:var(--zr-v2-wine-deep);font-size:13px;font-weight:900;cursor:pointer;box-shadow:none;
+    width:100%;min-height:44px;margin:0 0 19px;padding:0 14px;border:1px solid #2f7d32;border-radius:10px;
+    background:#2f7d32;color:#fff;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 7px 15px rgba(47,125,50,.24);
   }
-  #zrCustomerGroupGuideOpenV2:hover{background:#ffeada;border-color:#e6c3aa}
+  #zrCustomerGroupGuideOpenV2:hover{background:#256628;border-color:#256628}
+  #zrCustomerGroupGuideOpenV2:focus-visible{outline:3px solid rgba(47,125,50,.24);outline-offset:2px}
   .zr-entry-field-v2{display:block;margin:0 0 11px}
   .zr-entry-field-v2 span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   .zr-entry-field-v2 input{
