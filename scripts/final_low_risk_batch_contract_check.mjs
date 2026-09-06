@@ -25,21 +25,36 @@ for(const needle of [
   '공용 운영 메모',
   'zrAdminDailyMemoV1',
   'data-kind="reservation"',
-  'data-mobile-go="activity"',
-  "start.value=''",
-  "end.value=''",
+  'data-kind="inquiry"',
+  'data-kind="preview"',
+  "go==='activity'",
+  "go==='inquiries'",
+  "go==='previewVisit'",
+  'zrInquiryStart',
+  'zrInquiryEnd',
+  'zrInquiryStatus',
+  'zrInquiryApply',
+  'zrPreviewStartDateFilter',
+  'zrPreviewEndDateFilter',
+  'zrPreviewStatusFilter',
+  'zrPreviewApplyFilter',
   "status.value='pending'",
+  "status.value='received'",
   "norm(b.textContent)==='조회하기'"
 ])if(!admin.includes(needle))fail(`admin low-risk batch missing: ${needle}`);
 
 for(const needle of [
   "['privacy','inqPrivacy']",
   'zr-final-privacy-invalid',
+  'zrPrivacyAttempted',
+  "btn.id==='submitBooking'",
   '현재 예약하신 내역이 없습니다.',
   'zrCustomerEntryResultsV2',
-  '일치하는 예약 내역이 없습니다.',
+  '.existing-card',
+  '일치하는 예약 내역이 없습니다',
   '유료인원 합계 15명 이상',
-  '15명 충족 후 유료인원 5명당 인솔자 1명이 무료입니다.'
+  '15명 충족 후 유료인원 5명당 인솔자 1명이 무료입니다.',
+  '유료 관람인원이 15명 미만이라 인솔자 일부가 유료인원에 포함됩니다.'
 ])if(!customer.includes(needle))fail(`customer low-risk batch missing: ${needle}`);
 
 for(const [name,source] of [[adminFile,admin],[customerFile,customer]]){
@@ -58,4 +73,4 @@ for(const needle of [
 ])if(!minimum.includes(needle))fail(`minimum calculation contract changed unexpectedly: ${needle}`);
 
 if(failed)process.exit(1);
-ok('final low-risk UX batch keeps data contracts intact while adding mobile memo, privacy emphasis, empty lookup surface, concise minimum copy, and pending-only routing');
+ok('final low-risk UX batch keeps data contracts intact while adding mobile memo, direct privacy emphasis, empty lookup surface, concise minimum copy, and all-date pending routing');
