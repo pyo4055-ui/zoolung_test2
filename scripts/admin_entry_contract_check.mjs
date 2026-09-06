@@ -16,6 +16,9 @@ function need(ok,message){
 }
 
 need(admin.includes("fetch('./index.html?v=admin-entry-5'"),'admin.html must reuse the frozen reservation runtime instead of copying business logic.');
+need(admin.includes('const bridgeMarker=String.raw`'),'admin.html must preserve the escaped runtime bridge marker instead of allowing JavaScript string parsing to remove it.');
+need(admin.includes('const adminMarker=String.raw`'),'admin.html must preserve escaped injected script closers in the generated frozen runtime source.');
+need(admin.includes(bridgeMarker),'admin.html must keep the exact escaped Firebase bridge marker used by index.html.');
 need(admin.includes('admin_entry_bootstrap_v1.js?v=1'),'admin.html must inject the dedicated admin bootstrap.');
 need(admin.includes('admin_shell_v1.js?v=3'),'admin.html must inject the dedicated admin redevelopment shell after the restored runtime.');
 need(admin.includes('reservation_firebase_bridge.js?v=1'),'admin.html must preserve the existing administrator reservation Firebase bridge.');
