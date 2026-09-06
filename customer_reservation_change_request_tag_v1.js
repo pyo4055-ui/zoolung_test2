@@ -40,6 +40,25 @@ function taggedBody(text){
   const marker=q.match(/\n단체 인원:\s*\d+명\n\n/);
   return marker?q.slice((marker.index||0)+marker[0].length).trim():q.replace(/^\[[^\]]+\]\s*/,'').trim();
 }
+function timeToMin(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return m?Number(m[1])*60+Number(m[2]):NaN}
+function minToTime(n){if(!Number.isFinite(n)||n<0||n>=1440)return'';return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
+function mealLabel(v){return ({lunchbox:'도시락 지참',cafe:'내부 카페 주문',none:'식사 안 함'})[String(v||'none')]||'식사 안 함'}
+function changeOptions(booking){
+  const b=booking||{};
+  const playMode=String($('zrChangePlayMode')?.value||'keep'),mealMode=String($('zrChangeMealMode')?.value||'keep');
+  const changePlay=playMode!=='keep',changeMeal=mealMode!=='keep';
+  const playStart=changePlay&&playMode==='yes'?String($('zrChangePlayStart')?.value||''):'';
+  const playDuration=changePlay&&playMode==='yes'?Number($('zrChangePlayDuration')?.value||30):0;
+  const playEnd=playStart&&playDuration?minToTime(timeToMin(playStart)+playDuration):'';
+  const mealStart=changeMeal&&mealMode!=='none'?String($('zrChangeMealStart')?.value||''):'';
+  const mealEnd=changeMeal&&mealMode!=='none'?String($('zrChangeMealEnd')?.value||''):'';
+  return {
+    changePlay,playUse:changePlay?playMode:String(b.playUse||'no'),playStart,playEnd,playDuration,
+    changeMeal,mealType:changeMeal?mealMode:String(b.mealType||'none'),mealStart,mealEnd
+  };
+}
+function playChangeText(ctx){if(!ctx.changePlay)return'현재 예약 유지';if(ctx.playUse!=='yes')return'이용 안 함';return `이용함${ctx.playStart?` ${ctx.playStart}${ctx.playEnd?`~${ctx.playEnd}`:''}`:''}`}
+function mealChangeText(ctx){if(!ctx.changeMeal)return'현재 예약 유지';return `${mealLabel(ctx.mealType)}${ctx.mealType!=='none'&&ctx.mealStart?` ${ctx.mealStart}${ctx.mealEnd?`~${ctx.mealEnd}`:''}`:''}`}
 
 function syncInquiryType(){
   const type=$('inqType');if(!type)return;
@@ -64,7 +83,7 @@ function syncReviewType(){
   }
 }
 function contextSnapshot(){
-  const booking=selectedBooking();
+  const booking=selectedBooking(),extra=changeOptions(booking);
   return {
     booking,
     requestId:`cr_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
@@ -74,7 +93,8 @@ function contextSnapshot(){
     people:Math.trunc(Number($('inqPeople')?.value||0)),
     body:String($('inqContent')?.value||'').trim(),
     name:norm($('inqName')?.value),
-    mobile:tel($('inqMobile')?.value)
+    mobile:tel($('inqMobile')?.value),
+    ...extra
   };
 }
 function newInquiryIndex(before,after,ctx){
@@ -100,6 +120,8 @@ function structuredContent(ctx){
     `기존 예약시간: ${b.entryTime||'--:--'} ~ ${b.exitTime||'--:--'}`,
     `예약변경날짜: ${ctx.requestedDate||'-'}`,
     `예약변경시간: ${ctx.requestedTime||'--:--'}`,
+    `놀이터 변경: ${playChangeText(ctx)}`,
+    `식사 변경: ${mealChangeText(ctx)}`,
     `단체 인원: ${Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:0}명`,
     '',
     ctx.body||''
@@ -117,6 +139,8 @@ function attachBookingRequest(ctx,force=false){
     id:String(ctx.requestId||existing?.id||`cr_${Date.now()}`),status:String(existing?.status||'pending'),
     oldDate:String(b.date||booking.date||existing?.oldDate||''),oldEntryTime:String(b.entryTime||booking.entryTime||existing?.oldEntryTime||''),oldExitTime:String(b.exitTime||booking.exitTime||existing?.oldExitTime||''),
     requestedDate:String(ctx.requestedDate||existing?.requestedDate||''),requestedTime:String(ctx.requestedTime||existing?.requestedTime||''),
+    changePlay:ctx.changePlay===true,playUse:String(ctx.playUse||'no'),playStart:String(ctx.playStart||''),playEnd:String(ctx.playEnd||''),playDuration:Number(ctx.playDuration||0),
+    changeMeal:ctx.changeMeal===true,mealType:String(ctx.mealType||'none'),mealStart:String(ctx.mealStart||''),mealEnd:String(ctx.mealEnd||''),
     orgName:String(ctx.org||booking.orgName||existing?.orgName||''),requesterName:String(ctx.name||booking.managerName||existing?.requesterName||''),requesterMobile:String(ctx.mobile||booking.contact||existing?.requesterMobile||''),
     people:Number.isFinite(ctx.people)&&ctx.people>0?ctx.people:Number(existing?.people||0)||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
     body:String(ctx.body||existing?.body||''),createdAt:String(existing?.createdAt||now),updatedAt:now
@@ -140,6 +164,8 @@ function tagSavedInquiry(before,ctx){
   item.changeOldExitTime=String(b.exitTime||'');
   item.changeRequestedDate=String(ctx.requestedDate||'');
   item.changeRequestedTime=String(ctx.requestedTime||'');
+  item.changePlay=ctx.changePlay===true;item.playUse=String(ctx.playUse||'no');item.playStart=String(ctx.playStart||'');item.playEnd=String(ctx.playEnd||'');item.playDuration=Number(ctx.playDuration||0);
+  item.changeMeal=ctx.changeMeal===true;item.mealType=String(ctx.mealType||'none');item.mealStart=String(ctx.mealStart||'');item.mealEnd=String(ctx.mealEnd||'');
   item.changeRequestOrgName=String(ctx.org||b.orgName||'');
   item.changeRequestUpdatedAt=new Date().toISOString();
   writeInquiries(list);
@@ -167,6 +193,8 @@ function migrateLegacyLocalRequest(force=false){
       org:String(item.changeRequestOrgName||lineValue(text,'단체명')||booking.orgName||''),
       requestedDate:String(item.changeRequestedDate||lineValue(text,'예약변경날짜')||''),
       requestedTime:String(item.changeRequestedTime||lineValue(text,'예약변경시간')||''),
+      changePlay:item.changePlay===true,playUse:String(item.playUse||booking.playUse||'no'),playStart:String(item.playStart||''),playEnd:String(item.playEnd||''),playDuration:Number(item.playDuration||0),
+      changeMeal:item.changeMeal===true,mealType:String(item.mealType||booking.mealType||'none'),mealStart:String(item.mealStart||''),mealEnd:String(item.mealEnd||''),
       people:Number(lineValue(text,'단체 인원').replace(/[^0-9]/g,''))||Number(booking.paidCount||0)+Number(booking.chaperoneCount||0),
       body:taggedBody(text),name:String(item.name||item.customerName||item.managerName||item.inqName||booking.managerName||''),mobile:mobileOf(item)||tel(booking.contact)
     };
