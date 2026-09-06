@@ -32,6 +32,13 @@ function loadSharedReservationSettings(){
   s.id='zrReservationSettingsFirebaseSyncV1';s.async=false;s.src='./reservation_settings_firebase_sync_v1.js?v=1';
   document.body.appendChild(s);
 }
+function loadAdminHolidayManager(){
+  if(!/\/admin\.html$/i.test(location.pathname||''))return;
+  if(document.getElementById('zrAdminHolidaySettingsV1')||window.__ZR_ADMIN_HOLIDAY_SETTINGS_V1)return;
+  const s=document.createElement('script');
+  s.id='zrAdminHolidaySettingsV1';s.async=false;s.src='./admin_holiday_settings_v1.js?v=1';
+  document.body.appendChild(s);
+}
 function localToday(){
   const d=new Date(),pad=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -40,16 +47,48 @@ function isPastOrToday(date){
   const v=String(date||'');
   return /^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=localToday();
 }
-function isHoliday(date){
-  const v=String(date||'');
-  return KR_HOLIDAYS_2026.has(v)||KR_HOLIDAYS_2027.has(v)||FIXED_HOLIDAY_MD.has(v.slice(5));
-}
 function readSettings(){
   try{
     const fn=typeof window.settings==='function'?window.settings:(typeof settings==='function'?settings:null);
     const s=fn?.();
     return s&&typeof s==='object'?s:{};
   }catch{return {}}
+}
+function normalizeYear(year){
+  const y=String(year||'').trim();
+  return /^\d{4}$/.test(y)?y:'';
+}
+function normalizeDateList(list,year=''){
+  const y=normalizeYear(year);
+  const out=[];
+  for(const value of Array.isArray(list)?list:[]){
+    const v=String(value||'').trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v))continue;
+    if(y&&!v.startsWith(`${y}-`))continue;
+    if(!out.includes(v))out.push(v);
+  }
+  return out.sort();
+}
+function configuredDatesForYear(year){
+  const y=normalizeYear(year);if(!y)return [];
+  const map=readSettings().holidayDatesByYear;
+  if(!map||typeof map!=='object')return [];
+  return normalizeDateList(map[y],y);
+}
+function defaultDatesForYear(year){
+  const y=normalizeYear(year);if(!y)return [];
+  if(y==='2026')return [...KR_HOLIDAYS_2026].sort();
+  if(y==='2027')return [...KR_HOLIDAYS_2027].sort();
+  return [...FIXED_HOLIDAY_MD].map(md=>`${y}-${md}`).sort();
+}
+function effectiveDatesForYear(year){
+  return [...new Set([...defaultDatesForYear(year),...configuredDatesForYear(year)])].sort();
+}
+function isHoliday(date){
+  const v=String(date||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
+  const y=v.slice(0,4);
+  return KR_HOLIDAYS_2026.has(v)||KR_HOLIDAYS_2027.has(v)||FIXED_HOLIDAY_MD.has(v.slice(5))||configuredDatesForYear(y).includes(v);
 }
 function writeSettings(s){
   try{
@@ -167,18 +206,31 @@ function bookingActionButton(target){
   if(!/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(txt)||/예약확인|추가예약/.test(txt))return null;
   return btn;
 }
+function exposeApi(){
+  window.zrHolidayBookingSettingV1Api={
+    isHoliday,
+    defaultDatesForYear,
+    configuredDatesForYear,
+    effectiveDatesForYear,
+    normalizeDateList
+  };
+}
 function boot(){
   loadSharedReservationSettings();
+  exposeApi();
   refreshHooks();
   if(customerVisible())applyCustomerHolidayAvailability();
+  if(window.__ZR_ADMIN_REFACTOR_READY)loadAdminHolidayManager();
 
   // Other customer/admin patches can replace renderVisitDays during startup.
   // Poll only the function reference briefly; never rescan or observe the date DOM continuously.
   const t=setInterval(refreshHooks,500);
   setTimeout(()=>clearInterval(t),30000);
 
+  document.addEventListener('zr:admin-runtime-ready',loadAdminHolidayManager,{once:true});
   document.addEventListener('zr:reservation-settings-synced',()=>{
     adminDirty=false;
+    exposeApi();
     refreshHooks();
     if(customerVisible())setTimeout(applyCustomerHolidayAvailability,0);
   });
