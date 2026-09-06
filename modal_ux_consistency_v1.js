@@ -3,10 +3,13 @@
 if(window.__ZR_MODAL_UX_CONSISTENCY_V1)return;
 window.__ZR_MODAL_UX_CONSISTENCY_V1=true;
 
-const OVERLAY_SELECTOR='.modal,.zr-customer-info-modal,.zr-customer-zoom,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal';
-const SHELL_SELECTOR='.modal-card,.sheet,.zr-customer-info-sheet,.zr-customer-zoom-card,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet';
+const OVERLAY_SELECTOR='.modal,.zr-customer-info-modal,.zr-customer-zoom,.zrgm32,.zrfinal31,.zr-guide-modal,.zr14-modal,#zrCustomerReturnHomeModal,#zrReservationChangeNoticeV1';
+const SHELL_SELECTOR='.modal-card,.sheet,.zr-customer-info-sheet,.zr-customer-zoom-card,.zrgm32-sheet,.zrfinal31-sheet,.zr-guide-sheet,.zr14-modal-card,.zr-return-sheet,.zr-change-notice-card';
 let scanQueued=false;
 let touchX=0,touchY=0;
+let scrollLocked=false;
+let lockX=0,lockY=0;
+let bodyBefore=null,htmlOverflowBefore='';
 
 function visibleOverlay(el){
   if(!(el instanceof Element)||!el.matches(OVERLAY_SELECTOR))return false;
@@ -74,6 +77,38 @@ function guardWheel(e){
   if(scrollContainerFor(e.target,overlay,e.deltaY))return;
   if(e.cancelable)e.preventDefault();
 }
+function mobileScrollLockWanted(){
+  try{return matchMedia('(max-width:900px)').matches||matchMedia('(pointer:coarse)').matches}catch{return innerWidth<=900}
+}
+function rememberBodyStyle(){
+  const b=document.body;
+  return {position:b.style.position,top:b.style.top,left:b.style.left,right:b.style.right,width:b.style.width,overflow:b.style.overflow,paddingRight:b.style.paddingRight};
+}
+function lockPageScroll(){
+  if(scrollLocked||!document.body||!mobileScrollLockWanted())return;
+  scrollLocked=true;lockX=window.scrollX||0;lockY=window.scrollY||0;
+  bodyBefore=rememberBodyStyle();htmlOverflowBefore=document.documentElement.style.overflow;
+  const gutter=Math.max(0,window.innerWidth-document.documentElement.clientWidth);
+  const b=document.body;
+  b.style.position='fixed';b.style.top=`-${lockY}px`;b.style.left=`-${lockX}px`;b.style.right='0';b.style.width='100%';b.style.overflow='hidden';
+  if(gutter)b.style.paddingRight=`${gutter}px`;
+  document.documentElement.style.overflow='hidden';
+  document.documentElement.classList.add('zr-modal-scroll-locked');
+}
+function unlockPageScroll(){
+  if(!scrollLocked||!document.body)return;
+  scrollLocked=false;
+  const b=document.body,prev=bodyBefore||{};
+  b.style.position=prev.position||'';b.style.top=prev.top||'';b.style.left=prev.left||'';b.style.right=prev.right||'';b.style.width=prev.width||'';b.style.overflow=prev.overflow||'';b.style.paddingRight=prev.paddingRight||'';
+  document.documentElement.style.overflow=htmlOverflowBefore||'';
+  document.documentElement.classList.remove('zr-modal-scroll-locked');
+  const x=lockX,y=lockY;bodyBefore=null;
+  requestAnimationFrame(()=>window.scrollTo(x,y));
+}
+function syncPageScrollLock(){
+  const hasVisible=!!topVisibleOverlay();
+  if(hasVisible)lockPageScroll();else unlockPageScroll();
+}
 function textOf(el){return String(el?.textContent||el?.value||'').replace(/\s+/g,' ').trim()}
 function metaOf(el){return `${el?.id||''} ${typeof el?.className==='string'?el.className:''} ${el?.getAttribute?.('name')||''} ${el?.getAttribute?.('aria-label')||''} ${el?.getAttribute?.('title')||''}`}
 function isDangerousCancel(el){
@@ -102,7 +137,7 @@ function isCloseControl(el){
 function shellForOverlay(overlay){
   if(!overlay)return null;
   if(overlay.matches?.(SHELL_SELECTOR))return overlay;
-  return overlay.querySelector(':scope > .modal-card,:scope > .sheet,:scope > .zr-customer-info-sheet,:scope > .zr-customer-zoom-card,:scope > .zrgm32-sheet,:scope > .zrfinal31-sheet,:scope > .zr-guide-sheet,:scope > .zr14-modal-card,:scope > .zr-return-sheet,:scope > [role="dialog"],:scope > .card')||overlay.firstElementChild||null;
+  return overlay.querySelector(':scope > .modal-card,:scope > .sheet,:scope > .zr-customer-info-sheet,:scope > .zr-customer-zoom-card,:scope > .zrgm32-sheet,:scope > .zrfinal31-sheet,:scope > .zr-guide-sheet,:scope > .zr14-modal-card,:scope > .zr-return-sheet,:scope > .zr-change-notice-card,:scope > [role="dialog"],:scope > .card')||overlay.firstElementChild||null;
 }
 function labelledTitle(overlay,shell){
   const refs=[overlay?.getAttribute?.('aria-labelledby'),shell?.getAttribute?.('aria-labelledby')].filter(Boolean).join(' ').trim();
@@ -220,6 +255,7 @@ function scanCloseButtons(){
     if(isDismissCancel(btn))renameDismissCancel(btn);
   });
   document.querySelectorAll(OVERLAY_SELECTOR).forEach(syncOverlayHeader);
+  syncPageScrollLock();
 }
 function scheduleScan(){
   if(scanQueued)return;
@@ -231,9 +267,9 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrModalUxConsistencyStyleV1';
   s.textContent=`
-    ${OVERLAY_SELECTOR}{overscroll-behavior:contain!important}
-    ${SHELL_SELECTOR}{overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch}
-    .zr-modal-ux-shell{position:relative!important;padding-top:0!important}
+    ${OVERLAY_SELECTOR}{overscroll-behavior:contain!important;background:rgba(24,22,20,.50)!important}
+    ${SHELL_SELECTOR}{overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch;background:#fff!important;color:#1f2d25!important}
+    .zr-modal-ux-shell{position:relative!important;padding-top:0!important;background:#fff!important;color:#1f2d25!important}
     .zr-modal-ux-title-source,.zr-modal-ux-close-source{display:none!important}
     .zr-modal-ux-header{position:sticky!important;top:0!important;z-index:50!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;box-sizing:border-box!important;width:calc(100% + var(--zr-modal-ux-shell-pad-left,0px) + var(--zr-modal-ux-shell-pad-right,0px))!important;min-height:52px!important;margin-top:0!important;margin-right:calc(-1 * var(--zr-modal-ux-shell-pad-right,0px))!important;margin-left:calc(-1 * var(--zr-modal-ux-shell-pad-left,0px))!important;margin-bottom:16px!important;padding:10px max(14px,var(--zr-modal-ux-shell-pad-right,0px)) 10px max(14px,var(--zr-modal-ux-shell-pad-left,0px))!important;border-bottom:1px solid #e3e8e5!important;background:#fff!important;color:#1f2d25!important;box-shadow:none!important}
     .zr-modal-ux-header[hidden]{display:none!important}
@@ -242,6 +278,19 @@ function injectStyle(){
     .zr-modal-ux-header-close{flex:0 0 auto!important;min-width:56px!important;min-height:36px!important;margin:0!important;padding:6px 10px!important;border:1px solid #d5ddd7!important;border-radius:8px!important;background:#fff!important;color:#31433a!important;box-shadow:none!important;font:inherit!important;font-weight:700!important;line-height:1.2!important;white-space:nowrap!important;cursor:pointer!important;-webkit-text-fill-color:currentColor!important}
     .zr-modal-ux-header-close.zr-modal-ux-header-close-icon{width:36px!important;min-width:36px!important;padding:0!important;font-size:18px!important}
     .zr-modal-ux-header-close[hidden]{display:none!important}
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields{border-color:#dfe5df!important;background:#fff!important}
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-section-title{color:#1f2d25!important}
+    #inquiryModal.zr-reservation-change-mode #zrInquiryVisitFields .zr-inquiry-visit-grid label{color:#31433a!important}
+    #inquiryModal.zr-reservation-change-mode #inqType{background:#f6f7f4!important;color:#58655d!important}
+    #inquiryModal.zr-reservation-change-mode #zrChangeBookingField{border-color:#dfe5df!important;background:#fff!important}
+    #inquiryModal.zr-reservation-change-mode #zrChangeBookingField label{color:#31433a!important}
+    #inquiryModal.zr-reservation-change-mode #zrChangeReviewBooking{background:#fafcf9!important;border-color:#dfe5df!important}
+    #zrReservationChangeNoticeV1 .zr-change-notice-card{background:#fff!important;border-color:#dfe5df!important}
+    #zrReservationChangeNoticeV1 .zr-change-notice-head{background:#fff!important;color:#1f2d25!important;border-bottom:1px solid #e3e8e5!important}
+    @media(max-width:900px){
+      .zr-modal-scroll-locked{overscroll-behavior:none!important}
+      .zr-modal-ux-shell{max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important}
+    }
   `;
   document.head.appendChild(s);
 }
@@ -253,12 +302,16 @@ function boot(){
   document.addEventListener('touchstart',guardTouchStart,{capture:true,passive:true});
   document.addEventListener('touchmove',guardTouchMove,{capture:true,passive:false});
   document.addEventListener('wheel',guardWheel,{capture:true,passive:false});
-  document.addEventListener('click',()=>{scheduleScan();setTimeout(scheduleScan,80)},true);
+  document.addEventListener('click',()=>{scheduleScan();setTimeout(scheduleScan,80);setTimeout(scheduleScan,350)},true);
   document.addEventListener('change',()=>{scheduleScan();setTimeout(scheduleScan,80)},true);
+  document.addEventListener('submit',()=>{scheduleScan();setTimeout(scheduleScan,120);setTimeout(scheduleScan,600)},true);
   window.addEventListener('resize',scheduleScan);
   window.addEventListener('orientationchange',()=>setTimeout(scheduleScan,100));
+  window.addEventListener('pageshow',scheduleScan);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleScan()});
   document.addEventListener('zr:admin-runtime-ready',()=>{scheduleScan();setTimeout(scheduleScan,100)});
   const timer=setInterval(scheduleScan,700);setTimeout(()=>clearInterval(timer),12000);
+  setInterval(syncPageScrollLock,900);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
