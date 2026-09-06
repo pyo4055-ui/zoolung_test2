@@ -14,38 +14,49 @@ function injectStyle(){
   s.id='zrAdminHolidaySettingsPolishV1Style';
   s.textContent=`
     html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1{
-      width:min(760px,100%)!important;max-width:760px!important;margin:0 auto 0 0!important;padding:18px!important
+      width:100%!important;max-width:none!important;margin:0!important;padding:18px!important
     }
     html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar{
-      display:grid!important;grid-template-columns:190px 170px 140px!important;gap:10px!important;align-items:end!important;justify-content:start!important
+      display:grid!important;grid-template-columns:220px 150px 130px!important;gap:8px!important;
+      align-items:end!important;justify-content:start!important;width:max-content!important;max-width:100%!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar label{
+      margin:0!important;align-self:end!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 #zrHolidayYearV1{
+      height:44px!important;min-height:44px!important;margin:0!important;box-sizing:border-box!important
     }
     html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1{
-      display:inline-flex!important;align-items:center!important;justify-content:center!important;
-      min-width:170px!important;width:170px!important;height:42px!important;padding:0 16px!important;
+      display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:end!important;
+      min-width:150px!important;width:150px!important;height:44px!important;min-height:44px!important;margin:0!important;padding:0 14px!important;
       background:#195b37!important;border:1px solid #195b37!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
-      box-shadow:0 3px 9px rgba(25,91,55,.16)!important;font-weight:900!important;opacity:1!important
+      box-shadow:0 3px 9px rgba(25,91,55,.16)!important;font-weight:900!important;opacity:1!important;box-sizing:border-box!important
     }
     html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1:hover{background:#12462b!important;border-color:#12462b!important}
     html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1{
-      display:inline-flex!important;align-items:center!important;justify-content:center!important;
-      min-width:140px!important;width:140px!important;height:42px!important;padding:0 14px!important;
+      display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:end!important;
+      min-width:130px!important;width:130px!important;height:44px!important;min-height:44px!important;margin:0!important;padding:0 12px!important;
       background:#f26828!important;border:1px solid #f26828!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
-      box-shadow:0 3px 9px rgba(242,104,40,.18)!important;font-weight:900!important;opacity:1!important
+      box-shadow:0 3px 9px rgba(242,104,40,.18)!important;font-weight:900!important;opacity:1!important;box-sizing:border-box!important
     }
     html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1:hover{background:#d9571d!important;border-color:#d9571d!important}
     html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1{width:100%!important;max-width:100%!important}
     html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row{
-      grid-template-columns:minmax(0,1fr) 62px!important;gap:8px!important;padding:8px 9px!important
+      grid-template-columns:minmax(0,1fr) 74px!important;gap:8px!important;padding:9px!important;width:100%!important;box-sizing:border-box!important
     }
-    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row input[type="date"]{height:40px!important;min-height:40px!important}
-    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row button{min-width:62px!important;width:62px!important}
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row input[type="date"]{
+      width:100%!important;height:42px!important;min-height:42px!important;box-sizing:border-box!important
+    }
+    html.zr-admin-shell-mounted body #adminView #zrHolidayRowsV1 .zr-holiday-row button{
+      min-width:74px!important;width:74px!important;align-self:center!important
+    }
     .zr-holiday-pending-row{border-style:dashed!important;border-color:#e2b38e!important;background:#fff8f1!important}
     .zr-holiday-pending-picker{display:flex;align-items:center;gap:10px;min-width:0}
     .zr-holiday-pending-picker>span{flex:0 0 auto;font-size:12px;font-weight:900;color:#78451f;white-space:nowrap}
     .zr-holiday-pending-picker>input{min-width:0;flex:1}
     @media(max-width:900px){
       html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1{width:100%!important;max-width:none!important;padding:14px!important}
-      html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar{grid-template-columns:1fr 1fr!important}
+      html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar{grid-template-columns:1fr 1fr!important;width:100%!important}
       html.zr-admin-shell-mounted body #adminView #zrHolidaySettingsCardV1 .zr-holiday-toolbar label{grid-column:1/-1!important}
       html.zr-admin-shell-mounted body #adminView #zrHolidayAutoLoadV1,
       html.zr-admin-shell-mounted body #adminView #zrHolidayAddV1{width:100%!important;min-width:0!important}
