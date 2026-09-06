@@ -58,6 +58,7 @@ function changedTop(prev,next){
 function timeToMin(v){const m=/^(\d{2}):(\d{2})$/.exec(String(v||''));return m?Number(m[1])*60+Number(m[2]):NaN}
 function minToTime(n){if(!Number.isFinite(n)||n<0||n>=1440)return'';return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`}
 function changePlayHold(b){
+  if(['cancelled','rejected'].includes(String(b?.status||'')))return {active:false};
   const r=b?.reservationChangeRequest;
   if(!r||typeof r!=='object'||String(r.status||'pending')!=='pending')return {active:false};
   const date=String(r.requestedDate||b.date||'');
