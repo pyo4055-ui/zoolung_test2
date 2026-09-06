@@ -10,16 +10,19 @@ const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'p
 const uiFile='customer_reservation_change_request_v1.js';
 const tagFile='customer_reservation_change_request_tag_v1.js';
 const adminFile='admin_reservation_change_requests_shared_v1.js';
-const bridgeFile='reservation_firebase_bridge.js';
-const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),bridge=read(bridgeFile);
+const adminBridgeFile='reservation_firebase_bridge.js';
+const customerBridgeFile='customer_reservation_firebase_bridge_v1.js';
+const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile);
 
-[uiFile,tagFile,adminFile].forEach(syntax);
+[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile].forEach(syntax);
 
 for(const needle of [
   'zrChangePlayMode','zrChangePlayStart','zrChangePlayDuration',
   'zrChangeMealMode','zrChangeMealStart','zrChangeMealEnd',
   '현재 예약 유지','validateExtraChanges','놀이터 시작시간과 이용시간을 확인해주세요.',
-  '식사 시작·종료시간을 확인해주세요.'
+  '식사 시작·종료시간을 확인해주세요.',
+  'nativePlayTimes','playgroundOccupancies','playSlotState','syncChangePlayAvailability',
+  'zr:reservation-availability-updated',' (마감)','선택한 놀이터 시간은 이미 마감되었습니다.'
 ])if(!ui.includes(needle))fail(`customer change UI missing: ${needle}`);
 
 for(const needle of [
@@ -36,10 +39,14 @@ for(const needle of [
   'zrSharedChangeApplyPlayWrap','zrSharedChangeApplyMealWrap','예약 변경 내용을 반영했습니다.'
 ])if(!admin.includes(needle))fail(`admin change apply missing: ${needle}`);
 
-for(const needle of [
-  'playUse:b.playUse','playStart:b.playStart','playEnd:b.playEnd',
-  "entryTime:'',exitTime:'',mealType:'none',mealStart:'',mealEnd:''"
-])if(!bridge.includes(needle))fail(`existing reservation data contract missing: ${needle}`);
+for(const [name,bridge] of [[adminBridgeFile,adminBridge],[customerBridgeFile,customerBridge]]){
+  for(const needle of [
+    'function changePlayHold(b)','changePlayHoldActive','changePlayHoldRequestId','changePlayHoldDate',
+    'changePlayHoldStart','changePlayHoldEnd','changePlayHoldDuration','function changePlayHoldPlaceholder(a)',
+    '__changePlayHold:true','sourceBookingId:sourceId','const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean)',
+    'playUse:b.playUse','playStart:b.playStart','playEnd:b.playEnd'
+  ])if(!bridge.includes(needle))fail(`${name} playground hold contract missing: ${needle}`);
+}
 
 for(const [name,source] of [[uiFile,ui],[tagFile,tag],[adminFile,admin]]){
   for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc(']){
@@ -48,4 +55,4 @@ for(const [name,source] of [[uiFile,ui],[tagFile,tag],[adminFile,admin]]){
 }
 
 if(failed)process.exit(1);
-ok('reservation change flow reuses existing play/meal booking fields and applies only explicitly requested option changes');
+ok('reservation changes reuse normal playground occupancy data and pending requests publish shared playground holds');
