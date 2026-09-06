@@ -269,7 +269,8 @@ function injectStyle(){
   s.textContent=`
     ${OVERLAY_SELECTOR}{overscroll-behavior:contain!important;background:rgba(24,22,20,.50)!important}
     ${SHELL_SELECTOR}{overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch;background:#fff!important;color:#1f2d25!important}
-    .zr-modal-ux-shell{position:relative!important;padding-top:0!important;background:#fff!important;color:#1f2d25!important}
+    .zr-modal-ux-shell{position:relative!important;padding-top:0!important}
+    .zr-modal-ux-shell{background:#fff!important;color:#1f2d25!important}
     .zr-modal-ux-title-source,.zr-modal-ux-close-source{display:none!important}
     .zr-modal-ux-header{position:sticky!important;top:0!important;z-index:50!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;box-sizing:border-box!important;width:calc(100% + var(--zr-modal-ux-shell-pad-left,0px) + var(--zr-modal-ux-shell-pad-right,0px))!important;min-height:52px!important;margin-top:0!important;margin-right:calc(-1 * var(--zr-modal-ux-shell-pad-right,0px))!important;margin-left:calc(-1 * var(--zr-modal-ux-shell-pad-left,0px))!important;margin-bottom:16px!important;padding:10px max(14px,var(--zr-modal-ux-shell-pad-right,0px)) 10px max(14px,var(--zr-modal-ux-shell-pad-left,0px))!important;border-bottom:1px solid #e3e8e5!important;background:#fff!important;color:#1f2d25!important;box-shadow:none!important}
     .zr-modal-ux-header[hidden]{display:none!important}
