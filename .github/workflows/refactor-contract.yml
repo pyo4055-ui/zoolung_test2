@@ -59,6 +59,8 @@ jobs:
         run: node scripts/admin_operational_settings_contract_check.mjs
       - name: Verify minimum paid group booking rule
         run: node scripts/customer_group_minimum_contract_check.mjs
+      - name: Verify final low-risk UX batch
+        run: node scripts/final_low_risk_batch_contract_check.mjs
       - name: Verify modal interaction consistency
         run: node scripts/modal_ux_consistency_contract_check.mjs
       - name: Verify admin unsaved changes warning
