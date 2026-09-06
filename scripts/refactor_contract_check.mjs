@@ -4,7 +4,7 @@ import {execFileSync} from 'node:child_process';
 
 const frozen = {
   'index.html':'3d92d7e08b85eb2326aeba0d0def53659dac0ec9',
-  'firestore.rules':'5884ea6d8f468079da3ab48f5688e61ad3999d94',
+  'firestore.rules':'53423cdb51385fdee5104bf109695894b22a5c08',
   'admin_features.js':'92b56752200626496fedb9816b880414a74c571c',
   'admin2_part1.txt':'118b334e77bf168659a1f9d9f3b83282f04c730c',
   'admin2_part2.txt':'5e0d2acd06f6b1b417d42c29da488c03811fd0fb',
@@ -78,6 +78,15 @@ if(loader.includes('customer_guide_map_v1.js')||loader.includes('customer_parkin
 
 const bridge=read('reservation_firebase_bridge.js');
 for(const needle of ["BOOKING_KEY='zr_bookings'","FULL_COLLECTION='reservations'","AVAIL_COLLECTION='reservationAvailability'","writeChain=Promise.resolve()","window.setStore=wrapped"]){if(!bridge.includes(needle))fail(`reservation DB contract missing: ${needle}`)}
+
+const inquiryBridge=read('inquiry_firebase_bridge_v1.js');
+textHealth('inquiry_firebase_bridge_v1.js',inquiryBridge);syntax('inquiry_firebase_bridge_v1.js');
+for(const needle of ["STORE_KEY='zr_inquiries'","COLLECTION='customerInquiries'","sharedInquiryId","ownerUid","F.onSnapshot","window.setStore=wrapped","zr:inquiry-replies-changed"]){if(!inquiryBridge.includes(needle))fail(`inquiry shared DB contract missing: ${needle}`)}
+const inquiryRules=read('firestore.rules');
+for(const needle of ['match /customerInquiries/{inquiryId}','resource.data.ownerUid == request.auth.uid','request.resource.data.ownerUid == request.auth.uid'])if(!inquiryRules.includes(needle))fail(`inquiry Firestore rule contract missing: ${needle}`);
+const adminEntry=read('admin.html'),customerEntry=read('customer.html');
+if(!adminEntry.includes('./inquiry_firebase_bridge_v1.js?v=1'))fail('admin entry does not load shared inquiry bridge');
+if(!customerEntry.includes('./inquiry_firebase_bridge_v1.js?v=1'))fail('customer entry does not load shared inquiry bridge');
 
 const adminSchedule=read('admin_schedule_tab_v14.js');
 for(const needle of ["'scheduleGroups'","schedulePublished=true","customerSchedule={reservationId:String(b.id)","{merge:true}"]){if(!adminSchedule.includes(needle))fail(`admin schedule contract missing: ${needle}`)}
