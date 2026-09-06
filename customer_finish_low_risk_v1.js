@@ -23,7 +23,7 @@ function injectStyle(){
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px;padding:0 20px 20px}
     #${NO_RESULT_MODAL_ID} .zr-lookup-empty-actions button{min-height:48px;border-radius:11px;font-size:14px;font-weight:900;cursor:pointer}
     #zrCustomerLookupNoResultCloseV1{border:1px solid #f1bcbc;background:#ffe7e7;color:#913535}
-    #zrCustomerLookupNoResultApplyV1{border:1px solid #fc5404;background:#fc5404;color:#fff;box-shadow:0 8px 16px rgba(252,84,4,.18)}
+    #zrCustomerLookupNoResultApplyV1{grid-column:1/-1;justify-self:center;width:170px;max-width:100%;border:1px solid #fc5404;background:#fc5404;color:#fff;box-shadow:0 8px 16px rgba(252,84,4,.18)}
     #zrCustomerLookupNoResultApplyV1:hover{border-color:#e24600;background:#e24600}
     @media(max-width:900px){#${NO_RESULT_MODAL_ID}{padding:14px}#${NO_RESULT_MODAL_ID} .zr-lookup-empty-sheet{border-radius:18px}}
   `;document.head.appendChild(s);
