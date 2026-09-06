@@ -12,6 +12,7 @@ let baseSettings=null,baseSaveSettings=null,settingsWrapper=null,saveWrapper=nul
 let writeChain=Promise.resolve();
 
 const clone=v=>JSON.parse(JSON.stringify(v));
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function clean(v){
   if(Array.isArray(v))return v.map(clean).filter(x=>x!==undefined);
   if(v&&typeof v==='object'){
@@ -63,6 +64,47 @@ function queueWrite(value){
     },{merge:true});
   }).catch(e=>console.error('reservation settings firebase write',e));
 }
+async function saveShared(value){
+  installHooks();
+  const payload=clean(value&&typeof value==='object'?value:{});
+  try{
+    if(typeof baseSaveSettings==='function')baseSaveSettings(clone(payload));
+  }catch(e){
+    console.error('reservation settings local save',e);
+  }
+  const started=Date.now();
+  while((!F||!bridge()?.db||!isStaff())&&Date.now()-started<5000)await wait(100);
+  const z=bridge();
+  if(!F||!z?.db||!isStaff()){
+    console.error('reservation settings shared save unavailable');
+    return false;
+  }
+  let ok=false;
+  const task=async()=>{
+    const current=bridge();
+    if(!current?.db||!isStaff())throw new Error('staff firebase session unavailable');
+    await F.setDoc(F.doc(current.db,COLLECTION,DOC_ID),{
+      reservationSettings:payload,
+      reservationSettingsVersion:1,
+      reservationSettingsUpdatedAt:F.serverTimestamp()
+    },{merge:true});
+    ok=true;
+  };
+  writeChain=writeChain.then(task,task);
+  try{await writeChain}
+  catch(e){console.error('reservation settings shared save',e);return false}
+  if(!ok)return false;
+  remote=payload;remoteReady=true;refreshUi();
+  return true;
+}
+function exposeApi(){
+  window.zrReservationSettingsFirebaseSyncV1Api={
+    version:1,
+    save:saveShared,
+    get ready(){return !!F&&!!bridge()?.db&&isStaff()},
+    get remoteReady(){return remoteReady}
+  };
+}
 function installHooks(){
   const currentSettings=window.settings;
   if(typeof currentSettings==='function'&&!currentSettings.__zrReservationSettingsSync){
@@ -91,6 +133,7 @@ function installHooks(){
     window.saveSettings=saveWrapper;
     try{saveSettings=saveWrapper}catch{}
   }
+  exposeApi();
 }
 function subscribe(){
   const z=bridge();if(!F||!z?.db||!z?.auth?.currentUser)return false;
@@ -108,6 +151,7 @@ async function initFirebase(){
       import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`),
       import(`https://www.gstatic.com/firebasejs/${FV}/firebase-auth.js`)
     ]);
+    exposeApi();
     const started=Date.now();
     const t=setInterval(()=>{
       installHooks();
@@ -120,6 +164,7 @@ async function initFirebase(){
 }
 function boot(){
   installHooks();
+  exposeApi();
   const hookTimer=setInterval(installHooks,500);
   setTimeout(()=>clearInterval(hookTimer),60000);
   initFirebase();
