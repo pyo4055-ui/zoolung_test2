@@ -20,12 +20,17 @@ function readSettings(){
     return value&&typeof value==='object'?value:{};
   }catch{return {}}
 }
-function writeSettings(value){
+async function writeSettings(value){
+  const shared=window.zrReservationSettingsFirebaseSyncV1Api;
+  if(typeof shared?.save==='function'){
+    try{return !!(await shared.save(value))}
+    catch(e){console.error('holiday settings shared save',e);return false}
+  }
   try{
     const fn=typeof window.saveSettings==='function'?window.saveSettings:(typeof saveSettings==='function'?saveSettings:null);
     if(typeof fn!=='function')return false;
     fn(value);return true;
-  }catch{return false}
+  }catch(e){console.error('holiday settings legacy save',e);return false}
 }
 function api(){return window.zrHolidayBookingSettingV1Api||null}
 function validDate(v,y=year){
@@ -214,21 +219,28 @@ async function autoLoad(){
     toastMsg('공휴일 자동 불러오기에 실패했습니다. 날짜를 직접 추가해주세요.');
   }finally{btn.disabled=false;btn.textContent=old}
 }
-function saveDates(){
+async function saveDates(){
   if(!adminAllowed())return;
+  const btn=$('zrHolidaySaveV1');if(btn?.disabled)return;
   const clean=normalizeDates(draft,year);
   if(clean.some(v=>!validDate(v,year))){toastMsg('공휴일 날짜를 다시 확인해주세요.');return}
   const current=readSettings();
   const map=current.holidayDatesByYear&&typeof current.holidayDatesByYear==='object'?{...current.holidayDatesByYear}:{};
   map[year]=clean;
-  if(!writeSettings({...current,holidayDatesByYear:map})){
-    toastMsg('공휴일 설정 저장에 실패했습니다.');return
+  const old=btn?.textContent||'공휴일 설정 저장';
+  if(btn){btn.disabled=true;btn.textContent='저장 중...'}
+  try{
+    if(!(await writeSettings({...current,holidayDatesByYear:map}))){
+      toastMsg('공휴일 설정 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');return
+    }
+    draft=clean;dirty=false;renderDraft();
+    try{window.renderVisitDays?.()}catch{}
+    try{window.renderAdmin?.()}catch{}
+    setTimeout(decorateAdminCalendar,0);
+    toastMsg(`${year}년 공휴일 설정을 저장했습니다.`);
+  }finally{
+    if(btn?.isConnected){btn.disabled=false;btn.textContent=old}
   }
-  draft=clean;dirty=false;renderDraft();
-  try{window.renderVisitDays?.()}catch{}
-  try{window.renderAdmin?.()}catch{}
-  setTimeout(decorateAdminCalendar,0);
-  toastMsg(`${year}년 공휴일 설정을 저장했습니다.`);
 }
 function selectHolidayTab(){
   if(!ensurePanel())return false;
