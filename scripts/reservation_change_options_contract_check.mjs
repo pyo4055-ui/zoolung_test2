@@ -27,16 +27,25 @@ for(const needle of [
   "state.reason==='full'?' (마감)'",
   'requestedDate:x.date,requestedTime:x.entry,requestedExitTime:x.exit',
   'changePlay:true','changeMeal:true','booking.reservationChangeRequest={',
-  'window.setStore(BOOKING_KEY,list)','waitForReservationBridge',
+  'window.setStore(BOOKING_KEY,list)','waitForReservationBridge','waitForSavedRequest',
   'zr:reservation-change-request-shared','zr-change-invalid','scrollIntoView',
   '식사하지 않는 단체는 최대 3시간까지 이용할 수 있습니다.',
-  '식사 이용 단체는 최대 4시간까지 이용할 수 있습니다.'
+  '식사 이용 단체는 최대 4시간까지 이용할 수 있습니다.',
+  'zr-change-card-button','data-zr-change-booking-id','decorateChangeCards','bookingForCard',
+  'openNotice(cardButton.dataset.zrChangeBookingId','openChangeModal(bookingId)','zrChangeTargetBooking',
+  '#changeExisting{display:none!important}',
+  'background:#fff;color:#38271e;border-bottom:1px solid #e9e1dc',
+  'zr-change-modal-head:has(.zr-modal-ux-title-source){display:none!important}'
 ])if(!ui.includes(needle))fail(`dedicated customer change flow missing: ${needle}`);
 
-for(const forbidden of ['submitInquiry','inquiryModal','inqVisitTime','inqVisitDate','type="time"','collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc(']){
-  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore flow: ${forbidden}`);
+for(const forbidden of [
+  'submitInquiry','inquiryModal','inqVisitTime','inqVisitDate','type="time"','collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc(',
+  'zrChangeBookingSelect','populateBookingSelector','변경할 예약을 선택해주세요'
+]){
+  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore/duplicate-booking-selection flow: ${forbidden}`);
 }
 if(ui.includes('<option value="keep">현재 예약 유지</option>'))fail('dedicated change flow must expose actual values, not a keep placeholder');
+if(ui.includes('const saved=readBookings().find'))fail('reservation change must not fail on one immediate synchronous storage verification');
 
 for(const needle of [
   'requestedExitTime','changeRequestedExitTime','changePlay','changeMeal',
@@ -66,4 +75,4 @@ if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fa
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change uses a dedicated booking-style form, writes the existing reservation request directly, keeps shared playground holds, and stays independent from 1:1 inquiry');
+ok('reservation change routes directly from each booking card, uses a neutral shared modal header, writes the existing request with resilient verification, keeps shared playground holds, and stays independent from 1:1 inquiry');
