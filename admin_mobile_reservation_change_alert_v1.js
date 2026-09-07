@@ -6,7 +6,7 @@ window.__ZR_ADMIN_MOBILE_RESERVATION_CHANGE_ALERT_V1=true;
 const FIREBASE_VERSION='12.17.1';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
-let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0;
+let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0,alertCountObserver=null;
 let sharedPendingReservation=null;
 
 function installStyle(){
@@ -15,6 +15,16 @@ function installStyle(){
   s.textContent=`
     #zrAdminMobileAlertsV1 [data-mobile-go="reservationChange"] .zr-admin-mobile-alert-dot{background:#a74412!important}
     #zrAdminMobileDrawerV1 [data-mobile-go="reservationChange"] .zr-admin-mobile-menu-icon{background:#f7e6dc!important;color:#9a3c16!important}
+    @media(max-width:900px){
+      #zrReservationChangeAdminPanel,#zrReservationChangeAdminList,.zr-cr-card{min-width:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box!important}
+      #zrReservationChangeAdminList .zr-cr-route{grid-template-columns:minmax(0,1fr)!important}
+      #zrReservationChangeAdminList .zr-cr-box,#zrReservationChangeAdminList .zr-cr-box b{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+      #zrReservationChangeAdminList .zr-cr-meta{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;min-width:0!important}
+      #zrReservationChangeAdminList .zr-cr-meta span{min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+      #zrReservationChangeAdminList .zr-cr-body{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important}
+      #zrReservationChangeAdminList .zr-cr-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:7px!important;width:100%!important}
+      #zrReservationChangeAdminList .zr-cr-actions button{width:100%!important;min-width:0!important;white-space:normal!important}
+    }
   `;
   document.head.appendChild(s);
 }
@@ -53,15 +63,17 @@ function setText(el,v){if(el)el.textContent=String(countValue(v))}
 function syncBadge(){
   const badge=$('zrAdminMobileBellBadge');if(!badge)return;
   let total=0;document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]').forEach(el=>{const n=parseInt(String(el.textContent||'0').replace(/[^0-9-]/g,''),10);if(Number.isFinite(n)&&n>0)total+=n});
-  badge.textContent=total>99?'99+':String(total);badge.hidden=total===0;
+  const text=total>99?'99+':String(total);if(badge.textContent!==text)badge.textContent=text;badge.hidden=total===0;
+}
+function ensureAlertCountObserver(){
+  const list=document.querySelector('#zrAdminMobileAlertsV1 .zr-admin-mobile-alert-list');if(!list||alertCountObserver)return;
+  alertCountObserver=new MutationObserver(()=>queueMicrotask(syncBadge));
+  alertCountObserver.observe(list,{subtree:true,childList:true,characterData:true});
 }
 function sync(){
   if(!mobile())return;
-  installStyle();ensureAlertRow();ensureDrawerRow();
+  installStyle();ensureAlertRow();ensureDrawerRow();ensureAlertCountObserver();
   const pendingReservation=sharedPendingReservation===null?localPendingReservation():sharedPendingReservation;
-  /* Use the exact same booking source as the desktop smart panel. The shared
-     Firestore listeners wake this view up, but they do not build a second
-     reservation-change count with their own request-id deduplication rules. */
   const pendingChange=localPendingChange();
   setText($('zrSmartPendingReservation'),pendingReservation);setText($('zrSmartReservationChange'),pendingChange);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartPendingReservation"]'),pendingReservation);
