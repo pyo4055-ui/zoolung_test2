@@ -66,6 +66,8 @@ function installStyle(){
     #inquiryModal .zr-inquiry-org{grid-area:org}
     #inquiryModal .zr-inquiry-email{grid-area:email}
     #inquiryModal .zr-inquiry-mobile{grid-area:mobile}
+    #zrInquiryFormStage .zr-inquiry-invalid-target{border:2px solid #d94a4a!important;background:#fff2f2!important;box-shadow:0 0 0 3px rgba(217,74,74,.11)!important}
+    #zrInquiryFormStage .zr-inquiry-invalid-section{border:2px solid #d94a4a!important;background:#fff6f6!important;box-shadow:0 0 0 3px rgba(217,74,74,.09)!important;border-radius:12px!important}
     #zrInquiryReviewStage,#zrInquiryCompleteStage{padding:2px 0}
     #zrInquiryReviewStage h2,#zrInquiryCompleteStage h2{margin:0 0 8px}
     #zrInquiryReviewStage .zr-review-help,#zrInquiryCompleteStage .zr-review-help{font-size:13px;line-height:1.65;color:var(--muted,#6d756f);margin-bottom:16px}
@@ -86,6 +88,8 @@ function installStyle(){
       #zrInquiryVisitFields .zr-inquiry-visit-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
       #zrInquiryVisitFields .zr-inquiry-date-selects{gap:6px}
       #inquiryModal .zr-inquiry-contact-grid{grid-template-columns:1fr;grid-template-areas:"name" "org" "phone" "email" "mobile"}
+      #inquiryModal.zr-reservation-change-mode #zrChangeExitField{min-width:0!important;width:100%!important;max-width:100%!important;overflow:hidden!important}
+      #inquiryModal.zr-reservation-change-mode #zrChangeExitTime{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;height:50px!important;min-height:50px!important;max-height:50px!important;margin:0!important;padding:0 12px!important;box-sizing:border-box!important;font-size:15px!important;line-height:normal!important}
       #zrInquiryReviewStage .zr-review-grid{grid-template-columns:1fr}
       #zrInquiryReviewStage .zr-review-row.full{grid-column:auto}
     }
@@ -235,6 +239,28 @@ function install(){
 
   let draft=null,nativeSubmit=false;
 
+  function invalidNode(el){
+    if(!el)return null;
+    if(el===privacy)return privacy.closest('.calc')||privacy.parentElement||privacy;
+    if(el===visitMonth||el===visitDay)return el.closest('.zr-inquiry-date-selects')||el;
+    return el;
+  }
+  function clearInvalidMarks(){
+    modal.querySelectorAll('.zr-inquiry-invalid-target,.zr-inquiry-invalid-section').forEach(el=>{el.classList.remove('zr-inquiry-invalid-target','zr-inquiry-invalid-section');el.removeAttribute('aria-invalid')});
+  }
+  function markInvalid(elements,message){
+    clearInvalidMarks();
+    const nodes=[...new Set((Array.isArray(elements)?elements:[elements]).map(invalidNode).filter(Boolean))];
+    nodes.forEach(node=>{const field=node.matches?.('input,select,textarea');node.classList.add(field?'zr-inquiry-invalid-target':'zr-inquiry-invalid-section');node.setAttribute('aria-invalid','true')});
+    showStage(stages,'form');
+    const first=nodes[0];
+    setTimeout(()=>{
+      if(first){try{first.scrollIntoView({behavior:'smooth',block:'center'})}catch{}const focus=first.matches?.('input,select,textarea')?first:first.querySelector?.('input,select,textarea');try{focus?.focus({preventScroll:true})}catch{try{focus?.focus()}catch{}}}
+    },30);
+    showToast(message);
+    return null;
+  }
+
   function fillMonths(){
     const current=visitMonth.value;
     const today=new Date();
@@ -287,7 +313,7 @@ function install(){
   function updatePeopleLabel(){peopleLabel.textContent=type.value==='preview'?'사전답사 인원':type.value==='group'?'단체 인원':'인원'}
   function updateTypeUi(){updatePeopleLabel();fillTimeOptions()}
   function resetVisitFields(){
-    type.value='';visitMonth.value='';visitDay.innerHTML='<option value="">일 선택</option>';visitDay.disabled=true;visitDate.value='';visitTime.value='';people.value='';org.value='';draft=null;fillMonths();updateTypeUi();showStage(stages,'form');
+    clearInvalidMarks();type.value='';visitMonth.value='';visitDay.innerHTML='<option value="">일 선택</option>';visitDay.disabled=true;visitDate.value='';visitTime.value='';people.value='';org.value='';draft=null;fillMonths();updateTypeUi();showStage(stages,'form');
   }
   function setGroupInquiry(){resetVisitFields();type.value='group';updateTypeUi()}
   function validTime(v,inquiryType){
@@ -297,16 +323,24 @@ function install(){
   }
   function collectDraft(){
     syncDate();
+    if(modal.classList.contains('zr-reservation-change-mode')&&phone&&!phone.value.trim()&&/^010[0-9]{8}$/.test(mobile.value.trim()))phone.value=mobile.value.trim();
     const inquiryType=type.value,orgName=org.value.trim(),date=visitDate.value,time=visitTime.value,count=Math.trunc(Number(people.value));
     const person=name.value.trim(),mobileNo=mobile.value.trim(),phoneNo=phone?.value?.trim()||'',emailValue=email.value.trim(),body=content.value.trim();
-    if(!inquiryType||!orgName||!date||!time||!Number.isFinite(count)||count<1||!person||!mobileNo||!body||!privacy.checked){
-      showToast('필수 입력 항목과 개인정보 수집·이용 동의를 확인해주세요.');return null;
-    }
-    if(!/^010[0-9]{8}$/.test(mobileNo)){
-      showToast('휴대폰번호는 010으로 시작하는 숫자 11자리로 입력해주세요.');mobile.focus();return null;
-    }
-    if(!validTime(time,inquiryType)){showToast(inquiryType==='group'?'단체 방문시간은 10:30~18:00 중 30분 단위로 선택해주세요.':'사전답사 방문시간은 11:00~18:00 중 30분 단위로 선택해주세요.');return null}
-    if(emailValue&&!email.validity.valid){showToast('이메일 주소 형식을 확인해주세요.');email.focus();return null}
+    const missing=[];
+    if(!inquiryType)missing.push(type);
+    if(!date)missing.push(!visitMonth.value?visitMonth:visitDay);
+    if(!time)missing.push(visitTime);
+    if(!Number.isFinite(count)||count<1)missing.push(people);
+    if(!person)missing.push(name);
+    if(!orgName)missing.push(org);
+    if(!mobileNo)missing.push(mobile);
+    if(!body)missing.push(content);
+    if(!privacy.checked)missing.push(privacy);
+    if(missing.length)return markInvalid(missing,'빨간색으로 표시된 필수 입력 항목을 확인해주세요.');
+    if(!/^010[0-9]{8}$/.test(mobileNo))return markInvalid([mobile],'휴대폰번호는 010으로 시작하는 숫자 11자리로 입력해주세요.');
+    if(!validTime(time,inquiryType))return markInvalid([visitTime],inquiryType==='group'?'단체 방문시간은 10:30~18:00 중 30분 단위로 선택해주세요.':'사전답사 방문시간은 11:00~18:00 중 30분 단위로 선택해주세요.');
+    if(emailValue&&!email.validity.valid)return markInvalid([email],'이메일 주소 형식을 확인해주세요.');
+    clearInvalidMarks();
     return {inquiryType,orgName,date,time,count,person,mobileNo,phoneNo,emailValue,body};
   }
   function prefixOf(d){
@@ -332,25 +366,44 @@ function install(){
   }
   function submitNative(){
     if(!draft)return;
+    const finalBtn=document.getElementById('zrInquiryReviewSubmit');
     const before=readInquiries().length,originalBody=content.value,originalEmail=email.value;
     content.value=`${prefixOf(draft)}\n\n${draft.body}`;
     if(!draft.emailValue)email.value=OPTIONAL_EMAIL_SENTINEL;
+    if(finalBtn)finalBtn.disabled=true;
     const oldToast=window.toast;window.toast=()=>{};nativeSubmit=true;
     try{submit.click()}finally{nativeSubmit=false;window.toast=oldToast}
-    setTimeout(()=>{
-      const after=readInquiries().length;
-      clearOptionalEmailSentinel();email.value=originalEmail;content.value=originalBody;
-      if(after<=before){showStage(stages,'form');showToast('문의 접수에 실패했습니다. 입력 내용을 다시 확인해주세요.');return}
+    let restored=false;
+    const restore=()=>{if(restored)return;restored=true;clearOptionalEmailSentinel();email.value=originalEmail;content.value=originalBody;if(finalBtn)finalBtn.disabled=false};
+    const success=()=>{
+      restore();
       try{if(typeof window.openModal==='function')window.openModal('inquiryModal');else modal.classList.remove('hidden')}catch{modal.classList.remove('hidden')}
       showStage(stages,'complete');draft=null;
       modal.querySelector('.modal-card')?.scrollTo?.({top:0});
-    },0);
+    };
+    const fail=()=>{
+      restore();showStage(stages,'form');
+      const recheck=collectDraft();
+      if(recheck){showToast('입력 내용은 정상인데 접수가 완료되지 않았습니다. 잠시 후 다시 시도해주세요.');try{modal.querySelector('.modal-card')?.scrollTo?.({top:0,behavior:'smooth'})}catch{}}
+    };
+    const waits=[40,100,180,300,500,800];
+    const verify=attempt=>{
+      if(readInquiries().length>before){success();return}
+      if(attempt>=waits.length){fail();return}
+      setTimeout(()=>verify(attempt+1),waits[attempt]);
+    };
+    setTimeout(()=>verify(0),20);
   }
 
   fillMonths();fillDays();updateTypeUi();
   if(visitMonth.dataset.zrBound!=='1'){visitMonth.dataset.zrBound='1';visitMonth.addEventListener('change',()=>{visitDay.value='';fillDays()})}
   if(visitDay.dataset.zrBound!=='1'){visitDay.dataset.zrBound='1';visitDay.addEventListener('change',syncDate)}
   if(type.dataset.zrInquiryVisitBound!=='1'){type.dataset.zrInquiryVisitBound='1';type.addEventListener('change',updateTypeUi)}
+  if(modal.dataset.zrInquiryInvalidClearBound!=='1'){
+    modal.dataset.zrInquiryInvalidClearBound='1';
+    const clearFor=e=>{const node=invalidNode(e.target);node?.classList.remove('zr-inquiry-invalid-target','zr-inquiry-invalid-section');node?.removeAttribute('aria-invalid')};
+    modal.addEventListener('input',clearFor,true);modal.addEventListener('change',clearFor,true);
+  }
 
   if(submit.dataset.zrInquiryReviewBound!=='1'){
     submit.dataset.zrInquiryReviewBound='1';
