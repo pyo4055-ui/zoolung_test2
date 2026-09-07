@@ -12,8 +12,9 @@ const tagFile='customer_reservation_change_request_tag_v1.js';
 const adminFile='admin_reservation_change_requests_shared_v1.js';
 const adminBridgeFile='reservation_firebase_bridge.js';
 const customerBridgeFile='customer_reservation_firebase_bridge_v1.js';
-const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile);
-[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile].forEach(syntax);
+const mobileAlertFile='admin_mobile_reservation_change_alert_v1.js';
+const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile),mobileAlert=read(mobileAlertFile);
+[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile,mobileAlertFile].forEach(syntax);
 
 for(const needle of [
   '__ZR_RESERVATION_CHANGE_DEDICATED_V1',
@@ -36,7 +37,10 @@ for(const needle of [
   'openNotice(id)','openChangeModal(bookingId)','zrChangeTargetBooking',
   '#zrReservationChangeSelectV1 .zr-change-select-head','background:#fc5404;color:#fff',
   '#zrReservationChangeSelectV1 .zr-modal-ux-header{display:none!important}',
-  '#zrReservationChangeNoticeV1 .zr-change-notice-head'
+  '#zrReservationChangeNoticeV1 .zr-change-notice-head',
+  'function localTomorrow()','minDate=localTomorrow()',"String(o.value)>=minDate",
+  '#zrReservationChangeComplete .zr-change-actions{display:flex!important;justify-content:center!important',
+  '#zrReservationChangeComplete .zr-change-actions button{width:min(260px,100%)!important}'
 ])if(!ui.includes(needle))fail(`dedicated customer change flow missing: ${needle}`);
 
 for(const forbidden of [
@@ -79,10 +83,17 @@ for(const needle of [
   'lastWriteError','async function waitForWrites()'
 ])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} shared-request/playground-hold contract missing: ${needle}`);
 
+for(const needle of [
+  "F.collection(bridge.db,'customerInquiries')",'sharedInquiryChanges=new Map()','sharedReservationChanges=new Map()',
+  'function recomputeSharedChangeCount()',"if(x.changeRequest!==true)return",'changeRequestId',
+  'sharedReservationChanges?.has(key)?sharedReservationChanges.get(key):sharedInquiryChanges?.get(key)',
+  'x.changePlayHoldDedicated!==true',"document.addEventListener('zr:inquiry-shared-updated'"
+])if(!mobileAlert.includes(needle))fail(`mobile reservation-change alert contract missing: ${needle}`);
+
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
 for(const forbidden of ['updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only use staff reads and merge writes needed for existing reservationAvailability hold cleanup: ${forbidden}`);
 if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fail('frozen reservation bridge availability contract missing');
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps the picker/editor UX, saves shared requests without customer ownership of reservation docs, reserves playground through dedicated availability holds, lets admin mirror requests under staff authority, and preserves legacy compatibility');
+ok('reservation change keeps the picker/editor UX, starts future date choices tomorrow, centers completion, saves shared requests without customer ownership of reservation docs, reserves playground through dedicated availability holds, lets admin mirror requests under staff authority, and counts mobile alerts from shared inquiries without duplicate hold reservations');
