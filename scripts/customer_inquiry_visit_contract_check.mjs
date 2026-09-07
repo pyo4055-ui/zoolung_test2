@@ -55,7 +55,10 @@ const required=[
   'OPTIONAL_EMAIL_SENTINEL',
   "window.toast=()=>{}",
   'clearOptionalEmailSentinel()',
-  "if(after<=before)",
+  'const waits=[40,100,180,300,500,800]',
+  'if(readInquiries().length>before)',
+  'zr-inquiry-invalid-target',
+  '빨간색으로 표시된 필수 입력 항목을 확인해주세요.',
   '단체예약 접수 및 관리, 예약 확인·변경·취소, 이용 안내를 위해 단체명, 예약자명, 연락처, 이메일(선택), 예약 관련 요청사항 등 예약 과정에서 입력한 정보를 수집·이용합니다.',
   '수집된 개인정보는 이용 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 안전하게 보관합니다.',
   "submit.addEventListener('click'",
@@ -70,6 +73,10 @@ for(const needle of required){
 
 if(helper.includes('type="date"')||helper.includes('type="time"')){
   console.error('Inquiry visit date/time must use reservation-style selects rather than native browser date/time controls.');
+  process.exit(1);
+}
+if(helper.includes('if(after<=before)')){
+  console.error('Inquiry completion must not fail after a single immediate storage-length check.');
   process.exit(1);
 }
 if(helper.includes('테스트 버전에서는 현재 브라우저에만 저장됩니다.')){
@@ -89,4 +96,4 @@ if(!loader.includes("./customer_inquiry_visit_v1.js?v=1")){
   process.exit(1);
 }
 
-console.log('OK: inquiry uses booking-style month/day/time selects, strict 010 + 11-digit mobile validation, section spacing, review flow and zr_inquiries compatibility.');
+console.log('OK: inquiry uses booking-style month/day/time selects, strict 010 + 11-digit mobile validation, visible invalid-field guidance, resilient review submission and zr_inquiries compatibility.');
