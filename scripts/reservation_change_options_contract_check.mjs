@@ -8,13 +8,14 @@ const read=p=>fs.readFileSync(p,'utf8');
 const syntax=file=>{try{execFileSync(process.execPath,['--check',file],{stdio:'pipe'});ok(`syntax ${file}`)}catch(e){fail(`syntax ${file}: ${e.stderr?.toString()||e.message}`)}};
 
 const uiFile='customer_reservation_change_request_v1.js';
+const inquiryFile='customer_inquiry_visit_v1.js';
 const tagFile='customer_reservation_change_request_tag_v1.js';
 const adminFile='admin_reservation_change_requests_shared_v1.js';
 const adminBridgeFile='reservation_firebase_bridge.js';
 const customerBridgeFile='customer_reservation_firebase_bridge_v1.js';
-const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile);
+const ui=read(uiFile),inquiry=read(inquiryFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile);
 
-[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile].forEach(syntax);
+[uiFile,inquiryFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile].forEach(syntax);
 
 for(const needle of [
   'zrChangePlayMode','zrChangePlayStart','zrChangePlayDuration',
@@ -26,6 +27,14 @@ for(const needle of [
   'zr:reservation-availability-updated',' (마감)','선택한 놀이터 시간은 이미 마감되었습니다.'
 ])if(!ui.includes(needle))fail(`customer change UI missing: ${needle}`);
 if(ui.includes('<option value="keep">현재 예약 유지</option>'))fail('customer change UI must not expose current-reservation-keep options');
+
+for(const needle of [
+  '#inquiryModal.zr-reservation-change-mode #zrChangeExitTime','max-height:50px!important','min-width:0!important',
+  'zr-inquiry-invalid-target','zr-inquiry-invalid-section','markInvalid(elements,message)',
+  "modal.classList.contains('zr-reservation-change-mode')&&phone&&!phone.value.trim()",
+  "phone.value=mobile.value.trim()",'const waits=[40,100,180,300,500,800]',
+  '빨간색으로 표시된 필수 입력 항목을 확인해주세요.','입력 내용은 정상인데 접수가 완료되지 않았습니다.'
+])if(!inquiry.includes(needle))fail(`customer inquiry/change submit guard missing: ${needle}`);
 
 for(const needle of [
   'requestedExitTime','changeRequestedExitTime','zrChangeExitTime',
@@ -59,4 +68,4 @@ if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fa
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change defaults are explicit, exit time is requestable, playground holds remain shared, and admin applies the full requested visit range');
+ok('reservation change defaults are explicit, exit time is requestable, mobile validation is visible, playground holds remain shared, and admin applies the full requested visit range');
