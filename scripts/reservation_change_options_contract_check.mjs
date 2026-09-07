@@ -13,8 +13,10 @@ const adminFile='admin_reservation_change_requests_shared_v1.js';
 const adminBridgeFile='reservation_firebase_bridge.js';
 const customerBridgeFile='customer_reservation_firebase_bridge_v1.js';
 const mobileAlertFile='admin_mobile_reservation_change_alert_v1.js';
-const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile),mobileAlert=read(mobileAlertFile);
-[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile,mobileAlertFile].forEach(syntax);
+const adminEntryFile='admin.html';
+const adminBootGuardFile='admin_booking_cache_boot_guard_v1.js';
+const ui=read(uiFile),tag=read(tagFile),admin=read(adminFile),adminBridge=read(adminBridgeFile),customerBridge=read(customerBridgeFile),mobileAlert=read(mobileAlertFile),adminEntry=read(adminEntryFile),adminBootGuard=read(adminBootGuardFile);
+[uiFile,tagFile,adminFile,adminBridgeFile,customerBridgeFile,mobileAlertFile,adminBootGuardFile].forEach(syntax);
 
 for(const needle of [
   '__ZR_RESERVATION_CHANGE_DEDICATED_V1',
@@ -92,6 +94,8 @@ for(const needle of [
 ])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} shared-request/playground-hold contract missing: ${needle}`);
 
 for(const needle of [
+  'function allBookings()',
+  "typeof window.bookings==='function'?window.bookings()",
   'function localPendingChange()',
   "const pendingChange=localPendingChange()",
   "F.collection(bridge.db,'customerInquiries'),()=>sync()",
@@ -101,10 +105,22 @@ for(const needle of [
 ])if(!mobileAlert.includes(needle))fail(`mobile reservation-change alert contract missing: ${needle}`);
 for(const forbidden of ['recomputeSharedChangeCount','sharedReservationChanges=new Map()','sharedInquiryChanges=new Map()'])if(mobileAlert.includes(forbidden))fail(`mobile reservation-change alert must not independently deduplicate desktop pending requests: ${forbidden}`);
 
+for(const needle of [
+  '__ZR_ADMIN_BOOKING_CACHE_BOOT_GUARD_V1',
+  "localStorage.getItem('zr_bookings')",
+  "localStorage.setItem('zr_bookings','[]')",
+  '__ZR_ADMIN_BOOKING_CACHE_PREBOOT_COUNT'
+])if(!adminBootGuard.includes(needle))fail(`admin booking cache boot guard missing: ${needle}`);
+const guardTag='<script src="./admin_booking_cache_boot_guard_v1.js?v=1"><\\/script>';
+const bridgeTag='<script src="./reservation_firebase_bridge.js?v=1"><\\/script>';
+if(!adminEntry.includes(guardTag))fail('admin entry does not load stale-booking cache guard');
+if(adminEntry.indexOf(guardTag)<0||adminEntry.indexOf(bridgeTag)<0||adminEntry.indexOf(guardTag)>adminEntry.indexOf(bridgeTag))fail('admin booking cache guard must load before reservation firebase bridge');
+if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=4'))fail('admin entry must bust cache for corrected mobile reservation-change count');
+
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
 for(const forbidden of ['updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only use staff reads and merge writes needed for existing reservationAvailability hold cleanup: ${forbidden}`);
 if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fail('frozen reservation bridge availability contract missing');
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps the picker/editor UX, starts future date choices tomorrow, blocks weekends and configured unavailable holidays, centers completion, saves shared requests without customer ownership of reservation docs, reserves playground through dedicated availability holds, lets admin mirror requests under staff authority, and mirrors mobile alert counts from the same pending booking requests as desktop');
+ok('reservation change keeps customer date/play/meal rules, protects admin startup from stale local reservation migration, counts mobile change requests from the same booking source as desktop, and leaves the frozen reservation bridge unchanged');
