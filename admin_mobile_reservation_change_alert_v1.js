@@ -7,8 +7,7 @@ const FIREBASE_VERSION='12.17.1';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
 let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0;
-let sharedPendingReservation=null,sharedPendingChange=null;
-let sharedReservationChanges=null,sharedInquiryChanges=null;
+let sharedPendingReservation=null;
 
 function installStyle(){
   if($('zrAdminMobileReservationChangeAlertStyleV1'))return;
@@ -44,18 +43,6 @@ function localPendingReservation(){return localBookings().filter(b=>String(b.sta
 function localPendingChange(){return localBookings().filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
 function setText(el,v){if(el)el.textContent=String(countValue(v))}
-function changeActive(status){return !['done','rejected'].includes(String(status||'pending'))}
-function recomputeSharedChangeCount(){
-  if(sharedReservationChanges===null&&sharedInquiryChanges===null){sharedPendingChange=null;return}
-  const keys=new Set([...(sharedInquiryChanges?.keys?.()||[]),...(sharedReservationChanges?.keys?.()||[])]);
-  let count=0;
-  for(const key of keys){
-    const status=sharedReservationChanges?.has(key)?sharedReservationChanges.get(key):sharedInquiryChanges?.get(key);
-    if(changeActive(status))count++;
-  }
-  sharedPendingChange=count;
-  sync();
-}
 function syncBadge(){
   const badge=$('zrAdminMobileBellBadge');if(!badge)return;
   let total=0;document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]').forEach(el=>{const n=parseInt(String(el.textContent||'0').replace(/[^0-9-]/g,''),10);if(Number.isFinite(n)&&n>0)total+=n});
@@ -65,9 +52,10 @@ function sync(){
   if(!mobile())return;
   installStyle();ensureAlertRow();ensureDrawerRow();
   const pendingReservation=sharedPendingReservation===null?localPendingReservation():sharedPendingReservation;
-  const pendingChange=sharedPendingChange===null?localPendingChange():sharedPendingChange;
-  /* Keep the hidden PC summary counters and the visible mobile rows on one value so
-     the original mobile shell cannot restore an older local count on its next sync. */
+  /* Reservation-change count deliberately uses the same local booking requests as
+     the desktop 처리 대기 panel/admin request list. Firestore listeners only wake
+     this view up; they do not independently deduplicate request IDs. */
+  const pendingChange=localPendingChange();
   setText($('zrSmartPendingReservation'),pendingReservation);setText($('zrSmartReservationChange'),pendingChange);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartPendingReservation"]'),pendingReservation);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartReservationChange"]'),pendingChange);
@@ -90,19 +78,13 @@ async function attachSharedCounts(){
         reservationsStop=F.onSnapshot(F.collection(bridge.db,'reservations'),snap=>{
           const rows=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
           sharedPendingReservation=rows.filter(b=>String(b.status||'')==='pending').length;
-          sharedReservationChanges=new Map();
-          rows.forEach(b=>{const r=b?.reservationChangeRequest;if(!r||typeof r!=='object')return;const key=String(r.id||`booking:${b.id}`);sharedReservationChanges.set(key,String(r.status||'pending'))});
-          recomputeSharedChangeCount();sync();
+          sync();
         },()=>{});
       }catch{}
     }
     if(!inquiriesStop){
       try{
-        inquiriesStop=F.onSnapshot(F.collection(bridge.db,'customerInquiries'),snap=>{
-          sharedInquiryChanges=new Map();
-          snap.docs.forEach(d=>{const x=d.data()||{};if(x.changeRequest!==true)return;const key=String(x.changeRequestId||x.id||d.id);sharedInquiryChanges.set(key,String(x.changeRequestStatus||'pending'))});
-          recomputeSharedChangeCount();
-        },()=>{});
+        inquiriesStop=F.onSnapshot(F.collection(bridge.db,'customerInquiries'),()=>sync(),()=>{});
       }catch{}
     }
   }
@@ -115,6 +97,8 @@ function start(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(start,0),{once:true});
-document.addEventListener('zr:inquiry-shared-updated',()=>setTimeout(attachSharedCounts,0));
+document.addEventListener('zr:inquiry-shared-updated',()=>setTimeout(sync,0));
+document.addEventListener('zr:inquiry-replies-changed',()=>setTimeout(sync,0));
+window.addEventListener('storage',e=>{if(e.key==='zr_bookings'||e.key==='zr_inquiries')setTimeout(sync,0)});
 window.addEventListener('resize',()=>{if(mobile())start()},{passive:true});
 })();
