@@ -9,8 +9,10 @@ const LOCK_ATTR='zrVisitDateLock';
 const OVERLAP_ATTR='zrOverlapDisabled';
 const ENTRY_START_ATTR='zrEntryLinkDisabled';
 const ENTRY_DURATION_ATTR='zrEntryDurationDisabled';
+const CHANGE_HOLD_ATTR='zrChangeHoldDisabled';
 const ENTRY_RULE_SUFFIX=' (입장 직전만 가능)';
 const ENTRY_OVERLAP_SUFFIX=' (60분 마감)';
+const CHANGE_HOLD_SUFFIX=' (변경요청 마감)';
 let observingStart=null,observingDuration=null;
 let startObserver=null,durationObserver=null;
 
@@ -106,7 +108,7 @@ function durationOption(minutes){
   return [...el.options].find(o=>durationMinutes(o)===minutes)||null;
 }
 function optionBaseText(o){
-  return String(o?.textContent||'').replace(ENTRY_RULE_SUFFIX,'').replace(ENTRY_OVERLAP_SUFFIX,'');
+  return String(o?.textContent||'').replace(ENTRY_RULE_SUFFIX,'').replace(ENTRY_OVERLAP_SUFFIX,'').replace(CHANGE_HOLD_SUFFIX,'');
 }
 function restoreEntryStartOption(o){
   if(!o||o.dataset[ENTRY_START_ATTR]!=='1')return;
@@ -144,6 +146,52 @@ function disableEntryDurationOption(o){
 function restoreEntryDurationLimits(){
   const duration=playDuration();if(!duration||duration.tagName!=='SELECT')return;
   [...duration.options].forEach(restoreEntryDurationOption);
+}
+function readBookingCache(){
+  try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v:[]}
+  catch{return []}
+}
+function activeChangeHoldRanges(){
+  const date=visitDate();if(!date)return [];
+  return readBookingCache().filter(row=>{
+    if(!row||String(row.date||'')!==date)return false;
+    if(row.__changePlayHold!==true&&!String(row.id||'').startsWith('changePlayHold_'))return false;
+    if(['done','cancelled','rejected'].includes(String(row.status||'')))return false;
+    return String(row.playUse||'no')==='yes';
+  }).map(row=>{
+    const start=timeMinutes(row.playStart),end=timeMinutes(row.playEnd);
+    return Number.isFinite(start)&&Number.isFinite(end)&&end>start?{start,end}:null;
+  }).filter(Boolean);
+}
+function restoreChangeHoldOption(o){
+  if(!o||o.dataset[CHANGE_HOLD_ATTR]!=='1')return;
+  o.disabled=o.dataset.zrChangeHoldWasDisabled==='1';
+  o.textContent=optionBaseText(o);
+  delete o.dataset[CHANGE_HOLD_ATTR];
+  delete o.dataset.zrChangeHoldWasDisabled;
+}
+function disableChangeHoldOption(o){
+  if(!o||o.dataset[CHANGE_HOLD_ATTR]==='1')return;
+  o.dataset[CHANGE_HOLD_ATTR]='1';
+  o.dataset.zrChangeHoldWasDisabled=o.disabled?'1':'0';
+  o.disabled=true;
+  o.textContent=optionBaseText(o)+CHANGE_HOLD_SUFFIX;
+}
+function syncChangeHoldStartLimit(){
+  const start=playStart();if(!start||start.tagName!=='SELECT')return;
+  [...start.options].forEach(restoreChangeHoldOption);
+  if(!playRequested()||!visitDate())return;
+  const holds=activeChangeHoldRanges();if(!holds.length)return;
+  [...start.options].forEach(o=>{
+    const sm=timeMinutes(String(o.value||'').trim());if(sm===null)return;
+    const end=sm+30;
+    if(holds.some(h=>sm<h.end&&end>h.start))disableChangeHoldOption(o);
+  });
+  const selected=start.selectedOptions?.[0];
+  if(selected?.disabled&&String(start.value||'')){
+    start.value='';
+    start.dispatchEvent(new Event('change',{bubbles:true}));
+  }
 }
 function syncEntryStartLimit(){
   const start=playStart();
@@ -290,14 +338,14 @@ function syncHelp(){
 }
 function preEntryValidationMessage(){
   if(!playRequested())return '';
-  const pre=preEntryState();if(!pre)return '';
-  if((pre.gap!==30&&pre.gap!==60)||pre.duration!==pre.gap){
-    return '동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분으로만 예약할 수 있습니다.';
-  }
   const startOption=playStart()?.selectedOptions?.[0];
   const durationOptionSelected=playDuration()?.selectedOptions?.[0];
   if(startOption?.disabled||durationOptionSelected?.disabled){
-    return '선택한 놀이터 시간은 다른 단체 예약과 겹쳐 이용할 수 없습니다. 다른 시간을 선택해주세요.';
+    return '선택한 놀이터 시간은 다른 단체 예약 또는 예약변경 요청과 겹쳐 이용할 수 없습니다. 다른 시간을 선택해주세요.';
+  }
+  const pre=preEntryState();if(!pre)return '';
+  if((pre.gap!==30&&pre.gap!==60)||pre.duration!==pre.gap){
+    return '동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분으로만 예약할 수 있습니다.';
   }
   return '';
 }
@@ -307,6 +355,7 @@ function syncLock(){
   if(noDate&&requested){lockControl(playStart());lockControl(playDuration())}
   else {unlockControl(playStart());unlockControl(playDuration())}
   syncEntryStartLimit();
+  syncChangeHoldStartLimit();
   syncDurationLimit();
   syncEntryDurationLimit();
   syncHelp();
@@ -332,6 +381,8 @@ function boot(){
     if(!['visitMonth','visitDay','playUse','playStart','playDuration','entryTime','exitTime'].includes(id))return;
     setTimeout(apply,0);setTimeout(apply,80);
   },true);
+  document.addEventListener('zr:reservation-availability-updated',()=>{setTimeout(apply,0);setTimeout(apply,80)});
+  window.addEventListener('storage',e=>{if(e.key==='zr_bookings')setTimeout(apply,0)});
   document.addEventListener('click',e=>{if(e.target?.closest?.('#submitBooking'))guardSubmit(e)},true);
   document.addEventListener('submit',e=>{if(e.target?.closest?.('#customerView'))guardSubmit(e)},true);
   const root=$('customerView')||document.body;
