@@ -27,26 +27,26 @@ for(const needle of [
   "state.reason==='full'?' (마감)'",
   'requestedDate:x.date,requestedTime:x.entry,requestedExitTime:x.exit',
   'changePlay:true','changeMeal:true','booking.reservationChangeRequest={',
-  'window.setStore(BOOKING_KEY,list)','waitForReservationBridge','waitForSavedRequest',
+  'window.setStore(BOOKING_KEY,list)','waitForReservationBridge','window.zrReservationFirebase.waitForWrites()',
   'zr:reservation-change-request-shared','zr-change-invalid','scrollIntoView',
   '식사하지 않는 단체는 최대 3시간까지 이용할 수 있습니다.',
   '식사 이용 단체는 최대 4시간까지 이용할 수 있습니다.',
   'zrReservationChangeSelectV1','zrReservationChangeSelectList','zr-change-select-item','data-zr-change-select',
   'openChangeSelect','closeChangeSelect','changeChoiceHtml','이 예약 변경하기','2. 예약 변경하기',
   'openNotice(id)','openChangeModal(bookingId)','zrChangeTargetBooking',
-  'background:#fff;color:#38271e;border-bottom:1px solid #e9e1dc',
+  'background:#fc5404;color:#fff;border-bottom:1px solid #e84d04',
   'zr-change-modal-head:has(.zr-modal-ux-title-source){display:none!important}'
 ])if(!ui.includes(needle))fail(`dedicated customer change flow missing: ${needle}`);
 
 for(const forbidden of [
   'submitInquiry','inquiryModal','inqVisitTime','inqVisitDate','type="time"','collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc(',
   'zrChangeBookingSelect','populateBookingSelector','변경할 예약을 선택해주세요',
-  'zr-change-card-button','dataset.zrChangeBookingId','decorateChangeCards','bookingForCard','#changeExisting{display:none!important}'
+  'zr-change-card-button','dataset.zrChangeBookingId','decorateChangeCards','bookingForCard','#changeExisting{display:none!important}',
+  'waitForSavedRequest','const saved=readBookings().find'
 ]){
-  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore/duplicate-card-selection flow: ${forbidden}`);
+  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore/duplicate-card/local-cache-verification flow: ${forbidden}`);
 }
 if(ui.includes('<option value="keep">현재 예약 유지</option>'))fail('dedicated change flow must expose actual values, not a keep placeholder');
-if(ui.includes('const saved=readBookings().find'))fail('reservation change must not fail on one immediate synchronous storage verification');
 
 for(const needle of [
   'requestedExitTime','changeRequestedExitTime','changePlay','changeMeal',
@@ -67,8 +67,9 @@ for(const needle of [
   'function changePlayHold(b)','changePlayHoldActive','changePlayHoldRequestId','changePlayHoldDate',
   'changePlayHoldStart','changePlayHoldEnd','changePlayHoldDuration','function changePlayHoldPlaceholder(a)',
   '__changePlayHold:true','sourceBookingId:sourceId','const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean)',
-  'playUse:b.playUse','playStart:b.playStart','playEnd:b.playEnd',"['cancelled','rejected'].includes(String(b?.status||''))"
-])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} playground hold contract missing: ${needle}`);
+  'playUse:b.playUse','playStart:b.playStart','playEnd:b.playEnd',"['cancelled','rejected'].includes(String(b?.status||''))",
+  'lastWriteError','async function waitForWrites()','waitForWrites\n    }'
+])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} playground/write-completion contract missing: ${needle}`);
 
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
 for(const forbidden of ['collection(z.db','collection(db','updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only merge-clear the existing reservationAvailability hold document: ${forbidden}`);
@@ -76,4 +77,4 @@ if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fa
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps the global step-2 action, opens a cancellation-style booking picker, then notice + dedicated booking-style editor, writes resiliently, keeps shared playground holds, and stays independent from 1:1 inquiry');
+ok('reservation change keeps the global step-2 picker flow, uses the booking-style editor, awaits the real customer Firebase write chain before success, keeps shared playground holds, and stays independent from 1:1 inquiry');
