@@ -28,11 +28,19 @@ for(const needle of [
   "const OVERLAP_ATTR='zrOverlapDisabled'",
   "const ENTRY_START_ATTR='zrEntryLinkDisabled'",
   "const ENTRY_DURATION_ATTR='zrEntryDurationDisabled'",
+  "const CHANGE_HOLD_ATTR='zrChangeHoldDisabled'",
   "const ENTRY_RULE_SUFFIX=' (입장 직전만 가능)'",
   "const ENTRY_OVERLAP_SUFFIX=' (60분 마감)'",
+  "const CHANGE_HOLD_SUFFIX=' (변경요청 마감)'",
   'function controlsRow()',
   "row.insertAdjacentElement('afterend',n)",
   'white-space:nowrap',
+  'function readBookingCache()',
+  "localStorage.getItem('zr_bookings')",
+  'function activeChangeHoldRanges()',
+  "row.__changePlayHold!==true&&!String(row.id||'').startsWith('changePlayHold_')",
+  'function syncChangeHoldStartLimit()',
+  'if(holds.some(h=>sm<h.end&&end>h.start))disableChangeHoldOption(o)',
   'function syncEntryStartLimit()',
   "const entry=timeMinutes($('entryTime')?.value||'')",
   'if(gap!==30&&gap!==60){disableEntryStartOption',
@@ -47,13 +55,15 @@ for(const needle of [
   'function syncEntryDurationLimit()',
   'if((mins===30||mins===60)&&mins!==required)disableEntryDurationOption(o)',
   'syncEntryStartLimit();',
+  'syncChangeHoldStartLimit();',
   'syncDurationLimit();',
   'syncEntryDurationLimit();',
   '동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분만 이용할 수 있습니다.',
   '다른 단체와 한 구간이라도 겹치면 예약할 수 없습니다.',
   'function preEntryValidationMessage()',
   "return '동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분으로만 예약할 수 있습니다.'",
-  "return '선택한 놀이터 시간은 다른 단체 예약과 겹쳐 이용할 수 없습니다. 다른 시간을 선택해주세요.'",
+  "return '선택한 놀이터 시간은 다른 단체 예약 또는 예약변경 요청과 겹쳐 이용할 수 없습니다. 다른 시간을 선택해주세요.'",
+  "document.addEventListener('zr:reservation-availability-updated'",
   "if(e.target?.closest?.('#submitBooking'))guardSubmit(e)",
   "['visitMonth','visitDay','playUse','playStart','playDuration','entryTime','exitTime']"
 ])if(!s.includes(needle))fail(`playground booking guard contract missing: ${needle}`);
@@ -75,4 +85,4 @@ const customerLoader=fs.readFileSync('customer_features_loader_v1.js','utf8');
 if(!customerLoader.includes("['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=1']"))fail('playground booking guard is not loaded by dedicated customer runtime');
 
 if(failed)process.exit(1);
-ok('customer playground booking keeps pre-entry use contiguous, preserves overlap blocking, limits durations and stays write-free');
+ok('customer playground booking keeps pre-entry use contiguous, blocks shared reservation-change holds, preserves overlap blocking, limits durations and stays write-free');
