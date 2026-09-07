@@ -12,7 +12,8 @@ const ENTRY_DURATION_ATTR='zrEntryDurationDisabled';
 const CHANGE_HOLD_ATTR='zrChangeHoldDisabled';
 const ENTRY_RULE_SUFFIX=' (입장 직전만 가능)';
 const ENTRY_OVERLAP_SUFFIX=' (60분 마감)';
-const CHANGE_HOLD_SUFFIX=' (변경요청 마감)';
+const CHANGE_HOLD_SUFFIX=' (마감)';
+const LEGACY_CHANGE_HOLD_SUFFIX=' (변경요청 마감)';
 let observingStart=null,observingDuration=null;
 let startObserver=null,durationObserver=null;
 
@@ -108,7 +109,7 @@ function durationOption(minutes){
   return [...el.options].find(o=>durationMinutes(o)===minutes)||null;
 }
 function optionBaseText(o){
-  return String(o?.textContent||'').replace(ENTRY_RULE_SUFFIX,'').replace(ENTRY_OVERLAP_SUFFIX,'').replace(CHANGE_HOLD_SUFFIX,'');
+  return String(o?.textContent||'').replace(ENTRY_RULE_SUFFIX,'').replace(ENTRY_OVERLAP_SUFFIX,'').replace(LEGACY_CHANGE_HOLD_SUFFIX,'').replace(CHANGE_HOLD_SUFFIX,'');
 }
 function restoreEntryStartOption(o){
   if(!o||o.dataset[ENTRY_START_ATTR]!=='1')return;
