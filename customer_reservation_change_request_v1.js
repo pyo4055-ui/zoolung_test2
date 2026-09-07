@@ -33,6 +33,7 @@ function pad2(n){return String(n).padStart(2,'0')}
 function localToday(){const d=new Date();return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`}
 function mealLabel(v){return ({lunchbox:'도시락 지참',cafe:'내부 카페 주문',none:'식사 안 함'})[String(v||'none')]||'식사 안 함'}
 function playLabel(v){return String(v||'no')==='yes'?'이용함':'이용 안 함'}
+function statusLabel(v){const s=String(v||'pending');if(s==='confirmed')return'확정';if(s==='hold')return'보류';if(s==='completed')return'완료';return'접수'}
 function rangeDuration(start,end,allowed,fallback){
   const s=timeToMin(start),e=timeToMin(end),d=e-s;
   return Number.isFinite(s)&&Number.isFinite(e)&&e>s&&allowed.includes(d)?d:fallback;
@@ -71,12 +72,27 @@ function failForm(message,control){
 function ensureStyle(){
   if($('zrReservationChangeDedicatedStyleV1'))return;
   const s=document.createElement('style');s.id='zrReservationChangeDedicatedStyleV1';s.textContent=`
-  #changeExisting{display:none!important}
-  #existingBookingList .zr-change-card-action{display:flex;justify-content:flex-end;margin-top:12px;padding-top:11px;border-top:1px solid #eee8e4}
-  #existingBookingList .zr-change-card-button{min-width:112px;min-height:42px;border:1px solid #fc5404;border-radius:10px;padding:0 15px;background:#fff7f1;color:#c94303;font:inherit;font-size:13px;font-weight:900;cursor:pointer;touch-action:manipulation}
-  #existingBookingList .zr-change-card-button:active{transform:translateY(1px)}
+  #zrReservationChangeSelectV1{z-index:2147483480}
+  #zrReservationChangeSelectV1.hidden,#zrReservationChangeNoticeV1.hidden,#zrReservationChangeModalV1.hidden{display:none!important}
+  #zrReservationChangeSelectV1 .zr-change-select-sheet{width:min(620px,100%);max-height:min(92vh,860px);padding:18px;overflow:auto;background:#fff;color:#35261f;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.26);-webkit-overflow-scrolling:touch}
+  #zrReservationChangeSelectV1 .zr-change-select-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  #zrReservationChangeSelectV1 .zr-change-select-head h2{margin:0;flex:1;font-size:20px;color:#38271e}
+  #zrReservationChangeSelectV1 .zr-change-select-close{border:1px solid #f1bcbc;border-radius:9px;padding:8px 11px;background:#ffe7e7;color:#913535;font-weight:900;cursor:pointer}
+  #zrReservationChangeSelectV1 .zr-change-select-head:has(.zr-modal-ux-title-source){display:none!important}
+  #zrReservationChangeSelectV1 .zr-modal-ux-header{margin-bottom:12px!important;background:#fff!important;color:#38271e!important;border-bottom:1px solid #e9e1dc!important}
+  #zrReservationChangeSelectV1 .zr-modal-ux-header-close{border-color:#f1bcbc!important;background:#ffe7e7!important;color:#913535!important}
+  #zrReservationChangeSelectV1 .zr-change-select-help{margin:0 0 14px;color:#6d5b52;font-size:13px;line-height:1.6}
+  #zrReservationChangeSelectV1 .zr-change-select-list{display:grid;gap:10px}
+  #zrReservationChangeSelectV1 .zr-change-select-item{border:1px solid #e6ddd6;border-radius:13px;padding:13px;background:#fff}
+  #zrReservationChangeSelectV1 .zr-change-select-item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #zrReservationChangeSelectV1 .zr-change-select-item-head b{font-size:16px;color:#38271e}
+  #zrReservationChangeSelectV1 .zr-change-select-status{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#edf5f0;color:#2f6b4f;font-size:11px;font-weight:900}
+  #zrReservationChangeSelectV1 .zr-change-select-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-top:10px}
+  #zrReservationChangeSelectV1 .zr-change-select-meta div{font-size:13px;color:#4b403a;line-height:1.45}
+  #zrReservationChangeSelectV1 .zr-change-select-meta span{display:block;margin-bottom:2px;color:#82746d;font-size:10px;font-weight:850}
+  #zrReservationChangeSelectV1 .zr-change-select-action{display:flex;justify-content:flex-end;margin-top:12px}
+  #zrReservationChangeSelectV1 .zr-change-select-action button{min-height:42px;border:1px solid #fc5404;border-radius:10px;padding:0 14px;background:#fc5404;color:#fff;font:inherit;font-size:13px;font-weight:900;cursor:pointer;touch-action:manipulation}
   #zrReservationChangeNoticeV1{position:fixed;inset:0;z-index:2147483500;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(44,28,20,.72)}
-  #zrReservationChangeNoticeV1.hidden,#zrReservationChangeModalV1.hidden{display:none!important}
   #zrReservationChangeNoticeV1 .zr-change-notice-card{width:min(510px,100%);overflow:hidden;border:1px solid rgba(91,52,36,.12);border-radius:20px;background:#fff;box-shadow:0 28px 90px rgba(26,14,9,.30)}
   #zrReservationChangeNoticeV1 .zr-change-notice-head{padding:18px 22px;background:#fff;color:#38271e;border-bottom:1px solid #e9e1dc;font-size:20px;font-weight:950}
   #zrReservationChangeNoticeV1 .zr-change-notice-body{padding:21px 22px 8px;color:#493a32;font-size:14px;line-height:1.72;word-break:keep-all}
@@ -124,10 +140,35 @@ function ensureStyle(){
   #zrReservationChangeModalV1 .zr-change-complete{text-align:center;padding:32px 18px 36px}
   #zrReservationChangeModalV1 .zr-change-complete-mark{display:flex;width:58px;height:58px;align-items:center;justify-content:center;margin:0 auto 14px;border-radius:50%;background:#e9f3ed;color:#2f6b4f;font-size:28px;font-weight:950}
   #zrReservationChangeModalV1 .zr-change-complete h3{margin:0 0 9px;font-size:20px;color:#38271e}.zr-change-complete p{margin:0 auto;max-width:520px;color:#6e6058;font-size:13px;line-height:1.65}
-  @media(max-width:720px){#existingBookingList .zr-change-card-button{width:auto;min-width:118px;min-height:44px}#zrReservationChangeModalV1{padding:10px}#zrReservationChangeModalV1 .modal-card{max-height:94svh;border-radius:18px}#zrReservationChangeModalV1 .zr-change-modal-head{padding:14px 15px}#zrReservationChangeModalV1 .zr-change-modal-head h2{font-size:18px}#zrReservationChangeModalV1 .zr-change-stage{padding:14px 14px 20px}#zrReservationChangeModalV1 .zr-change-grid2{grid-template-columns:1fr}#zrReservationChangeModalV1 .zr-change-date-grid{grid-template-columns:minmax(0,1.35fr) minmax(92px,.65fr)}#zrReservationChangeModalV1 select,#zrReservationChangeModalV1 input{height:50px!important;min-height:50px!important;max-height:50px!important;padding-top:0!important;padding-bottom:0!important}#zrReservationChangeModalV1 .zr-change-actions{display:grid;grid-template-columns:1fr 1.35fr}#zrReservationChangeModalV1 .zr-change-actions button{width:100%}}
+  @media(max-width:720px){#zrReservationChangeSelectV1 .zr-change-select-sheet{padding:15px}#zrReservationChangeSelectV1 .zr-change-select-meta{grid-template-columns:1fr}#zrReservationChangeSelectV1 .zr-change-select-action button{width:100%;min-height:46px;font-size:14px}#zrReservationChangeModalV1{padding:10px}#zrReservationChangeModalV1 .modal-card{max-height:94svh;border-radius:18px}#zrReservationChangeModalV1 .zr-change-modal-head{padding:14px 15px}#zrReservationChangeModalV1 .zr-change-modal-head h2{font-size:18px}#zrReservationChangeModalV1 .zr-change-stage{padding:14px 14px 20px}#zrReservationChangeModalV1 .zr-change-grid2{grid-template-columns:1fr}#zrReservationChangeModalV1 .zr-change-date-grid{grid-template-columns:minmax(0,1.35fr) minmax(92px,.65fr)}#zrReservationChangeModalV1 select,#zrReservationChangeModalV1 input{height:50px!important;min-height:50px!important;max-height:50px!important;padding-top:0!important;padding-bottom:0!important}#zrReservationChangeModalV1 .zr-change-actions{display:grid;grid-template-columns:1fr 1.35fr}#zrReservationChangeModalV1 .zr-change-actions button{width:100%}}
   @media(max-width:430px){#zrReservationChangeNoticeV1{padding:10px}#zrReservationChangeNoticeV1 .zr-change-notice-actions{grid-template-columns:1fr;padding:12px 17px 18px}#zrReservationChangeModalV1 .zr-change-date-grid{grid-template-columns:1fr 90px}}
   `;document.head.appendChild(s);
 }
+
+function activeChangeBookings(){return matchingBookings().filter(b=>!['cancelled','rejected'].includes(String(b.status||'')))}
+function changeChoiceHtml(b){
+  return `<section class="zr-change-select-item"><div class="zr-change-select-item-head"><span class="zr-change-select-status">${esc(statusLabel(b.status))}</span><b>${esc(b.orgName||'단체 예약')}</b></div><div class="zr-change-select-meta"><div><span>방문일</span>${esc(b.date||'-')}</div><div><span>방문시간</span>${esc(b.entryTime||'--:--')} ~ ${esc(b.exitTime||'--:--')}</div></div><div class="zr-change-select-action"><button type="button" data-zr-change-select="${esc(b.id||'')}">이 예약 변경하기</button></div></section>`;
+}
+function ensureChangeSelect(){
+  let modal=$('zrReservationChangeSelectV1');if(modal)return modal;
+  modal=document.createElement('div');modal.id='zrReservationChangeSelectV1';modal.className='modal zr-change-select-modal hidden';
+  modal.innerHTML='<div class="modal-card zr-change-select-sheet" role="dialog" aria-modal="true" aria-labelledby="zrReservationChangeSelectTitle"><div class="zr-change-select-head"><h2 id="zrReservationChangeSelectTitle">예약 변경하기</h2><button type="button" class="zr-change-select-close">닫기</button></div><p class="zr-change-select-help">변경하실 예약의 ‘이 예약 변경하기’ 버튼을 눌러주세요.</p><div class="zr-change-select-list" id="zrReservationChangeSelectList"></div></div>';
+  document.body.appendChild(modal);
+  modal.querySelector('.zr-change-select-close').onclick=closeChangeSelect;
+  modal.addEventListener('click',e=>{
+    if(e.target===modal){closeChangeSelect();return}
+    const btn=e.target?.closest?.('[data-zr-change-select]');if(!btn)return;
+    const id=String(btn.dataset.zrChangeSelect||'');closeChangeSelect();openNotice(id);
+  });
+  return modal;
+}
+function openChangeSelect(){
+  const rows=activeChangeBookings();if(!rows.length){toastSafe('변경할 수 있는 예약 내역이 없습니다.');return}
+  const modal=ensureChangeSelect(),list=$('zrReservationChangeSelectList');
+  const ordered=[...rows].sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.entryTime||'').localeCompare(String(b.entryTime||'')));
+  list.innerHTML=ordered.map(changeChoiceHtml).join('');modal.classList.remove('hidden');try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}
+}
+function closeChangeSelect(){$('zrReservationChangeSelectV1')?.classList.add('hidden');try{window.__ZR_MODAL_UX_SYNC_HEADERS?.()}catch{}}
 
 function ensureNotice(){
   let modal=$('zrReservationChangeNoticeV1');if(modal)return modal;
@@ -338,57 +379,27 @@ async function submitChangeRequest(){
     const saved=await waitForSavedRequest(String(booking.id||''),requestId);
     if(!saved){if(writeError)throw writeError;showStage('form');failForm('예약 변경 요청 저장이 완료되지 않았습니다. 다시 시도해주세요.',$('zrChangeTargetBooking'));return}
     currentBookingId=String(booking.id||'');try{document.dispatchEvent(new CustomEvent('zr:reservation-change-request-shared',{detail:{bookingId:currentBookingId,requestId}}))}catch{}
-    showStage('complete');scheduleDecorateCards();
+    showStage('complete');
   }catch(e){console.error('reservation change submit',e);showStage('form');failForm('예약 변경 요청을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.',$('zrChangeTargetBooking'))}
   finally{if(btn){btn.disabled=false;btn.textContent='변경 요청 접수하기'}}
 }
 
-function cardText(card){return norm(card?.textContent||'')}
-function activeChangeBookings(){return matchingBookings().filter(b=>!['cancelled','rejected'].includes(String(b.status||'')))}
-function bookingForCard(card,rows,used){
-  const html=String(card?.outerHTML||''),text=cardText(card);
-  let hit=rows.find(b=>!used.has(String(b.id||''))&&String(b.id||'')&&html.includes(String(b.id)));
-  if(hit)return hit;
-  const candidates=rows.filter(b=>{
-    if(used.has(String(b.id||'')))return false;
-    const date=String(b.date||''),entry=String(b.entryTime||''),org=norm(b.orgName||'');
-    return (!date||text.includes(date))&&(!entry||text.includes(entry))&&(!org||text.includes(org));
-  });
-  if(candidates.length===1)return candidates[0];
-  if(rows.length===1&&!used.has(String(rows[0].id||'')))return rows[0];
-  return null;
-}
-function decorateChangeCards(){
-  const list=$('existingBookingList');if(!list)return;
-  const rows=activeChangeBookings(),used=new Set();
-  list.querySelectorAll('.existing-card').forEach(card=>{
-    const cancelled=card.classList.contains('zr-cancelled-record')||/본 예약은 취소|취소 되었습니다/.test(cardText(card));
-    const old=card.querySelector('.zr-change-card-action');
-    if(cancelled){old?.remove();return}
-    const booking=bookingForCard(card,rows,used);if(!booking){old?.remove();return}
-    used.add(String(booking.id||''));
-    let wrap=old;if(!wrap){wrap=document.createElement('div');wrap.className='zr-change-card-action';wrap.innerHTML='<button type="button" class="zr-change-card-button">예약변경</button>';card.appendChild(wrap)}
-    const button=wrap.querySelector('.zr-change-card-button');button.dataset.zrChangeBookingId=String(booking.id||'');
-  });
-}
-function scheduleDecorateCards(){[0,80,220,500,900,1500].forEach(ms=>setTimeout(decorateChangeCards,ms))}
-
 function bind(){
-  ensureStyle();ensureNotice();ensureModal();scheduleDecorateCards();
+  ensureStyle();ensureChangeSelect();ensureNotice();ensureModal();
+  const setButton=()=>{const btn=$('changeExisting');if(btn){btn.textContent='2. 예약 변경하기';btn.classList.remove('hidden')}};setButton();
   document.addEventListener('click',e=>{
-    const cardButton=e.target?.closest?.('.zr-change-card-button');
-    if(cardButton){e.preventDefault();e.stopImmediatePropagation();openNotice(cardButton.dataset.zrChangeBookingId||'');return}
-    const global=e.target?.closest?.('#changeExisting');
-    if(global){
-      e.preventDefault();e.stopImmediatePropagation();const rows=activeChangeBookings();
-      if(rows.length===1)openNotice(String(rows[0].id||''));else toastSafe('예약 내역의 예약변경 버튼을 눌러주세요.');return;
-    }
-    if(e.target?.closest?.('#lookupBooking,#checkExisting,#zrCustomerEntryLookupV2'))scheduleDecorateCards();
+    const global=e.target?.closest?.('#changeExisting');if(!global)return;
+    e.preventDefault();e.stopImmediatePropagation();openChangeSelect();
   },true);
-  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('zrReservationChangeNoticeV1')?.classList.contains('hidden')){pendingBookingId='';closeNotice();return}if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))closeChangeModal()});
-  document.addEventListener('zr:reservation-availability-updated',()=>{scheduleDecorateCards();if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))refreshPlayOptions(String($('zrChangePlayStart')?.value||''))});
-  window.addEventListener('storage',e=>{if(e.key!==BOOKING_KEY)return;scheduleDecorateCards();if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))refreshPlayOptions(String($('zrChangePlayStart')?.value||''))});
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    if(!$('zrReservationChangeSelectV1')?.classList.contains('hidden')){closeChangeSelect();return}
+    if(!$('zrReservationChangeNoticeV1')?.classList.contains('hidden')){pendingBookingId='';closeNotice();return}
+    if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))closeChangeModal();
+  });
+  document.addEventListener('zr:reservation-availability-updated',()=>{setButton();if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))refreshPlayOptions(String($('zrChangePlayStart')?.value||''))});
+  window.addEventListener('storage',e=>{if(e.key!==BOOKING_KEY)return;setButton();if(!$('zrReservationChangeModalV1')?.classList.contains('hidden'))refreshPlayOptions(String($('zrChangePlayStart')?.value||''))});
+  document.addEventListener('zr:customer-runtime-ready',setButton,{once:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-document.addEventListener('zr:customer-runtime-ready',scheduleDecorateCards,{once:true});
 })();
