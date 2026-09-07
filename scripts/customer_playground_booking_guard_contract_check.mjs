@@ -31,7 +31,8 @@ for(const needle of [
   "const CHANGE_HOLD_ATTR='zrChangeHoldDisabled'",
   "const ENTRY_RULE_SUFFIX=' (입장 직전만 가능)'",
   "const ENTRY_OVERLAP_SUFFIX=' (60분 마감)'",
-  "const CHANGE_HOLD_SUFFIX=' (변경요청 마감)'",
+  "const CHANGE_HOLD_SUFFIX=' (마감)'",
+  "const LEGACY_CHANGE_HOLD_SUFFIX=' (변경요청 마감)'",
   'function controlsRow()',
   "row.insertAdjacentElement('afterend',n)",
   'white-space:nowrap',
@@ -68,6 +69,8 @@ for(const needle of [
   "['visitMonth','visitDay','playUse','playStart','playDuration','entryTime','exitTime']"
 ])if(!s.includes(needle))fail(`playground booking guard contract missing: ${needle}`);
 
+if(/CHANGE_HOLD_SUFFIX=' \(변경요청 마감\)'/.test(s))fail('customer playground options must show shared holds simply as 마감');
+
 for(const forbidden of [
   'setStore(',
   'setDoc(',
@@ -85,4 +88,4 @@ const customerLoader=fs.readFileSync('customer_features_loader_v1.js','utf8');
 if(!customerLoader.includes("['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=1']"))fail('playground booking guard is not loaded by dedicated customer runtime');
 
 if(failed)process.exit(1);
-ok('customer playground booking keeps pre-entry use contiguous, blocks shared reservation-change holds, preserves overlap blocking, limits durations and stays write-free');
+ok('customer playground booking keeps pre-entry use contiguous, blocks shared reservation-change holds as normal closed slots, preserves overlap blocking, limits durations and stays write-free');
