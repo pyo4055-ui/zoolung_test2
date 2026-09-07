@@ -94,9 +94,15 @@ for(const needle of [
 
 for(const needle of [
   'function allBookings()',
-  "typeof window.bookings==='function'?window.bookings()",
+  'function readInquiries()',
+  'function contentOf(item)',
+  'function questionOf(item)',
+  'function isChangeInquiry(item)',
+  "localStorage.getItem('zr_inquiries')",
+  "item?.changeRequest===true||/^\\[예약 변경 요청\\]/.test(q)",
   'function localPendingChange()',
-  "const pendingChange=localPendingChange()",
+  "!['done','rejected'].includes(String(item?.changeRequestStatus||'pending'))",
+  'const pendingChange=localPendingChange();',
   'function ensureAlertCountObserver()',
   "alertCountObserver.observe(list,{subtree:true,childList:true,characterData:true})",
   "document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]')",
@@ -108,10 +114,10 @@ for(const needle of [
   "document.addEventListener('zr:inquiry-shared-updated'",
   "window.addEventListener('storage',e=>{if(e.key==='zr_bookings'||e.key==='zr_inquiries')"
 ])if(!mobileAlert.includes(needle))fail(`mobile reservation-change alert/layout contract missing: ${needle}`);
-for(const forbidden of ['recomputeSharedChangeCount','sharedReservationChanges=new Map()','sharedInquiryChanges=new Map()'])if(mobileAlert.includes(forbidden))fail(`mobile reservation-change alert must not independently deduplicate desktop pending requests: ${forbidden}`);
+for(const forbidden of ['recomputeSharedChangeCount','sharedReservationChanges=new Map()','sharedInquiryChanges=new Map()'])if(mobileAlert.includes(forbidden))fail(`mobile reservation-change alert must not independently deduplicate pending requests: ${forbidden}`);
 
 if(adminEntry.includes('admin_booking_cache_boot_guard_v1.js'))fail('admin entry must not load the unrelated stale-booking cache guard');
-if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=5'))fail('admin entry must bust cache for corrected mobile reservation-change alert/layout');
+if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=6'))fail('admin entry must bust cache for inquiry-backed mobile reservation-change count');
 
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
 for(const forbidden of ['updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only use staff reads and merge writes needed for existing reservationAvailability hold cleanup: ${forbidden}`);
@@ -119,4 +125,4 @@ if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fa
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps customer date/play/meal rules, mobile change cards wrap instead of clipping, the bell total follows every visible pending row including reservation changes, and the frozen reservation bridge stays unchanged');
+ok('reservation change keeps customer date/play/meal rules, mobile change cards wrap instead of clipping, mobile reservation-change alerts count the same inquiry-backed requests shown in the admin tab, and the frozen reservation bridge stays unchanged');
