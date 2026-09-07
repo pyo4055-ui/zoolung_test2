@@ -8,6 +8,7 @@ const CUSTOMER_APP_NAME='zrCustomerReservation';
 const BOOKING_KEY='zr_bookings';
 const FULL_COLLECTION='reservations';
 const AVAIL_COLLECTION='reservationAvailability';
+const INQUIRY_COLLECTION='customerInquiries';
 const BRIDGE_VERSION=1;
 
 const firebaseConfig={
@@ -90,21 +91,21 @@ function availabilityPatch(b,ownerUid){
 }
 function availabilityPlaceholder(a){
   return {
-    id:a.id,date:a.date||'',status:a.status||'pending',playUse:a.playUse||'no',
-    playStart:a.playStart||'',playEnd:a.playEnd||'',
+    id:a.id,sourceBookingId:String(a.sourceBookingId||a.changePlayHoldSourceBookingId||''),date:a.date||'',status:a.status||'pending',playUse:a.playUse||'no',
+    playStart:a.playStart||'',playEnd:a.playEnd||'',playDuration:Number(a.playDuration||0),
     paidCount:0,chaperoneCount:0,freeChaperone:0,paidChaperone:0,
     entryTime:'',exitTime:'',mealType:'none',mealStart:'',mealEnd:'',
-    orgName:'',managerName:'',contact:'',email:'',notes:'',__availabilityOnly:true
+    orgName:'',managerName:'',contact:'',email:'',notes:'',__availabilityOnly:true,__changePlayHold:a.changePlayHoldDedicated===true
   };
 }
 function changePlayHoldPlaceholder(a){
   if(a?.changePlayHoldActive!==true)return null;
-  const sourceId=String(a.id||''),requestId=String(a.changePlayHoldRequestId||'');
-  const date=String(a.changePlayHoldDate||''),start=String(a.changePlayHoldStart||''),end=String(a.changePlayHoldEnd||'');
+  const sourceId=String(a.changePlayHoldSourceBookingId||a.sourceBookingId||a.id||''),requestId=String(a.changePlayHoldRequestId||'');
+  const date=String(a.changePlayHoldDate||a.date||''),start=String(a.changePlayHoldStart||a.playStart||''),end=String(a.changePlayHoldEnd||a.playEnd||'');
   if(!sourceId||!date||!start||!end)return null;
   return {
-    id:`${sourceId}__change_play_hold__${requestId||'pending'}`,sourceBookingId:sourceId,
-    date,status:'pending',playUse:'yes',playStart:start,playEnd:end,playDuration:Number(a.changePlayHoldDuration||0),
+    id:String(a.id||`${sourceId}__change_play_hold__${requestId||'pending'}`),sourceBookingId:sourceId,
+    date,status:'pending',playUse:'yes',playStart:start,playEnd:end,playDuration:Number(a.changePlayHoldDuration||a.playDuration||0),
     paidCount:0,chaperoneCount:0,freeChaperone:0,paidChaperone:0,
     entryTime:'',exitTime:'',mealType:'none',mealStart:'',mealEnd:'',
     orgName:'',managerName:'',contact:'',email:'',notes:'',__availabilityOnly:true,__changePlayHold:true
@@ -121,7 +122,7 @@ function applyCustomerCache(){
   const legacy=[...legacyLocal.values()].filter(x=>!ids.has(String(x.id))).map(x=>({...clone(x),__legacyLocal:true}));
   legacy.forEach(x=>ids.add(String(x.id)));
   const allAvailability=[...availability.values()];
-  const shadows=allAvailability.filter(x=>!ids.has(String(x.id))).map(availabilityPlaceholder);
+  const shadows=allAvailability.filter(x=>!ids.has(String(x.id))&&x.changePlayHoldDedicated!==true).map(availabilityPlaceholder);
   const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean);
   directWriteLocal([...full,...legacy,...shadows,...holds]);
   refreshUi();
@@ -186,6 +187,42 @@ async function waitForWrites(){
   if(lastWriteError)throw lastWriteError;
   return true;
 }
+function changeHoldDocId(requestId){return `changePlayHold_${String(requestId||'')}`}
+async function clearOwnChangePlayHold(requestId){
+  if(!requestId)return true;
+  const user=await ensureUser(),ref=F.doc(db,AVAIL_COLLECTION,changeHoldDocId(requestId));
+  try{
+    await F.setDoc(ref,{ownerUid:user.uid,date:'',status:'done',playUse:'no',playStart:'',playEnd:'',playDuration:0,changePlayHoldDedicated:true,changePlayHoldActive:false,changePlayHoldRequestId:String(requestId),changePlayHoldDate:'',changePlayHoldStart:'',changePlayHoldEnd:'',changePlayHoldDuration:0,updatedAt:F.serverTimestamp()},{merge:true});
+    return true;
+  }catch(e){console.warn('customer change hold clear',e);return false}
+}
+async function submitSharedChangeRequest(payload){
+  const user=await ensureUser(),p=clean(payload&&typeof payload==='object'?payload:{});
+  const requestId=String(p.changeRequestId||p.requestId||''),bookingId=String(p.changeBookingId||p.bookingId||'');
+  if(!requestId||!bookingId)throw new Error('reservation change request identity missing');
+  let holdCreated=false;
+  if(p.changePlay===true&&String(p.playUse||'no')==='yes'){
+    const holdId=changeHoldDocId(requestId),date=String(p.changeRequestedDate||p.requestedDate||''),start=String(p.playStart||''),end=String(p.playEnd||''),duration=Number(p.playDuration||0);
+    if(!date||!start||!end||![30,60].includes(duration))throw new Error('reservation change playground hold invalid');
+    await F.setDoc(F.doc(db,AVAIL_COLLECTION,holdId),{
+      id:holdId,ownerUid:user.uid,sourceBookingId:bookingId,date,status:'pending',playUse:'yes',playStart:start,playEnd:end,playDuration:duration,
+      changePlayHoldDedicated:true,changePlayHoldActive:true,changePlayHoldRequestId:requestId,changePlayHoldSourceBookingId:bookingId,
+      changePlayHoldDate:date,changePlayHoldStart:start,changePlayHoldEnd:end,changePlayHoldDuration:duration,bridgeVersion:BRIDGE_VERSION,updatedAt:F.serverTimestamp()
+    },{merge:true});
+    holdCreated=true;
+  }
+  const inquiryId=String(p.sharedInquiryId||`inq_change_${requestId}`);
+  try{
+    await F.setDoc(F.doc(db,INQUIRY_COLLECTION,inquiryId),{
+      ...p,id:String(p.id||requestId),sharedInquiryId:inquiryId,sharedInquiryVersion:1,ownerUid:user.uid,
+      changeRequest:true,changeRequestId:requestId,changeBookingId:bookingId,updatedAt:F.serverTimestamp()
+    },{merge:true});
+  }catch(e){
+    if(holdCreated)await clearOwnChangePlayHold(requestId);
+    throw e;
+  }
+  return {requestId,bookingId,inquiryId,holdId:holdCreated?changeHoldDocId(requestId):''};
+}
 function patchSetStore(){
   if(window.setStore?.__zrCustomerFirebaseBridge)return true;
   if(typeof window.setStore!=='function')return false;
@@ -226,7 +263,9 @@ async function boot(){
       version:BRIDGE_VERSION,appName:CUSTOMER_APP_NAME,auth,db,
       get user(){return currentUser},
       isStaff:()=>false,
-      waitForWrites
+      waitForWrites,
+      submitChangeRequest:submitSharedChangeRequest,
+      clearChangePlayHold:clearOwnChangePlayHold
     };
     try{document.dispatchEvent(new CustomEvent('zr:customer-firebase-ready',{detail:{appName:CUSTOMER_APP_NAME}}))}catch{}
   }catch(e){
