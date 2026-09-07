@@ -6,8 +6,9 @@ window.__ZR_ADMIN_MOBILE_RESERVATION_CHANGE_ALERT_V1=true;
 const FIREBASE_VERSION='12.17.1';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
-let firestorePromise=null,availabilityStop=null,reservationsStop=null,timer=0;
+let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0;
 let sharedPendingReservation=null,sharedPendingChange=null;
+let sharedReservationChanges=null,sharedInquiryChanges=null;
 
 function installStyle(){
   if($('zrAdminMobileReservationChangeAlertStyleV1'))return;
@@ -43,6 +44,18 @@ function localPendingReservation(){return localBookings().filter(b=>String(b.sta
 function localPendingChange(){return localBookings().filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
 function setText(el,v){if(el)el.textContent=String(countValue(v))}
+function changeActive(status){return !['done','rejected'].includes(String(status||'pending'))}
+function recomputeSharedChangeCount(){
+  if(sharedReservationChanges===null&&sharedInquiryChanges===null){sharedPendingChange=null;return}
+  const keys=new Set([...(sharedInquiryChanges?.keys?.()||[]),...(sharedReservationChanges?.keys?.()||[])]);
+  let count=0;
+  for(const key of keys){
+    const status=sharedReservationChanges?.has(key)?sharedReservationChanges.get(key):sharedInquiryChanges?.get(key);
+    if(changeActive(status))count++;
+  }
+  sharedPendingChange=count;
+  sync();
+}
 function syncBadge(){
   const badge=$('zrAdminMobileBellBadge');if(!badge)return;
   let total=0;document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]').forEach(el=>{const n=parseInt(String(el.textContent||'0').replace(/[^0-9-]/g,''),10);if(Number.isFinite(n)&&n>0)total+=n});
@@ -67,19 +80,31 @@ async function attachSharedCounts(){
   if(!availabilityStop){
     try{
       availabilityStop=F.onSnapshot(F.collection(bridge.db,'reservationAvailability'),snap=>{
-        sharedPendingReservation=snap.docs.filter(d=>String(d.data()?.status||'')==='pending').length;sync();
+        sharedPendingReservation=snap.docs.filter(d=>{const x=d.data()||{};return x.changePlayHoldDedicated!==true&&String(x.status||'')==='pending'}).length;sync();
       },()=>{});
     }catch{}
   }
-  if(!reservationsStop&&bridge.isStaff?.()){
-    try{
-      reservationsStop=F.onSnapshot(F.collection(bridge.db,'reservations'),snap=>{
-        const rows=snap.docs.map(d=>d.data()||{});
-        sharedPendingReservation=rows.filter(b=>String(b.status||'')==='pending').length;
-        sharedPendingChange=rows.filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length;
-        sync();
-      },()=>{});
-    }catch{}
+  if(bridge.isStaff?.()){
+    if(!reservationsStop){
+      try{
+        reservationsStop=F.onSnapshot(F.collection(bridge.db,'reservations'),snap=>{
+          const rows=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
+          sharedPendingReservation=rows.filter(b=>String(b.status||'')==='pending').length;
+          sharedReservationChanges=new Map();
+          rows.forEach(b=>{const r=b?.reservationChangeRequest;if(!r||typeof r!=='object')return;const key=String(r.id||`booking:${b.id}`);sharedReservationChanges.set(key,String(r.status||'pending'))});
+          recomputeSharedChangeCount();sync();
+        },()=>{});
+      }catch{}
+    }
+    if(!inquiriesStop){
+      try{
+        inquiriesStop=F.onSnapshot(F.collection(bridge.db,'customerInquiries'),snap=>{
+          sharedInquiryChanges=new Map();
+          snap.docs.forEach(d=>{const x=d.data()||{};if(x.changeRequest!==true)return;const key=String(x.changeRequestId||x.id||d.id);sharedInquiryChanges.set(key,String(x.changeRequestStatus||'pending'))});
+          recomputeSharedChangeCount();
+        },()=>{});
+      }catch{}
+    }
   }
   return true;
 }
@@ -90,5 +115,6 @@ function start(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(start,0),{once:true});
+document.addEventListener('zr:inquiry-shared-updated',()=>setTimeout(attachSharedCounts,0));
 window.addEventListener('resize',()=>{if(mobile())start()},{passive:true});
 })();
