@@ -23,9 +23,9 @@ const firebaseConfig={
 let auth=null,db=null,F=null,currentUser=null;
 let stopFull=null,stopAvail=null;
 let ownFull=new Map(),availability=new Map(),legacyLocal=new Map();
-let applyingRemote=false,writeChain=Promise.resolve(),originalSetStore=null,bridgeStarted=false;
+let applyingRemote=false,writeChain=Promise.resolve(),lastWriteError=null,originalSetStore=null,bridgeStarted=false;
 
-const readLocal=()=>{try{return JSON.parse(localStorage.getItem(BOOKING_KEY)||'[]')}catch{return []}};
+const readLocal=()=>{try{return JSON.parse(localStorage.getItem(BOOKING_KEY)||'[]')}catch{return[]}};
 const directWriteLocal=v=>{applyingRemote=true;try{localStorage.setItem(BOOKING_KEY,JSON.stringify(v))}finally{applyingRemote=false}};
 const clone=v=>JSON.parse(JSON.stringify(v));
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -150,13 +150,14 @@ async function ensureUser(){
   return cred.user;
 }
 function queueBookingSync(before,after){
-  if(applyingRemote)return;
+  if(applyingRemote)return writeChain;
   const prev=byId(before),next=byId(after),changed=[];
   for(const [id,b] of next){
     const old=prev.get(id);
     if(!old||!same(clean(old),clean(b)))changed.push({id,old,b});
   }
-  if(!changed.length)return;
+  if(!changed.length)return writeChain;
+  lastWriteError=null;
   writeChain=writeChain.then(async()=>{
     const user=await ensureUser();
     for(const {id,old,b} of changed){
@@ -173,9 +174,17 @@ function queueBookingSync(before,after){
       await F.setDoc(F.doc(db,AVAIL_COLLECTION,id),{...availabilityPatch(b,ownerUid),updatedAt:F.serverTimestamp()},{merge:true});
     }
   }).catch(e=>{
+    lastWriteError=e;
     console.error('customer reservation firebase write',e);
     toastSafe('예약은 이 기기에 저장됐지만 공용 DB 저장에 실패했습니다.');
   });
+  return writeChain;
+}
+async function waitForWrites(){
+  const pending=writeChain;
+  await pending;
+  if(lastWriteError)throw lastWriteError;
+  return true;
 }
 function patchSetStore(){
   if(window.setStore?.__zrCustomerFirebaseBridge)return true;
@@ -216,7 +225,8 @@ async function boot(){
     window.zrReservationFirebase={
       version:BRIDGE_VERSION,appName:CUSTOMER_APP_NAME,auth,db,
       get user(){return currentUser},
-      isStaff:()=>false
+      isStaff:()=>false,
+      waitForWrites
     };
     try{document.dispatchEvent(new CustomEvent('zr:customer-firebase-ready',{detail:{appName:CUSTOMER_APP_NAME}}))}catch{}
   }catch(e){
