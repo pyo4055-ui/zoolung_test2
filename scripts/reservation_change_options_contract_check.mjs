@@ -25,26 +25,28 @@ for(const needle of [
   'zrChangePlayMode','zrChangePlayStart','zrChangePlayDuration','zrChangePlayEnd',
   'playgroundOccupancies','playSlotState','m>=entry&&m<exit',
   "state.reason==='full'?' (마감)'",
-  'requestedDate:x.date,requestedTime:x.entry,requestedExitTime:x.exit',
-  'changePlay:true','changeMeal:true','booking.reservationChangeRequest={',
-  'window.setStore(BOOKING_KEY,list)','waitForReservationBridge','window.zrReservationFirebase.waitForWrites()',
-  'zr:reservation-change-request-shared','zr-change-invalid','scrollIntoView',
+  'structuredContent','waitForChangeBridge','window.zrReservationFirebase.submitChangeRequest(payload)',
+  'changeRequest:true','changeRequestId:requestId',"changeRequestStatus:'pending'",'changeBookingId:String(booking.id||\'\')',
+  'changeRequestedDate:x.date','changeRequestedTime:x.entry','changeRequestedExitTime:x.exit',
+  'changePlay:true','changeMeal:true','zr:reservation-change-request-shared','zr-change-invalid','scrollIntoView',
   '식사하지 않는 단체는 최대 3시간까지 이용할 수 있습니다.',
   '식사 이용 단체는 최대 4시간까지 이용할 수 있습니다.',
   'zrReservationChangeSelectV1','zrReservationChangeSelectList','zr-change-select-item','data-zr-change-select',
   'openChangeSelect','closeChangeSelect','changeChoiceHtml','이 예약 변경하기','2. 예약 변경하기',
   'openNotice(id)','openChangeModal(bookingId)','zrChangeTargetBooking',
-  'background:#fc5404;color:#fff;border-bottom:1px solid #e84d04',
-  'zr-change-modal-head:has(.zr-modal-ux-title-source){display:none!important}'
+  '#zrReservationChangeSelectV1 .zr-change-select-head','background:#fc5404;color:#fff',
+  '#zrReservationChangeSelectV1 .zr-modal-ux-header{display:none!important}',
+  '#zrReservationChangeNoticeV1 .zr-change-notice-head'
 ])if(!ui.includes(needle))fail(`dedicated customer change flow missing: ${needle}`);
 
 for(const forbidden of [
   'submitInquiry','inquiryModal','inqVisitTime','inqVisitDate','type="time"','collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc(',
   'zrChangeBookingSelect','populateBookingSelector','변경할 예약을 선택해주세요',
   'zr-change-card-button','dataset.zrChangeBookingId','decorateChangeCards','bookingForCard','#changeExisting{display:none!important}',
-  'waitForSavedRequest','const saved=readBookings().find'
+  'waitForSavedRequest','waitForReservationBridge','window.zrReservationFirebase.waitForWrites()',
+  'window.setStore(BOOKING_KEY,list)','booking.reservationChangeRequest={'
 ]){
-  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore/duplicate-card/local-cache-verification flow: ${forbidden}`);
+  if(ui.includes(forbidden))fail(`${uiFile} must stay independent from inquiry/native-time/direct-Firestore/duplicate-card/customer-reservation-write flow: ${forbidden}`);
 }
 if(ui.includes('<option value="keep">현재 예약 유지</option>'))fail('dedicated change flow must expose actual values, not a keep placeholder');
 
@@ -54,27 +56,33 @@ for(const needle of [
 ])if(!tag.includes(needle))fail(`legacy change migration compatibility missing: ${needle}`);
 
 for(const needle of [
+  "const INQUIRY_KEY='zr_inquiries'",'function readInquiries()','function inquiryRequest(item)','function syncInquiryRequestsToBookings()',
+  'changeRequestId','changeBookingId','booking.reservationChangeRequest={','syncInquiryRequestsToBookings();',
+  'zr:inquiry-shared-updated','zr:inquiry-replies-changed',
   "requestedExit:String(r.requestedExitTime||'')",'zrSharedChangeApplyExit','legacyExitTime',
   'booking.entryTime=entry;booking.exitTime=exit','appliedExitTime:exit',
   'r.changePlay===true','r.changeMeal===true',
   'booking.playUse=appliedPlayUse','booking.playStart=appliedPlayStart','booking.playEnd=appliedPlayEnd','booking.playDuration=appliedPlayDuration',
   'booking.mealType=appliedMealType','booking.mealStart=appliedMealStart','booking.mealEnd=appliedMealEnd',
   'pendingPlayRange','playgroundConflict','validatePlayAgainstVisit','clearChangePlayHold','releaseChangePlayHold',
-  "holdFs.setDoc(holdFs.doc(z.db,'reservationAvailability',String(bookingId))",'changePlayHoldActive:false'
-])if(!admin.includes(needle))fail(`admin change apply/hold lifecycle missing: ${needle}`);
+  'changePlayHoldSourceBookingId',"holdFs.where('changePlayHoldSourceBookingId','==',String(bookingId))",'changePlayHoldActive:false'
+])if(!admin.includes(needle))fail(`admin change ingest/apply/hold lifecycle missing: ${needle}`);
 
 for(const needle of [
+  "const INQUIRY_COLLECTION='customerInquiries'",'function changeHoldDocId','async function clearOwnChangePlayHold','async function submitSharedChangeRequest',
+  'changePlayHoldDedicated:true','changePlayHoldSourceBookingId:bookingId',
+  'F.setDoc(F.doc(db,INQUIRY_COLLECTION,inquiryId)','changeRequest:true','submitChangeRequest:submitSharedChangeRequest','clearChangePlayHold:clearOwnChangePlayHold',
+  "sourceBookingId:String(a.sourceBookingId||a.changePlayHoldSourceBookingId||'')",'x.changePlayHoldDedicated!==true',
   'function changePlayHold(b)','changePlayHoldActive','changePlayHoldRequestId','changePlayHoldDate',
   'changePlayHoldStart','changePlayHoldEnd','changePlayHoldDuration','function changePlayHoldPlaceholder(a)',
-  '__changePlayHold:true','sourceBookingId:sourceId','const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean)',
-  'playUse:b.playUse','playStart:b.playStart','playEnd:b.playEnd',"['cancelled','rejected'].includes(String(b?.status||''))",
-  'lastWriteError','async function waitForWrites()','waitForWrites\n    }'
-])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} playground/write-completion contract missing: ${needle}`);
+  '__changePlayHold:true','const holds=allAvailability.map(changePlayHoldPlaceholder).filter(Boolean)',
+  'lastWriteError','async function waitForWrites()'
+])if(!customerBridge.includes(needle))fail(`${customerBridgeFile} shared-request/playground-hold contract missing: ${needle}`);
 
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
-for(const forbidden of ['collection(z.db','collection(db','updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only merge-clear the existing reservationAvailability hold document: ${forbidden}`);
+for(const forbidden of ['collection(z.db','updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only use staff reads and merge writes needed for existing reservationAvailability hold cleanup: ${forbidden}`);
 if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fail('frozen reservation bridge availability contract missing');
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps the global step-2 picker flow, uses the booking-style editor, awaits the real customer Firebase write chain before success, keeps shared playground holds, and stays independent from 1:1 inquiry');
+ok('reservation change keeps the picker/editor UX, saves shared requests without customer ownership of reservation docs, reserves playground through dedicated availability holds, lets admin mirror requests under staff authority, and preserves legacy compatibility');
