@@ -4,6 +4,7 @@ if(window.__ZR_ADMIN_MOBILE_RESERVATION_CHANGE_ALERT_V1)return;
 window.__ZR_ADMIN_MOBILE_RESERVATION_CHANGE_ALERT_V1=true;
 
 const FIREBASE_VERSION='12.17.1';
+const REPLY_MARKER='\n\n[관리자 답변]\n';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
 let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0,alertCountObserver=null;
@@ -56,8 +57,14 @@ function allBookings(){
     try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v.filter(b=>b&&!b.__availabilityOnly):[]}catch{return[]}
   }
 }
+function readInquiries(){
+  try{const v=JSON.parse(localStorage.getItem('zr_inquiries')||'[]');return Array.isArray(v)?v:[]}catch{return[]}
+}
+function contentOf(item){for(const k of ['content','message','inquiry','text'])if(Object.prototype.hasOwnProperty.call(item||{},k))return String(item?.[k]??'');return''}
+function questionOf(item){const t=contentOf(item),i=t.lastIndexOf(REPLY_MARKER);return (i<0?t:t.slice(0,i)).trim()}
+function isChangeInquiry(item){const q=questionOf(item);return item?.changeRequest===true||/^\[예약 변경 요청\]/.test(q)||q.includes('\n[예약 변경 정보]\n')}
 function localPendingReservation(){return allBookings().filter(b=>String(b.status||'')==='pending').length}
-function localPendingChange(){return allBookings().filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length}
+function localPendingChange(){return readInquiries().filter(item=>isChangeInquiry(item)&&!['done','rejected'].includes(String(item?.changeRequestStatus||'pending'))).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
 function setText(el,v){if(el)el.textContent=String(countValue(v))}
 function syncBadge(){
@@ -102,9 +109,7 @@ async function attachSharedCounts(){
       }catch{}
     }
     if(!inquiriesStop){
-      try{
-        inquiriesStop=F.onSnapshot(F.collection(bridge.db,'customerInquiries'),()=>sync(),()=>{});
-      }catch{}
+      try{inquiriesStop=F.onSnapshot(F.collection(bridge.db,'customerInquiries'),()=>sync(),()=>{})}catch{}
     }
   }
   return true;
