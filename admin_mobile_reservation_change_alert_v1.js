@@ -38,9 +38,16 @@ function ensureDrawerRow(){
   if(inquiry?.nextSibling)list.insertBefore(row,inquiry.nextSibling);else list.appendChild(row);
   return true;
 }
-function localBookings(){try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v.filter(b=>b&&!b.__availabilityOnly):[]}catch{return[]}}
-function localPendingReservation(){return localBookings().filter(b=>String(b.status||'')==='pending').length}
-function localPendingChange(){return localBookings().filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length}
+function allBookings(){
+  try{
+    const list=typeof window.bookings==='function'?window.bookings():JSON.parse(localStorage.getItem('zr_bookings')||'[]');
+    return Array.isArray(list)?list.filter(b=>b&&!b.__availabilityOnly):[];
+  }catch{
+    try{const v=JSON.parse(localStorage.getItem('zr_bookings')||'[]');return Array.isArray(v)?v.filter(b=>b&&!b.__availabilityOnly):[]}catch{return[]}
+  }
+}
+function localPendingReservation(){return allBookings().filter(b=>String(b.status||'')==='pending').length}
+function localPendingChange(){return allBookings().filter(b=>{const r=b?.reservationChangeRequest;return !!r&&typeof r==='object'&&!['done','rejected'].includes(String(r.status||'pending'))}).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
 function setText(el,v){if(el)el.textContent=String(countValue(v))}
 function syncBadge(){
@@ -52,9 +59,9 @@ function sync(){
   if(!mobile())return;
   installStyle();ensureAlertRow();ensureDrawerRow();
   const pendingReservation=sharedPendingReservation===null?localPendingReservation():sharedPendingReservation;
-  /* Reservation-change count deliberately uses the same local booking requests as
-     the desktop 처리 대기 panel/admin request list. Firestore listeners only wake
-     this view up; they do not independently deduplicate request IDs. */
+  /* Use the exact same booking source as the desktop smart panel. The shared
+     Firestore listeners wake this view up, but they do not build a second
+     reservation-change count with their own request-id deduplication rules. */
   const pendingChange=localPendingChange();
   setText($('zrSmartPendingReservation'),pendingReservation);setText($('zrSmartReservationChange'),pendingChange);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartPendingReservation"]'),pendingReservation);
