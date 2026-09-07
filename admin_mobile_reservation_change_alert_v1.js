@@ -7,7 +7,7 @@ const FIREBASE_VERSION='12.17.1';
 const REPLY_MARKER='\n\n[관리자 답변]\n';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
-let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,timer=0,alertCountObserver=null;
+let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,alertCountObserver=null,badgeFrame=0,retryScheduled=false;
 let sharedPendingReservation=null;
 
 function installStyle(){
@@ -66,15 +66,16 @@ function isChangeInquiry(item){const q=questionOf(item);return item?.changeReque
 function localPendingReservation(){return allBookings().filter(b=>String(b.status||'')==='pending').length}
 function localPendingChange(){return readInquiries().filter(item=>isChangeInquiry(item)&&!['done','rejected'].includes(String(item?.changeRequestStatus||'pending'))).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
-function setText(el,v){if(el)el.textContent=String(countValue(v))}
+function setText(el,v){if(!el)return;const text=String(countValue(v));if(el.textContent!==text)el.textContent=text}
 function syncBadge(){
   const badge=$('zrAdminMobileBellBadge');if(!badge)return;
   let total=0;document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]').forEach(el=>{const n=parseInt(String(el.textContent||'0').replace(/[^0-9-]/g,''),10);if(Number.isFinite(n)&&n>0)total+=n});
   const text=total>99?'99+':String(total);if(badge.textContent!==text)badge.textContent=text;badge.hidden=total===0;
 }
+function scheduleBadgeSync(){if(badgeFrame)return;badgeFrame=requestAnimationFrame(()=>{badgeFrame=0;syncBadge()})}
 function ensureAlertCountObserver(){
   const list=document.querySelector('#zrAdminMobileAlertsV1 .zr-admin-mobile-alert-list');if(!list||alertCountObserver)return;
-  alertCountObserver=new MutationObserver(()=>queueMicrotask(syncBadge));
+  alertCountObserver=new MutationObserver(scheduleBadgeSync);
   alertCountObserver.observe(list,{subtree:true,childList:true,characterData:true});
 }
 function sync(){
@@ -85,7 +86,7 @@ function sync(){
   setText($('zrSmartPendingReservation'),pendingReservation);setText($('zrSmartReservationChange'),pendingChange);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartPendingReservation"]'),pendingReservation);
   setText(document.querySelector('#zrAdminMobileAlertsV1 [data-mobile-count="zrSmartReservationChange"]'),pendingChange);
-  syncBadge();
+  scheduleBadgeSync();
 }
 function firestore(){return firestorePromise||(firestorePromise=import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-firestore.js`).catch(()=>null))}
 async function attachSharedCounts(){
@@ -114,15 +115,16 @@ async function attachSharedCounts(){
   }
   return true;
 }
-function start(){
-  installStyle();sync();attachSharedCounts();
-  if(timer)return;
-  timer=setInterval(()=>{sync();attachSharedCounts()},700);
+function scheduleAttachRetries(){
+  if(retryScheduled)return;retryScheduled=true;
+  [120,350,800,1600,3200,6000].forEach(ms=>setTimeout(()=>{attachSharedCounts();sync()},ms));
 }
+function start(){installStyle();sync();attachSharedCounts();scheduleAttachRetries()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(start,0),{once:true});
+document.addEventListener('zr:admin-firebase-staff-ready',()=>{attachSharedCounts();sync()});
 document.addEventListener('zr:inquiry-shared-updated',()=>setTimeout(sync,0));
 document.addEventListener('zr:inquiry-replies-changed',()=>setTimeout(sync,0));
 window.addEventListener('storage',e=>{if(e.key==='zr_bookings'||e.key==='zr_inquiries')setTimeout(sync,0)});
-window.addEventListener('resize',()=>{if(mobile())start()},{passive:true});
+window.addEventListener('resize',()=>{if(mobile()){sync();attachSharedCounts()}},{passive:true});
 })();
