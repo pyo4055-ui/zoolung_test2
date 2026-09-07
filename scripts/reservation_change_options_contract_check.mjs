@@ -31,7 +31,7 @@ for(const needle of [
   'zr:reservation-change-request-shared','zr-change-invalid','scrollIntoView',
   '식사하지 않는 단체는 최대 3시간까지 이용할 수 있습니다.',
   '식사 이용 단체는 최대 4시간까지 이용할 수 있습니다.',
-  'zr-change-card-button','data-zr-change-booking-id','decorateChangeCards','bookingForCard',
+  'zr-change-card-button','dataset.zrChangeBookingId','decorateChangeCards','bookingForCard',
   'openNotice(cardButton.dataset.zrChangeBookingId','openChangeModal(bookingId)','zrChangeTargetBooking',
   '#changeExisting{display:none!important}',
   'background:#fff;color:#38271e;border-bottom:1px solid #e9e1dc',
