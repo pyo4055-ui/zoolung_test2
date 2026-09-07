@@ -114,7 +114,7 @@ for(const needle of [
 const guardTag='<script src="./admin_booking_cache_boot_guard_v1.js?v=1"><\\/script>';
 const bridgeTag='<script src="./reservation_firebase_bridge.js?v=1"><\\/script>';
 if(!adminEntry.includes(guardTag))fail('admin entry does not load stale-booking cache guard');
-if(adminEntry.indexOf(guardTag)<0||adminEntry.indexOf(bridgeTag)<0||adminEntry.indexOf(guardTag)>adminEntry.indexOf(bridgeTag))fail('admin booking cache guard must load before reservation firebase bridge');
+if(!adminEntry.includes(guardTag+bridgeTag))fail('admin booking cache guard must be injected immediately before reservation firebase bridge');
 if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=4'))fail('admin entry must bust cache for corrected mobile reservation-change count');
 
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
