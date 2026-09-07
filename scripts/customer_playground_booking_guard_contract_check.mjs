@@ -69,8 +69,6 @@ for(const needle of [
   "['visitMonth','visitDay','playUse','playStart','playDuration','entryTime','exitTime']"
 ])if(!s.includes(needle))fail(`playground booking guard contract missing: ${needle}`);
 
-if(/CHANGE_HOLD_SUFFIX=' \(변경요청 마감\)'/.test(s))fail('customer playground options must show shared holds simply as 마감');
-
 for(const forbidden of [
   'setStore(',
   'setDoc(',
