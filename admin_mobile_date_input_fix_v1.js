@@ -34,6 +34,38 @@ function injectStyle(){
         margin:0!important;
         text-align:center!important;
       }
+
+      /* Cancellation review: keep two date fields comfortably inside each mobile grid column. */
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar input[type="date"]{
+        width:calc(100% - 20px)!important;
+        inline-size:calc(100% - 20px)!important;
+        max-width:calc(100% - 20px)!important;
+        max-inline-size:calc(100% - 20px)!important;
+        margin-left:auto!important;
+        margin-right:auto!important;
+      }
+
+      /* Cancellation review actions must use the exact same mobile footprint. */
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar .zr-cancel-search,
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar .zr-cancel-today{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        align-self:end!important;
+        width:100%!important;
+        min-width:0!important;
+        max-width:100%!important;
+        height:44px!important;
+        min-height:44px!important;
+        max-height:44px!important;
+        margin:0!important;
+        padding:0 12px!important;
+        box-sizing:border-box!important;
+        line-height:1!important;
+        border-radius:11px!important;
+        font-size:13px!important;
+        font-weight:900!important;
+      }
     }
   `;
   document.head.appendChild(s);
