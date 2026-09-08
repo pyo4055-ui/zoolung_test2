@@ -17,7 +17,10 @@ const MENUS={
     {label:'경고',parent:'warning'}
   ]},
   reservation:{label:'예약',sections:[
-    {label:'예약 현황',parent:'activity'},
+    {label:'예약 현황',parent:'activity',children:[
+      {label:'예약현황',targetId:'zrActivityMainSubtabV1'},
+      {label:'예약취소',targetId:'zrActivityCancelSubtabV1'}
+    ]},
     {label:'식사 현황',parent:'meals'},
     {label:'과거 예약 정리',parent:'cleanup',children:[
       {label:'예약 정리',targetId:'zrCleanupSubtab'},
@@ -76,6 +79,7 @@ let panel=null,currentGroup='operation',menuGroup='',activeParentId='today',acti
 function railButton(id){return document.querySelector(`#zrAdminShellRail [data-zr-admin-item="${CSS.escape(id)}"]`)}
 function currentRailParent(){return document.querySelector('#zrAdminShellRail [data-zr-admin-item].is-active')?.dataset.zrAdminItem||''}
 function childKey(group,sectionIndex,childIndex){return `${group}:${sectionIndex}:${childIndex}`}
+function targetActive(target){return !!target&&(target.classList.contains('btn-primary')||target.classList.contains('zr-subtab-active')||target.getAttribute('aria-selected')==='true')}
 
 function injectStyle(){
   if($('zrAdminMobileSubnavV3Style'))return;
@@ -118,7 +122,7 @@ function injectStyle(){
     #zrAdminMobileBottomV1 [data-mobile-category].is-category-active{color:#fff!important;background:linear-gradient(180deg,#7b1518,#650d10)!important;border-radius:12px!important;margin:5px 3px!important;padding-top:3px!important;padding-bottom:3px!important}
     #zrAdminMobileBottomV1 [data-mobile-category].is-active:not(.is-category-active){color:#6f5d53!important;background:transparent!important;margin:0!important;padding:7px 2px 5px!important;border-radius:0!important}
 
-    #zrCleanupInnerTabs,#zrInquiryReplyInnerTabs,#zrPreviewNotifyInnerTabs,#zrGuideSubtabsV1,#zrSettingsSubtabsV1,#tab-sales-dashboard .zr-sales-subtabs{display:none!important}
+    #zrActivityModeTabsV1,#zrCleanupInnerTabs,#zrInquiryReplyInnerTabs,#zrPreviewNotifyInnerTabs,#zrGuideSubtabsV1,#zrSettingsSubtabsV1,#tab-sales-dashboard .zr-sales-subtabs{display:none!important}
 
     html.zr-admin-shell-mounted #adminView [id^="tab-"],
     html.zr-admin-shell-mounted #adminView .card,
@@ -247,9 +251,16 @@ function syncFromCurrent(){
   if(navigating)return;
   const parent=currentRailParent();if(!parent)return;
   const group=PARENT_GROUP[parent];if(group&&MENUS[group])currentGroup=group;
-  const section=MENUS[currentGroup]?.sections?.find(x=>x.parent===parent);
-  if(section){if(activeParentId!==parent)activeChildKey='';activeParentId=parent}
+  const sectionIndex=MENUS[currentGroup]?.sections?.findIndex(x=>x.parent===parent)??-1;
+  const section=sectionIndex>=0?MENUS[currentGroup].sections[sectionIndex]:null;
+  if(section){
+    activeParentId=parent;
+    const children=Array.isArray(section.children)?section.children:[];
+    const activeIndex=children.findIndex(child=>child.targetId&&targetActive($(child.targetId)));
+    activeChildKey=activeIndex>=0?childKey(currentGroup,sectionIndex,activeIndex):'';
+  }
   syncBottom();
+  if(menuOpen())render(menuGroup||currentGroup);
 }
 
 function bindRail(){
@@ -270,6 +281,7 @@ function boot(){
   let tries=0;
   const timer=setInterval(()=>{tries++;const ready=prepareBottom();bindRail();if(ready||tries>120)clearInterval(timer)},100);
   document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(()=>{prepareBottom();bindRail();syncFromCurrent();closeMenu()},100),{once:true});
+  document.addEventListener('zr:cancel-review-updated',()=>setTimeout(syncFromCurrent,0));
   window.addEventListener('resize',()=>{if(!mobile()){closeMenu();return}prepareBottom();if(!navigating)syncFromCurrent();if(menuOpen())updatePanelHeight()},{passive:true});
 }
 
