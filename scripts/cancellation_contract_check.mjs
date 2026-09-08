@@ -61,13 +61,33 @@ if(review.includes("b?.cancelReviewed!==true"))fail('legacy cancellations withou
 if(review.includes("status.value='cancelled'"))fail('notification shortcut must open the dedicated cancellation review workspace, not the general cancelled filter');
 if(review.includes('setInterval('))fail('cancellation review workflow must not add a permanent polling interval');
 
+const shell=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
+checkSyntax('admin_shell_submenus_v1.js');
+must(shell,'admin_shell_submenus_v1.js',[
+  "activity:[",
+  "{id:'activity-list',label:'예약현황',targetId:'zrActivityMainSubtabV1'}",
+  "{id:'activity-cancel',label:'예약취소',targetId:'zrActivityCancelSubtabV1'}",
+  '#zrActivityModeTabsV1{display:none!important}'
+]);
+
+const mobile=fs.readFileSync('admin_mobile_subnav_v3.js','utf8');
+checkSyntax('admin_mobile_subnav_v3.js');
+must(mobile,'admin_mobile_subnav_v3.js',[
+  "{label:'예약 현황',parent:'activity',children:[",
+  "{label:'예약현황',targetId:'zrActivityMainSubtabV1'}",
+  "{label:'예약취소',targetId:'zrActivityCancelSubtabV1'}",
+  'function targetActive(target)',
+  'const activeIndex=children.findIndex',
+  '#zrActivityModeTabsV1'
+]);
+
 const adminEntry=fs.readFileSync('admin.html','utf8');
 const customerEntry=fs.readFileSync('customer.html','utf8');
-must(adminEntry,'admin.html',['cancel_review_state_v1.js?v=2']);
+must(adminEntry,'admin.html',['admin_shell_submenus_v1.js?v=2','admin_mobile_subnav_v3.js?v=5','cancel_review_state_v1.js?v=2']);
 must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=2']);
 
 const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility and dedicated review workspace contract passed.');
+console.log('Cancellation visibility and nested review submenu contract passed.');
