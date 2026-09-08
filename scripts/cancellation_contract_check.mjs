@@ -91,9 +91,14 @@ must(cancelCommit,commitFile,[
   '취소 내역은 예약 조회에서 다시 확인할 수 있습니다.',
   '취소 사유를 입력해주세요.',
   "if(b.__legacyLocal)throw new Error('legacy-local')",
-  'owner-mismatch'
+  'owner-mismatch',
+  'function handleConfirmClick(e)',
+  "e.target?.closest?.('#confirmCustomerCancel')",
+  "document.addEventListener('click',handleConfirmClick,true)",
+  'if(busy){e.preventDefault();e.stopImmediatePropagation();return}'
 ]);
 for(const bad of ['setDoc(','updateDoc(','deleteDoc(','firebase-firestore','initializeApp('])if(cancelCommit.includes(bad))fail(`${commitFile} must commit through the existing customer reservation bridge only: ${bad}`);
+if(cancelCommit.includes("btn.addEventListener('click',onConfirm,true)"))fail('customer cancellation must use delegated binding so dynamically-created modal buttons still work');
 if(cancelCommit.indexOf('await bridge.waitForWrites()')>cancelCommit.indexOf('showSuccess();')&&cancelCommit.includes('showSuccess();'))fail('customer cancellation success UI must only appear after shared Firebase writes finish');
 
 const shell=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
@@ -129,4 +134,4 @@ const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility, shared customer commit, observer-loop protection and nested review submenu contract passed.');
+console.log('Cancellation visibility, shared customer commit, dynamic cancel binding, observer-loop protection and nested review submenu contract passed.');
