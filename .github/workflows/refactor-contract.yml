@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Diagnose compressed customer core handlers
+        run: node scripts/customer_core_diagnostic.mjs
       - run: node scripts/refactor_contract_check.mjs
       - name: Verify cancellation history visibility
         run: node scripts/cancellation_contract_check.mjs
