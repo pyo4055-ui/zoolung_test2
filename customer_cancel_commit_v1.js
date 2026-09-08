@@ -93,7 +93,7 @@ async function commitCancellation(id,reason){
   return b;
 }
 async function onConfirm(e){
-  if(busy)return;
+  if(busy){e.preventDefault();e.stopImmediatePropagation();return}
   const reason=String($('zrCustomerCancelReason')?.value||'').trim();
   if(!reason){e.preventDefault();e.stopImmediatePropagation();setReasonError(true);return}
   setReasonError(false);
@@ -123,16 +123,15 @@ async function onConfirm(e){
     busy=false;if(btn){btn.disabled=false;btn.textContent=oldText}
   }
 }
-function bind(){
-  installOpenHook();
-  const btn=$('confirmCustomerCancel');
-  if(btn&&btn.dataset.zrCancelCommitBound!=='1'){
-    btn.dataset.zrCancelCommitBound='1';
-    btn.addEventListener('click',onConfirm,true);
-  }
+function handleConfirmClick(e){
+  const btn=e.target?.closest?.('#confirmCustomerCancel');
+  if(!btn)return;
+  onConfirm(e);
 }
+function bind(){installOpenHook()}
 function boot(){
   ensureSuccessModal();
+  document.addEventListener('click',handleConfirmClick,true);
   [0,80,220,600,1400,3000,6000].forEach(ms=>setTimeout(bind,ms));
   document.addEventListener('zr:customer-runtime-ready',()=>{bind();setTimeout(bind,250)});
   document.addEventListener('zr:customer-firebase-ready',()=>{bind();setTimeout(bind,120)});
