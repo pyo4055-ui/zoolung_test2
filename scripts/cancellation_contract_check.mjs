@@ -71,6 +71,31 @@ if(review.includes('setInterval('))fail('cancellation review workflow must not a
 if(review.includes("$('zrCancelReviewListV1').innerHTML="))fail('cancellation workspace list must not rewrite identical DOM during smart-panel observer refreshes');
 if(review.includes("$('zrCancelReviewPagerV1').innerHTML="))fail('cancellation workspace pager must not rewrite identical DOM during smart-panel observer refreshes');
 
+const commitFile='customer_cancel_commit_v1.js';
+const cancelCommit=fs.readFileSync(commitFile,'utf8');
+checkSyntax(commitFile);
+must(cancelCommit,commitFile,[
+  '__ZR_CUSTOMER_CANCEL_COMMIT_V1',
+  'confirmCustomerCancel',
+  'window.openCustomerCancel=wrapped',
+  "b.status='cancelled'",
+  'b.cancelledAt=new Date().toISOString()',
+  "b.cancelledBy='customer'",
+  'b.cancelReason=reason',
+  'b.cancelReviewed=false',
+  'delete b.cancelReviewedAt;delete b.cancelReviewedBy',
+  'window.setStore(KEY,list)',
+  'await bridge.waitForWrites()',
+  "typeof bridge.clearChangePlayHold==='function'",
+  '예약 취소가 완료되었습니다.',
+  '취소 내역은 예약 조회에서 다시 확인할 수 있습니다.',
+  '취소 사유를 입력해주세요.',
+  "if(b.__legacyLocal)throw new Error('legacy-local')",
+  'owner-mismatch'
+]);
+for(const bad of ['setDoc(','updateDoc(','deleteDoc(','firebase-firestore','initializeApp('])if(cancelCommit.includes(bad))fail(`${commitFile} must commit through the existing customer reservation bridge only: ${bad}`);
+if(cancelCommit.indexOf('await bridge.waitForWrites()')>cancelCommit.indexOf('showSuccess();')&&cancelCommit.includes('showSuccess();'))fail('customer cancellation success UI must only appear after shared Firebase writes finish');
+
 const shell=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
 checkSyntax('admin_shell_submenus_v1.js');
 must(shell,'admin_shell_submenus_v1.js',[
@@ -98,10 +123,10 @@ must(mobile,'admin_mobile_subnav_v3.js',[
 const adminEntry=fs.readFileSync('admin.html','utf8');
 const customerEntry=fs.readFileSync('customer.html','utf8');
 must(adminEntry,'admin.html',['admin_shell_submenus_v1.js?v=2','admin_mobile_subnav_v3.js?v=5','cancel_review_state_v1.js?v=2']);
-must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=2']);
+must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=2','customer_cancel_commit_v1.js?v=1']);
 
 const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility, observer-loop protection and nested review submenu contract passed.');
+console.log('Cancellation visibility, shared customer commit, observer-loop protection and nested review submenu contract passed.');
