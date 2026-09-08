@@ -12,11 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Diagnose compressed customer core handlers
-        run: node scripts/customer_core_diagnostic.mjs
       - run: node scripts/refactor_contract_check.mjs
       - name: Verify cancellation history visibility
         run: node scripts/cancellation_contract_check.mjs
+      - name: Verify customer reservation storage bridge safety
+        run: node scripts/customer_storage_bridge_contract_check.mjs
       - name: Verify admin group search safety
         run: node scripts/admin_group_search_contract_check.mjs
       - name: Verify customer guide modal ordering
