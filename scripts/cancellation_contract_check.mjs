@@ -8,6 +8,10 @@ const must=(text,file,items)=>items.forEach(x=>{if(!text.includes(x))fail(`${fil
 const loader=fs.readFileSync('admin_features_v2_loader.js','utf8');
 must(loader,'admin_features_v2_loader.js',['customer_lookup_actions_v1.js?v=2','admin_cancel_visibility_v1.js?v=1']);
 
+const customerLoader=fs.readFileSync('customer_features_loader_v1.js','utf8');
+checkSyntax('customer_features_loader_v1.js');
+must(customerLoader,'customer_features_loader_v1.js',["['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=2']","['zrCustomerCancelCommitV1','./customer_cancel_commit_v1.js?v=2']"]);
+
 const customer=fs.readFileSync('customer_lookup_actions_v1.js','utf8');
 checkSyntax('customer_lookup_actions_v1.js');
 must(customer,'customer_lookup_actions_v1.js',[
@@ -78,6 +82,10 @@ must(cancelCommit,commitFile,[
   '__ZR_CUSTOMER_CANCEL_COMMIT_V1',
   'confirmCustomerCancel',
   'window.openCustomerCancel=wrapped',
+  'function armConfirmButton()',
+  'if(!busy)btn.disabled=false',
+  "btn.style.setProperty('pointer-events','auto','important')",
+  "actions.style.setProperty('z-index','5','important')",
   "b.status='cancelled'",
   'b.cancelledAt=new Date().toISOString()',
   "b.cancelledBy='customer'",
@@ -134,4 +142,4 @@ const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility, shared customer commit, dynamic cancel binding, observer-loop protection and nested review submenu contract passed.');
+console.log('Cancellation visibility, runtime-loaded shared customer commit, armed dynamic cancel binding, observer-loop protection and nested review submenu contract passed.');
