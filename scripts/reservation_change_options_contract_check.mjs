@@ -105,6 +105,8 @@ for(const needle of [
   'const pendingChange=localPendingChange();',
   'function ensureAlertCountObserver()',
   "alertCountObserver.observe(list,{subtree:true,childList:true,characterData:true})",
+  'function ensureBadgeObserver()',
+  "badgeObserver.observe(badge,{subtree:true,childList:true,characterData:true})",
   "document.querySelectorAll('#zrAdminMobileAlertsV1 [data-mobile-count]')",
   '#zrReservationChangeAdminList .zr-cr-meta{display:grid!important',
   '#zrReservationChangeAdminList .zr-cr-body{white-space:normal!important',
@@ -117,7 +119,7 @@ for(const needle of [
 for(const forbidden of ['recomputeSharedChangeCount','sharedReservationChanges=new Map()','sharedInquiryChanges=new Map()'])if(mobileAlert.includes(forbidden))fail(`mobile reservation-change alert must not independently deduplicate pending requests: ${forbidden}`);
 
 if(adminEntry.includes('admin_booking_cache_boot_guard_v1.js'))fail('admin entry must not load the unrelated stale-booking cache guard');
-if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=6'))fail('admin entry must bust cache for inquiry-backed mobile reservation-change count');
+if(!adminEntry.includes('admin_mobile_reservation_change_alert_v1.js?v=7'))fail('admin entry must bust cache for corrected mobile reservation-change badge total');
 
 for(const forbidden of ['collection(db','setDoc(','updateDoc(','addDoc(','deleteDoc('])if(tag.includes(forbidden))fail(`${tagFile} must use the existing reservation bridge, not direct Firestore writes: ${forbidden}`);
 for(const forbidden of ['updateDoc(','addDoc(','deleteDoc('])if(admin.includes(forbidden))fail(`${adminFile} may only use staff reads and merge writes needed for existing reservationAvailability hold cleanup: ${forbidden}`);
@@ -125,4 +127,4 @@ if(!adminBridge.includes("const AVAIL_COLLECTION='reservationAvailability';"))fa
 if(adminBridge.includes('changePlayHoldActive'))fail('frozen reservation bridge must not absorb playground change hold logic');
 
 if(failed)process.exit(1);
-ok('reservation change keeps customer date/play/meal rules, mobile change cards wrap instead of clipping, mobile reservation-change alerts count the same inquiry-backed requests shown in the admin tab, and the frozen reservation bridge stays unchanged');
+ok('reservation change keeps customer date/play/meal rules, mobile change cards wrap instead of clipping, the mobile bell badge follows the visible pending rows including reservation changes, and the frozen reservation bridge stays unchanged');
