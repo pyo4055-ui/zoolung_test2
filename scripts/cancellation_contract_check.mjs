@@ -31,8 +31,39 @@ must(admin,'admin_cancel_visibility_v1.js',[
 ]);
 for(const bad of ['setStore(','setDoc(','getFirestore(','firebase-firestore'])if(admin.includes(bad))fail(`admin cancellation visibility must stay display-only: ${bad}`);
 
+const reviewFile='cancel_review_state_v1.js';
+const review=fs.readFileSync(reviewFile,'utf8');
+checkSyntax(reviewFile);
+must(review,reviewFile,[
+  '__ZR_CANCEL_REVIEW_STATE_V1',
+  "String(b?.status||'')==='cancelled'&&b?.cancelReviewed===false",
+  'function markCancelledUnreviewed(id)',
+  'b.cancelReviewed=false',
+  'function markReviewed(id)',
+  'b.cancelReviewed=true',
+  'b.cancelReviewedAt=new Date().toISOString()',
+  'b.cancelReviewedBy=staffName()',
+  'window.openCustomerCancel=wrapped',
+  'window.setBookingStatus=wrapped',
+  "String(status||'')==='cancelled'",
+  '예약 취소','취소 확인 필요','확인완료',
+  'zrSmartCancelReview',
+  'data-zr-cancel-review-open',
+  'zrOpenCancelReviewV1',
+  "status.value='cancelled'",
+  '@media(max-width:900px)',
+  "window.setStore(KEY,list)"
+]);
+for(const bad of ['setDoc(','updateDoc(','deleteDoc(','firebase-firestore'])if(review.includes(bad))fail(`${reviewFile} must use the existing reservation bridge instead of direct Firestore writes: ${bad}`);
+if(review.includes("b?.cancelReviewed!==true"))fail('legacy cancellations without review state must not be retroactively counted as unread');
+
+const adminEntry=fs.readFileSync('admin.html','utf8');
+const customerEntry=fs.readFileSync('customer.html','utf8');
+must(adminEntry,'admin.html',['cancel_review_state_v1.js?v=1']);
+must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=1']);
+
 const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility contract passed.');
+console.log('Cancellation visibility and shared review workflow contract passed.');
