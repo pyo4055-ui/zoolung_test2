@@ -7,7 +7,7 @@ const sidebar=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
 function need(ok,message){if(!ok){console.error(message);process.exit(1)}}
 
 need(admin.includes('admin_section_header_help_v1.js?v=1'),'admin entry must load unified section headers/help.');
-need(admin.includes('admin_shell_submenus_v1.js?v=1'),'left sidebar submenus must remain loaded.');
+need(admin.includes('admin_shell_submenus_v1.js?v=2'),'left sidebar submenus must remain loaded.');
 
 for(const id of ['tab-today','tab-calendar','tab-schedule','tab-warning','tab-activity','tab-meals','tab-cleanup','tab-inquiries','tab-preview-visit','zrGuideAdminSection','tab-outsourcing','tab-menuadmin','tab-settings']){
   need(ui.includes(`id:'${id}'`),`section header config missing: ${id}`);
