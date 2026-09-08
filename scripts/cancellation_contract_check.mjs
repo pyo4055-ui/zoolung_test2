@@ -37,6 +37,7 @@ checkSyntax(reviewFile);
 must(review,reviewFile,[
   '__ZR_CANCEL_REVIEW_STATE_V1',
   "String(b?.status||'')==='cancelled'&&b?.cancelReviewed===false",
+  "function reviewState(b){return b?.cancelReviewed===false?'pending':'done'}",
   'function markCancelledUnreviewed(id)',
   'b.cancelReviewed=false',
   'function markReviewed(id)',
@@ -46,24 +47,27 @@ must(review,reviewFile,[
   'window.openCustomerCancel=wrapped',
   'window.setBookingStatus=wrapped',
   "String(status||'')==='cancelled'",
-  '예약 취소','취소 확인 필요','확인완료',
-  'zrSmartCancelReview',
-  'data-zr-cancel-review-open',
-  'zrOpenCancelReviewV1',
-  "status.value='cancelled'",
+  'zrActivityModeTabsV1','zrActivityMainSubtabV1','zrActivityCancelSubtabV1',
+  '예약취소 조회','확인 필요','확인 완료','전체',
+  'zrCancelReviewBasisV1','취소일 기준','예약일 기준','zrCancelReviewStatusV1',
+  'booking-item zr-cancel-workspace-card','PAGE_SIZE=8',
+  'showCancelWorkspace({forcePending:true})',
+  'zrSmartCancelReview','data-zr-cancel-review-open','zrOpenCancelReviewV1',
   '@media(max-width:900px)',
   "window.setStore(KEY,list)"
 ]);
 for(const bad of ['setDoc(','updateDoc(','deleteDoc(','firebase-firestore'])if(review.includes(bad))fail(`${reviewFile} must use the existing reservation bridge instead of direct Firestore writes: ${bad}`);
 if(review.includes("b?.cancelReviewed!==true"))fail('legacy cancellations without review state must not be retroactively counted as unread');
+if(review.includes("status.value='cancelled'"))fail('notification shortcut must open the dedicated cancellation review workspace, not the general cancelled filter');
+if(review.includes('setInterval('))fail('cancellation review workflow must not add a permanent polling interval');
 
 const adminEntry=fs.readFileSync('admin.html','utf8');
 const customerEntry=fs.readFileSync('customer.html','utf8');
-must(adminEntry,'admin.html',['cancel_review_state_v1.js?v=1']);
-must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=1']);
+must(adminEntry,'admin.html',['cancel_review_state_v1.js?v=2']);
+must(customerEntry,'customer.html',['cancel_review_state_v1.js?v=2']);
 
 const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility and shared review workflow contract passed.');
+console.log('Cancellation visibility and dedicated review workspace contract passed.');
