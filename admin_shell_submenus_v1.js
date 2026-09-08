@@ -5,6 +5,10 @@ window.__ZR_ADMIN_SHELL_SUBMENUS_V1=true;
 
 const HOVER_OPEN_DELAY_MS=1000;
 const SUBMENUS={
+  activity:[
+    {id:'activity-list',label:'예약현황',targetId:'zrActivityMainSubtabV1'},
+    {id:'activity-cancel',label:'예약취소',targetId:'zrActivityCancelSubtabV1'}
+  ],
   cleanup:[
     {id:'reservation-cleanup',label:'예약 정리',targetId:'zrCleanupSubtab'},
     {id:'cancel-cleanup',label:'취소 정리',targetId:'zrCancelCleanupSubtab'},
@@ -63,6 +67,7 @@ function injectStyle(){
     .zr-admin-shell-subitem:hover{background:var(--zr-sub-soft)!important;color:var(--zr-sub-color)!important}
     .zr-admin-shell-subitem.is-active{background:var(--zr-sub-soft)!important;color:var(--zr-sub-color)!important;font-weight:900!important}
     .zr-admin-shell-subitem.is-active:before{opacity:1}
+    #zrActivityModeTabsV1{display:none!important}
     #zrChangeSidebarRequests,#zrChangeSidebarSms{display:none!important}
     #zrInquiryReplyInnerTabs .zr-change-inner-tab{display:none!important}
     html.zr-admin-shell-collapsed .zr-admin-shell-item-wrap .zr-admin-shell-submenu,html.zr-admin-shell-collapsed .zr-admin-shell-submenu-chevron{display:none!important}
