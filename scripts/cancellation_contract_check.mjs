@@ -27,9 +27,12 @@ must(customer,'customer_lookup_actions_v1.js',[
 const admin=fs.readFileSync('admin_cancel_visibility_v1.js','utf8');
 checkSyntax('admin_cancel_visibility_v1.js');
 must(admin,'admin_cancel_visibility_v1.js',[
-  'activityList','adminBookingDetailContent','openAdminBookingDetail','cancelReason','취소 사유','취소 사유 미기록','zr-admin-cancelled'
+  'activityList','adminBookingDetailContent','openAdminBookingDetail','cancelReason','취소 사유','취소 사유 미기록','zr-admin-cancelled',
+  'function setHtmlIfChanged(el,html){if(el&&el.innerHTML!==html)el.innerHTML=html}',
+  'setHtmlIfChanged(box,`<b>취소 사유</b><br>${esc(reason)}`)'
 ]);
 for(const bad of ['setStore(','setDoc(','getFirestore(','firebase-firestore'])if(admin.includes(bad))fail(`admin cancellation visibility must stay display-only: ${bad}`);
+if((admin.match(/box\.innerHTML=/g)||[]).length)fail('admin cancellation visibility must not rewrite cancellation DOM on every observer pass');
 
 const reviewFile='cancel_review_state_v1.js';
 const review=fs.readFileSync(reviewFile,'utf8');
@@ -67,7 +70,9 @@ must(shell,'admin_shell_submenus_v1.js',[
   "activity:[",
   "{id:'activity-list',label:'예약현황',targetId:'zrActivityMainSubtabV1'}",
   "{id:'activity-cancel',label:'예약취소',targetId:'zrActivityCancelSubtabV1'}",
-  '#zrActivityModeTabsV1{display:none!important}'
+  '#zrActivityModeTabsV1{display:none!important}',
+  "parentId==='activity'&&sub.id==='activity-cancel'&&typeof window.zrOpenCancelReviewV1==='function'",
+  'try{window.zrOpenCancelReviewV1()}finally{suppressParentToggle=false}'
 ]);
 
 const mobile=fs.readFileSync('admin_mobile_subnav_v3.js','utf8');
@@ -78,7 +83,9 @@ must(mobile,'admin_mobile_subnav_v3.js',[
   "{label:'예약취소',targetId:'zrActivityCancelSubtabV1'}",
   'function targetActive(target)',
   'const activeIndex=children.findIndex',
-  '#zrActivityModeTabsV1'
+  '#zrActivityModeTabsV1',
+  "const directCancel=child?.targetId==='zrActivityCancelSubtabV1'&&typeof window.zrOpenCancelReviewV1==='function'",
+  'window.zrOpenCancelReviewV1();'
 ]);
 
 const adminEntry=fs.readFileSync('admin.html','utf8');
@@ -90,4 +97,4 @@ const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility and nested review submenu contract passed.');
+console.log('Cancellation visibility, freeze protection and nested review submenu contract passed.');
