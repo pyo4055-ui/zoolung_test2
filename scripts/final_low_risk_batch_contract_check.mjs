@@ -43,7 +43,21 @@ for(const needle of [
   "status.value='pending'",
   "status.value='received'",
   "status.value='all'",
-  "norm(b.textContent)==='조회하기'"
+  "norm(b.textContent)==='조회하기'",
+  'function isCancelMenuClick(target)',
+  'data-zr-admin-subitem="activity-cancel"',
+  "norm(mobileChild.textContent)==='예약취소'",
+  'function applyCancelDefaultPeriod()',
+  'zrCancelReviewStartV1',
+  'zrCancelReviewEndV1',
+  'zrCancelReviewBasisV1',
+  'zrCancelReviewTodayV1',
+  'zrCancelReviewSearchV1',
+  'first=`${today.slice(0,8)}01`',
+  '#adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar input[type="date"]',
+  'width:calc(100% - 12px)!important',
+  '#adminView #zrCancelReviewTodayV1',
+  "todayBtn.textContent='오늘'"
 ])if(!admin.includes(needle))fail(`admin low-risk batch missing: ${needle}`);
 
 for(const needle of [
@@ -78,4 +92,4 @@ for(const needle of [
 ])if(!minimum.includes(needle))fail(`minimum calculation contract changed unexpectedly: ${needle}`);
 
 if(failed)process.exit(1);
-ok('final low-risk UX batch keeps data contracts intact while preserving pending shortcuts, restoring normal preview filters, and surfacing empty reservation lookup as a direct-action popup');
+ok('final low-risk UX batch keeps data contracts intact while preserving pending shortcuts, restoring normal preview filters, applying normal cancellation date defaults, and surfacing empty reservation lookup as a direct-action popup');
