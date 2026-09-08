@@ -4,7 +4,7 @@ if(window.__ZR_ADMIN_CANCEL_VISIBILITY_V1)return;
 window.__ZR_ADMIN_CANCEL_VISIBILITY_V1=true;
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function readBookings(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function byId(id){return readBookings().find(b=>String(b?.id||'')===String(id))||null}
 function cardBookingId(card){
