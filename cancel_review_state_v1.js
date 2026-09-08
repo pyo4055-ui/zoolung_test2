@@ -216,16 +216,19 @@ function applyCancelControls(){
 function applyCancelToday(){
   const d=todaySeoul();cancelApplied={start:d,end:d,basis:'cancel',status:$('zrCancelReviewStatusV1')?.value||'pending'};cancelPage=1;syncCancelControls();renderCancelWorkspace();
 }
+function setTextIfChanged(el,value){const text=String(value);if(el&&el.textContent!==text)el.textContent=text}
+function setHtmlIfChanged(el,html){if(el&&el.innerHTML!==html)el.innerHTML=html}
 function renderCancelWorkspace(){
   if(!$('zrActivityCancelWorkspaceV1'))return;
   const all=cancelRows(),pending=all.filter(b=>reviewState(b)==='pending').length,done=all.length-pending;
-  if($('zrCancelKpiAll'))$('zrCancelKpiAll').textContent=String(all.length);
-  if($('zrCancelKpiPending'))$('zrCancelKpiPending').textContent=String(pending);
-  if($('zrCancelKpiDone'))$('zrCancelKpiDone').textContent=String(done);
+  setTextIfChanged($('zrCancelKpiAll'),all.length);
+  setTextIfChanged($('zrCancelKpiPending'),pending);
+  setTextIfChanged($('zrCancelKpiDone'),done);
   const rows=filteredCancelRows(),pages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));cancelPage=Math.max(1,Math.min(cancelPage,pages));
   const shown=rows.slice((cancelPage-1)*PAGE_SIZE,cancelPage*PAGE_SIZE);
-  if($('zrCancelReviewListV1'))$('zrCancelReviewListV1').innerHTML=shown.length?shown.map(cancelCard).join(''):'<div class="card zr-cancel-workspace-empty"><b>조회 조건에 맞는 취소 예약이 없습니다.</b><span>확인 상태 또는 조회 기간을 변경해보세요.</span></div>';
-  if($('zrCancelReviewPagerV1'))$('zrCancelReviewPagerV1').innerHTML=pagerHtml(cancelPage,pages);
+  const listHtml=shown.length?shown.map(cancelCard).join(''):'<div class="card zr-cancel-workspace-empty"><b>조회 조건에 맞는 취소 예약이 없습니다.</b><span>확인 상태 또는 조회 기간을 변경해보세요.</span></div>';
+  setHtmlIfChanged($('zrCancelReviewListV1'),listHtml);
+  setHtmlIfChanged($('zrCancelReviewPagerV1'),pagerHtml(cancelPage,pages));
 }
 function showMainWorkspace(){
   if(!ensureWorkspace())return;
