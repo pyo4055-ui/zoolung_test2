@@ -14,6 +14,20 @@ function readBookings(){
   catch{return[]}
 }
 function toast(msg){try{window.toast?.(msg)}catch{}}
+function armConfirmButton(){
+  const btn=$('confirmCustomerCancel');if(!btn)return false;
+  if(!busy)btn.disabled=false;
+  btn.removeAttribute('aria-disabled');
+  btn.style.setProperty('pointer-events','auto','important');
+  btn.style.setProperty('touch-action','manipulation','important');
+  const actions=btn.closest?.('.modal-actions');
+  if(actions){
+    actions.style.setProperty('position','relative','important');
+    actions.style.setProperty('z-index','5','important');
+    actions.style.setProperty('pointer-events','auto','important');
+  }
+  return true;
+}
 function currentTarget(){
   if(targetId)return targetId;
   const name=String($('startManager')?.value||'').trim(),phone=tel($('startContact')?.value||'');
@@ -24,7 +38,12 @@ function currentTarget(){
 function installOpenHook(){
   const base=window.openCustomerCancel;
   if(typeof base!=='function'||base.__zrCancelCommitV1)return false;
-  const wrapped=function(id){targetId=String(id||'');return base.apply(this,arguments)};
+  const wrapped=function(id){
+    targetId=String(id||'');
+    const out=base.apply(this,arguments);
+    [0,30,100,250].forEach(ms=>setTimeout(armConfirmButton,ms));
+    return out;
+  };
   wrapped.__zrCancelCommitV1=true;wrapped.__zrBase=base;
   window.openCustomerCancel=wrapped;
   try{openCustomerCancel=wrapped}catch{}
@@ -43,6 +62,8 @@ function closeConfirm(){
 function ensureSuccessModal(){
   let modal=$('zrCustomerCancelSuccessV1');if(modal)return modal;
   const style=document.createElement('style');style.id='zrCustomerCancelSuccessV1Style';style.textContent=`
+    #cancelConfirmModal #confirmCustomerCancel{pointer-events:auto!important;touch-action:manipulation!important}
+    #cancelConfirmModal .modal-actions{position:relative!important;z-index:5!important;pointer-events:auto!important}
     #zrCustomerCancelSuccessV1{position:fixed;inset:0;z-index:2147483400;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(37,22,16,.66)}
     #zrCustomerCancelSuccessV1.hidden{display:none!important}
     #zrCustomerCancelSuccessV1 .zr-cancel-success-card{width:min(440px,100%);box-sizing:border-box;border:1px solid rgba(91,52,36,.12);border-radius:22px;background:#fffdfa;padding:26px 22px 22px;box-shadow:0 28px 80px rgba(24,12,8,.28);text-align:center;color:#38271e}
@@ -120,7 +141,7 @@ async function onConfirm(e){
     else if(code==='bridge-not-ready')toast('예약 DB 연결을 준비 중입니다. 잠시 후 다시 시도해주세요.');
     else toast('예약 취소 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
   }finally{
-    busy=false;if(btn){btn.disabled=false;btn.textContent=oldText}
+    busy=false;if(btn){btn.disabled=false;btn.textContent=oldText;armConfirmButton()}
   }
 }
 function handleConfirmClick(e){
@@ -128,7 +149,7 @@ function handleConfirmClick(e){
   if(!btn)return;
   onConfirm(e);
 }
-function bind(){installOpenHook()}
+function bind(){installOpenHook();armConfirmButton()}
 function boot(){
   ensureSuccessModal();
   document.addEventListener('click',handleConfirmClick,true);
