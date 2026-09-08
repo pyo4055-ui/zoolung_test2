@@ -56,6 +56,11 @@ must(review,reviewFile,[
   'booking-item zr-cancel-workspace-card','PAGE_SIZE=8',
   'showCancelWorkspace({forcePending:true})',
   'zrSmartCancelReview','data-zr-cancel-review-open','zrOpenCancelReviewV1',
+  'function setTextIfChanged(el,value)',
+  'function setHtmlIfChanged(el,html)',
+  "setTextIfChanged($('zrCancelKpiAll'),all.length)",
+  "setHtmlIfChanged($('zrCancelReviewListV1'),listHtml)",
+  "setHtmlIfChanged($('zrCancelReviewPagerV1'),pagerHtml(cancelPage,pages))",
   '@media(max-width:900px)',
   "window.setStore(KEY,list)"
 ]);
@@ -63,6 +68,8 @@ for(const bad of ['setDoc(','updateDoc(','deleteDoc(','firebase-firestore'])if(r
 if(review.includes("b?.cancelReviewed!==true"))fail('legacy cancellations without review state must not be retroactively counted as unread');
 if(review.includes("status.value='cancelled'"))fail('notification shortcut must open the dedicated cancellation review workspace, not the general cancelled filter');
 if(review.includes('setInterval('))fail('cancellation review workflow must not add a permanent polling interval');
+if(review.includes("$('zrCancelReviewListV1').innerHTML="))fail('cancellation workspace list must not rewrite identical DOM during smart-panel observer refreshes');
+if(review.includes("$('zrCancelReviewPagerV1').innerHTML="))fail('cancellation workspace pager must not rewrite identical DOM during smart-panel observer refreshes');
 
 const shell=fs.readFileSync('admin_shell_submenus_v1.js','utf8');
 checkSyntax('admin_shell_submenus_v1.js');
@@ -97,4 +104,4 @@ const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility, freeze protection and nested review submenu contract passed.');
+console.log('Cancellation visibility, observer-loop protection and nested review submenu contract passed.');
