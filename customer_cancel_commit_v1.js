@@ -28,11 +28,23 @@ function armConfirmButton(){
   }
   return true;
 }
+function activeBookings(){
+  return readBookings().filter(b=>b&&!b.__availabilityOnly&&!b.__legacyLocal&&!['cancelled','rejected'].includes(String(b.status||'')));
+}
+function targetFromVisibleModal(){
+  const modal=$('cancelConfirmModal');
+  if(!modal||modal.classList.contains('hidden'))return'';
+  const text=String(modal.textContent||'');
+  const matches=activeBookings().filter(b=>String(b.id||'')&&text.includes(String(b.id)));
+  return matches.length===1?String(matches[0].id||''):'';
+}
 function currentTarget(){
   if(targetId)return targetId;
+  const modalId=targetFromVisibleModal();
+  if(modalId){targetId=modalId;return modalId}
   const name=String($('startManager')?.value||'').trim(),phone=tel($('startContact')?.value||'');
   if(!name||!phone)return'';
-  const matches=readBookings().filter(b=>b&&!b.__availabilityOnly&&!b.__legacyLocal&&String(b.managerName||'').trim()===name&&tel(b.contact)===phone&&!['cancelled','rejected'].includes(String(b.status||'')));
+  const matches=activeBookings().filter(b=>String(b.managerName||'').trim()===name&&tel(b.contact)===phone);
   return matches.length===1?String(matches[0].id||''):'';
 }
 function installOpenHook(){
@@ -145,6 +157,8 @@ async function onConfirm(e){
   }
 }
 function handleConfirmClick(e){
+  const selected=e.target?.closest?.('[data-zr-cancel-select]');
+  if(selected){targetId=String(selected.dataset.zrCancelSelect||'');return}
   const btn=e.target?.closest?.('#confirmCustomerCancel');
   if(!btn)return;
   onConfirm(e);
