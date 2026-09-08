@@ -4,7 +4,7 @@ if(window.__ZR_ADMIN_CANCEL_VISIBILITY_V1)return;
 window.__ZR_ADMIN_CANCEL_VISIBILITY_V1=true;
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function readBookings(){try{return JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{return[]}}
 function byId(id){return readBookings().find(b=>String(b?.id||'')===String(id))||null}
 function cardBookingId(card){
@@ -20,6 +20,7 @@ function injectStyle(){
   #adminBookingDetailContent .zr-admin-cancel-detail{margin-top:12px;padding:10px 11px;border:1px solid #ead0d0;border-radius:10px;background:#fff0f0;color:#704242;font-size:13px;line-height:1.55;white-space:pre-wrap}
   `;document.head.appendChild(s);
 }
+function setHtmlIfChanged(el,html){if(el&&el.innerHTML!==html)el.innerHTML=html}
 function decorateActivity(){
   const root=$('activityList');if(!root)return;
   root.querySelectorAll('.booking-item').forEach(card=>{
@@ -31,7 +32,7 @@ function decorateActivity(){
     card.classList.add('zr-admin-cancelled');
     const reason=String(b.cancelReason||'').trim()||'취소 사유 미기록';
     if(!box){box=document.createElement('div');box.className='zr-admin-cancel-reason';card.appendChild(box)}
-    box.innerHTML=`<b>취소 사유</b><br>${esc(reason)}`;
+    setHtmlIfChanged(box,`<b>취소 사유</b><br>${esc(reason)}`);
   });
 }
 let detailId='';
@@ -41,7 +42,7 @@ function decorateDetail(){
   if(!b||String(b.status||'')!=='cancelled'){box?.remove();return}
   const reason=String(b.cancelReason||'').trim()||'취소 사유 미기록';
   if(!box){box=document.createElement('div');box.className='zr-admin-cancel-detail';body.appendChild(box)}
-  box.innerHTML=`<b>취소 사유</b><br>${esc(reason)}`;
+  setHtmlIfChanged(box,`<b>취소 사유</b><br>${esc(reason)}`);
 }
 let pending=false;
 function decorate(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;injectStyle();decorateActivity();decorateDetail()})}
