@@ -223,12 +223,17 @@ async function navigateSection(group,sectionIndex,childIndex=-1){
 
     const parent=railButton(section.parent);
     if(!parent)return;
-    /* Always click the real PC navigation item. Its active class can be stale after a sales submode switch. */
-    parent.click();
-    await wait(90);
-
-    if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
-    else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
+    const directCancel=child?.targetId==='zrActivityCancelSubtabV1'&&typeof window.zrOpenCancelReviewV1==='function';
+    if(directCancel){
+      window.zrOpenCancelReviewV1();
+      await wait(120);
+    }else{
+      /* Always click the real PC navigation item. Its active class can be stale after a sales submode switch. */
+      parent.click();
+      await wait(90);
+      if(child?.targetId)await clickWhenReady(`#${CSS.escape(child.targetId)}`);
+      else if(child?.salesMode)await clickWhenReady(`#tab-sales-dashboard [data-zr-sales-mode="${CSS.escape(child.salesMode)}"]`);
+    }
 
     currentGroup=group;
     activeParentId=section.parent;
