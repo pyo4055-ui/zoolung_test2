@@ -171,6 +171,12 @@ async function activateSubitem(parentId,sub){
   const wrap=wrappers.get(parentId),parent=wrap?.querySelector(':scope > .zr-admin-shell-item');
   if(!parent)return;
   cancelHover();openSubmenu(parentId);
+  if(parentId==='activity'&&sub.id==='activity-cancel'&&typeof window.zrOpenCancelReviewV1==='function'){
+    suppressParentToggle=true;
+    try{window.zrOpenCancelReviewV1()}finally{suppressParentToggle=false}
+    openSubmenu(parentId);
+    await wait(100);scheduleSync();return;
+  }
   const alreadyActive=parent.classList.contains('is-active');
   if(!alreadyActive){
     suppressParentToggle=true;
