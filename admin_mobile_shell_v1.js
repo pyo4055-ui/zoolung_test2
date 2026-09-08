@@ -101,7 +101,21 @@ function activeId(){const b=document.querySelector('#zrAdminShellRail [data-zr-a
 function groupForId(id){for(const [key,g] of Object.entries(GROUPS))if(g.items.some(([item])=>item===id))return key;return''}
 function syncActive(){const g=groupForId(activeId());document.querySelectorAll('#zrAdminMobileBottomV1 [data-mobile-group]').forEach(b=>b.classList.toggle('is-active',b.dataset.mobileGroup===g));if(quick?.classList.contains('is-open'))renderQuick(quick.dataset.group||'')}
 function countText(id){const el=$(id);const n=parseInt(String(el?.textContent||'0').replace(/[^0-9-]/g,''),10);return Number.isFinite(n)&&n>0?n:0}
-function syncCounts(){if(!alerts||!badge)return;let total=0;ALERTS.forEach(([,label,countId])=>{const n=countText(countId);total+=n;const el=alerts.querySelector(`[data-mobile-count="${countId}"]`);if(el)el.textContent=String(n)});badge.textContent=total>99?'99+':String(total);badge.hidden=total===0}
+function syncCounts(){
+  if(!alerts||!badge)return;
+  ALERTS.forEach(([,label,countId])=>{
+    const n=countText(countId),el=alerts.querySelector(`[data-mobile-count="${countId}"]`);
+    if(el&&el.textContent!==String(n))el.textContent=String(n);
+  });
+  let total=0;
+  alerts.querySelectorAll('[data-mobile-count]').forEach(el=>{
+    const n=parseInt(String(el.textContent||'0').replace(/[^0-9-]/g,''),10);
+    if(Number.isFinite(n)&&n>0)total+=n;
+  });
+  const text=total>99?'99+':String(total);
+  if(badge.textContent!==text)badge.textContent=text;
+  badge.hidden=total===0;
+}
 function openAlerts(){if(!alerts)return;const on=!alerts.classList.contains('is-open');closeDrawer();closeQuick();alerts.classList.toggle('is-open',on);bell?.classList.toggle('is-open',on);bell?.setAttribute('aria-expanded',on?'true':'false')}
 function closeAlerts(){alerts?.classList.remove('is-open');bell?.classList.remove('is-open');bell?.setAttribute('aria-expanded','false')}
 function openDrawer(){if(!drawer||!backdrop)return;closeAlerts();closeQuick();drawer.classList.add('is-open');backdrop.classList.add('is-open');menuBtn?.classList.add('is-open');menuBtn?.setAttribute('aria-expanded','true');document.documentElement.classList.add('zr-admin-mobile-overlay-open')}
