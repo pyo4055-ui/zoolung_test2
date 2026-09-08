@@ -7,7 +7,7 @@ const FIREBASE_VERSION='12.17.1';
 const REPLY_MARKER='\n\n[관리자 답변]\n';
 const $=id=>document.getElementById(id);
 const mobile=()=>window.matchMedia('(max-width:900px)').matches;
-let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,alertCountObserver=null,badgeFrame=0,retryScheduled=false;
+let firestorePromise=null,availabilityStop=null,reservationsStop=null,inquiriesStop=null,alertCountObserver=null,badgeObserver=null,badgeFrame=0,retryScheduled=false;
 let sharedPendingReservation=null;
 
 function installStyle(){
@@ -78,9 +78,14 @@ function ensureAlertCountObserver(){
   alertCountObserver=new MutationObserver(scheduleBadgeSync);
   alertCountObserver.observe(list,{subtree:true,childList:true,characterData:true});
 }
+function ensureBadgeObserver(){
+  const badge=$('zrAdminMobileBellBadge');if(!badge||badgeObserver)return;
+  badgeObserver=new MutationObserver(scheduleBadgeSync);
+  badgeObserver.observe(badge,{subtree:true,childList:true,characterData:true});
+}
 function sync(){
   if(!mobile())return;
-  installStyle();ensureAlertRow();ensureDrawerRow();ensureAlertCountObserver();
+  installStyle();ensureAlertRow();ensureDrawerRow();ensureAlertCountObserver();ensureBadgeObserver();
   const pendingReservation=sharedPendingReservation===null?localPendingReservation():sharedPendingReservation;
   const pendingChange=localPendingChange();
   setText($('zrSmartPendingReservation'),pendingReservation);setText($('zrSmartReservationChange'),pendingChange);
