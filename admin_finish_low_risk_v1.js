@@ -5,7 +5,7 @@ window.__ZR_ADMIN_FINISH_LOW_RISK_V1=true;
 
 const $=id=>document.getElementById(id);
 const MAX_MOBILE=900;
-let memoModal=null,memoHome=null,shortcutRouteToken=0,previewShortcutUntil=0;
+let memoModal=null,memoHome=null,shortcutRouteToken=0,previewShortcutUntil=0,cancelMenuRouteToken=0;
 
 function mobile(){try{return matchMedia(`(max-width:${MAX_MOBILE}px)`).matches}catch{return innerWidth<=MAX_MOBILE}}
 function noteIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 4h12v16H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>'}
@@ -19,6 +19,23 @@ function injectStyle(){
     #zrAdminMobileMemoModal .zr-admin-mobile-memo-close{float:right;min-height:38px;border:1px solid #d5ddd7;border-radius:9px;background:#fff;color:#31433a;font-weight:800}
     #zrAdminMobileMemoHost{clear:both}
     #zrAdminMobileMemoModal .zr-admin-daily-memo{margin:0!important;border-color:#e3e8e5!important;box-shadow:none!important}
+    @media(max-width:${MAX_MOBILE}px){
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-start,
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-end{min-width:0!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar input[type="date"]{
+        display:block!important;width:calc(100% - 12px)!important;inline-size:calc(100% - 12px)!important;
+        max-width:calc(100% - 12px)!important;max-inline-size:calc(100% - 12px)!important;
+        min-width:0!important;min-inline-size:0!important;margin-left:auto!important;margin-right:auto!important;
+        justify-self:center!important;box-sizing:border-box!important
+      }
+      #adminView #zrActivityCancelWorkspaceV1 .zr-cancel-toolbar input[type="date"]::-webkit-date-and-time-value{
+        width:100%!important;min-width:0!important;margin:0!important;text-align:center!important
+      }
+      #adminView #zrCancelReviewTodayV1{
+        min-height:44px!important;border:1px solid #195b37!important;background:#195b37!important;color:#fff!important;
+        font-size:13px!important;font-weight:900!important;border-radius:11px!important;box-shadow:none!important
+      }
+    }
     @media(min-width:${MAX_MOBILE+1}px){#zrAdminMobileMemoModal{display:none!important}}
   `;document.head.appendChild(s);
 }
@@ -134,6 +151,29 @@ function restorePreviewDefaultAfterShortcut(){
     status.value='all';status.dispatchEvent(new Event('change',{bubbles:true}));
   }
 }
+function isCancelMenuClick(target){
+  if(target?.closest?.('#zrAdminShellRail [data-zr-admin-subitem="activity-cancel"]'))return true;
+  const mobileChild=target?.closest?.('#zrAdminMobileSubnavV3 [data-zrm-child-btn]');
+  return !!mobileChild&&norm(mobileChild.textContent)==='예약취소';
+}
+function applyCancelDefaultPeriod(){
+  const workspace=$('zrActivityCancelWorkspaceV1'),start=$('zrCancelReviewStartV1'),end=$('zrCancelReviewEndV1'),basis=$('zrCancelReviewBasisV1'),todayBtn=$('zrCancelReviewTodayV1'),search=$('zrCancelReviewSearchV1');
+  if(!workspace||workspace.classList.contains('hidden')||!start||!end||!search)return false;
+  const today=seoulDate(),first=`${today.slice(0,8)}01`;
+  if(start.value!==first){start.value=first;start.dispatchEvent(new Event('change',{bubbles:true}))}
+  if(end.value!==today){end.value=today;end.dispatchEvent(new Event('change',{bubbles:true}))}
+  if(basis&&basis.value!=='cancel'){basis.value='cancel';basis.dispatchEvent(new Event('change',{bubbles:true}))}
+  if(todayBtn&&todayBtn.textContent!=='오늘')todayBtn.textContent='오늘';
+  search.click();
+  return true;
+}
+function scheduleCancelDefaultPeriod(){
+  const token=++cancelMenuRouteToken;
+  [90,180,320,520,800].forEach(ms=>setTimeout(()=>{
+    if(token!==cancelMenuRouteToken)return;
+    if(applyCancelDefaultPeriod())cancelMenuRouteToken=0;
+  },ms));
+}
 function applyShortcut(kind){
   if(kind==='reservation')return applyPendingOnly();
   if(kind==='inquiry')return applyInquiryPendingOnly();
@@ -154,6 +194,7 @@ function bindPendingRoute(){
       if(kind==='preview')previewShortcutUntil=Date.now()+1800;
       schedulePendingRoute(kind);return;
     }
+    if(isCancelMenuClick(e.target)){scheduleCancelDefaultPeriod();return}
     if(e.target?.closest?.('#zrPreviewVisitTabBtn'))restorePreviewDefaultAfterShortcut();
   },true);
 }
