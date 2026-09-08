@@ -86,6 +86,11 @@ must(cancelCommit,commitFile,[
   'if(!busy)btn.disabled=false',
   "btn.style.setProperty('pointer-events','auto','important')",
   "actions.style.setProperty('z-index','5','important')",
+  'function activeBookings()',
+  'function targetFromVisibleModal()',
+  "text.includes(String(b.id))",
+  "e.target?.closest?.('[data-zr-cancel-select]')",
+  "targetId=String(selected.dataset.zrCancelSelect||'')",
   "b.status='cancelled'",
   'b.cancelledAt=new Date().toISOString()',
   "b.cancelledBy='customer'",
@@ -142,4 +147,4 @@ const ops=fs.readFileSync('admin_ops_v10.js','utf8');
 must(ops,'admin_ops_v10.js',["cancelled?2:0","cancelText(b)"]);
 
 if(failed){console.error('\nCancellation contract failed.');process.exit(1)}
-console.log('Cancellation visibility, runtime-loaded shared customer commit, armed dynamic cancel binding, observer-loop protection and nested review submenu contract passed.');
+console.log('Cancellation visibility, runtime-loaded shared customer commit, reliable target resolution, armed dynamic cancel binding, observer-loop protection and nested review submenu contract passed.');
