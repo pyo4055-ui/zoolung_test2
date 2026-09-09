@@ -162,7 +162,7 @@ function queueBookingSync(before,after){
   writeChain=writeChain.then(async()=>{
     const user=await ensureUser();
     for(const {id,old,b} of changed){
-      if(b.__availabilityOnly||b.__legacyLocal)continue;
+      if(b.__availabilityOnly)continue;
       const remoteOwner=ownFull.get(id)?.ownerUid||old?.ownerUid||b.ownerUid||'';
       if(remoteOwner&&remoteOwner!==user.uid){
         console.warn('skip write: booking is not owned by this customer session',id);continue;
@@ -224,9 +224,11 @@ async function submitSharedChangeRequest(payload){
   return {requestId,bookingId,inquiryId,holdId:holdCreated?changeHoldDocId(requestId):''};
 }
 function patchSetStore(){
-  if(window.setStore?.__zrCustomerFirebaseBridge)return true;
-  if(typeof window.setStore!=='function')return false;
-  originalSetStore=window.setStore;
+  const current=window.setStore;
+  if(current?.__zrSetStoreChain?.includes('customer-reservation'))return true;
+  if(typeof current!=='function')return false;
+  const chain=Array.isArray(current.__zrSetStoreChain)?current.__zrSetStoreChain:[];
+  originalSetStore=current;
   const wrapped=function(k,v){
     const before=k===BOOKING_KEY?readLocal():null;
     const r=originalSetStore.apply(this,arguments);
@@ -241,6 +243,7 @@ function patchSetStore(){
     return r;
   };
   wrapped.__zrCustomerFirebaseBridge=true;
+  wrapped.__zrSetStoreChain=[...chain,'customer-reservation'];
   window.setStore=wrapped;
   try{setStore=wrapped}catch{}
   return true;
@@ -282,3 +285,4 @@ async function boot(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
+

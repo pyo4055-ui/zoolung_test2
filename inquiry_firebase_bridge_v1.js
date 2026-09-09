@@ -143,9 +143,11 @@ async function syncList(list){
   return writeChain;
 }
 function patchSetStore(){
-  if(window.setStore?.__zrInquiryFirebaseBridge)return true;
-  if(typeof window.setStore!=='function')return false;
-  originalSetStore=window.setStore;
+  const current=window.setStore;
+  if(current?.__zrSetStoreChain?.includes('inquiry'))return true;
+  if(typeof current!=='function')return false;
+  const chain=Array.isArray(current.__zrSetStoreChain)?current.__zrSetStoreChain:[];
+  originalSetStore=current;
   const wrapped=function(k,v){
     if(k!==STORE_KEY)return originalSetStore.apply(this,arguments);
     const uid=currentUser?.uid||auth?.currentUser?.uid||'';
@@ -155,7 +157,7 @@ function patchSetStore(){
     return r;
   };
   wrapped.__zrInquiryFirebaseBridge=true;
-  try{Object.assign(wrapped,originalSetStore)}catch{}
+  wrapped.__zrSetStoreChain=[...chain,'inquiry'];
   window.setStore=wrapped;
   try{setStore=wrapped}catch{}
   return true;
@@ -219,3 +221,4 @@ document.addEventListener('zr:customer-firebase-ready',()=>setTimeout(connect,0)
 document.addEventListener('zr:admin-staff-auth-ready',()=>setTimeout(connect,0));
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,0),{once:true});
 })();
+
