@@ -86,16 +86,17 @@ function go(id){
   if(id==='reservationChange'){const target=$('zrReservationChangeAdminRequestSubtab');if(target){target.click();return true}}
   return false;
 }
-function setText(id,value,unit){const el=$(id);if(el)el.textContent=`${value}${unit||''}`}
+function setText(id,value,unit){const el=$(id);if(el&&el.textContent!==`${value}${unit||''}`)el.textContent=`${value}${unit||''}`}
 function renderTypes(items){
   const root=$('zrSmartGroupTypes');if(!root)return;
-  root.innerHTML=items.length?items.map(([name,count])=>`<div class="zr-admin-smart-type-row"><span>${String(name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span><b>${count}팀</b></div>`).join(''):'<div class="zr-admin-smart-type-empty">오늘 확정된 단체가 없습니다.</div>';
+  const html=items.length?items.map(([name,count])=>`<div class="zr-admin-smart-type-row"><span>${String(name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span><b>${count}팀</b></div>`).join(''):'<div class="zr-admin-smart-type-empty">오늘 확정된 단체가 없습니다.</div>';
+  if(root.innerHTML!==html)root.innerHTML=html;
 }
 function render(){
   if(!panel)return;const c=counts();
   setText('zrSmartConfirmedTeams',c.confirmedTeams,'팀');renderTypes(c.groupTypes);setText('zrSmartVisitors',c.visitors,'명');setText('zrSmartCafeTeams',c.cafeTeams,'팀');setText('zrSmartPaidTeams',c.paidTeams,'팀');
   setText('zrSmartInquiry',c.pendingInquiry,'');setText('zrSmartReservationChange',c.pendingChange,'');setText('zrSmartPreview',c.pendingPreview,'');setText('zrSmartPendingReservation',c.pendingReservation,'');
-  const now=new Date(),time=$('zrSmartUpdated');if(time)time.textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const now=new Date(),time=$('zrSmartUpdated');if(time&&time.textContent!==`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`)time.textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 function build(){
   if($('zrAdminSmartPanelV1')){panel=$('zrAdminSmartPanelV1');return true}
