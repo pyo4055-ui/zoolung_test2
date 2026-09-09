@@ -243,9 +243,14 @@ function showMainWorkspace(){
   $('zrActivityCancelWorkspaceV1')?.classList.add('hidden');
   $('zrActivityMainSubtabV1')?.classList.add('zr-subtab-active');$('zrActivityCancelSubtabV1')?.classList.remove('zr-subtab-active');
 }
+function monthStartSeoul(){const d=todaySeoul();return d.slice(0,8)+'01'}
 function showCancelWorkspace(options={}){
   if(!ensureWorkspace())return;
-  if(options.forcePending){cancelApplied={start:'',end:'',basis:'cancel',status:'pending'};cancelPage=1;syncCancelControls()}
+  if(options.forcePending){
+    cancelApplied={start:'',end:'',basis:'cancel',status:'pending'};cancelPage=1;syncCancelControls()
+  }else if(options.monthRange){
+    cancelApplied={start:monthStartSeoul(),end:todaySeoul(),basis:'cancel',status:'pending'};cancelPage=1;syncCancelControls()
+  }
   $('tab-activity')?.classList.add('zr-cancel-workspace-active');
   $('zrActivityCancelWorkspaceV1')?.classList.remove('hidden');
   $('zrActivityMainSubtabV1')?.classList.remove('zr-subtab-active');$('zrActivityCancelSubtabV1')?.classList.add('zr-subtab-active');
@@ -285,13 +290,13 @@ function syncNotifications(){
 function closeMobileAlerts(){
   $('zrAdminMobileAlertsV1')?.classList.remove('is-open');$('zrAdminMobileBell')?.classList.remove('is-open');$('zrAdminMobileBell')?.setAttribute('aria-expanded','false');
 }
-function openCancelReview(attempt=0){
+function openCancelReview(options={},attempt=0){
   closeMobileAlerts();
   const rail=document.querySelector('#zrAdminShellRail [data-zr-admin-item="activity"]');
   const fallback=document.querySelector('[data-tab="activity"]');
   if(rail)rail.click();else fallback?.click?.();
-  if(ensureWorkspace()){setTimeout(()=>{showCancelWorkspace({forcePending:true});window.scrollTo({top:0,behavior:'auto'})},60);return true}
-  if(attempt<20)setTimeout(()=>openCancelReview(attempt+1),80);
+  if(ensureWorkspace()){setTimeout(()=>{showCancelWorkspace(options.monthRange?{monthRange:true}:{forcePending:true});window.scrollTo({top:0,behavior:'auto'})},60);return true}
+  if(attempt<20)setTimeout(()=>openCancelReview(options,attempt+1),80);
   return false;
 }
 window.zrOpenCancelReviewV1=openCancelReview;
@@ -320,7 +325,9 @@ document.addEventListener('click',e=>{
   if(review){e.preventDefault();e.stopPropagation();markReviewed(review.dataset.zrCancelReview||'');return}
   const detail=e.target?.closest?.('[data-zr-cancel-detail]');
   if(detail){e.preventDefault();detailId=detail.dataset.zrCancelDetail||'';try{window.openAdminBookingDetail?.(detailId)}catch{}setTimeout(decorateDetail,40);setTimeout(decorateDetail,140);return}
-  if(e.target?.closest?.('[data-zr-cancel-review-open], [data-zr-admin-subitem="activity-cancel"]')){e.preventDefault();e.stopImmediatePropagation();openCancelReview();return}
+  const smartCancel=e.target?.closest?.('[data-zr-cancel-review-open]');
+  const cancelSubmenu=e.target?.closest?.('[data-zr-admin-subitem="activity-cancel"]');
+  if(smartCancel||cancelSubmenu){e.preventDefault();e.stopImmediatePropagation();openCancelReview(cancelSubmenu?{monthRange:true}:{forcePending:true});return}
   const normalDetail=e.target?.closest?.('button[onclick*="openAdminBookingDetail"]');
   if(normalDetail){const m=String(normalDetail.getAttribute('onclick')||'').match(/openAdminBookingDetail\(['"]([^'"]+)['"]\)/);detailId=m?.[1]||'';setTimeout(decorateDetail,50);setTimeout(decorateDetail,140)}
   if(e.target?.closest?.('#confirmCustomerCancel')){
