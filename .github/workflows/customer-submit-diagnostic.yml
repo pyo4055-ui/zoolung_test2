@@ -1,0 +1,15 @@
+name: Customer submit diagnostic
+on:
+  push:
+    branches:
+      - diagnose-reservation-submit-20260909
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Inspect compressed customer submit core
+        run: node scripts/customer_submit_diagnostic_20260909.mjs
