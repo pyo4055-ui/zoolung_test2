@@ -105,6 +105,22 @@ async function loadParkingInfo(){
   evalText(parking);
 }
 
+function installFinalConfirmBridge(){
+  if(window.__ZR_CUSTOMER_FINAL_CONFIRM_BRIDGE_V1)return;
+  window.__ZR_CUSTOMER_FINAL_CONFIRM_BRIDGE_V1=true;
+  window.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#zrFinalOkV31');
+    if(!btn)return;
+    const modal=btn.closest?.('#zrFinalGuideModalV31');
+    if(!modal||modal.classList.contains('hidden'))return;
+    const handler=btn.onclick;
+    if(typeof handler!=='function')return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    try{handler.call(btn,e)}catch(err){console.error('customer final confirm bridge',err)}
+  },true);
+}
+
 async function loadCustomerModules(){
   // Explicit customer-only dependency list. No admin tabs, settlement, Excel,
   // schedule editor, warning dashboard or cleanup workspace are loaded here.
@@ -152,6 +168,7 @@ installLegacyGuideGuards();
     installPlayZooGuideGuard();
     await loadCustomerGuideFixV20();
     await loadParkingInfo();
+    installFinalConfirmBridge();
     await loadCustomerModules();
   }catch(e){
     console.error('customer runtime load failed',e);
