@@ -32,6 +32,6 @@ const sections=[
   excerpt('zr_bookings',1200,3800,10)
 ];
 let output=sections.join('\n\n--------------------\n\n');
-if(output.length>60000)output=output.slice(0,60000)+'\n[TRUNCATED]';
-const esc=s=>s.replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A');
-console.log(`::notice file=scripts/customer_submit_diagnostic_20260909.mjs,title=Customer submit core diagnostic::${esc(output)}`);
+if(output.length>90000)output=output.slice(0,90000)+'\n[TRUNCATED]';
+fs.writeFileSync('diagnostic_output.txt',output,'utf8');
+console.log('wrote diagnostic_output.txt',output.length);
