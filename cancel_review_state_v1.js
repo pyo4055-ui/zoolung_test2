@@ -4,7 +4,7 @@ if(window.__ZR_CANCEL_REVIEW_STATE_V1)return;
 window.__ZR_CANCEL_REVIEW_STATE_V1=true;
 
 const KEY='zr_bookings';
-const PAGE_SIZE=8;
+const PAGE_SIZE=4;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
@@ -124,7 +124,6 @@ function pageNumbers(current,pages){
   return out;
 }
 function pagerHtml(current,pages){
-  if(pages<=1)return'';
   const nums=pageNumbers(current,pages).map(n=>n==='…'?'<span class="zr-cancel-page-gap">…</span>':`<button type="button" class="${n===current?'btn-primary':'btn-soft'} zr-cancel-page-btn" data-zr-cancel-page="${n}" ${n===current?'aria-current="page"':''}>${n}</button>`).join('');
   return `<div class="zr-cancel-pagination"><button type="button" class="btn-soft zr-cancel-page-btn" data-zr-cancel-page="prev" ${current<=1?'disabled':''}>이전</button>${nums}<button type="button" class="btn-soft zr-cancel-page-btn" data-zr-cancel-page="next" ${current>=pages?'disabled':''}>다음</button></div>`;
 }
