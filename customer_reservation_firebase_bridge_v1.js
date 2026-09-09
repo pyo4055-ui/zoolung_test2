@@ -230,7 +230,14 @@ function patchSetStore(){
   const wrapped=function(k,v){
     const before=k===BOOKING_KEY?readLocal():null;
     const r=originalSetStore.apply(this,arguments);
-    if(k===BOOKING_KEY&&!applyingRemote)queueBookingSync(before,v);
+    if(k===BOOKING_KEY&&!applyingRemote){
+      try{queueBookingSync(before,v)}
+      catch(e){
+        lastWriteError=e;
+        console.error('customer reservation firebase sync queue',e);
+        toastSafe('예약은 이 기기에 저장됐지만 공용 DB 동기화 준비에 실패했습니다.');
+      }
+    }
     return r;
   };
   wrapped.__zrCustomerFirebaseBridge=true;
