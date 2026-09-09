@@ -203,17 +203,10 @@ function syncEntryStartLimit(){
   if(entry===null)return;
 
   const baseDisabled=new Map([...start.options].map(o=>[o,!!o.disabled]));
-  const optionAt=min=>[...start.options].find(o=>timeMinutes(String(o.value||'').trim())===min)||null;
-
   [...start.options].forEach(o=>{
     const sm=timeMinutes(String(o.value||'').trim());
     if(sm===null||sm>=entry||baseDisabled.get(o))return;
-    const gap=entry-sm;
-    if(gap!==30&&gap!==60){disableEntryStartOption(o,'gap');return}
-    if(gap===60){
-      const next=optionAt(sm+30);
-      if(!next||baseDisabled.get(next))disableEntryStartOption(o,'overlap');
-    }
+    disableEntryStartOption(o,'gap');
   });
 
   const selected=start.selectedOptions?.[0];
@@ -318,7 +311,7 @@ function syncHelp(){
     return;
   }
   if(!String(playStart()?.value||'').trim()){
-    setHelp('동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분만 이용할 수 있습니다. 다른 단체와 시간이 겹치면 마감됩니다.','ok');
+    setHelp('놀이터는 동물원 입장시간부터 퇴장시간 안에서만 예약할 수 있습니다. 다른 단체와 시간이 겹치면 마감됩니다.','ok');
     return;
   }
   const pre=preEntryState();
@@ -346,7 +339,7 @@ function preEntryValidationMessage(){
   }
   const pre=preEntryState();if(!pre)return '';
   if((pre.gap!==30&&pre.gap!==60)||pre.duration!==pre.gap){
-    return '동물원 입장 전 놀이터는 입장시간 바로 직전 30분 또는 60분으로만 예약할 수 있습니다.';
+    return '놀이터는 동물원 입장시간부터 퇴장시간 안에서만 예약할 수 있습니다.';
   }
   return '';
 }
