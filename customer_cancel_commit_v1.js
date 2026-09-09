@@ -106,7 +106,7 @@ async function commitCancellation(id,reason){
   const list=readBookings(),b=list.find(x=>String(x?.id||'')===String(id));
   if(!b||b.__availabilityOnly)throw new Error('booking-not-found');
   const uid=String(bridge.auth?.currentUser?.uid||bridge.user?.uid||'');
-  if(b.ownerUid&&uid&&String(b.ownerUid)!==uid)throw new Error('owner-mismatch');
+  if(!b.__legacyLocal&&b.ownerUid&&uid&&String(b.ownerUid)!==uid)throw new Error('owner-mismatch');
   if(String(b.status||'')==='cancelled')return b;
 
   b.status='cancelled';

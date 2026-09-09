@@ -163,7 +163,8 @@ function queueBookingSync(before,after){
     const user=await ensureUser();
     for(const {id,old,b} of changed){
       if(b.__availabilityOnly)continue;
-      const remoteOwner=ownFull.get(id)?.ownerUid||old?.ownerUid||b.ownerUid||'';
+      const legacy=old?.__legacyLocal===true||b.__legacyLocal===true;
+      const remoteOwner=legacy?'':(ownFull.get(id)?.ownerUid||old?.ownerUid||b.ownerUid||'');
       if(remoteOwner&&remoteOwner!==user.uid){
         console.warn('skip write: booking is not owned by this customer session',id);continue;
       }
