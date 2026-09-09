@@ -320,7 +320,7 @@ document.addEventListener('click',e=>{
   if(review){e.preventDefault();e.stopPropagation();markReviewed(review.dataset.zrCancelReview||'');return}
   const detail=e.target?.closest?.('[data-zr-cancel-detail]');
   if(detail){e.preventDefault();detailId=detail.dataset.zrCancelDetail||'';try{window.openAdminBookingDetail?.(detailId)}catch{}setTimeout(decorateDetail,40);setTimeout(decorateDetail,140);return}
-  if(e.target?.closest?.('[data-zr-cancel-review-open]')){e.preventDefault();e.stopImmediatePropagation();openCancelReview();return}
+  if(e.target?.closest?.('[data-zr-cancel-review-open], [data-zr-admin-subitem="activity-cancel"]')){e.preventDefault();e.stopImmediatePropagation();openCancelReview();return}
   const normalDetail=e.target?.closest?.('button[onclick*="openAdminBookingDetail"]');
   if(normalDetail){const m=String(normalDetail.getAttribute('onclick')||'').match(/openAdminBookingDetail\(['"]([^'"]+)['"]\)/);detailId=m?.[1]||'';setTimeout(decorateDetail,50);setTimeout(decorateDetail,140)}
   if(e.target?.closest?.('#confirmCustomerCancel')){
