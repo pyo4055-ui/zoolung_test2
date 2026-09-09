@@ -422,6 +422,21 @@ function install(){
       html.zr-customer-theme-v1 .modal-actions button{min-height:48px!important}
     }
 
+    html.zr-customer-theme-v1 #customerView #submitBooking,
+    html.zr-customer-theme-v1 #customerView button.btn-primary,
+    html.zr-customer-theme-v1 #customerView input.btn-primary{
+      background:var(--zr-customer-orange)!important;
+      border-color:var(--zr-customer-orange)!important;
+      color:#fff!important;
+      -webkit-text-fill-color:#fff!important;
+    }
+    html.zr-customer-theme-v1 #customerView #submitBooking:hover,
+    html.zr-customer-theme-v1 #customerView button.btn-primary:hover,
+    html.zr-customer-theme-v1 #customerView input.btn-primary:hover{
+      background:var(--zr-customer-orange-dark)!important;
+      border-color:var(--zr-customer-orange-dark)!important;
+    }
+
     @media(max-width:520px){
       html.zr-customer-theme-v1 #startView{margin-left:-2px!important;margin-right:-2px!important;padding:18px 10px!important}
       html.zr-customer-theme-v1 #startView #startManager,
