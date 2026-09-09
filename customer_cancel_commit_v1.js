@@ -38,6 +38,9 @@ function targetFromVisibleModal(){
   const matches=activeBookings().filter(b=>String(b.id||'')&&text.includes(String(b.id)));
   return matches.length===1?String(matches[0].id||''):'';
 }
+function rejectUnmigratedLegacyRecord(b){
+  if(b.__legacyLocal)throw new Error('legacy-local');
+}
 function currentTarget(){
   if(targetId)return targetId;
   const modalId=targetFromVisibleModal();
@@ -105,6 +108,7 @@ async function commitCancellation(id,reason){
   if(!bridge||typeof bridge.waitForWrites!=='function'||typeof window.setStore!=='function')throw new Error('bridge-not-ready');
   const list=readBookings(),b=list.find(x=>String(x?.id||'')===String(id));
   if(!b||b.__availabilityOnly)throw new Error('booking-not-found');
+  rejectUnmigratedLegacyRecord(b);
   if(String(b.status||'')==='cancelled')return b;
 
   b.status='cancelled';
