@@ -147,12 +147,13 @@ function patchSetStore(){
   if(current?.__zrSetStoreChain?.includes('inquiry'))return true;
   if(typeof current!=='function')return false;
   const chain=Array.isArray(current.__zrSetStoreChain)?current.__zrSetStoreChain:[];
-  originalSetStore=current;
+  const base=current;
+  originalSetStore=base;
   const wrapped=function(k,v){
-    if(k!==STORE_KEY)return originalSetStore.apply(this,arguments);
+    if(k!==STORE_KEY)return base.apply(this,arguments);
     const uid=currentUser?.uid||auth?.currentUser?.uid||'';
     const prepared=markList(v,uid);
-    const r=originalSetStore.call(this,k,prepared);
+    const r=base.call(this,k,prepared);
     if(!applyingRemote)syncList(prepared);
     return r;
   };

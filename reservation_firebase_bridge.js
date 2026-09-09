@@ -197,16 +197,20 @@ function queueBookingSync(before,after){
 }
 
 function patchSetStore(){
-  if(window.setStore?.__zrFirebaseBridge)return;
-  if(typeof window.setStore!=='function')return false;
-  originalSetStore=window.setStore;
+  const current=window.setStore;
+  if(current?.__zrSetStoreChain?.includes('reservation'))return true;
+  if(typeof current!=='function')return false;
+  const chain=Array.isArray(current.__zrSetStoreChain)?current.__zrSetStoreChain:[];
+  const base=current;
+  originalSetStore=base;
   const wrapped=function(k,v){
     const before=k===BOOKING_KEY?readLocal():null;
-    const r=originalSetStore.apply(this,arguments);
+    const r=base.apply(this,arguments);
     if(k===BOOKING_KEY&&!applyingRemote)queueBookingSync(before,v);
     return r;
   };
   wrapped.__zrFirebaseBridge=true;
+  wrapped.__zrSetStoreChain=[...chain,'reservation'];
   window.setStore=wrapped;
   return true;
 }

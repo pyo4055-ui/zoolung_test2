@@ -217,7 +217,14 @@ function applyCancelToday(){
   const d=todaySeoul();cancelApplied={start:d,end:d,basis:'cancel',status:$('zrCancelReviewStatusV1')?.value||'pending'};cancelPage=1;syncCancelControls();renderCancelWorkspace();
 }
 function setTextIfChanged(el,value){const text=String(value);if(el&&el.textContent!==text)el.textContent=text}
-function setHtmlIfChanged(el,html){if(el&&el.innerHTML!==html)el.innerHTML=html}
+const renderedHtml=new WeakMap();
+function setHtmlIfChanged(el,html){
+  if(!el)return;
+  const previous=renderedHtml.get(el);
+  if(previous?.source===html&&previous.dom===el.innerHTML)return;
+  el.innerHTML=html;
+  renderedHtml.set(el,{source:html,dom:el.innerHTML});
+}
 function renderCancelWorkspace(){
   if(!$('zrActivityCancelWorkspaceV1'))return;
   const all=cancelRows(),pending=all.filter(b=>reviewState(b)==='pending').length,done=all.length-pending;
