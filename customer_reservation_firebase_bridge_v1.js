@@ -163,8 +163,7 @@ function queueBookingSync(before,after){
     const user=await ensureUser();
     for(const {id,old,b} of changed){
       if(b.__availabilityOnly)continue;
-      const legacy=old?.__legacyLocal===true||b.__legacyLocal===true;
-      const remoteOwner=legacy?'':(ownFull.get(id)?.ownerUid||old?.ownerUid||b.ownerUid||'');
+      const remoteOwner=ownFull.get(id)?.ownerUid||'';
       if(remoteOwner&&remoteOwner!==user.uid){
         console.warn('skip write: booking is not owned by this customer session',id);continue;
       }
@@ -286,4 +285,3 @@ async function boot(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-

@@ -105,8 +105,6 @@ async function commitCancellation(id,reason){
   if(!bridge||typeof bridge.waitForWrites!=='function'||typeof window.setStore!=='function')throw new Error('bridge-not-ready');
   const list=readBookings(),b=list.find(x=>String(x?.id||'')===String(id));
   if(!b||b.__availabilityOnly)throw new Error('booking-not-found');
-  const uid=String(bridge.auth?.currentUser?.uid||bridge.user?.uid||'');
-  if(!b.__legacyLocal&&b.ownerUid&&uid&&String(b.ownerUid)!==uid)throw new Error('owner-mismatch');
   if(String(b.status||'')==='cancelled')return b;
 
   b.status='cancelled';
@@ -172,4 +170,3 @@ function boot(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-
