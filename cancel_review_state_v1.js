@@ -339,7 +339,7 @@ document.addEventListener('click',e=>{
     if(v==='prev')cancelPage=Math.max(1,cancelPage-1);else if(v==='next')cancelPage=Math.min(pages,cancelPage+1);else cancelPage=Math.max(1,Math.min(pages,Number(v)||1));
     renderCancelWorkspace();$('zrActivityCancelWorkspaceV1')?.scrollIntoView?.({block:'start'});return;
   }
-  if(e.target?.closest?.('#zrAdminShellRail [data-zr-admin-item="activity"], [data-tab="activity"]'))setTimeout(()=>{if(!$('zrActivityCancelSubtabV1')?.matches(':active'))showMainWorkspace()},0);
+  if(!cancelSubmenu&&!smartCancel&&e.target?.closest?.('#zrAdminShellRail [data-zr-admin-item="activity"], [data-tab="activity"]'))setTimeout(()=>{if(!$('zrActivityCancelSubtabV1')?.matches(':active'))showMainWorkspace()},0);
 },true);
 document.addEventListener('zr:admin-runtime-ready',scheduleBootSync);
 document.addEventListener('zr:customer-runtime-ready',scheduleBootSync);
