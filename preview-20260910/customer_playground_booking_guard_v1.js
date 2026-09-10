@@ -10,7 +10,8 @@ const OVERLAP_ATTR='zrOverlapDisabled';
 const ENTRY_START_ATTR='zrEntryLinkDisabled';
 const ENTRY_DURATION_ATTR='zrEntryDurationDisabled';
 const CHANGE_HOLD_ATTR='zrChangeHoldDisabled';
-const ENTRY_RULE_SUFFIX=' (입장 직전만 가능)';
+const ENTRY_RULE_SUFFIX=' (입장시간 제한)';
+const ENTRY_TIME_HELP='놀이터는 동물원 입장시간부터 퇴장시간 안에서만 예약할 수 있습니다. 단, 10:30 입장 예약은 10:00 놀이터 이용이 가능합니다.';
 const ENTRY_OVERLAP_SUFFIX=' (60분 마감)';
 const CHANGE_HOLD_SUFFIX=' (마감)';
 const LEGACY_CHANGE_HOLD_SUFFIX=' (변경요청 마감)';
@@ -194,6 +195,7 @@ function syncChangeHoldStartLimit(){
     start.dispatchEvent(new Event('change',{bubbles:true}));
   }
 }
+function isOpeningPlayException(start,entry){return start===600&&entry===630}
 function syncEntryStartLimit(){
   const start=playStart();
   if(!start||start.tagName!=='SELECT')return;
@@ -205,7 +207,7 @@ function syncEntryStartLimit(){
   const baseDisabled=new Map([...start.options].map(o=>[o,!!o.disabled]));
   [...start.options].forEach(o=>{
     const sm=timeMinutes(String(o.value||'').trim());
-    if(sm===null||sm>=entry||baseDisabled.get(o))return;
+    if(sm===null||sm>=entry||isOpeningPlayException(sm,entry)||baseDisabled.get(o))return;
     disableEntryStartOption(o,'gap');
   });
 
@@ -311,11 +313,11 @@ function syncHelp(){
     return;
   }
   if(!String(playStart()?.value||'').trim()){
-    setHelp('놀이터는 동물원 입장시간부터 퇴장시간 안에서만 예약할 수 있습니다. 다른 단체와 시간이 겹치면 마감됩니다.','ok');
+    setHelp(ENTRY_TIME_HELP+' 다른 단체와 시간이 겹치면 마감됩니다.','ok');
     return;
   }
   const pre=preEntryState();
-  if(pre&&(pre.gap===30||pre.gap===60)){
+  if(pre&&isOpeningPlayException(pre.start,pre.entry)){
     setHelp(`동물원 입장 전 놀이터는 ${pre.gap}분 이용 후 바로 입장하도록 연결됩니다. 다른 단체와 한 구간이라도 겹치면 예약할 수 없습니다.`,'ok');
     return;
   }
@@ -338,8 +340,8 @@ function preEntryValidationMessage(){
     return '선택한 놀이터 시간은 다른 단체 예약 또는 예약변경 요청과 겹쳐 이용할 수 없습니다. 다른 시간을 선택해주세요.';
   }
   const pre=preEntryState();if(!pre)return '';
-  if((pre.gap!==30&&pre.gap!==60)||pre.duration!==pre.gap){
-    return '놀이터는 동물원 입장시간부터 퇴장시간 안에서만 예약할 수 있습니다.';
+  if(!isOpeningPlayException(pre.start,pre.entry)||pre.duration!==pre.gap){
+    return ENTRY_TIME_HELP;
   }
   return '';
 }
