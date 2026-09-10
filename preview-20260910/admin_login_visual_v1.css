@@ -1,0 +1,272 @@
+/* Zoolung Dongtan admin login intro visual. UI only; auth/data behavior unchanged. */
+html.zr-admin-login-clean,
+html.zr-admin-login-clean body{
+  background:#38271e!important;
+}
+html.zr-admin-login-clean body{
+  overflow:hidden!important;
+}
+
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]{
+  position:fixed!important;
+  inset:0!important;
+  z-index:99999!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100svh!important;
+  display:block!important;
+  box-sizing:border-box!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background-color:#38271e!important;
+  background-image:none!important;
+  isolation:isolate!important;
+}
+
+/* Disable all older pseudo/photo layers. The real intro is a DOM video layer. */
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::before,
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+}
+
+#zrAdminLoginSceneV1{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#38271e;
+  pointer-events:none;
+}
+#zrAdminLoginSceneV1 video{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  background:#38271e;
+}
+#zrAdminLoginSceneV1::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    90deg,
+    rgba(34,18,10,.28) 0%,
+    rgba(34,18,10,.12) 33%,
+    rgba(10,14,14,.03) 64%,
+    rgba(10,14,14,.08) 100%
+  );
+  opacity:.28;
+  transition:opacity .65s ease;
+}
+html.zr-admin-login-intro-ready #zrAdminLoginSceneV1::after{
+  opacity:1;
+}
+
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  position:fixed!important;
+  z-index:2!important;
+  left:clamp(72px,13.5vw,280px)!important;
+  top:50%!important;
+  transform:translate(-18px,-50%)!important;
+  width:min(430px,calc(100vw - 56px))!important;
+  min-width:0!important;
+  max-width:none!important;
+  min-height:590px!important;
+  max-height:calc(100svh - 48px)!important;
+  margin:0!important;
+  padding:54px 42px 38px!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+  border:1px solid rgba(91,52,36,.10)!important;
+  border-radius:30px!important;
+  background:rgba(255,253,249,.965)!important;
+  box-shadow:0 28px 70px rgba(26,14,9,.26),0 5px 18px rgba(26,14,9,.10)!important;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:
+    opacity .58s ease,
+    transform .68s cubic-bezier(.22,.8,.24,1),
+    visibility 0s linear .68s!important;
+}
+
+html.zr-admin-login-clean.zr-admin-login-intro-ready #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  transform:translate(0,-50%)!important;
+  transition-delay:0s!important;
+}
+
+/* Official color logo on the warm-white card. */
+html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{
+  content:""!important;
+  display:block!important;
+  position:static!important;
+  width:162px!important;
+  height:62px!important;
+  flex:0 0 62px!important;
+  margin:0 auto 18px!important;
+  background:
+    center/contain no-repeat
+    url("https://zoolungzoolung.com/wp-content/themes/zoolungzoolung/assets/images/zoolung_logo_color.svg")!important;
+  opacity:1!important;
+  filter:none!important;
+  transform:none!important;
+}
+
+html.zr-admin-login-clean #adminLoginModal .modal-card h2{
+  display:block!important;
+  margin:0 0 31px!important;
+  padding:0!important;
+  color:#651012!important;
+  font-size:29px!important;
+  line-height:1.22!important;
+  letter-spacing:-.045em!important;
+  text-align:center!important;
+  font-weight:850!important;
+}
+html.zr-admin-login-clean #adminLoginModal .modal-card h2::after{
+  content:"동탄점 단체예약 관리자";
+  display:block;
+  margin-top:8px;
+  color:#8a7469;
+  font-size:12px;
+  line-height:1.4;
+  letter-spacing:-.02em;
+  font-weight:650;
+}
+
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-field{
+  display:block!important;
+  margin:0 0 11px!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-label{
+  display:none!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity,
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  display:block!important;
+  width:100%!important;
+  height:51px!important;
+  min-height:51px!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  border:1px solid #e3d8d0!important;
+  border-radius:10px!important;
+  outline:none!important;
+  padding:0 14px 0 44px!important;
+  background-color:#fffdfa!important;
+  color:#38251d!important;
+  font:inherit!important;
+  font-size:14px!important;
+  box-shadow:none!important;
+  transition:border-color .16s ease,box-shadow .16s ease!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 20c.8-4 3.2-6 7.5-6s6.7 2 7.5 6'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ad8d7a' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='10' width='14' height='10' rx='2'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 8 0V10'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:15px center!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity::placeholder,
+html.zr-admin-login-clean #adminLoginModal #adminPassword::placeholder{
+  color:#aa968a!important;
+}
+html.zr-admin-login-clean #adminLoginModal #zrAdminIdentity:focus,
+html.zr-admin-login-clean #adminLoginModal #adminPassword:focus{
+  border-color:#b9826e!important;
+  box-shadow:0 0 0 3px rgba(132,59,47,.08)!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-error{
+  margin:6px 0 0!important;
+  color:#b23838!important;
+  font-size:11px!important;
+  font-weight:750!important;
+}
+html.zr-admin-login-clean #adminLoginModal .zr-admin-identity-error.hidden{
+  display:none!important;
+}
+
+/* Normalize legacy password wrapper spacing without changing its behavior. */
+html.zr-admin-login-clean #adminLoginModal #adminPassword{
+  margin-bottom:0!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminLoginSubmit{
+  display:block!important;
+  width:100%!important;
+  height:52px!important;
+  min-height:52px!important;
+  margin:14px 0 0!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:#720b0f!important;
+  color:#fff!important;
+  font-size:14px!important;
+  line-height:1!important;
+  font-weight:800!important;
+  cursor:pointer!important;
+  box-shadow:0 8px 16px rgba(91,13,15,.18)!important;
+}
+html.zr-admin-login-clean #adminLoginModal #adminLoginSubmit:active{
+  transform:translateY(1px)!important;
+}
+
+#zrAdminLoginEmployeeV1{
+  margin-top:auto;
+  padding-top:28px;
+  text-align:center;
+  color:#a28f84;
+  font-size:11px;
+  line-height:1.4;
+  font-weight:650;
+}
+
+@media(max-width:900px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    left:50%!important;
+    top:50%!important;
+    width:min(420px,calc(100vw - 36px))!important;
+    min-height:520px!important;
+    padding:42px 30px 30px!important;
+    border-radius:26px!important;
+    transform:translate(-50%,-50%)!important;
+  }
+  html.zr-admin-login-clean.zr-admin-login-intro-ready #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    transform:translate(-50%,-50%)!important;
+  }
+  #zrAdminLoginSceneV1::after{
+    background:rgba(31,17,11,.18);
+  }
+}
+
+@media(max-height:660px){
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card{
+    min-height:0!important;
+    padding-top:30px!important;
+    padding-bottom:26px!important;
+  }
+  html.zr-admin-login-clean #adminLoginModal[data-zr-login-visual="1"]>.modal-card::before{
+    width:140px!important;
+    height:52px!important;
+    flex-basis:52px!important;
+    margin-bottom:12px!important;
+  }
+  html.zr-admin-login-clean #adminLoginModal .modal-card h2{
+    margin-bottom:18px!important;
+  }
+  #zrAdminLoginEmployeeV1{
+    padding-top:18px;
+  }
+}

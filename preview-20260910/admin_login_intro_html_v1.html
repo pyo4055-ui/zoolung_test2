@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>주렁주렁 인트로</title>
+<style>
+  :root{--bg:#38271e}
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    background:var(--bg);
+  }
+  body{overflow:hidden}
+
+  /* All supplied PNGs share one canvas/coordinate system.
+     Keep every layer perfectly aligned, but scale that shared canvas as one
+     cover surface so wide monitors never reveal brown side bars. */
+  .intro-frame{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    height:100svh;
+    overflow:hidden;
+    isolation:isolate;
+    background:var(--bg);
+  }
+
+  .intro-layer{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    will-change:transform,opacity;
+  }
+  .intro-layer img{
+    position:absolute;
+    inset:0;
+    display:block;
+    width:100%;
+    height:100%;
+    max-width:none;
+    object-fit:cover;
+    object-position:center center;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+
+  .penguin-layer{z-index:1;transform:translate3d(0,105%,0)}
+  .otter-layer{z-index:2;transform:translate3d(0,-105%,0)}
+  .capybara-layer{z-index:3;transform:translate3d(-105%,0,0)}
+  .copy-layer{z-index:4;opacity:0}
+
+  /* All three animals enter together; only their directions differ. */
+  .intro-frame.run .penguin-layer,
+  .intro-frame.run .otter-layer,
+  .intro-frame.run .capybara-layer{
+    animation-duration:.88s;
+    animation-timing-function:cubic-bezier(.18,.72,.22,1);
+    animation-delay:.06s;
+    animation-fill-mode:forwards;
+  }
+  .intro-frame.run .penguin-layer{animation-name:penguinIn}
+  .intro-frame.run .otter-layer{animation-name:otterIn}
+  .intro-frame.run .capybara-layer{animation-name:capybaraIn}
+  .intro-frame.run .copy-layer{
+    animation:copyIn .52s cubic-bezier(.2,.76,.24,1) 1.02s forwards;
+  }
+
+  @keyframes penguinIn{
+    0%{transform:translate3d(0,105%,0)}
+    82%{transform:translate3d(0,-1.4%,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes otterIn{
+    0%{transform:translate3d(0,-105%,0)}
+    82%{transform:translate3d(0,1.4%,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes capybaraIn{
+    0%{transform:translate3d(-105%,0,0)}
+    82%{transform:translate3d(1.4%,0,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes copyIn{
+    0%{opacity:0;transform:scale(.985)}
+    100%{opacity:1;transform:scale(1)}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .penguin-layer,.otter-layer,.capybara-layer{transform:none!important}
+    .copy-layer{opacity:1!important}
+    .intro-frame.run .intro-layer{animation:none!important}
+  }
+</style>
+</head>
+<body>
+  <main id="introFrame" class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
+    <div class="intro-layer penguin-layer">
+      <img src="https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer otter-layer">
+      <img src="https://i.ibb.co/XkpnjP9r/1-otter-transparent.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer capybara-layer">
+      <img src="https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer copy-layer">
+      <img src="https://i.ibb.co/LDPssRz1/asdd.png" alt="주렁주렁" decoding="async">
+    </div>
+  </main>
+<script>
+  const frame=document.getElementById('introFrame');
+  const sources=[
+    'https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png',
+    'https://i.ibb.co/XkpnjP9r/1-otter-transparent.png',
+    'https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png',
+    'https://i.ibb.co/LDPssRz1/asdd.png'
+  ];
+
+  const notify=event=>{
+    try{window.parent.postMessage({source:'zr-admin-intro-html-v1',event},'*')}catch{}
+  };
+
+  let finished=false;
+  const finish=()=>{
+    if(finished)return;
+    finished=true;
+    notify('ended');
+  };
+
+  const start=()=>{
+    notify('ready');
+    requestAnimationFrame(()=>{
+      frame.classList.add('run');
+      notify('playing');
+      /* Start the parent login-card reveal at the same moment as the logo. */
+      setTimeout(finish,1020);
+    });
+  };
+
+  Promise.all(sources.map(src=>new Promise(resolve=>{
+    const img=new Image();
+    img.onload=resolve;
+    img.onerror=resolve;
+    img.src=src;
+  }))).then(start).catch(start);
+
+  setTimeout(finish,4000);
+</script>
+</body>
+</html>

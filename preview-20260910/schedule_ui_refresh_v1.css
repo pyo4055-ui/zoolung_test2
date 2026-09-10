@@ -1,0 +1,258 @@
+/* Zoolung Dongtan onsite schedule skin.
+   Keep the original compact schedule layout; change only the visual language. */
+:root{
+  --zr-wine:#651012;
+  --zr-wine-btn:#720b0f;
+  --zr-brown:#38271e;
+  --zr-orange:#f28a2e;
+  --zr-warm:#f7f2ec;
+  --zr-paper:#fffdf9;
+  --zr-line:#eaded5;
+  --zr-text:#332925;
+  --zr-muted:#86766d;
+}
+
+body{background:var(--zr-warm)!important;color:var(--zr-text)!important}
+header{
+  background:rgba(255,253,249,.98)!important;
+  border-bottom-color:var(--zr-line)!important;
+  box-shadow:0 3px 14px rgba(71,42,29,.05)!important;
+}
+.brand{color:var(--zr-wine)!important;letter-spacing:-.02em!important}
+.brand small{color:#927e73!important}
+.scheduleUserBadge{
+  border:1px solid #e4d8cf!important;
+  background:#f8f2ed!important;
+  color:#6c5145!important;
+  box-shadow:none!important;
+}
+.sharedMemoBtn{
+  background:#fff2e6!important;
+  color:#9a4d1e!important;
+  border:1px solid #efcfb8!important;
+}
+.editLock{box-shadow:none!important}
+.editLock.locked{background:#f1eeeb!important;color:#74675f!important;border:1px solid #ddd4ce!important}
+.editLock.unlocked{background:#fff0e2!important;color:#8e3f16!important;border:1px solid #efc8a9!important}
+
+.toolbar{
+  background:rgba(247,242,236,.97)!important;
+  border-bottom-color:#e5d9d0!important;
+}
+.toolbar.editing{background:#fff8f0!important}
+.controls .soft{
+  background:var(--zr-wine-btn)!important;
+  color:#fff!important;
+  box-shadow:0 4px 10px rgba(101,16,18,.12)!important;
+}
+.controls input{
+  border-color:#dfd3ca!important;
+  background:#fff!important;
+  color:#332925!important;
+}
+#today,.refreshBtn{
+  background:#f2efec!important;
+  color:#62564f!important;
+  border:1px solid #e2d9d2!important;
+}
+.pill{
+  background:#fff!important;
+  border-color:#e5dbd4!important;
+  color:#796b63!important;
+}
+.pill b{color:var(--zr-wine)!important}
+.syncPill.ok{background:#eef6f0!important;color:#4f6c57!important;border-color:#d1e1d4!important}
+.syncPill.wait{background:#fff7e9!important;color:#8a661f!important;border-color:#ead8aa!important}
+.syncPill.err{background:#fbecec!important;color:#a33b3b!important;border-color:#e8c6c6!important}
+.editHint{color:#92481d!important}
+
+#ruler{
+  border-color:#ded5ce!important;
+  background:#f4f1ed!important;
+}
+#ruler .tick{color:#5e544e!important}
+.card{
+  background:var(--zr-paper)!important;
+  border-color:#e5ddd7!important;
+  box-shadow:0 3px 12px rgba(66,39,26,.045)!important;
+}
+.card.editable{box-shadow:0 0 0 1px #e8bd96 inset,0 3px 12px rgba(66,39,26,.045)!important}
+.card.cancelled{background:#f2efed!important;border-color:#d9d2cd!important}
+.head{border-bottom-color:#eee7e2!important}
+.org{color:#3d2b24!important}
+.tag{background:#f3f0ed!important;color:#655a54!important}
+.mealTag{background:#fff0c7!important;color:#81511d!important}
+.locTag.hasLoc{background:#edf5ef!important;color:#466550!important}
+.locTag.noLoc{background:#fff4de!important;color:#93612b!important;border-color:#e4c58f!important}
+.appearanceTag.hasAppearance{background:#f0f5f8!important;color:#566a75!important;border-color:#dfe7eb!important}
+.appearanceTag.noAppearance{background:#f5f3f1!important;color:#877d76!important;border-color:#dcd5d0!important}
+.zr-phone-tag{background:#edf6f0!important;color:#41694d!important;border-color:#d4e5d8!important}
+.detail{background:#f3efec!important;color:#66564d!important;border-color:#e0d6cf!important}
+.meta{color:#6f655f!important}
+.meta .planT{color:#4f4038!important}
+.live{background:#f1f2f0!important;color:#716962!important}
+.live.has{background:#eaf4ec!important;color:#4d6c55!important}
+.check{background:#fff!important;color:#655b55!important;border-color:#ddd6d1!important}
+.check.on{background:#fff0e4!important;color:#8b451c!important;border-color:#efcbae!important}
+#list .timeline{border-color:#ddd6d0!important;background:#fffdfa!important}
+#list .seg{border-color:rgba(70,47,35,.08)!important;box-shadow:0 2px 5px rgba(55,35,25,.04)!important}
+#list .seg b{color:#3f332d!important}
+#list .seg small{color:#665950!important}
+.now{background:#b91f26!important}
+.memo{background:#faf7f3!important;border-color:#e9e1db!important;color:#70665f!important}
+.memo b{color:var(--zr-wine)!important}
+.empty{background:#fffdf9!important;border-color:#d8cbc1!important;color:#89786f!important}
+.fab{background:var(--zr-wine-btn)!important;color:#fff!important;box-shadow:0 7px 20px rgba(101,16,18,.18)!important}
+.toast{background:var(--zr-wine-btn)!important}
+
+.sheet{background:#fffdf9!important;border-color:#e7dcd4!important}
+.titleRow{background:var(--zr-orange)!important;color:#fff!important;box-shadow:0 4px 12px rgba(248,84,4,.16)!important}
+.titleRow h2{color:#fff!important}
+.titleRow .gray{background:#fff!important;color:var(--zr-wine)!important;border-color:rgba(71,9,16,.18)!important}
+.titleRow .gray:hover{background:#fff3e9!important;color:var(--zr-wine)!important}
+.section{border-color:#eee6e0!important}
+.section h3{color:#55443b!important}
+.sheet input,.sheet select,.sheet textarea{border-color:#dfd5ce!important;background:#fff!important;color:#3d302a!important}
+.sheet .primary{background:var(--zr-wine-btn)!important;color:#fff!important}
+
+/* Mobile: deliberately preserve the original compact placement.
+   Only keep the signed-in staff name small under the title so it does not
+   push memo/edit controls onto a separate row. */
+@media(max-width:430px){
+  .top{position:relative!important;padding-bottom:27px!important}
+  .brand{color:var(--zr-wine)!important}
+  .topRight{
+    width:auto!important;
+    margin-left:auto!important;
+    display:flex!important;
+    grid-template-columns:none!important;
+    gap:4px!important;
+  }
+  .scheduleUserBadge{
+    position:absolute!important;
+    left:8px!important;
+    bottom:5px!important;
+    width:auto!important;
+    max-width:150px!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:auto!important;
+    padding:2px 0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    color:#8a7469!important;
+    font-size:8px!important;
+    line-height:1.2!important;
+    justify-content:flex-start!important;
+  }
+  .sharedMemoBtn,.editLock{white-space:nowrap!important}
+
+  /* undo the v1 mobile dashboard/grid treatment */
+  .toolbar{
+    position:sticky!important;
+    top:55px!important;
+    margin:0!important;
+    padding:7px 0!important;
+    border:0!important;
+    border-bottom:1px solid #e5d9d0!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+  .controls{align-items:center!important}
+  .controls .soft{
+    width:auto!important;
+    min-width:0!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:10px 12px!important;
+    font-size:inherit!important;
+    line-height:normal!important;
+    border-radius:10px!important;
+  }
+  .controls input{
+    padding:9px 7px!important;
+    font-size:inherit!important;
+  }
+  #today{
+    font-size:inherit!important;
+  }
+  .refreshBtn{
+    font-size:10px!important;
+  }
+  /* Keep all date controls reachable without shrinking the arrow targets. */
+  .controls{
+    display:grid!important;
+    grid-template-columns:44px minmax(0,1fr) 44px 58px!important;
+    gap:6px!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+  }
+  .controls #prev,.controls #next{
+    width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;
+    padding:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+    font-size:20px!important;box-sizing:border-box!important;
+  }
+  .controls input{width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;box-sizing:border-box!important}
+  .controls #today{width:58px!important;min-width:58px!important;height:44px!important;min-height:44px!important;padding:0!important;box-sizing:border-box!important}
+  .refreshBtn{grid-column:1/-1!important;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;margin-left:0!important;padding:0 8px!important;box-sizing:border-box!important}
+  .summary{
+    display:flex!important;
+    grid-template-columns:none!important;
+    gap:6px!important;
+    overflow:auto!important;
+    white-space:nowrap!important;
+    margin-top:6px!important;
+    padding-bottom:0!important;
+  }
+  .pill{
+    min-width:auto!important;
+    width:auto!important;
+    min-height:0!important;
+    justify-content:flex-start!important;
+    padding:5px 8px!important;
+    font-size:10px!important;
+    white-space:nowrap!important;
+  }
+  .summary .syncPill{grid-column:auto!important}
+
+  .card{padding-bottom:4px!important}
+  .meta{
+    min-height:32px!important;
+    display:flex!important;
+    align-items:center!important;
+    grid-template-columns:none!important;
+    gap:5px!important;
+    padding:5px 7px!important;
+    font-size:8px!important;
+    white-space:nowrap!important;
+    overflow:auto!important;
+  }
+  .meta .planT{
+    grid-column:auto!important;
+    min-height:0!important;
+    display:inline!important;
+    padding:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    font-size:8px!important;
+  }
+  .meta .live{
+    width:auto!important;
+    min-width:0!important;
+    min-height:22px!important;
+    padding:4px 5px!important;
+    font-size:8px!important;
+  }
+  .quick{
+    grid-column:auto!important;
+    width:auto!important;
+    display:flex!important;
+    margin-left:auto!important;
+    gap:4px!important;
+  }
+  .memo{margin-left:7px!important;margin-right:7px!important}
+  #list .timeline{margin-left:7px!important;margin-right:7px!important}
+}
