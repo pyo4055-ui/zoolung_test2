@@ -59,7 +59,7 @@
   .intro-frame.run .penguin-layer,
   .intro-frame.run .otter-layer,
   .intro-frame.run .capybara-layer{
-    animation-duration:.88s;
+    animation-duration:1.38s;
     animation-timing-function:cubic-bezier(.18,.72,.22,1);
     animation-delay:.06s;
     animation-fill-mode:forwards;
@@ -68,28 +68,26 @@
   .intro-frame.run .otter-layer{animation-name:otterIn}
   .intro-frame.run .capybara-layer{animation-name:capybaraIn}
   .intro-frame.run .copy-layer{
-    animation:copyIn .52s cubic-bezier(.2,.76,.24,1) 1.02s forwards;
+    animation:copyIn .52s cubic-bezier(.2,.76,.24,1) 1.52s forwards;
   }
 
   @keyframes penguinIn{
     0%{transform:translate3d(0,105%,0)}
-    82%{transform:translate3d(0,-1.4%,0)}
     100%{transform:translate3d(0,0,0)}
   }
   @keyframes otterIn{
     0%{transform:translate3d(0,-105%,0)}
-    82%{transform:translate3d(0,1.4%,0)}
     100%{transform:translate3d(0,0,0)}
   }
   @keyframes capybaraIn{
     0%{transform:translate3d(-105%,0,0)}
-    82%{transform:translate3d(1.4%,0,0)}
     100%{transform:translate3d(0,0,0)}
   }
   @keyframes copyIn{
     0%{opacity:0;transform:scale(.985)}
     100%{opacity:1;transform:scale(1)}
   }
+  .intro-frame.still .intro-layer{animation:none!important;transform:none!important;opacity:1!important}
 
   @media(prefers-reduced-motion:reduce){
     .penguin-layer,.otter-layer,.capybara-layer{transform:none!important}
@@ -115,42 +113,57 @@
   </main>
 <script>
   const frame=document.getElementById('introFrame');
-  const sources=[
-    'https://i.ibb.co/8n1KSdTh/3-penguin-transparent.png',
-    'https://i.ibb.co/XkpnjP9r/1-otter-transparent.png',
-    'https://i.ibb.co/ksPyqJC7/2-capybara-transparent.png',
-    'https://i.ibb.co/LDPssRz1/asdd.png'
-  ];
+  const images=[...frame.querySelectorAll('img')];
 
   const notify=event=>{
     try{window.parent.postMessage({source:'zr-admin-intro-html-v1',event},'*')}catch{}
   };
 
-  let finished=false;
+  let finished=false,started=false;
+  let assetTimeout=0,animationTimeout=0;
   const finish=()=>{
     if(finished)return;
     finished=true;
+    clearTimeout(assetTimeout);clearTimeout(animationTimeout);
     notify('ended');
   };
-
-  const start=()=>{
-    notify('ready');
-    requestAnimationFrame(()=>{
-      frame.classList.add('run');
-      notify('playing');
-      /* Start the parent login-card reveal at the same moment as the logo. */
-      setTimeout(finish,1020);
-    });
+  const fail=()=>{
+    if(finished)return;
+    finished=true;
+    clearTimeout(assetTimeout);clearTimeout(animationTimeout);
+    frame.classList.add('still');
+    notify('error');
   };
 
-  Promise.all(sources.map(src=>new Promise(resolve=>{
-    const img=new Image();
-    img.onload=resolve;
-    img.onerror=resolve;
-    img.src=src;
-  }))).then(start).catch(start);
+  frame.addEventListener('animationstart',event=>{
+    if(event.target.classList.contains('copy-layer')&&event.animationName==='copyIn')finish();
+  });
 
-  setTimeout(finish,4000);
+  const start=()=>{
+    if(started||finished)return;
+    started=true;
+    clearTimeout(assetTimeout);
+    notify('ready');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(finished)return;
+      frame.classList.add('run');
+      notify('playing');
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return}
+      // The logo's real animation start reveals all three parent cards.
+      // This is only recovery if animation events are unavailable.
+      animationTimeout=setTimeout(finish,4000);
+    }));
+  };
+
+  assetTimeout=setTimeout(fail,8000);
+  Promise.all(images.map(async img=>{
+    if(typeof img.decode==='function'){await img.decode();return}
+    if(img.complete){if(img.naturalWidth>0)return;throw new Error('intro image unavailable')}
+    await new Promise((resolve,reject)=>{
+      img.addEventListener('load',resolve,{once:true});
+      img.addEventListener('error',reject,{once:true});
+    });
+  })).then(start).catch(fail);
 </script>
 </body>
 </html>

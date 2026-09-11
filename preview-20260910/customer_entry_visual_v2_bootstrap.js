@@ -93,7 +93,7 @@ function load(){
   const s=document.createElement('script');
   s.id='zrCustomerEntryVisualV2Script';
   s.async=false;
-  s.src='./customer_entry_visual_v2.js?v=4';
+  s.src='./customer_entry_visual_v2.js?v=5';
   s.onload=loadFix;
   s.onerror=()=>{s.remove();signalVisualReady(true);try{window.toast?.('고객 첫 화면 디자인을 불러오지 못했습니다. 새로고침해주세요.')}catch{}};
   document.body.appendChild(s);

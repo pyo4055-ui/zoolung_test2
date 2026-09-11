@@ -3,7 +3,7 @@
 if(window.__ZR_SCHEDULE_LOGIN_ANIMALS_V1)return;
 window.__ZR_SCHEDULE_LOGIN_ANIMALS_V1=true;
 
-const INTRO_URL='./admin_login_intro_html_v1.html?v=1';
+const INTRO_URL='./admin_login_intro_html_v1.html?v=2';
 let observer=null;
 let playToken=0;
 let fallbackTimer=0;
@@ -18,9 +18,9 @@ function installStyle(){
     #zrScheduleLoginAnimalsV1{position:absolute!important;inset:0!important;z-index:0!important;display:block!important;overflow:hidden!important;background:#38271e!important;pointer-events:none!important}
     #zrScheduleLoginAnimalsV1 iframe{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0!important;margin:0!important;padding:0!important;display:block!important;background:#38271e!important;pointer-events:none!important}
     #zrScheduleLoginAnimalsV1::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(32,18,12,.10)}
-    #login .loginbox{position:relative!important;z-index:2!important;transition:opacity .38s ease,transform .38s ease,visibility .38s ease!important}
-    #login.zr-schedule-login-animals-booting .loginbox{opacity:0!important;visibility:hidden!important;transform:translateY(8px) scale(.992)!important;pointer-events:none!important}
-    #login.zr-schedule-login-animals-ready .loginbox{opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:auto!important}
+    #login .loginbox{position:relative!important;z-index:2!important;transition:opacity .38s ease,transform .38s ease,visibility 0s linear!important}
+    #login.zr-schedule-login-animals-booting .loginbox{opacity:0!important;visibility:hidden!important;transform:translate3d(0,8px,0)!important;pointer-events:none!important}
+    #login.zr-schedule-login-animals-ready .loginbox{opacity:1!important;visibility:visible!important;transform:translate3d(0,0,0)!important;pointer-events:auto!important}
     @media(max-width:700px){#zrScheduleLoginAnimalsV1::after{background:rgba(32,18,12,.16)}}
     @media(prefers-reduced-motion:reduce){#login .loginbox{transition:none!important}#login.zr-schedule-login-animals-booting .loginbox{transform:none!important}}
   `;
@@ -63,8 +63,8 @@ function play(){
   clearFallback();
   p.login.classList.remove('zr-schedule-login-animals-ready');
   p.login.classList.add('zr-schedule-login-animals-booting');
-  p.frame.src=INTRO_URL+'&surface=schedule&session='+token+'&t='+Date.now();
-  fallbackTimer=setTimeout(()=>reveal(token),1800);
+  p.frame.src=INTRO_URL;
+  fallbackTimer=setTimeout(()=>reveal(token),10000);
 }
 function syncVisibility(force=false){
   installStyle();
@@ -84,6 +84,9 @@ function handleMessage(e){
   const data=e.data;
   if(!data||data.source!=='zr-admin-intro-html-v1')return;
   const token=playToken;
+  if(data.event==='playing'){
+    clearFallback();fallbackTimer=setTimeout(()=>reveal(token),10000);
+  }
   if(data.event==='ended'||data.event==='error')reveal(token);
 }
 function boot(){

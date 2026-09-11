@@ -5,9 +5,10 @@ window.__ZR_CUSTOMER_ENTRY_VISUAL_V2=true;
 
 const $=id=>document.getElementById(id);
 const ROOT=document.documentElement;
-const INTRO_URL='./admin_login_intro_html_v1.html?v=1';
+const INTRO_URL='./admin_login_intro_html_v1.html?v=2';
 let viewObserver=null;
 let introReady=false;
+let introStarted=false;
 let introFallback=0;
 let lookupToken=0;
 
@@ -69,9 +70,9 @@ function injectStyle(){
     display:flex;flex-direction:column;width:min(430px,calc(100vw - 56px));min-height:610px;max-height:calc(100svh - 44px);
     margin:0;padding:48px 42px 34px;box-sizing:border-box;overflow:auto;
     border:1px solid rgba(91,52,36,.10);border-radius:30px;background:rgba(255,253,249,.972);
-    box-shadow:0 28px 70px rgba(26,14,9,.28),0 5px 18px rgba(26,14,9,.10);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 28px 70px rgba(26,14,9,.28),0 5px 18px rgba(26,14,9,.10);backdrop-filter:none;-webkit-backdrop-filter:none;
     opacity:0;visibility:hidden;pointer-events:none;
-    transition:opacity .58s ease,transform .68s cubic-bezier(.22,.8,.24,1),visibility 0s linear .68s;
+    transition:opacity .38s ease,transform .38s ease,visibility 0s linear;
   }
   html.zr-customer-entry-v2.zr-customer-entry-card-ready #zrCustomerEntryCardV2{
     opacity:1;visibility:visible;pointer-events:auto;transform:translate(0,-50%);transition-delay:0s;
@@ -365,15 +366,15 @@ function ensureHero(){
   name.addEventListener('input',()=>showEntryError(''));
   phone.addEventListener('input',()=>{phone.value=sanitizePhone(phone.value);showEntryError('')});
   syncProxyFromNative();
-  startIntro();
   return true;
 }
 function startIntro(){
-  if(introReady)return;
+  if(introReady||introStarted)return;
   const frame=$('zrCustomerEntryIntroFrameV2');if(!frame)return;
-  frame.src=INTRO_URL+'&customer=1&t='+Date.now();
+  introStarted=true;
+  frame.src=INTRO_URL;
   if(introFallback)clearTimeout(introFallback);
-  introFallback=setTimeout(finishIntro,4500);
+  introFallback=setTimeout(finishIntro,10000);
 }
 function finishIntro(){
   if(introReady)return;introReady=true;
@@ -383,6 +384,10 @@ function finishIntro(){
 function onIntroMessage(e){
   const frame=$('zrCustomerEntryIntroFrameV2');if(!frame||e.source!==frame.contentWindow)return;
   const d=e.data;if(!d||d.source!=='zr-admin-intro-html-v1')return;
+  if(d.event==='playing'){
+    if(introFallback)clearTimeout(introFallback);
+    introFallback=setTimeout(finishIntro,10000);
+  }
   if(d.event==='ended'||d.event==='error')finishIntro();
 }
 function syncViewState(){
@@ -400,8 +405,12 @@ function watchViews(){
   nodes.forEach(n=>viewObserver.observe(n,{attributes:true,attributeFilter:['class','style','hidden']}));
 }
 function boot(){
-  ROOT.classList.add('zr-customer-entry-v2');injectStyle();ensureHero();watchViews();syncViewState();
   window.addEventListener('message',onIntroMessage);
+  ROOT.classList.add('zr-customer-entry-v2');injectStyle();ensureHero();watchViews();syncViewState();
+  // Start only after the final overlay is mounted and its boot cover is gone.
+  // Moving an already-playing iframe would reload its document mid-animation.
+  if(window.__ZR_CUSTOMER_ENTRY_V2_READY)startIntro();
+  else document.addEventListener('zr:customer-entry-v2-ready',startIntro,{once:true});
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('zrCustomerGroupGuideV2')?.classList.contains('hidden')){e.preventDefault();closeGuide()}});
   document.addEventListener('zr:customer-runtime-ready',()=>{ensureHero();syncViewState()},{once:true});
 }

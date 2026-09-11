@@ -3,7 +3,7 @@
 if(window.__ZR_ADMIN_LOGIN_INTRO_V1)return;
 window.__ZR_ADMIN_LOGIN_INTRO_V1=true;
 
-const INTRO_HTML_URL='./admin_login_intro_html_v1.html?v=1';
+const INTRO_HTML_URL='./admin_login_intro_html_v1.html?v=2';
 const ROOT=document.documentElement;
 const $=id=>document.getElementById(id);
 let rootObserver=null;
@@ -99,7 +99,7 @@ function beginLoginSession(){
 
   /* Reload the dedicated HTML document for every login session. The iframe owns
      autoplay/currentTime/end-frame behavior, keeping the admin runtime out of it. */
-  parts.frame.src=INTRO_HTML_URL+'&session='+token+'&t='+Date.now();
+  parts.frame.src=INTRO_HTML_URL;
   fallbackTimer=setTimeout(()=>fallbackToLogin(token),10000);
   return true;
 }
@@ -140,6 +140,8 @@ function handleIntroMessage(e){
     return;
   }
   if(data.event==='playing'){
+    if(fallbackTimer)clearTimeout(fallbackTimer);
+    fallbackTimer=setTimeout(()=>fallbackToLogin(token),10000);
     ROOT.classList.add('zr-admin-login-intro-playing');
     revealIntroSurface();
     return;

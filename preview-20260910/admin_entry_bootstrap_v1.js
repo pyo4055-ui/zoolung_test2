@@ -42,7 +42,7 @@ function installLoginVisual(){
     const link=document.createElement('link');
     link.id='zrAdminLoginVisualV1Style';
     link.rel='stylesheet';
-    link.href='./admin_login_visual_v1.css?v=1';
+    link.href='./admin_login_visual_v1.css?v=4';
     document.head.appendChild(link);
   }
   const modal=$('adminLoginModal');
