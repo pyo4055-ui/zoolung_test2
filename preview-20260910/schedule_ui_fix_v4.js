@@ -207,7 +207,7 @@ function loadCustomerScheduleUiV5(){
   if(document.getElementById('zrCustomerScheduleUiV5'))return;
   const s=document.createElement('script');
   s.id='zrCustomerScheduleUiV5';
-  s.src='./customer_schedule_ui_v5.js?v=5';
+  s.src='./customer_schedule_ui_v5.js?v=6';
   document.body.appendChild(s);
 }
 

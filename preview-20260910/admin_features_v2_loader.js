@@ -98,7 +98,7 @@ async function loadAdminBase(){
 }
 
 async function loadAdminPatchChain(){
-  await loadScript('zrAdminPatchBundle','./admin_features_patch_bundle.js?v=1');
+  await loadScript('zrAdminPatchBundle','./admin_features_patch_bundle.js?v=3');
   await new Promise(resolve=>setTimeout(resolve,0));
 }
 

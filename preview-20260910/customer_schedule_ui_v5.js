@@ -32,7 +32,10 @@ function axisFor(b,bounds){
 function zoomAxisForBooking(b,bounds){
   const start=mn(b?.entryTime||b?.customerSchedule?.entryTime);
   const end=mn(b?.exitTime||b?.customerSchedule?.exitTime);
-  if(Number.isFinite(start)&&Number.isFinite(end)&&end>start)return {start,end};
+  if(Number.isFinite(start)&&Number.isFinite(end)&&end>start){
+    const hasBounds=Number.isFinite(bounds?.start)&&Number.isFinite(bounds?.end)&&bounds.end>bounds.start;
+    return {start:hasBounds?Math.min(start,bounds.start):start,end:hasBounds?Math.max(end,bounds.end):end};
+  }
   if(bounds&&bounds.end>bounds.start)return {start:bounds.start,end:bounds.end};
   return {start:630,end:870};
 }
@@ -124,7 +127,7 @@ function patchZoom(id){
     if(width<7)el.classList.add('compact');else el.classList.remove('compact');
   });
   const help=modal.querySelector('.zr-customer-zoom-head + .help');
-  if(help)help.textContent=`예약시간 ${timeText(axis.start)}~${timeText(axis.end)} 범위로 크게 표시됩니다.`;
+  if(help)help.textContent=`예약과 확정 일정 ${timeText(axis.start)}~${timeText(axis.end)} 전체를 표시합니다.`;
 }
 function queueZoomPatch(id){[0,30,90,180].forEach(ms=>setTimeout(()=>patchZoom(id),ms))}
 

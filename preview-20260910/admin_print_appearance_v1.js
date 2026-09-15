@@ -5,7 +5,7 @@
 const properties=Object.freeze([
   'color','-webkit-text-fill-color','font-family','background-color','background-image',
   'border-top-color','border-right-color','border-bottom-color','border-left-color',
-  'fill','stroke','text-decoration-color'
+  'fill','stroke','text-decoration-color','box-shadow','border-top-left-radius','border-top-right-radius','border-bottom-right-radius','border-bottom-left-radius','border-top-style','border-right-style','border-bottom-style','border-left-style'
 ]);
 window.zrCopyAdminPrintAppearanceV1=(source,clone)=>{
   const originals=[source,...source.querySelectorAll('*')];

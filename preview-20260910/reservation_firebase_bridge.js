@@ -124,7 +124,8 @@ async function migrateStaffLocal(user){
     try{
       const ref=F.doc(db,FULL_COLLECTION,String(b.id));
       const snap=await F.getDoc(ref);
-      let ownerUid=user.uid;
+      // Restore a known customer owner instead of transferring the booking to staff.
+      let ownerUid=b.ownerUid||user.uid;
       if(!snap.exists()){
         await F.setDoc(ref,{...clean(b),id:String(b.id),ownerUid,bridgeVersion:BRIDGE_VERSION,updatedAt:F.serverTimestamp()});
       }else{
