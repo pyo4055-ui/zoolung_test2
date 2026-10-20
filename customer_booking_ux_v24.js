@@ -6,10 +6,10 @@ window.__ZR_CUSTOMER_BOOKING_UX_V24=true;
 const $=id=>document.getElementById(id);
 const toast=s=>{try{window.toast?.(s)}catch{}};
 const PRIVACY_TEXT='단체예약 접수 및 관리, 예약 확인·변경·취소, 이용 안내를 위해 단체명, 예약자명, 연락처, 이메일(선택), 예약 관련 요청사항 등 예약 과정에서 입력한 정보를 수집·이용합니다. 수집된 개인정보는 이용 목적 달성 후 지체 없이 파기하며, 관계 법령에 따라 보관이 필요한 경우에는 해당 기간 동안 안전하게 보관합니다.';
-const SPECIAL_TEXT='간식시간 등 별도 시간 조정이 필요하거나, 예약 시 전달할 사항이 있다면 작성해주세요.';
-const SPECIAL_EXAMPLE='예) 14:00~14:30 간식시간 필요';
+const SPECIAL_TEXT='예약 시 전달할 사항이 있다면 작성해주세요.';
+
 const OLD_PROGRAM_TEXT='동물원 프로그램 시간은 방문 전주 스케줄을 통해 안내됩니다.';
-const NEW_PROGRAM_HTML='동물원 프로그램 일정 시간표는 <b>방문 전주 스케줄</b>을 통해 안내됩니다.';
+const NEW_PROGRAM_HTML='동물원 관람 및 체험 일정은 <b>방문 전주</b>에 예약확인 페이지에서 안내됩니다.';
 
 function phone(){return $('startContact')}
 function preparePhone(){
@@ -63,7 +63,7 @@ function applySpecialRequestText(){
   const holder=label.parentElement;
   const ta=holder?.querySelector?.('textarea')||((label.nextElementSibling?.matches?.('textarea'))?label.nextElementSibling:null);
   if(!ta)return;
-  ta.placeholder=SPECIAL_EXAMPLE;
+  ta.removeAttribute('placeholder');
   let help=$('zrSpecialRequestHelp');
   if(!help){
     help=document.createElement('div');

@@ -13,7 +13,7 @@ function apply(){
     if(o.value<=td){o.disabled=true;if(o.value===td&&!o.textContent.includes('당일예약 불가'))o.textContent+=' (당일예약 불가)'}
   });
   if(day.value&&day.value<=td){day.value='';try{day.dispatchEvent(new Event('change',{bubbles:true}))}catch{}}
-  if(!$('zrSameDayNotice')){const n=document.createElement('div');n.id='zrSameDayNotice';n.className='help';n.style.marginTop='6px';n.textContent='당일 예약은 불가하며 익일부터 예약할 수 있습니다.';day.insertAdjacentElement('afterend',n)}
+  $('zrSameDayNotice')?.remove();
 }
 function hookRender(){
   if(typeof window.renderVisitDays!=='function'||window.renderVisitDays.__zrNoSameDay)return false;

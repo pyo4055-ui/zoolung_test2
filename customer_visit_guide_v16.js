@@ -3,6 +3,8 @@
 if(window.__ZR_CUSTOMER_VISIT_GUIDE_V16)return;
 window.__ZR_CUSTOMER_VISIT_GUIDE_V16=true;
 
+// Set synchronously by the customer-only loader before shared modules load.
+const customerOnly=window.__ZR_CUSTOMER_RUNTIME_LOADER_V1===true;
 const FV='12.17.1';
 const DOC_ID='__customer_guide__';
 const COLLECTION='reservationAvailability';
@@ -11,7 +13,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const attr=esc;
 const uid=prefix=>`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
-const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
+const safeUrl=u=>window.ZRDisplaySafety.httpUrl(u);
 const toast=s=>{try{window.toast?.(s)}catch{}}
 
 const DEFAULT_GUIDE={
@@ -78,7 +80,7 @@ function ensureCustomerModal(){
     </div>`;
   document.body.appendChild(m);
   $('zrGuideBack').onclick=()=>{m.classList.add('hidden');ackEntry='';ackSig='';setTimeout(()=>entryControl?.focus?.(),30)};
-  $('zrGuideConfirm').onclick=()=>{const v=String(entryControl?.value||'').trim();if(!v)return;m.classList.add('hidden');ackEntry=v;ackSig=guideSig;toast('방문 안내사항을 확인했습니다.')};
+  $('zrGuideConfirm').onclick=()=>{const v=String(entryControl?.value||'').trim();if(!v)return;m.classList.add('hidden');ackEntry=v;ackSig=guideSig;window.__ZR_ZOO_GUIDE_ACK_ONCE=true;toast('방문 안내사항을 확인했습니다.')};
 }
 function renderCustomerModal(control){
   entryControl=control||entryControl;const value=String(entryControl?.value||'').trim();if(!value)return;
@@ -87,7 +89,7 @@ function renderCustomerModal(control){
   $('zrGuideCards').innerHTML=active.map(x=>{const u=safeUrl(x.imageUrl),dur=Number(x.duration||0);return `<article class="zr-guide-card">${u?`<img class="zr-guide-img" src="${attr(u)}" alt="${attr(x.name)}" onerror="this.style.display='none'">`:''}<div class="zr-guide-card-body"><h3>${esc(x.name)}</h3>${dur>0?`<span class="zr-guide-duration">평균 소요시간 약 ${dur}분</span>`:''}${x.description?`<p class="zr-guide-desc">${esc(x.description)}</p>`:''}</div></article>`}).join('');
   $('zrGuideNotices').innerHTML=guide.notices.length?`<section class="zr-guide-notices"><h3>방문 전 주의사항</h3><ul>${guide.notices.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ul></section>`:'';
 }
-function openCustomerGuide(control){if(control?.id!=='entryTime')return;ensureCustomerModal();renderCustomerModal(control);$('zrGuideModal').classList.remove('hidden');(()=>{const sh=$('zrGuideModal').querySelector('.zr-guide-sheet');if(sh)sh.scrollTop=0})()}
+function openCustomerGuide(control){if(control?.id!=='entryTime')return;if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return;const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;ensureCustomerModal();renderCustomerModal(control);$('zrGuideModal').classList.remove('hidden');(()=>{const sh=$('zrGuideModal').querySelector('.zr-guide-sheet');if(sh)sh.scrollTop=0})()}
 
 function labelText(el){
   let out='';
@@ -98,12 +100,14 @@ function labelText(el){
 }
 function looksTimeControl(el){if(!el?.matches?.('select,input'))return false;if(el.matches('input[type="time"]'))return true;if(el.tagName==='SELECT'){const vals=[...el.options].slice(0,8).map(o=>o.value||o.textContent);return vals.some(v=>/^\d{1,2}:\d{2}$/.test(String(v).trim()))}return /^\d{1,2}:\d{2}$/.test(String(el.value||''))}
 function isEntryControl(el){
-  return !!el?.matches?.('select,input')&&!el.closest('#adminView')&&el.id==='entryTime';
+  if(!el?.matches?.('select,input')||el.closest('#adminView'))return false;
+  return el.id==='entryTime';
 }
 function findVisibleEntry(){return [...document.querySelectorAll('select,input')].find(el=>isEntryControl(el)&&visible(el))||null}
-function acknowledgementOk(control){const v=String(control?.value||'').trim();return !!v&&ackEntry===v&&ackSig===guideSig}
+function acknowledgementOk(control){if(window.__ZR_ZOO_GUIDE_ACK_ONCE)return true;const v=String(control?.value||'').trim();return !!v&&ackEntry===v&&ackSig===guideSig}
 
 function interceptBooking(ev){
+  if(window.__ZR_FINAL_DIRECT_SUBMIT)return;
   if(!customerVisible())return;
   const btn=ev.target?.closest?.('button,input[type="submit"],a');if(!btn||btn.closest('#zrGuideModal'))return;
   const txt=(btn.textContent||btn.value||'').replace(/\s+/g,'');
@@ -112,7 +116,7 @@ function interceptBooking(ev){
   if(acknowledgementOk(control))return;
   ev.preventDefault();ev.stopImmediatePropagation();openCustomerGuide(control);toast('방문 안내사항 확인이 필요합니다.');
 }
-function interceptSubmit(ev){if(!customerVisible())return;const q=ev.target?.querySelectorAll?.('select,input')||[];const control=[...q].find(isEntryControl)||findVisibleEntry();if(control&&String(control.value||'').trim()&&!acknowledgementOk(control)){ev.preventDefault();ev.stopImmediatePropagation();openCustomerGuide(control)}}
+function interceptSubmit(ev){if(window.__ZR_FINAL_DIRECT_SUBMIT)return;if(!customerVisible())return;const q=ev.target?.querySelectorAll?.('select,input')||[];const control=[...q].find(isEntryControl)||findVisibleEntry();if(control&&String(control.value||'').trim()&&!acknowledgementOk(control)){ev.preventDefault();ev.stopImmediatePropagation();openCustomerGuide(control)}}
 
 function bindCustomer(){
   document.addEventListener('change',e=>{const el=e.target;if(!customerVisible()||!isEntryControl(el))return;entryControl=el;ackEntry='';ackSig='';if(String(el.value||'').trim())setTimeout(()=>openCustomerGuide(el),20)},true);
@@ -122,7 +126,7 @@ function ensureAdminSection(){
   if(adminInstalled)return true;
   const tabs=document.querySelector('#adminView .admin-tabs');if(!tabs)return false;
   const btn=document.createElement('button');btn.id='zrGuideAdminTab';btn.className='btn-gray';btn.textContent='고객 안내 관리';tabs.appendChild(btn);
-  const sec=document.createElement('section');sec.id='zrGuideAdminSection';sec.className='hidden';sec.innerHTML=`<div class="card" style="margin-top:14px"><div class="zrga-toolbar"><div><h2 style="margin:0">고객 안내 관리</h2><div class="zrga-help">고객이 입장시간을 선택하면 표시되는 컨텐츠·사진·평균 소요시간·주의사항을 관리합니다.</div></div><button type="button" class="btn-soft" id="zrGuideAddContent">+ 컨텐츠 추가</button></div><div id="zrGuideAdminContents" class="zrga-list"></div><div style="margin-top:18px"><div class="zrga-toolbar"><h3 style="margin:0">방문 전 주의사항</h3><button type="button" class="btn-soft" id="zrGuideAddNotice">+ 주의사항 추가</button></div><div id="zrGuideAdminNotices"></div></div><div class="zrga-savebar"><button type="button" class="btn-primary" id="zrGuideAdminSave">안내 설정 저장</button></div></div>`;
+  const sec=document.createElement('section');sec.id='zrGuideAdminSection';sec.className='hidden';sec.innerHTML=`<div class="card" style="margin-top:14px"><div class="zrga-toolbar"><div><h2 style="margin:0">고객 안내 관리</h2><div class="zrga-help">고객이 입장시간을 선택하면 표시되는 컨텐츠·사진·평균 소요시간·주의사항을 관리합니다.</div></div><button type="button" class="btn-soft" id="zrGuideAddContent">+ 컨텐츠 추가</button></div><div id="zrGuideAdminContents" class="zrga-list"></div><div style="margin-top:18px"><div class="zrga-toolbar"><h3 style="margin:0">방문 전 주의사항</h3><button type="button" class="btn-soft" id="zrGuideAddNotice">+ 주의사항 추가</button></div><div id="zrGuideAdminNotices"></div></div><div class="zrga-savebar"><button type="button" class="btn-primary" id="zrGuideAdminSave">저장</button></div></div>`;
   document.querySelector('#adminView').appendChild(sec);
   btn.onclick=()=>openAdminTab();
   document.addEventListener('click',e=>{const b=e.target.closest?.('#adminView .admin-tabs button');if(b&&b!==btn)sec.classList.add('hidden')});
@@ -132,8 +136,9 @@ function ensureAdminSection(){
   adminInstalled=true;return true;
 }
 function openAdminTab(){
-  document.querySelectorAll('#adminView section[id^="tab-"]').forEach(s=>s.classList.add('hidden'));
+  document.querySelectorAll('#adminView [id^="tab-"]').forEach(s=>s.classList.add('hidden'));
   document.querySelectorAll('#adminView .admin-tabs button').forEach(b=>b.className='btn-gray');
+  $('tab-inquiry-reply-v1')?.classList.add('hidden');$('tab-inquiry-reply-examples')?.classList.add('hidden');
   $('zrGuideAdminSection').classList.remove('hidden');$('zrGuideAdminTab').className='btn-primary';
   adminDraft=JSON.parse(JSON.stringify(guide));renderAdminEditor();
 }
@@ -144,6 +149,7 @@ function collectAdminDraft(){
 }
 function move(arr,i,dir){const j=i+dir;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]]}
 function renderAdminEditor(){
+  if(window.__ZR_CUSTOMER_GUIDE_FIX_V20)return;
   if(!adminDraft)return;const root=$('zrGuideAdminContents');
   root.innerHTML=adminDraft.contents.map((x,i)=>{const u=safeUrl(x.imageUrl);return `<div class="zrga-row" data-i="${i}"><div class="zrga-head"><strong>컨텐츠 ${i+1}</strong><button class="zrga-mini" data-up="${i}">↑</button><button class="zrga-mini" data-down="${i}">↓</button><button class="zrga-mini zrga-del" data-del="${i}">삭제</button></div><div class="zrga-grid"><div><label>컨텐츠명</label><input data-k="name" value="${attr(x.name)}"></div><div><label>평균 소요시간(분)</label><input data-k="duration" inputmode="numeric" type="number" min="0" max="999" value="${attr(x.duration)}" placeholder="예: 45"></div><div class="full"><label>사진 URL</label><input data-k="imageUrl" value="${attr(x.imageUrl)}" placeholder="https://..."></div>${u?`<div class="full zrga-preview"><img src="${attr(u)}" alt="미리보기" onerror="this.parentElement.style.display='none'"></div>`:''}<div class="full"><label>간단 설명</label><textarea data-k="description" placeholder="고객에게 보여줄 간단한 설명">${esc(x.description)}</textarea></div><div class="full"><label style="display:flex;gap:7px;align-items:center"><input data-k="enabled" type="checkbox" ${x.enabled?'checked':''} style="width:auto"> 고객에게 노출</label></div></div></div>`}).join('');
   root.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{collectAdminDraft();move(adminDraft.contents,Number(b.dataset.up),-1);renderAdminEditor()});
@@ -153,26 +159,16 @@ function renderAdminEditor(){
   notices.querySelectorAll('[data-notice-del]').forEach(b=>b.onclick=()=>{collectAdminDraft();adminDraft.notices.splice(Number(b.dataset.noticeDel),1);renderAdminEditor()});
 }
 async function saveAdminGuide(){
-  collectAdminDraft();if(!adminDraft)return;
-  const cleaned=normalize(adminDraft);
-  const z=bridge();if(!F||!z?.db||!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
-  const btn=$('zrGuideAdminSave'),old=btn.textContent;btn.disabled=true;btn.textContent='저장 중...';
-  try{await F.setDoc(F.doc(z.db,COLLECTION,DOC_ID),{kind:'customerGuide',date:'',status:'cancelled',playUse:'no',playStart:'',playEnd:'',contents:cleaned.contents,notices:cleaned.notices,updatedAt:F.serverTimestamp()},{merge:true});setGuide(cleaned);toast('고객 안내 설정을 저장했습니다.')}
-  catch(e){console.error('customer guide save',e);toast('고객 안내 설정 저장에 실패했습니다.')}
-  finally{btn.disabled=false;btn.textContent=old}
+  const action=window.ZRAdminFormActions?.guide?.save;
+  if(!action){toast('고객 안내 편집기를 불러오는 중입니다.');return false}
+  return action();
 }
 
-function subscribe(){
-  const z=bridge();if(!F||!z?.db||!z?.auth?.currentUser)return;
-  if(unsub){unsub();unsub=null}
-  try{unsub=F.onSnapshot(F.doc(z.db,COLLECTION,DOC_ID),s=>{setGuide(s.exists()?s.data():DEFAULT_GUIDE)},e=>console.debug('customer guide read',e))}catch(e){console.debug('customer guide subscribe',e)}
-}
-async function initFirebase(){
-  try{const [fs,au]=await Promise.all([import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`),import(`https://www.gstatic.com/firebasejs/${FV}/firebase-auth.js`)]);F=fs;authMod=au;const t=setInterval(()=>{const z=bridge();if(!z?.auth||!z?.db)return;clearInterval(t);authMod.onAuthStateChanged(z.auth,()=>setTimeout(subscribe,20));subscribe()},200);setTimeout(()=>clearInterval(t),15000)}catch(e){console.error('customer guide firebase',e)}
-}
 function boot(){
   if(installed)return;installed=true;injectStyle();ensureCustomerModal();bindCustomer();
-  const t=setInterval(()=>{ensureAdminSection();if(adminInstalled)clearInterval(t)},250);setTimeout(()=>clearInterval(t),15000);initFirebase();
+  if(!customerOnly){const t=setInterval(()=>{ensureAdminSection();if(adminInstalled)clearInterval(t)},250);setTimeout(()=>clearInterval(t),15000)}
+  // Current guide data and persistence are owned by customer_visit_guide_fix_v20.js.
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+(window.ZRAdminRefreshViews||(window.ZRAdminRefreshViews=new Map())).set('zrGuideSubpanelV1',renderAdminEditor);
 })();

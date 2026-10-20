@@ -4,6 +4,8 @@ if(window.__ZR_PARKING_INFO_V31)return;
 window.__ZR_PARKING_INFO_V31=true;
 window.__ZR_FINAL_CONFIRM_V31=true;
 
+// Set synchronously by the customer-only loader before shared modules load.
+const customerOnly=window.__ZR_CUSTOMER_RUNTIME_LOADER_V1===true;
 const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const COLLECTION='customerGuides';
@@ -11,7 +13,7 @@ const DOC_ID='main';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
-const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
+const safeUrl=u=>window.ZRDisplaySafety.httpUrl(u);
 const toast=s=>{try{window.toast?.(s)}catch{}};
 
 const DEF={
@@ -28,9 +30,7 @@ const DEF={
 const FALLBACK_ZOO=['예약한 입장시간에 맞춰 방문해주세요.','동물 친구들은 눈으로만 만나주세요.'];
 const FALLBACK_PLAY=['예약한 놀이터 이용시간을 지켜주세요.','안전을 위해 놀이터 이용수칙을 지켜주세요.'];
 
-let FS=null,db=null,unsub=null,current=clone(DEF),guideDoc={};
-let guideMapUrl='',guideMapDraft='',guideMapDirty=false;
-let submitBypass=false,pendingButton=null;
+let FS=null,db=null,unsub=null,current=clone(DEF),guideDoc={},guideMapUrl='',submitBypass=false,pendingButton=null;
 
 function norm(raw){
   const s=raw&&typeof raw==='object'?raw:{};
@@ -71,155 +71,112 @@ function injectStyle(){
 function mapButtons(address){const u=mapUrls(address);return `<div class="zrpk31-maps"><a class="zrpk31-map naver" href="${esc(u.naver)}" target="_blank" rel="noopener noreferrer">네이버지도</a><a class="zrpk31-map kakao" href="${esc(u.kakao)}" target="_blank" rel="noopener noreferrer">카카오맵</a></div>`}
 function notesHtml(text){const a=lines(text);return a.length?`<ul class="zrpk31-notes">${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
 function locationHtml(title,place,address,note){return `<section class="zrpk31-row"><h4>${esc(title)}</h4><div class="zrpk31-place">${esc(place)}</div><div class="zrpk31-address">${esc(address)}</div>${mapButtons(address)}${notesHtml(note)}</section>`}
-function cardHtml(){const p=current;return `<div class="zrpk31-title">${esc(p.title)}</div>${locationHtml(p.dropoffTitle,p.dropoffPlace,p.dropoffAddress,p.dropoffNote)}${locationHtml(p.busTitle,p.busPlace,p.busAddress,p.busNote)}`}
+function parkingPresentation(booking){
+  const general=booking?window.ZRBookingRules?.requiresProgramSchedule(booking)===false:window.ZRGroupBooking?.general()===true;
+  const height=lines(current.dropoffNote).filter(x=>/높이\s*제한/.test(x));
+  return {...current,general,title:general?'대형버스 주차 안내':current.title,dropoffNote:lines(current.dropoffNote).filter(x=>!/높이\s*제한/.test(x)).join('\n'),busNote:[...new Set([...lines(current.busNote),...height])].join('\n')};
+}
+function cardHtml(booking){const p=parkingPresentation(booking);return `<div class="zrpk31-title">${esc(p.title)}</div>${p.general?'':locationHtml(p.dropoffTitle,p.dropoffPlace,p.dropoffAddress,p.dropoffNote)}${locationHtml(p.busTitle,p.busPlace,p.busAddress,p.busNote)}`}
+window.ZRParkingGuide=Object.freeze({html:cardHtml,refresh:()=>renderCard()});
 function anchor(){const a=$('entryTime'),b=$('exitTime');if(!a||!b)return null;const c=[b.closest('.grid2'),b.closest('.grid'),b.parentElement?.parentElement,b.parentElement].filter(Boolean);return c.find(x=>x.contains(a)&&x.contains(b))||b.parentElement}
 function renderCard(){let r=$('zrParkingInfoCard');if(!r){const a=anchor();if(!a)return false;r=document.createElement('section');r.id='zrParkingInfoCard';a.insertAdjacentElement('afterend',r)}r.innerHTML=cardHtml();return true}
 
 const field=(label,key,value,full=false,area=false)=>`<div class="${full?'full':''}"><label>${label}</label>${area?`<textarea data-pk31="${key}">${esc(value)}</textarea>`:`<input data-pk31="${key}" value="${esc(value)}">`}</div>`;
-function renderAdmin(){
-  const sec=$('zrGuideAdminSection');if(!sec)return false;
-  let r=$('zrParkingAdminSection');
-  if(!r){
-    r=document.createElement('section');r.id='zrParkingAdminSection';
-    const bar=sec.querySelector('.zrga-savebar');bar?bar.insertAdjacentElement('beforebegin',r):sec.appendChild(r);
-  }
-  const p=current;
-  r.innerHTML=`<h3>주차 안내 관리</h3><div class="zrga-help">장소명·주소·안내 문구를 수정할 수 있습니다. 지도 버튼은 입력한 주소로 자동 연결됩니다.</div><div class="zrpk31-admin">${field('안내 제목','title',p.title,true)}${field('승·하차 제목','dropoffTitle',p.dropoffTitle)}${field('승·하차 장소','dropoffPlace',p.dropoffPlace)}${field('승·하차 주소','dropoffAddress',p.dropoffAddress,true)}${field('승·하차 안내 문구','dropoffNote',p.dropoffNote,true,true)}${field('버스 주차 제목','busTitle',p.busTitle)}${field('버스 주차 장소','busPlace',p.busPlace)}${field('버스 주차 주소','busAddress',p.busAddress,true)}${field('버스 주차 안내 문구','busNote',p.busNote,true,true)}</div><div class="zrpk31-save"><button type="button" class="btn-primary" id="zrParkingSaveV31">주차 안내 저장</button></div>`;
-  $('zrParkingSaveV31').onclick=saveParking;return true;
+let parkingSaving=false;
+function renderAdmin(force=false){
+  if(!force&&(parkingSaving||window.ZRAdminFormDrafts?.isDirty("parking")))return true;
+  const sec=$('zrGuideAdminSection');if(!sec)return false;let r=$('zrParkingAdminSection');if(!r){r=document.createElement('section');r.id='zrParkingAdminSection';const bar=sec.querySelector('.zrga-savebar');bar?bar.insertAdjacentElement('beforebegin',r):sec.appendChild(r)}const p=current;
+  r.innerHTML=`<h3>주차 안내 관리</h3><div class="zrga-help">장소명·주소·안내 문구를 수정할 수 있습니다. 지도 버튼은 입력한 주소로 자동 연결됩니다.</div><div class="zrpk31-admin">${field('안내 제목','title',p.title,true)}${field('승·하차 제목','dropoffTitle',p.dropoffTitle)}${field('승·하차 장소','dropoffPlace',p.dropoffPlace)}${field('승·하차 주소','dropoffAddress',p.dropoffAddress,true)}${field('승·하차 안내 문구','dropoffNote',p.dropoffNote,true,true)}${field('버스 주차 제목','busTitle',p.busTitle)}${field('버스 주차 장소','busPlace',p.busPlace)}${field('버스 주차 주소','busAddress',p.busAddress,true)}${field('버스 주차 안내 문구','busNote',p.busNote,true,true)}</div><div class="zrpk31-save"><button type="button" class="btn-primary" id="zrParkingSaveV31">저장</button></div>`;
+  $('zrParkingSaveV31').onclick=saveParking;window.ZRAdminEditMeta?.render();return true;
 }
 async function saveParking(){
-  if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
-  if(!FS||!db)return toast('주차 안내 DB 연결 중입니다.');
-  const b=$('zrParkingSaveV31'),old=b?.textContent||'';if(b){b.disabled=true;b.textContent='저장 중...'}
+  if(parkingSaving)return false;
+  if(!isStaff()||!FS||!db){toast('관리자 DB 연결을 확인해주세요.');return false}
+  const saveUid=window.zrReservationFirebase?.auth?.currentUser?.uid;if(!saveUid)return false;
+  const controls=[...document.querySelectorAll('#zrParkingAdminSection input,#zrParkingAdminSection textarea,#zrParkingAdminSection button')].map(el=>({el,disabled:el.disabled}));
+  const b=$('zrParkingSaveV31'),old=b?.textContent||'저장';
+  const o=clone(current);document.querySelectorAll('#zrParkingAdminSection [data-pk31]').forEach(x=>o[x.dataset.pk31]=x.value);const cleaned=norm(o);
+  parkingSaving=true;controls.forEach(({el})=>el.disabled=true);if(b)b.textContent='저장 중…';
   try{
-    const o=clone(current);document.querySelectorAll('#zrParkingAdminSection [data-pk31]').forEach(x=>o[x.dataset.pk31]=x.value);
-    const cleaned=norm(o);await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{parking:cleaned,updatedAtMs:Date.now()},{merge:true});
-    current=cleaned;renderCard();renderAdmin();toast('주차 안내를 저장했습니다.');
-  }catch(e){console.error('parking v31 save',e);toast('주차 안내 저장에 실패했습니다.')}finally{if(b){b.disabled=false;b.textContent=old}}
+    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{parking:cleaned,parkingEditMeta:window.ZRAdminEditMeta?.make()||null,updatedAtMs:Date.now()},{merge:true});
+    if(!isStaff()||window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return false;
+    current=cleaned;renderCard();window.ZRAdminFormDrafts?.saved('parking');renderAdmin(true);toast('주차 안내를 저장했습니다.');return true;
+  }catch(e){if(window.zrReservationFirebase?.auth?.currentUser?.uid===saveUid){console.error('parking v31 save',e);toast('주차 안내 저장에 실패했습니다.')}return false}
+  finally{parkingSaving=false;controls.forEach(({el,disabled})=>el.disabled=disabled);if(b)b.textContent=old}
 }
 
-function visibleInput(x){
-  if(!x||x.type==='hidden'||x.disabled)return false;
-  try{return getComputedStyle(x).display!=='none'&&getComputedStyle(x).visibility!=='hidden'&&x.getClientRects().length>0}catch{return true}
-}
-function guideMapControls(button){
-  const root=$('zrGuideAdminSection')||document;
-  const b=button||[...root.querySelectorAll('button,input[type="button"],input[type="submit"]')].find(x=>/가이드맵저장/.test((x.textContent||x.value||'').replace(/\s+/g,'')));
+(window.ZRAdminFormActions||(window.ZRAdminFormActions={})).guideMap={save:()=>saveGuideMap($('zrGuideMapSave')),discard:()=>{if($('zrGuideMapImageUrl'))$('zrGuideMapImageUrl').value=guideMapUrl;document.dispatchEvent(new CustomEvent('zr:guide-map-draft-reset'));syncGuideMapAdmin()}};
+function findGuideMapControls(button){
+  const b=button||$('zrGuideMapSave')||[...document.querySelectorAll('button')].find(x=>/가이드맵\s*저장/.test((x.textContent||'').replace(/\s+/g,'')));
   if(!b)return null;
-  const scopes=[];
-  for(const s of [b.parentElement,b.parentElement?.parentElement,b.closest('.card'),b.closest('section')])if(s&&!scopes.includes(s))scopes.push(s);
+  const scopes=[b.closest('section'),b.closest('.card'),b.parentElement?.parentElement,b.parentElement].filter(Boolean);
   for(const scope of scopes){
-    let inputs=[...scope.querySelectorAll('input')].filter(visibleInput);
-    if(!inputs.length)inputs=[...scope.querySelectorAll('input')].filter(x=>x.type!=='hidden'&&!x.disabled);
-    if(!inputs.length)continue;
-    const input=inputs.find(x=>/가이드맵|guide.?map/i.test(`${x.id||''} ${x.name||''} ${x.placeholder||''} ${x.getAttribute('aria-label')||''} ${x.parentElement?.textContent||''}`))
-      ||inputs.find(x=>String(x.type||'').toLowerCase()==='url')
-      ||inputs.find(x=>/url/i.test(`${x.id||''} ${x.name||''} ${x.placeholder||''}`))
-      ||inputs[0];
-    if(input){
-      b.onclick=null;
-      input.oninput=null;input.onchange=null;input.onblur=null;input.onfocusout=null;
-      return {button:b,scope,input,root};
-    }
+    const inputs=[...scope.querySelectorAll('input')];
+    const input=inputs.find(x=>/guide|map|가이드맵/i.test(`${x.id||''} ${x.name||''} ${x.placeholder||''}`))||inputs.find(x=>/^https?:\/\//i.test(String(x.value||'').trim()))||inputs[0];
+    if(input)return {button:b,scope,input};
   }
   return null;
 }
-function guideMapPreview(c,raw){
-  if(!c)return;
-  const roots=[];
-  for(const r of [c.scope,c.button?.closest?.('.card'),c.button?.closest?.('section')])if(r&&!roots.includes(r))roots.push(r);
-  let img=null;
-  for(const r of roots){
-    const imgs=[...r.querySelectorAll('img')];
-    img=imgs.find(x=>/가이드맵|guide.?map/i.test(`${x.id||''} ${x.className||''} ${x.alt||''}`));
-    if(!img&&imgs.length===1)img=imgs[0];
-    if(img)break;
-  }
-  if(!img)return;
-  const url=safeUrl(raw);
-  if(!url){img.removeAttribute('src');img.style.display='none';return;}
-  if(img.src!==url)img.src=url;
-  img.style.display='block';
-}
-function syncGuideMapAdmin(force=false){
-  const c=guideMapControls();if(!c)return false;
-  if(guideMapDirty){
-    if(c.input.value!==guideMapDraft)c.input.value=guideMapDraft;
-    guideMapPreview(c,guideMapDraft);
-    return true;
-  }
-  if(!force&&document.activeElement===c.input)return true;
-  if(c.input.value!==guideMapUrl)c.input.value=guideMapUrl;
-  guideMapPreview(c,guideMapUrl);
-  return true;
-}
-function holdGuideMapDraft(){
-  if(!guideMapDirty)return;
-  for(const ms of [0,40,120,260])setTimeout(()=>syncGuideMapAdmin(true),ms);
+function syncGuideMapAdmin(){
+  if(customerOnly||!guideMapUrl)return;
+  const c=findGuideMapControls();if(!c)return;
+  if(document.activeElement!==c.input&&c.input.dataset.zrGuideMapDirty!=='1')c.input.value=guideMapUrl;
+  const img=c.scope.querySelector('img');if(img&&img.src!==guideMapUrl)img.src=guideMapUrl;
 }
 async function saveGuideMap(button){
-  const c=guideMapControls(button);if(!c)return toast('가이드맵 입력창을 찾지 못했습니다.');
+  const c=findGuideMapControls(button);if(!c)return;
   if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
   if(!FS||!db)return toast('가이드맵 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
-  const raw=guideMapDirty?guideMapDraft:String(c.input.value||'');
-  const trimmed=String(raw||'').trim();
-  const url=trimmed?safeUrl(trimmed):'';
-  if(trimmed&&!url)return toast('가이드맵 이미지 URL을 https:// 주소로 입력해주세요.');
-  const old=c.button.textContent||c.button.value||'가이드맵 저장';
-  c.button.disabled=true;if('value' in c.button&&c.button.tagName==='INPUT')c.button.value='저장 중...';else c.button.textContent='저장 중...';
+  const url=safeUrl(c.input.value);
+  if(!url)return toast('가이드맵 이미지 URL을 https:// 주소로 입력해주세요.');
+  if(c.button.dataset.zrMapSaving==='1')return false;
+  c.button.dataset.zrMapSaving='1';
+  const saveUid=window.zrReservationFirebase?.auth?.currentUser?.uid;if(!saveUid){delete c.button.dataset.zrMapSaving;return false}
+  const inputDisabled=c.input.disabled;c.input.disabled=true;
+  const old='저장';c.button.disabled=true;c.button.textContent='저장 중…';
+  const pendingTimer=setTimeout(()=>{if(window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return;c.button.textContent='저장 확인 대기';window.ZRDialogs?.alert('서버의 저장 응답을 기다리고 있습니다. 연결 상태를 확인해주세요. 저장 완료 전에는 다른 URL을 다시 저장하지 마세요.');},12000);
   try{
-    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{guideMapImageUrl:url,updatedAtMs:Date.now()},{merge:true});
-    guideMapUrl=url;guideMapDraft=url;guideMapDirty=false;
-    c.input.value=url;guideMapPreview(c,url);
-    toast(url?'가이드맵 이미지를 저장했습니다.':'가이드맵 이미지를 숨겼습니다.');
+    await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),{guideMapImageUrl:url,guideMapEditMeta:window.ZRAdminEditMeta?.make()||null,updatedAtMs:Date.now()},{merge:true});
+    if(!isStaff()||window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return false;
+    guideMapUrl=url;syncGuideMapAdmin();toast('가이드맵 이미지를 저장했습니다.');document.dispatchEvent(new CustomEvent('zr:guide-map-draft-reset'));window.ZRAdminFormDrafts?.saved('guideMap');return true;
   }catch(e){
+    if(window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return false;
     const code=String(e?.code||e?.name||'unknown').replace(/^firestore\//,'');
-    console.error('guide map save',e);toast(`가이드맵 이미지 저장 실패 · ${code}`);
-  }finally{
-    c.button.disabled=false;if('value' in c.button&&c.button.tagName==='INPUT')c.button.value=old;else c.button.textContent=old;
-  }
+    console.error('guide map v32 save',e);toast(`가이드맵 이미지 저장 실패 · ${code}`);return false;
+  }finally{c.input.disabled=inputDisabled;clearTimeout(pendingTimer);delete c.button.dataset.zrMapSaving;c.button.disabled=false;c.button.textContent=old}
 }
 function ensureGuideMapModal(){
   if($('zrGuideMapModalV32'))return;
-  const m=document.createElement('div');m.id='zrGuideMapModalV32';m.className='zrgm32 hidden';
-  m.innerHTML=`<div class="zrgm32-sheet" role="dialog" aria-modal="true" aria-label="가이드맵"><div class="zrgm32-head"><h2>가이드맵</h2><button type="button" class="zrgm32-close" id="zrGuideMapCloseV32">닫기</button></div><img class="zrgm32-img" id="zrGuideMapImageV32" alt="주렁주렁 동탄 가이드맵"></div>`;
-  document.body.appendChild(m);$('zrGuideMapCloseV32').onclick=()=>m.classList.add('hidden');m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden')});
+  const m=document.createElement('div');m.id='zrGuideMapModalV32';m.className='zrgm32 hidden';m.innerHTML=`<div class="zrgm32-sheet" role="dialog" aria-modal="true" aria-label="가이드맵"><div class="zrgm32-head"><h2>가이드맵</h2><button type="button" class="zrgm32-close" id="zrGuideMapCloseV32">닫기</button></div><img class="zrgm32-img" id="zrGuideMapImageV32" alt="주렁주렁 동탄 가이드맵"></div>`;document.body.appendChild(m);
+  $('zrGuideMapCloseV32').onclick=()=>m.classList.add('hidden');m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden')});
 }
 function openGuideMap(){
   const url=safeUrl(guideMapUrl);if(!url)return toast('등록된 가이드맵 이미지가 없습니다.');
   ensureGuideMapModal();$('zrGuideMapImageV32').src=url;$('zrGuideMapModalV32').classList.remove('hidden');
 }
 function isGuideMapCustomerButton(b){
+  if(!customerOnly&&!customerVisible()&&!b?.closest('#existingBookingList'))return false;
   if(!b||b.closest('#adminView')||b.closest('#zrGuideMapModalV32'))return false;
-  const t=(b.textContent||b.value||'').replace(/\s+/g,'');return /^가이드맵(보기|확인)?$/.test(t);
+  const t=(b.textContent||b.value||'').replace(/\s+/g,'');
+  return /^가이드맵(보기|확인)?$/.test(t);
 }
 function bindGuideMap(){
-  const editEvent=e=>{
-    const c=guideMapControls();if(!c||e.target!==c.input)return;
-    guideMapDraft=String(e.target.value||'');guideMapDirty=true;guideMapPreview(c,guideMapDraft);
-    e.stopImmediatePropagation();
-  };
-  document.addEventListener('input',editEvent,true);
-  document.addEventListener('change',e=>{const c=guideMapControls();if(!c||e.target!==c.input)return;e.stopImmediatePropagation();holdGuideMapDraft()},true);
-  document.addEventListener('blur',e=>{const c=guideMapControls();if(!c||e.target!==c.input)return;e.stopImmediatePropagation();holdGuideMapDraft()},true);
-  document.addEventListener('focusout',e=>{const c=guideMapControls();if(!c||e.target!==c.input)return;e.stopImmediatePropagation();holdGuideMapDraft()},true);
   document.addEventListener('click',e=>{
     const b=e.target?.closest?.('button,a,input[type="button"],input[type="submit"]');if(!b)return;
     const text=(b.textContent||b.value||'').replace(/\s+/g,'');
-    if(/가이드맵저장/.test(text)){
+    if(!customerOnly&&(b.id==='zrGuideMapSave'||/가이드맵저장/.test(text))){
       e.preventDefault();e.stopImmediatePropagation();saveGuideMap(b);return;
     }
-    if(isGuideMapCustomerButton(b)){e.preventDefault();e.stopImmediatePropagation();openGuideMap()}
+    if(isGuideMapCustomerButton(b)){
+      e.preventDefault();e.stopImmediatePropagation();openGuideMap();
+    }
   },true);
-  const mo=new MutationObserver(()=>syncGuideMapAdmin());mo.observe(document.body,{childList:true,subtree:true});
+  if(!customerOnly){const mo=new MutationObserver(()=>syncGuideMapAdmin());mo.observe(document.body,{childList:true,subtree:true})}
 }
 
 function summaryBlock(title,items){return `<section class="zrfinal31-summary"><b>${esc(title)}</b><ul>${items.slice(0,2).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function finalModal(){
-  if($('zrFinalGuideModalV31'))return;
-  const m=document.createElement('div');m.id='zrFinalGuideModalV31';m.className='zrfinal31 hidden';
-  m.innerHTML=`<div class="zrfinal31-sheet"><h2>예약 전 최종 확인</h2><div id="zrFinalChecksV31"></div><div class="zrfinal31-parking" id="zrFinalParkingV31"></div><div class="zrfinal31-actions"><button type="button" class="zrfinal31-back" id="zrFinalBackV31">예약 내용 다시 보기</button><button type="button" class="zrfinal31-ok" id="zrFinalOkV31">확인 후 예약 신청</button></div></div>`;
-  document.body.appendChild(m);
+  if($('zrFinalGuideModalV31'))return;const m=document.createElement('div');m.id='zrFinalGuideModalV31';m.className='zrfinal31 hidden';m.innerHTML=`<div class="zrfinal31-sheet"><h2>예약 전 최종 확인</h2><div id="zrFinalChecksV31"></div><div class="zrfinal31-parking" id="zrFinalParkingV31"></div><div class="zrfinal31-actions"><button type="button" class="zrfinal31-back" id="zrFinalBackV31">예약 내용 다시 보기</button><button type="button" class="zrfinal31-ok" id="zrFinalOkV31">확인 후 예약 신청</button></div></div>`;document.body.appendChild(m);
   $('zrFinalBackV31').onclick=()=>m.classList.add('hidden');
   $('zrFinalOkV31').onclick=()=>{m.classList.add('hidden');submitBypass=true;window.__ZR_FINAL_DIRECT_SUBMIT=true;const b=pendingButton;pendingButton=null;setTimeout(()=>{b?.click?.();setTimeout(()=>{submitBypass=false;window.__ZR_FINAL_DIRECT_SUBMIT=false},250)},0)};
 }
@@ -227,41 +184,24 @@ function finalLocation(title,place,address){return `<div class="zrfinal31-place"
 function showFinal(){
   finalModal();const play=String($('playUse')?.value||'')==='yes';
   const zoo=guideNotices('zoo',FALLBACK_ZOO),playItems=guideNotices('playground',FALLBACK_PLAY);
-  $('zrFinalChecksV31').innerHTML=summaryBlock('동물원 이용 안내',zoo)+(play?summaryBlock('놀이터 이용 안내',playItems):`<section class="zrfinal31-summary"><b>놀이터</b><div style="font-size:12px;color:#6a746d">이용 안 함</div></section>`);
-  $('zrFinalParkingV31').innerHTML=`<h3>${esc(current.title)}</h3>${finalLocation(current.dropoffTitle,current.dropoffPlace,current.dropoffAddress)}${finalLocation(current.busTitle,current.busPlace,current.busAddress)}`;
+  $('zrFinalChecksV31').innerHTML=summaryBlock('동물원 이용 안내',zoo)+(window.ZRGroupBooking?.general()?summaryBlock('관람 방식',['직원 인솔이나 별도 스케줄 없이 자율 관람합니다.']):'')+(window.ZRGroupBooking?.general()?'' : play?summaryBlock('놀이터 이용 안내',playItems):`<section class="zrfinal31-summary"><b>놀이터</b><div style="font-size:12px;color:#6a746d">이용 안 함</div></section>`);
+  const p=parkingPresentation();
+  $('zrFinalParkingV31').innerHTML=`<h3>${esc(p.title)}</h3>${p.general?'':finalLocation(p.dropoffTitle,p.dropoffPlace,p.dropoffAddress)}${finalLocation(p.busTitle,p.busPlace,p.busAddress)}${notesHtml(p.busNote)}`;
   $('zrFinalGuideModalV31').classList.remove('hidden');
 }
 function bookingButton(b){const t=(b?.textContent||b?.value||'').replace(/\s+/g,'');return !!b&&/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t)}
 function bindFinal(){
-  window.addEventListener('click',e=>{
-    if(submitBypass||!customerVisible())return;
-    const b=e.target?.closest?.('button,input[type="submit"],a');
-    if(!bookingButton(b)||b.closest('#zrFinalGuideModalV31')||b.closest('#zrGuideModal')||b.closest('#zrPlayGuideModal'))return;
+  document.addEventListener('click',e=>{
+    if(submitBypass||!customerVisible())return;const b=e.target?.closest?.('button,input[type="submit"],a');if(!bookingButton(b)||b.closest('#zrFinalGuideModalV31')||b.closest('#zrGuideModal')||b.closest('#zrPlayGuideModal'))return;
     e.preventDefault();e.stopImmediatePropagation();pendingButton=b;showFinal();
   },true);
 }
 async function init(){
-  try{
-    FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);
-    const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;
-    if(unsub)unsub();
-    unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{
-      guideDoc=snap.exists()?snap.data()||{}:{};
-      guideMapUrl=readGuideMapUrl(guideDoc);if(!guideMapDirty)guideMapDraft=guideMapUrl;
-      current=norm(guideDoc.parking);renderCard();syncGuideMapAdmin();
-      if($('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden'))renderAdmin();
-    },e=>console.error('parking v31 read',e));
-  }catch(e){console.error('parking v31 init',e)}
+  try{FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB bridge unavailable');db=z.db;if(unsub)unsub();const {onAuthStateChanged}=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-auth.js`);unsub=window.ZRDocumentListener.connect({auth:z.auth,ref:FS.doc(db,COLLECTION,DOC_ID),onAuthStateChanged,onSnapshot:FS.onSnapshot,onData:snap=>{guideDoc=snap.exists()?snap.data()||{}:{};if(!snap.metadata?.hasPendingWrites){window.ZRAdminEditMeta?.publish('parking',guideDoc.parkingEditMeta);window.ZRAdminEditMeta?.publish('guideMap',guideDoc.guideMapEditMeta);}guideMapUrl=readGuideMapUrl(guideDoc);current=norm(guideDoc.parking);renderCard();syncGuideMapAdmin();if(!customerOnly&&$('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden'))renderAdmin()},onError:e=>console.error('parking v31 read',e)})}catch(e){console.error('parking v31 init',e)}
 }
 function boot(){
-  injectStyle();
-  const cardTimer=setInterval(()=>{if(renderCard())clearInterval(cardTimer)},200);setTimeout(()=>clearInterval(cardTimer),20000);
-  const adminTimer=setInterval(()=>{
-    const t=$('zrGuideAdminTab');if(!t)return;
-    t.addEventListener('click',()=>setTimeout(()=>{renderAdmin();syncGuideMapAdmin(true)},80));clearInterval(adminTimer);
-  },250);setTimeout(()=>clearInterval(adminTimer),20000);
-  bindGuideMap();bindFinal();
-  const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
+  injectStyle();const cardTimer=setInterval(()=>{if(renderCard())clearInterval(cardTimer)},200);setTimeout(()=>clearInterval(cardTimer),20000);if(!customerOnly){const adminTimer=setInterval(()=>{const t=$('zrGuideAdminTab');if(!t)return;t.addEventListener('click',()=>setTimeout(()=>{renderAdmin();syncGuideMapAdmin()},80));clearInterval(adminTimer)},250);setTimeout(()=>clearInterval(adminTimer),20000)}bindGuideMap();bindFinal();const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+(window.ZRAdminRefreshViews||(window.ZRAdminRefreshViews=new Map())).set('zrGuideParkingSubpanelV1',renderAdmin);
 })();
