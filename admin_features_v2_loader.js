@@ -78,22 +78,22 @@ const loadScript=(id,src)=>new Promise((resolve,reject)=>{
 });
 
 async function loadAdminBase(){
-  await loadScript('zrAdminBaseRuntime','./admin_base_runtime.js?v=release-1792498821086');
+  await loadScript('zrAdminBaseRuntime','./admin_base_runtime.js?v=release-1792499658639');
 }
 
 async function loadAdminPatchChain(){
-  await loadScript('zrAdminPatchBundle','./admin_features_patch_bundle.js?v=release-1792498821086');
+  await loadScript('zrAdminPatchBundle','./admin_features_patch_bundle.js?v=release-1792499658639');
   await new Promise(resolve=>setTimeout(resolve,0));
 }
 
 async function loadCustomerBookingUx(){
   if(window.__ZR_CUSTOMER_BOOKING_UX_V24)return;
-  await loadScript('zrCustomerBookingUxV24','./customer_booking_ux_v24.js?v=release-1792498821086');
+  await loadScript('zrCustomerBookingUxV24','./customer_booking_ux_v24.js?v=release-1792499658639');
 }
 
 async function loadCustomerVisitGuideV16(){
   if(window.__ZR_CUSTOMER_VISIT_GUIDE_V16)return;
-  await loadScript('zrCustomerVisitGuideV16','./customer_visit_guide_v16.js?v=release-1792498821086');
+  await loadScript('zrCustomerVisitGuideV16','./customer_visit_guide_v16.js?v=release-1792499658639');
 }
 
 function installPlayZooGuideGuard(){
@@ -108,27 +108,27 @@ function installPlayZooGuideGuard(){
 
 async function loadCustomerGuideFixV20(){
   if(window.__ZR_CUSTOMER_GUIDE_FIX_V20)return;
-  await loadScript('zrCustomerVisitGuideFixV20','./customer_visit_guide_fix_v20.js?v=release-1792498821086');
+  await loadScript('zrCustomerVisitGuideFixV20','./customer_visit_guide_fix_v20.js?v=release-1792499658639');
 }
 
 async function loadParkingInfo(){
   if(window.__ZR_PARKING_INFO_V31)return;
-  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=release-1792498821086');
+  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=release-1792499658639');
 }
 
 function loadCustomerQuickTools(){
   const tools=[
-    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=release-1792498821086'],
-    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=release-1792498821086'],
-    ['zrCustomerStatusBannerV1','./customer_status_banner_v1.js?v=release-1792498821086'],
-    ['zrCustomerGuideMapAdminUiV2','./customer_guide_map_admin_ui_v2.js?v=release-1792498821086'],
-    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=release-1792498821086'],
-    ['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=release-1792498821086'],
-    ['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=release-1792498821086'],
-    ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792498821086'],
-    ['zrAdminCancelVisibilityV1','./admin_cancel_visibility_v1.js?v=release-1792498821086'],
-    ['zrAdminTabActiveFixV1','./admin_tab_active_fix_v1.js?v=release-1792498821086'],
-    ['zrAdminActivityFilterFixV1','./admin_activity_filter_fix_v1.js?v=release-1792498821086']
+    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=release-1792499658639'],
+    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=release-1792499658639'],
+    ['zrCustomerStatusBannerV1','./customer_status_banner_v1.js?v=release-1792499658639'],
+    ['zrCustomerGuideMapAdminUiV2','./customer_guide_map_admin_ui_v2.js?v=release-1792499658639'],
+    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=release-1792499658639'],
+    ['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=release-1792499658639'],
+    ['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=release-1792499658639'],
+    ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792499658639'],
+    ['zrAdminCancelVisibilityV1','./admin_cancel_visibility_v1.js?v=release-1792499658639'],
+    ['zrAdminTabActiveFixV1','./admin_tab_active_fix_v1.js?v=release-1792499658639'],
+    ['zrAdminActivityFilterFixV1','./admin_activity_filter_fix_v1.js?v=release-1792499658639']
   ];
   for(const [id,src] of tools){
     if(document.getElementById(id))continue;
@@ -141,7 +141,7 @@ function loadAdminSearchEnhancements(){
   if(document.getElementById('zrAdminGroupSearchV2'))return;
   const s=document.createElement('script');
   s.id='zrAdminGroupSearchV2';
-  s.async=false;s.src='./admin_group_search_v2.js?v=release-1792498821086';document.body.appendChild(s);
+  s.async=false;s.src='./admin_group_search_v2.js?v=release-1792499658639';document.body.appendChild(s);
 }
 
 function revealPage(){

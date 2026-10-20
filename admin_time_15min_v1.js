@@ -5,15 +5,17 @@ window.__ZR_ADMIN_TIME_15MIN_V1=true;
 
 const TARGETS=['zr2eEntry','zr2eExit','zr2eMealStart','zr2ePlayStart','zr2qEntry','zr2qExit','zr2qMealStart','zr2qPlayStart'];
 const pad=n=>String(n).padStart(2,'0');
-function options(current){
+function options(current,id=""){
   const value=String(current||'');
   const out=['<option value="">선택</option>'];
   const standard=new Set();
-  for(let m=0;m<24*60;m+=15){
+  const start=id.endsWith('Entry')?630:id.endsWith('Exit')?660:0;
+  const end=id.endsWith('Entry')?1020:id.endsWith('Exit')?1200:1425;
+  for(let m=start;m<=end;m+=15){
     const t=`${pad(Math.floor(m/60))}:${pad(m%60)}`;standard.add(t);
     out.push(`<option value="${t}" ${t===value?'selected':''}>${t}</option>`);
   }
-  if(value&&!standard.has(value))out.splice(1,0,`<option value="${value}" selected>기존 ${value}</option>`);
+  if(value&&!standard.has(value)&&!/(Entry|Exit)$/.test(id))out.splice(1,0,`<option value="${value}" selected>기존 ${value}</option>`);
   return out.join('');
 }
 function replaceTimeInput(input){
@@ -21,9 +23,9 @@ function replaceTimeInput(input){
   const select=document.createElement('select');
   select.id=input.id;select.name=input.name||'';select.className=input.className||'';select.style.cssText=input.style.cssText||'';
   select.required=input.required;select.disabled=input.disabled;select.dataset.zr15Converted='1';select.dataset.zr15AdminTime='1';
-  select.innerHTML=options(input.value);
+  select.innerHTML=options(input.value,input.id);
   for(const a of ['data-field','aria-label','aria-describedby'])if(input.hasAttribute(a))select.setAttribute(a,input.getAttribute(a));
-  input.replaceWith(select);return true;
+  input.replaceWith(select);if(input.value&&![...select.options].some(o=>o.value===input.value))select.value='';select.addEventListener('change',()=>window.ZRAdminGroupForm?.sync(select.id.startsWith('zr2e')?'zr2e':'zr2q'));return true;
 }
 function apply(root=document){
   TARGETS.forEach(id=>{const el=(root.getElementById?.(id)||document.getElementById(id));replaceTimeInput(el)});

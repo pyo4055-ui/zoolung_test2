@@ -11,7 +11,8 @@ const activityBasis=()=>localStorage.getItem(ACTIVITY_BASIS_KEY)==='reservation'
 
 /* ===== 단체 구분: 유치원 / 어린이집 분리 ===== */
 function patchGroupSelect(sel){
-  if(!sel)return;
+  if(!sel||sel.dataset.zrGroupTypesSplit==='1')return;
+  sel.dataset.zrGroupTypesSplit='1';
   const options=[...sel.options];
   const legacy=options.find(o=>{
     const t=String(o.textContent||'').replace(/\s/g,'');
@@ -19,13 +20,14 @@ function patchGroupSelect(sel){
     return ['유치원,어린이집','유치원/어린이집'].includes(t)||['유치원,어린이집','유치원/어린이집'].includes(v);
   });
   if(!legacy)return;
+  const seen=new Set();for(const option of options){if(['유치원','어린이집'].includes(option.value)){if(seen.has(option.value))option.remove();else seen.add(option.value)}}
   const cur=sel.value;
   const preserveLegacy=cur===legacy.value && /^zr2eGroupType$/.test(sel.id||'');
   const make=(value,text)=>{const o=document.createElement('option');o.value=value;o.textContent=text;return o};
   const frag=document.createDocumentFragment();
   if(preserveLegacy)frag.appendChild(make(legacy.value,'유치원, 어린이집 (기존 예약)'));
-  frag.appendChild(make('유치원','유치원'));
-  frag.appendChild(make('어린이집','어린이집'));
+  if(!seen.has('유치원'))frag.appendChild(make('유치원','유치원'));
+  if(!seen.has('어린이집'))frag.appendChild(make('어린이집','어린이집'));
   legacy.replaceWith(frag);
   if(preserveLegacy)sel.value=legacy.value;
   else if(cur&&cur!==legacy.value&&[...sel.options].some(o=>o.value===cur))sel.value=cur;

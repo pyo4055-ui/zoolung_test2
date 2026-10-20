@@ -18,6 +18,8 @@ function installStyle(){
     box-shadow:0 0 0 3px rgba(217,56,56,.12)!important;
     background-color:#fff9f9!important;
   }
+  #${ROOT_ID} .zr-participant-age-row input{min-width:64px!important;font-size:16px!important;scroll-margin-top:90px}
+  #${ROOT_ID} .zr-participant-age-row + .${ERROR_CLASS}{width:100%;box-sizing:border-box}
   #${ROOT_ID} .${ERROR_CLASS}{
     margin:6px 0 0!important;padding:8px 10px!important;border:1px solid #f0b4b4!important;border-radius:9px!important;
     background:#fff0f0!important;color:#a62525!important;font-size:13px!important;font-weight:800!important;line-height:1.45!important;
@@ -81,6 +83,7 @@ function clearField(el){
   if(id){document.getElementById(id)?.remove();delete el.dataset.zrValidationErrorId}
 }
 function errorAnchor(el){
+  if(['participantAgeMin','participantAgeMax'].includes(el.id))return el.closest('.zr-participant-age-row')||el.parentElement;
   if(el.type==='checkbox'||el.type==='radio')return el.closest('label,.check,.checkbox,.radio,.calc,.field,.form-group')||el.parentElement||el;
   return el;
 }
@@ -119,8 +122,8 @@ function collectIssues(root){
 function focusIssue(issue){
   if(!issue?.el)return;
   const target=errorAnchor(issue.el);
-  try{target.scrollIntoView({behavior:'smooth',block:'center'})}catch{try{target.scrollIntoView()}catch{}}
-  setTimeout(()=>{try{issue.el.focus({preventScroll:true})}catch{try{issue.el.focus()}catch{}}},280);
+  try{target.scrollIntoView({behavior:'auto',block:'center'})}catch{try{target.scrollIntoView()}catch{}}
+  try{issue.el.focus({preventScroll:true})}catch{try{issue.el.focus()}catch{}};
 }
 function handleAttempt(e){
   const root=$(ROOT_ID);if(!root||!root.contains(e.target))return;
