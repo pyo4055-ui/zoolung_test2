@@ -15,6 +15,7 @@ async function saveDrafts(owners){const request=decision;for(const owner of owne
 
 // Track editing forms at the first interaction, before the browser changes a value.
 const formSpecs=[
+ ['groupNotice','단체 안내문구','#tab-group-notice','#zrGroupNoticeSave'],
  ['changeApply','예약 변경 반영','#zrSharedReservationChangeApplyModal','#zrSharedChangeApplyConfirm'],
  ['scheduleContent','스케줄 컨텐츠 설정','#zr14ContentModal','#zr14SaveSettings'],
  ['cafe','카페 메뉴','#menuEditModal','#saveCafeMenu'],

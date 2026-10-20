@@ -187,7 +187,7 @@ async function applySchedule(id,btn,publish){
  const location=card.querySelector('[data-meal-location]'),mealValue=location?.value,mealOriginal=location?.dataset.original;
  const defs=defsFromCard(card),old=btn.textContent;
  const controls=[...card.querySelectorAll('input,select,textarea,button')].map(el=>({el,disabled:el.disabled}));
- const patch={participantAgeMin:b.participantAgeMin??null,participantAgeMax:b.participantAgeMax??null,reservationId:String(b.id),date:b.date,org:b.orgName||'',res:Number(b.paidCount||0),tea:Number(b.chaperoneCount||0),contact:b.contact||'',ps:b.entryTime||'',pe:b.exitTime||'',meal:mealText(b),cafeDetail:cafeText(b),customDefs:defs,segments,programNotRequired:false,adminLastModifiedBy:String(localStorage.getItem('zr_admin_display_name_v1')||'').trim(),adminLastModifiedAt:new Date().toISOString(),updatedAt:F.serverTimestamp()};
+ const patch={customerInvalidated:false,participantAgeMin:b.participantAgeMin??null,participantAgeMax:b.participantAgeMax??null,reservationId:String(b.id),date:b.date,org:b.orgName||'',res:Number(b.paidCount||0),tea:Number(b.chaperoneCount||0),contact:b.contact||'',ps:b.entryTime||'',pe:b.exitTime||'',meal:mealText(b),cafeDetail:cafeText(b),customDefs:defs,segments,programNotRequired:false,adminLastModifiedBy:String(localStorage.getItem('zr_admin_display_name_v1')||'').trim(),adminLastModifiedAt:new Date().toISOString(),updatedAt:F.serverTimestamp()};
  scheduleSaving=true;controls.forEach(({el})=>el.disabled=true);btn.disabled=true;btn.textContent='저장 중…';
  try{
   const existing=await F.getDoc(F.doc(db,'scheduleGroups',String(b.id)));
@@ -264,7 +264,7 @@ function listenDate(){
   const q=F.query(F.collection(db,'scheduleGroups'),F.where('date','==',requestedDate));
   unsub=F.onSnapshot(q,s=>{
    if(!current()||s.metadata?.hasPendingWrites)return;
-   remote=new Map(s.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
+   remote=new Map(s.docs.filter(d=>!d.data().customerInvalidated).map(d=>[d.id,{id:d.id,...d.data()}]));
    setStatus('실시간 연결됨','ok');if(!settingsSaving&&!scheduleSaving&&!hasScheduleDraft())render();
   },e=>{if(!current())return;console.error(e);setStatus('DB 연결 확인 필요','err')});
  }catch(e){console.error(e);setStatus('DB 연결 확인 필요','err')}

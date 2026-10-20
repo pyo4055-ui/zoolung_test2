@@ -10,7 +10,7 @@ const catalog=[
 const canonical=value=>String(value||'').replace(/[·\s]/g,'').replace('캠핑존안쪽평상','캠핑존왼쪽평상').replace('캠핑존바깥평상','캠핑존오른쪽평상전체');
 function places(value){const p=canonical(value);return !p||p==='미지정'||p==='자리배정없음'?[]:p==='캠핑존오른쪽평상전체'?['캠핑존오른쪽평상안쪽','캠핑존오른쪽평상바깥쪽']:[p]}
 function minutes(v){if(!/^\d{2}:\d{2}$/.test(v||''))return null;const [h,m]=v.split(':').map(Number);return h<24&&m<60?h*60+m:null}
-function claim(g){if(g.cancelled||g.programNotRequired||g.status==='cancelled')return null;const seats=places(g.mealLoc);if(!seats.length)return null;const meals=(g.segments||[]).filter(s=>s.type==='meal');const ranges=(meals.length?meals:[{start:g.mealStart||g.ps,end:g.mealEnd||g.pe}]).map(s=>({start:minutes(s.start),end:minutes(s.end)}));if(ranges.some(({start:a,end:b})=>a==null||b==null||b<=a))throw Error('식사 자리 배정 전에 식사 시작·종료 시간을 설정해주세요.');return {seats,ranges,org:String(g.org||g.orgName||'다른 단체')}}
+function claim(g){if(g.customerInvalidated||g.cancelled||g.programNotRequired||g.status==='cancelled')return null;const seats=places(g.mealLoc);if(!seats.length)return null;const meals=(g.segments||[]).filter(s=>s.type==='meal');const ranges=(meals.length?meals:[{start:g.mealStart||g.ps,end:g.mealEnd||g.pe}]).map(s=>({start:minutes(s.start),end:minutes(s.end)}));if(ranges.some(({start:a,end:b})=>a==null||b==null||b<=a))throw Error('식사 자리 배정 전에 식사 시작·종료 시간을 설정해주세요.');return {seats,ranges,org:String(g.org||g.orgName||'다른 단체')}}
 function conflict(a,b){return !!(a&&b&&a.seats.some(x=>b.seats.includes(x))&&a.ranges.some(({start:s,end:e})=>b.ranges.some(({start:bs,end:be})=>Math.max(s,bs)<Math.min(e,be))))}
 async function save(F,db,id,patch,extra=[]){
  const ref=F.doc(db,'scheduleGroups',String(id));
@@ -28,7 +28,7 @@ async function save(F,db,id,patch,extra=[]){
   const booking=await tx.get(F.doc(db,'reservations',String(id)));
   const inactive=booking.exists()&&['cancelled','rejected'].includes(booking.data().status);
   const wanted=inactive?null:claim(next);
-  for(const other of Object.keys(target.entries)){if(other===String(id))continue;const reservation=await tx.get(F.doc(db,'reservations',other));if(reservation.exists()&&['cancelled','rejected'].includes(reservation.data().status))delete target.entries[other];}
+  for(const other of Object.keys(target.entries)){if(other===String(id))continue;const reservation=await tx.get(F.doc(db,'reservations',other));const schedule=await tx.get(F.doc(db,'scheduleGroups',other));if((reservation.exists()&&['cancelled','rejected'].includes(reservation.data().status))||(schedule.exists()&&schedule.data().customerInvalidated))delete target.entries[other];}
   for(const [other,c]of Object.entries(target.entries))if(other!==String(id)&&conflict(wanted,c)){const error=Error(c.org+' 단체와 식사 시간·자리가 겹칩니다. 다른 자리나 시간을 선택해주세요.');error.code='meal-seat-conflict';throw error}
   const allocate=extra.length?await window.ZRBookingAllocations.prepareWrites(F,db,tx,extra):()=>{};
   allocate();

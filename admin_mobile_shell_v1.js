@@ -82,6 +82,7 @@ const GROUPS={
   "settings": {
     "label": "설정",
     "items": [
+["groupNotice", "단체 안내문구 설정"],
       [
         "settings",
         "예약 설정"

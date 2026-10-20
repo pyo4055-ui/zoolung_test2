@@ -136,6 +136,7 @@ const MENUS={
   "settings": {
     "label": "설정",
     "sections": [
+{"label":"단체 안내문구 설정","parent":"groupNotice"},
       {
         "label": "예약 설정",
         "parent": "settings",
