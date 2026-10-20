@@ -234,7 +234,7 @@ function decorateActionButtons(){
       btn.classList.remove('zr-safari-popup-trigger','zr-safari-payment-trigger','zr-safari-role-complete',...roleClasses);
       return;
     }
-    btn.classList.toggle('zr-safari-role-complete',['확인완료','처리완료'].includes(compact));
+    btn.classList.toggle('zr-safari-role-complete',['확인완료','처리완료','처리완료됨'].includes(compact));
     const inCalendarDay=!!btn.closest('#adminCalendar .day');
     if(inCalendarDay&&text==='자세히'){
       btn.classList.remove('zr-safari-popup-trigger','zr-safari-payment-trigger',...roleClasses);

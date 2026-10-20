@@ -29,14 +29,14 @@ let wrappedRender=null;
 function loadSharedReservationSettings(){
   if(document.getElementById('zrReservationSettingsFirebaseSyncV1')||window.__ZR_RESERVATION_SETTINGS_FIREBASE_SYNC_V1)return;
   const s=document.createElement('script');
-  s.id='zrReservationSettingsFirebaseSyncV1';s.async=false;s.src='./reservation_settings_firebase_sync_v1.js?v=release-1792497810400';
+  s.id='zrReservationSettingsFirebaseSyncV1';s.async=false;s.src='./reservation_settings_firebase_sync_v1.js?v=release-1792498821086';
   document.body.appendChild(s);
 }
 function loadAdminHolidayManager(){
   if(!/\/admin\.html$/i.test(location.pathname||''))return;
   if(document.getElementById('zrAdminHolidaySettingsV1')||window.__ZR_ADMIN_HOLIDAY_SETTINGS_V1)return;
   const s=document.createElement('script');
-  s.id='zrAdminHolidaySettingsV1';s.async=false;s.src='./admin_holiday_settings_v1.js?v=release-1792497810400';
+  s.id='zrAdminHolidaySettingsV1';s.async=false;s.src='./admin_holiday_settings_v1.js?v=release-1792498821086';
   document.body.appendChild(s);
 }
 function localToday(){

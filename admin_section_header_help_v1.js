@@ -139,7 +139,7 @@ function summary(sec,head){
   const entries=[];
   for(const [id,label] of sources){const node=$(id);if(!node||!sec.contains(node)||node.parentElement?.closest('.hidden,[hidden]'))continue;if(sec.id==='tab-activity'&&sec.classList.contains('zr-cancel-workspace-active')&&!node.closest('#zrActivityCancelWorkspaceV1'))continue;const value=text(node);if(!value)continue;entries.push(label?label+' '+value:value);const original=node.closest('.kpis,.kpi,.zr-cancel-kpis,.zr-today-summary')||node;if(!original.classList.contains('zr-summary-source'))original.classList.add('zr-summary-source');}
   let bar=head.querySelector('.zr-admin-summary');if(!entries.length){bar?.remove();return}if(!bar){bar=document.createElement('div');bar.className='zr-admin-summary';head.append(bar)}
-  const values=entries.flatMap(x=>x.split(' · '));const signature=values.join('|');if(bar.dataset.signature===signature)return;bar.dataset.signature=signature;bar.replaceChildren(...values.map(value=>{const chip=document.createElement('span');chip.textContent=value;return chip}));
+  const values=entries.flatMap(x=>x.split(' · '));const signature=values.join('|');if(bar.dataset.signature===signature)return;bar.dataset.signature=signature;values.forEach((value,index)=>{let chip=bar.children[index];if(!chip){chip=document.createElement('span');bar.append(chip)}if(chip.textContent!==value)chip.textContent=value});while(bar.children.length>values.length)bar.lastElementChild.remove();
 }
 function ensureHeader(cfg){
   const sec=$(cfg.id);if(!sec)return false;

@@ -132,6 +132,7 @@ function leaveChangeMode(){
 }
 
 function renderRequests(){
+  if(window.__ZR_ADMIN_RESERVATION_CHANGE_REQUESTS_SHARED_V1)return;
   const host=$('zrReservationChangeAdminList');if(!host)return;
   const all=requests(),filter=$('zrReservationChangeStatusFilter')?.value||'all',rows=filter==='all'?all:all.filter(x=>x.status===filter);
   if($('zrReservationChangeCount'))$('zrReservationChangeCount').textContent=`${rows.length}건 / 전체 ${all.length}건`;
