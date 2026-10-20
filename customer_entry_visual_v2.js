@@ -256,7 +256,7 @@ function openGuide(){
   const modal=ensureGuideModal();modal.classList.remove('hidden');ROOT.classList.add('zr-customer-guide-v2-open');
   window.ZRGroupNotice?.render();
   try{document.body.style.overflow='hidden'}catch{}
-  const sheet=modal.querySelector('.zr-guide-v2-sheet');if(sheet)sheet.scrollTop=0;
+  const sheet=modal.querySelector('.zr-guide-v2-body');if(sheet)sheet.scrollTop=0;
   setTimeout(()=>$('zrCustomerGroupGuideCloseV2')?.focus({preventScroll:true}),0);
 }
 function closeGuide(){
