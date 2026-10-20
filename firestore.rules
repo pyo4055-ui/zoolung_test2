@@ -27,8 +27,8 @@ service cloud.firestore {
         && d.entryTime is string && d.entryTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
         && d.exitTime is string && d.exitTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
         && d.exitTime > d.entryTime
-        && d.orgName is string && d.orgName.size() > 0
-        && d.managerName is string && d.managerName.size() > 0
+        && d.orgName is string && d.orgName.size() > 0 && d.orgName.size() <= 300
+        && d.managerName is string && d.managerName.size() > 0 && d.managerName.size() <= 100
         && d.contact is string && d.contact.matches('^[0-9]{2,3}-?[0-9]{3,4}-?[0-9]{4}$');
     }
     function customerBookingFields() {
@@ -42,8 +42,9 @@ service cloud.firestore {
         'reservationChangeRequest','changePlayHoldRequestId','cancelledAt','cancelledBy','cancelReason','cancelReviewed','schedulePublished','customerSchedule'];
     }
     function validDate(value) {
+      let parts = value.split('-');
       return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && timestamp.date(int(value.split('-')[0]),int(value.split('-')[1]),int(value.split('-')[2])).year() >= 2000;
+        && timestamp.date(int(parts[0]),int(parts[1]),int(parts[2])).year() >= 2000;
     }
     function timeMinutes(value) {
       let parts = value.split(':');
@@ -65,9 +66,6 @@ service cloud.firestore {
           validPlayOptions(d))
         && d.get('mealType','none') in ['none','lunchbox','cafe']
         && (d.get('mealType','none') == 'none' || validInterval(d.mealStart,d.mealEnd))
-        && d.get('email','') is string && d.get('email','').size() <= 320
-        && d.get('notes','') is string && d.get('notes','').size() <= 20000
-        && d.orgName.size() <= 300 && d.managerName.size() <= 100
         && d.get('entryAmount',0) is number && d.get('entryAmount',0) >= 0
         && d.get('totalAmount',0) is number && d.get('totalAmount',0) >= 0;
     }
@@ -82,6 +80,8 @@ service cloud.firestore {
       return validCustomerBooking(request.resource.data)
         && request.resource.data.keys().hasOnly(customerBookingFields().concat(['schedulePublished','customerSchedule']))
         && validCustomerOptions(request.resource.data) && validCustomerChange(request.resource.data)
+        && request.resource.data.get('email','') is string && request.resource.data.get('email','').size() <= 320
+        && request.resource.data.get('notes','') is string && request.resource.data.get('notes','').size() <= 20000
         && request.resource.data.get('mealLoc','') in ['', '자리배정 없음']
         && request.resource.data.status == 'pending'
         && !request.resource.data.keys().hasAny(staffBookingFields())
@@ -96,35 +96,33 @@ service cloud.firestore {
     }
     function customerDirectEdit() {
       return resource.data.status in ['pending','confirmed']
-        && directEditDate(resource.data.date)
-        && (request.resource.data.date == resource.data.date || directEditDate(request.resource.data.date))
+        && directEditDate(resource.data.date < request.resource.data.date ? resource.data.date : request.resource.data.date)
         && resource.data.get('reservationChangeRequest',{}).get('status','') != 'pending';
     }
     function customerBookingUpdate() {
-      let changed = request.resource.data.diff(resource.data).affectedKeys();
-      let direct = customerDirectEdit();
-      let cancellation = request.resource.data.status == 'cancelled'
-        && resource.data.status in ['pending', 'confirmed', 'hold']
-        && request.resource.data.cancelledBy == 'customer'
-        && request.resource.data.cancelReviewed == false;
-      return (!changed.hasAny(['paidCount','chaperoneCount','participantAgeMin','participantAgeMax','date','entryTime','exitTime','orgName','managerName','contact']) || validCustomerBooking(request.resource.data))
-        && changed.hasOnly(customerBookingFields())
-        && (direct || !changed.hasAny([
-          'date','groupType','groupBookingMode','participantAgeMin','participantAgeMax',
-          'paidCount','chaperoneCount','freeChaperone','paidChaperone','entryAmount','totalAmount',
-          'entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','mealDuration','cafe',
-          'playUse','playStart','playEnd','playDuration','feedOrder','orgName','managerName','contact','email','notes']))
-        && (!changed.hasAny(['date','playUse','playStart','playEnd','playDuration','mealType','mealStart','mealEnd','email','notes','orgName','managerName','entryAmount','totalAmount']) || validCustomerOptions(request.resource.data))
-        && (!changed.hasAny(['reservationChangeRequest']) || validCustomerChange(request.resource.data))
-        && (!changed.hasAny(['mealLoc']) || request.resource.data.get('mealLoc','') in ['', '자리배정 없음'])
-        && (request.resource.data.status == resource.data.status || cancellation)
-        && !changed.hasAny(['settlement', 'settlementStatus', 'settlementCompletedAt',
-          'additionalSales', 'outsourcingVendorId', 'outsourcingVendorSnapshot',
-          'confirmedAt',
-          'adminLastModifiedBy', 'adminLastModifiedAt', 'cancelReviewedAt', 'cancelReviewedBy'])
-        && (!changed.hasAny(['schedulePublished','customerSchedule']) || (direct
-          && request.resource.data.get('schedulePublished',false) == false && request.resource.data.get('customerSchedule',null) == null))
-        && (!changed.hasAny(['cancelReviewed']) || cancellation);
+      let d = request.resource.data;
+      let before = resource.data;
+      let changed = d.diff(before).affectedKeys();
+      let cancellation = d.status == 'cancelled' && before.status in ['pending','confirmed','hold']
+        && d.cancelledBy == 'customer' && d.cancelReviewed == false;
+      let metadataOnly = changed.hasOnly(['id','ownerUid','bridgeVersion','createdAt','updatedAt','statusUpdatedAt','status',
+        'customerViewedGuideMapAt','customerViewedParkingAt','customerViewedScheduleAt',
+        'reservationChangeRequest','changePlayHoldRequestId','cancelledAt','cancelledBy','cancelReason','cancelReviewed']);
+      return metadataOnly
+        ? ((d.status == before.status || cancellation)
+          && (!changed.hasAny(['reservationChangeRequest']) || validCustomerChange(d))
+          && (!changed.hasAny(['cancelReviewed']) || cancellation))
+        : (customerDirectEdit() && d.status == before.status
+          && changed.hasOnly(['id','ownerUid','bridgeVersion','updatedAt',
+            'date','groupType','groupBookingMode','participantAgeMin','participantAgeMax',
+            'paidCount','chaperoneCount','freeChaperone','paidChaperone','entryAmount','totalAmount',
+            'entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','mealDuration','cafe',
+            'playUse','playStart','playEnd','playDuration','feedOrder','orgName','managerName','contact','email','notes','schedulePublished','customerSchedule'])
+          && validCustomerBooking(d) && validCustomerOptions(d)
+          && d.get('notes','') is string && d.get('notes','').size() <= 20000
+          && d.get('email','') is string && d.get('email','').size() <= 320
+          && d.get('mealLoc','') in ['', '자리배정 없음']
+          && d.get('schedulePublished',false) == false && d.get('customerSchedule',null) == null);
     }
 
     function customerAvailabilityWrite(reservationId) {
@@ -448,8 +446,10 @@ service cloud.firestore {
         let before = get(/databases/$(database)/documents/reservations/$(groupId)).data;
         let after = getAfter(/databases/$(database)/documents/reservations/$(groupId)).data;
         return request.auth != null && before.ownerUid == request.auth.uid
-          && before.status in ['pending','confirmed'] && after.status == before.status
-          && directEditDate(before.date)
+          && after.diff(before).affectedKeys().hasAny(['date','groupType','groupBookingMode',
+            'paidCount','chaperoneCount','entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd',
+            'cafe','playUse','playStart','playEnd','feedOrder','notes','orgName','managerName','contact',
+            'email','participantAgeMin','participantAgeMax','schedulePublished','customerSchedule'])
           && after.updatedAt == request.time && before.get('updatedAt',null) != after.updatedAt
           && after.get('schedulePublished',false) == false && after.get('customerSchedule',null) == null
           && request.resource.data.customerInvalidated == true

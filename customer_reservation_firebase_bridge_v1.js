@@ -195,7 +195,9 @@ async function updatePendingBooking(id,booking){
     allocate();
     tx.set(ref,{...patch,updatedAt:F.serverTimestamp()},{merge:true});
     tx.set(F.doc(db,AVAIL_COLLECTION,String(id)),{...availabilityPatch(saved,user.uid),updatedAt:F.serverTimestamp()},{merge:true});
-    tx.set(F.doc(db,'scheduleGroups',String(id)),{customerInvalidated:true,customerInvalidatedAt:F.serverTimestamp()},{merge:true});
+    if(Object.keys(patch).some(key=>['date','groupType','groupBookingMode','paidCount','chaperoneCount','entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','cafe','playUse','playStart','playEnd','feedOrder','notes','orgName','managerName','contact','email','participantAgeMin','participantAgeMax','schedulePublished','customerSchedule'].includes(key))){
+      tx.set(F.doc(db,'scheduleGroups',String(id)),{customerInvalidated:true,customerInvalidatedAt:F.serverTimestamp()},{merge:true});
+    }
   });
   if(auth.currentUser?.uid!==user.uid)throw Error('booking session changed');
   ownFull.set(String(id),saved);legacyLocal.delete(String(id));applyCustomerCache();
