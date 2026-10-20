@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<script src="./shared_meal_seating_v1.js?v=release-1792499658639"></script>
-<script src="./shared_document_listener_v1.js?v=release-1792499658639"></script>
-<script src="./shared_display_safety_v1.js?v=release-1792499658639"></script>
-<script src="./shared_dialogs_v1.js?v=release-1792499658639"></script>
+<script src="./shared_meal_seating_v1.js?v=release-1792500956413"></script>
+<script src="./shared_document_listener_v1.js?v=release-1792500956413"></script>
+<script src="./shared_display_safety_v1.js?v=release-1792500956413"></script>
+<script src="./shared_dialogs_v1.js?v=release-1792500956413"></script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>주렁주렁 동탄점 단체예약</title>
@@ -646,9 +646,9 @@
   </div>
 </div>
 
-<script src="./shared_booking_rules_v1.js?v=release-1792499658639"></script>
-<script src="./shared_booking_allocations_v1.js?v=release-1792499658639"></script><script src="./admin_edit_metadata_v1.js?v=release-1792499658639"></script>
-<script src="./customer_group_program_v1.js?v=release-1792499658639"></script>
+<script src="./shared_booking_rules_v1.js?v=release-1792500956413"></script>
+<script src="./shared_booking_allocations_v1.js?v=release-1792500956413"></script><script src="./admin_edit_metadata_v1.js?v=release-1792500956413"></script>
+<script src="./customer_group_program_v1.js?v=release-1792500956413"></script>
 <script>
 const PRICE=15000;
 
@@ -1391,13 +1391,14 @@ window.requestBookingStatus=function(id,status){
   $("adminActionConfirmButton").className=cfg.cls;
   openModal("adminActionConfirmModal");
 }
-function executePendingAdminAction(){
+async function executePendingAdminAction(){
   if(!adminGuard())return;
   if(!pendingAdminAction)return;
   const {id,status}=pendingAdminAction;
-  pendingAdminAction=null;
-  closeModal("adminActionConfirmModal");
-  setBookingStatus(id,status);
+  const button=$("adminActionConfirmButton");if(button.disabled)return;
+  const label=button.textContent;button.disabled=true;button.textContent="저장중...";
+  try{if(await setBookingStatus(id,status)!==false){pendingAdminAction=null;closeModal("adminActionConfirmModal")}}
+  finally{button.disabled=false;button.textContent=label}
 }
 
 window.openDay=function(date){
@@ -1437,9 +1438,10 @@ window.toggleAutoCloseOverride=function(date){
   saveSettings(s);renderAdmin();renderVisitDays();openDay(date);
 }
 
-window.setBookingStatus=function(id,status){
+window.setBookingStatus=async function(id,status){
   if(!adminGuard())return;
-  const bs=bookings(),b=bs.find(x=>x.id===id);if(!b)return;
+  const original=bookings().find(x=>x.id===id);if(!original)return false;
+  const b=JSON.parse(JSON.stringify(original));
   b.status=status;
   b.statusUpdatedAt=new Date().toISOString();
   if(status==="confirmed")b.confirmedAt=b.statusUpdatedAt;
@@ -1447,8 +1449,10 @@ window.setBookingStatus=function(id,status){
   if(status==="cancelled"){
     b.cancelledAt=b.statusUpdatedAt;
     b.cancelledBy="admin";
+    b.cancelReviewed=false;delete b.cancelReviewedAt;delete b.cancelReviewedBy;
   }
-  setStore("zr_bookings",bs);
+  if(!await window.zrReservationFirebase?.saveBooking?.(b))return false;
+  window.ZRAdminRefreshViews?.get("tab-warning")?.();
   if((status==="cancelled"||status==="rejected") && bookingCount(b.date)<4){
     const s=settings(),i=s.autoCloseOverrideOpen.indexOf(b.date);
     if(i>=0){s.autoCloseOverrideOpen.splice(i,1);saveSettings(s)}
@@ -1472,6 +1476,7 @@ window.setBookingStatus=function(id,status){
   }
   else if(status==="cancelled")toast("예약을 취소 처리했습니다.");
   else toast("예약을 거절 처리했습니다.");
+  return true;
 }
 
 function confirmedCafeBookingsForDate(date){
@@ -1944,8 +1949,8 @@ renderSmsSettings();
 })();
 
 </script>
-<script src="./admin_excel_archive_v1.js?v=release-1792499658639"></script><script src="./admin_settlement_rules_v1.js?v=release-1792499658639"></script><script src="./admin_features.js?v=release-1792499658639"></script><script src="./admin_features_v2_loader.js?v=release-1792499658639"></script><script src="./shared_store_dispatch_v1.js?v=release-1792499658639"></script><script src="./shared_reservation_records_v1.js?v=release-1792499658639"></script><script src="./reservation_firebase_bridge.js?v=release-1792499658639"></script><script src="./admin_entry_bootstrap_v1.js?v=release-1792499658639"></script><script src="./admin_login_preview_v4_patch_v1.js?v=release-1792499658639"></script><script src="./admin_login_intro_v1.js?v=release-1792499658639"></script><script src="./admin_shell_v1.js?v=release-1792499658639"></script><script src="./admin_shell_submenus_v1.js?v=release-1792499658639"></script><script src="./admin_shell_submenu_customer_guard_v1.js?v=release-1792499658639"></script><script src="./admin_shell_attention_v1.js?v=release-1792499658639"></script><script src="./admin_smart_panel_v1.js?v=release-1792499658639"></script><script src="./admin_shell_layout_polish_v1.js?v=release-1792499658639"></script><script src="./admin_shell_layout_specificity_fix_v1.js?v=release-1792499658639"></script><script src="./admin_shell_current_ui_fix_v1.js?v=release-1792499658639"></script><script src="./admin_today_connection_guard_v1.js?v=release-1792499658639"></script><script src="./admin_daily_memo_v1.js?v=release-1792499658639"></script><script src="./admin_section_header_help_v1.js?v=release-1792499658639"></script><script src="./admin_section_subtab_title_fix_v1.js?v=release-1792499658639"></script><script src="./admin_workspace_frame_fix_v1.js?v=release-1792499658639"></script><script src="./admin_activity_search_v1.js?v=release-1792499658639"></script><script src="./admin_operational_ui_alignment_v1.js?v=release-1792499658639"></script><script src="./admin_sales_model_v1.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_v1.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_v2_patch.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_v3_finish.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_v5_ui_fix.js?v=release-1792499658639"></script><script src="./admin_print_appearance_v1.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_print_fix_v1.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_compare_chart_v1.js?v=release-1792499658639"></script><script src="./admin_sales_dashboard_daily_chart_v1.js?v=release-1792499658639"></script><script src="./admin_today_print_fix_v1.js?v=release-1792499658639"></script><script src="./admin_reservation_change_requests_v1.js?v=release-1792499658639"></script><script src="./admin_reservation_change_requests_shared_v1.js?v=release-1792499658639"></script><script src="./admin_mobile_shell_v1.js?v=release-1792499658639"></script><script src="./admin_mobile_subnav_v3.js?v=release-1792499658639"></script><script src="./admin_mobile_content_polish_v1.js?v=release-1792499658639"></script><script src="./admin_mobile_date_clip_fix_v1.js?v=release-1792499658639"></script><script src="./admin_reservation_change_route_adapter_v1.js?v=release-1792499658639"></script><script src="./admin_reservation_staff_login_shim_v1.js?v=release-1792499658639"></script><script src="./admin_firebase_staff_session_guard_v1.js?v=release-1792499658639"></script><script src="./admin_mobile_reservation_change_alert_v1.js?v=release-1792499658639"></script><script src="./cancel_review_state_v1.js?v=release-1792499658639"></script><script src="./shared_inquiry_records_v1.js?v=release-1792499658639"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792499658639"></script><script src="./admin_operational_settings_firebase_v1.js?v=release-1792499658639"></script><script src="./admin_holiday_settings_polish_v1.js?v=release-1792499658639"></script><script src="./admin_finish_low_risk_v1.js?v=release-1792499658639"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792499658639"></script>
-<script src="./admin_booking_policy_settings_v1.js?v=release-1792499658639"></script>
-<script src="./shared_group_notice_v1.js?v=release-1792499658639"></script>
+<script src="./admin_excel_archive_v1.js?v=release-1792500956413"></script><script src="./admin_settlement_rules_v1.js?v=release-1792500956413"></script><script src="./admin_features.js?v=release-1792500956413"></script><script src="./admin_features_v2_loader.js?v=release-1792500956413"></script><script src="./shared_store_dispatch_v1.js?v=release-1792500956413"></script><script src="./shared_reservation_records_v1.js?v=release-1792500956413"></script><script src="./reservation_firebase_bridge.js?v=release-1792500956413"></script><script src="./admin_entry_bootstrap_v1.js?v=release-1792500956413"></script><script src="./admin_login_preview_v4_patch_v1.js?v=release-1792500956413"></script><script src="./admin_login_intro_v1.js?v=release-1792500956413"></script><script src="./admin_shell_v1.js?v=release-1792500956413"></script><script src="./admin_shell_submenus_v1.js?v=release-1792500956413"></script><script src="./admin_shell_submenu_customer_guard_v1.js?v=release-1792500956413"></script><script src="./admin_shell_attention_v1.js?v=release-1792500956413"></script><script src="./admin_smart_panel_v1.js?v=release-1792500956413"></script><script src="./admin_shell_layout_polish_v1.js?v=release-1792500956413"></script><script src="./admin_shell_layout_specificity_fix_v1.js?v=release-1792500956413"></script><script src="./admin_shell_current_ui_fix_v1.js?v=release-1792500956413"></script><script src="./admin_today_connection_guard_v1.js?v=release-1792500956413"></script><script src="./admin_daily_memo_v1.js?v=release-1792500956413"></script><script src="./admin_section_header_help_v1.js?v=release-1792500956413"></script><script src="./admin_section_subtab_title_fix_v1.js?v=release-1792500956413"></script><script src="./admin_workspace_frame_fix_v1.js?v=release-1792500956413"></script><script src="./admin_activity_search_v1.js?v=release-1792500956413"></script><script src="./admin_operational_ui_alignment_v1.js?v=release-1792500956413"></script><script src="./admin_sales_model_v1.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_v1.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_v2_patch.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_v3_finish.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_v5_ui_fix.js?v=release-1792500956413"></script><script src="./admin_print_appearance_v1.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_print_fix_v1.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_compare_chart_v1.js?v=release-1792500956413"></script><script src="./admin_sales_dashboard_daily_chart_v1.js?v=release-1792500956413"></script><script src="./admin_today_print_fix_v1.js?v=release-1792500956413"></script><script src="./admin_reservation_change_requests_v1.js?v=release-1792500956413"></script><script src="./admin_reservation_change_requests_shared_v1.js?v=release-1792500956413"></script><script src="./admin_mobile_shell_v1.js?v=release-1792500956413"></script><script src="./admin_mobile_subnav_v3.js?v=release-1792500956413"></script><script src="./admin_mobile_content_polish_v1.js?v=release-1792500956413"></script><script src="./admin_mobile_date_clip_fix_v1.js?v=release-1792500956413"></script><script src="./admin_reservation_change_route_adapter_v1.js?v=release-1792500956413"></script><script src="./admin_reservation_staff_login_shim_v1.js?v=release-1792500956413"></script><script src="./admin_firebase_staff_session_guard_v1.js?v=release-1792500956413"></script><script src="./admin_mobile_reservation_change_alert_v1.js?v=release-1792500956413"></script><script src="./cancel_review_state_v1.js?v=release-1792500956413"></script><script src="./shared_inquiry_records_v1.js?v=release-1792500956413"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792500956413"></script><script src="./admin_operational_settings_firebase_v1.js?v=release-1792500956413"></script><script src="./admin_holiday_settings_polish_v1.js?v=release-1792500956413"></script><script src="./admin_finish_low_risk_v1.js?v=release-1792500956413"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792500956413"></script>
+<script src="./admin_booking_policy_settings_v1.js?v=release-1792500956413"></script>
+<script src="./shared_group_notice_v1.js?v=release-1792500956413"></script>
 </body>
 </html>

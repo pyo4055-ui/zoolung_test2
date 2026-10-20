@@ -56,7 +56,7 @@ function renderPeopleGuide(){
   const box=$('peopleCalc'),paidEl=$('paidCount'),chapEl=$('chaperoneCount');
   if(!box||!paidEl||!chapEl)return;
   const c=currentCounts();
-  if(!c.paid){box.innerHTML='<b>유료인원 0명</b><br>인솔자 '+c.chaperone+'명<br><span class="money">0원</span> <span class="help">* VAT 포함</span>';return}
+  if(!c.paid){box.innerHTML='<b>인원을 선택해주세요.</b><br><span class="help">유료 관람인원과 인솔자 수를 선택하면 예약 가능 여부와 무료 인솔 인원을 확인할 수 있습니다.</span>';return}
 
   if(!c.eligible){
     box.innerHTML=`<b class="danger">예약 불가 · 현재 유료인원 ${c.totalPaid}명</b><br><span class="help">단체예약은 유료인원 합계 15명부터 가능합니다. 유료 관람인원 또는 인솔자 수를 확인해주세요.</span>`;
@@ -152,6 +152,7 @@ function patchRefreshSummary(){
   return true;
 }
 
+window.ZRGroupMinimum=Object.freeze({renderPeople:renderPeopleGuide});
 function refresh(){
   ensurePaidOptions();ensureTopNotice();ensureRuleHelp();patchBookingData();patchValidateBooking();patchRefreshSummary();renderPeopleGuide();
 }

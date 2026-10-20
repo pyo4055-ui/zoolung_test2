@@ -19,6 +19,7 @@ function injectStyle(){
   const s=document.createElement('style');
   s.id='zrAdminMobileContentPolishV1Style';
   s.textContent=`
+  #zrMobileActivityToolbarV2{display:none!important}
   @media(max-width:900px){
     html.zr-admin-shell-mounted body #adminView,
     html.zr-admin-shell-mounted body #adminView *{box-sizing:border-box}

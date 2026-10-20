@@ -40,7 +40,7 @@ function bookingForCard(card){
 function ensureCustomerViewTracking(){
   if(window.__ZR_CUSTOMER_VIEW_TRACKING_V1||$('zrCustomerViewTrackingV1'))return;
   const s=document.createElement('script');
-  s.id='zrCustomerViewTrackingV1';s.async=false;s.src='./customer_view_tracking_v1.js?v=release-1792499658639';
+  s.id='zrCustomerViewTrackingV1';s.async=false;s.src='./customer_view_tracking_v1.js?v=release-1792500956413';
   s.onerror=()=>{s.remove();setTimeout(ensureCustomerViewTracking,500)};
   document.body.appendChild(s);
 }

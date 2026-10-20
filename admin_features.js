@@ -146,13 +146,14 @@
   };
 
   const baseSetBookingStatus=setBookingStatus;
-  window.setBookingStatus=setBookingStatus=function(id,status){
+  window.setBookingStatus=setBookingStatus=async function(id,status){
     if(!adminGuard())return;
-    baseSetBookingStatus(id,status);
+    const saved=await baseSetBookingStatus(id,status);if(saved===false)return false;
     const b=bookings().find(x=>x.id===id),s=settings(),limit=Number(s.autoCloseLimit||0);
     if(b&&limit>0&&bookingCount(b.date)<limit){
       const i=s.autoCloseOverrideOpen.indexOf(b.date);if(i>=0){s.autoCloseOverrideOpen.splice(i,1);saveSettings(s)}
     }
+    return saved;
   };
 
   function renderOutsourcingPayments(){

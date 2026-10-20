@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<script src="./shared_document_listener_v1.js?v=release-1792499658639"></script>
-<script src="./shared_display_safety_v1.js?v=release-1792499658639"></script>
-<script src="./shared_dialogs_v1.js?v=release-1792499658639"></script>
+<script src="./shared_document_listener_v1.js?v=release-1792500956413"></script>
+<script src="./shared_display_safety_v1.js?v=release-1792500956413"></script>
+<script src="./shared_dialogs_v1.js?v=release-1792500956413"></script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>주렁주렁 동탄점 단체예약</title>
@@ -180,7 +180,7 @@
             <select id="chaperoneCount"></select>
           </div>
         </div>
-        <div style="margin:14px 0"><label>참가자 만 나이 (인솔자 제외) <span class="required">필수</span></label><div class="zr-participant-age-row" style="display:flex;align-items:center;gap:8px;width:100%;max-width:340px"><span style="flex-shrink:0">만</span><input id="participantAgeMin" type="number" min="0" step="1" required inputmode="numeric" aria-label="참가자 최소 만 나이" placeholder="최소" style="min-width:0;flex:1"><span style="flex-shrink:0">세 ~ 만</span><input id="participantAgeMax" type="number" min="0" step="1" required inputmode="numeric" aria-label="참가자 최대 만 나이" placeholder="최대" style="min-width:0;flex:1"><span>세</span></div></div><div class="calc" id="peopleCalc">유료인원 <b>0명</b><br>인솔자 <b>0명</b><br>무료 인솔자 <b>0명</b> <span class="help">※ 유료인원 5명당 1명 무료</span><br>유료 인솔자 <b>0명</b><br><span class="money">0원</span> <span class="help">* VAT 포함</span></div>
+        <div style="margin:14px 0"><label class="req">참가자 만 나이 (인솔자 제외)</label><div class="zr-participant-age-row" style="display:flex;align-items:center;gap:8px;width:100%;max-width:340px"><span style="flex-shrink:0">만</span><input id="participantAgeMin" type="number" min="0" step="1" required inputmode="numeric" aria-label="참가자 최소 만 나이" placeholder="최소" style="min-width:0;flex:1"><span style="flex-shrink:0">세 ~ 만</span><input id="participantAgeMax" type="number" min="0" step="1" required inputmode="numeric" aria-label="참가자 최대 만 나이" placeholder="최대" style="min-width:0;flex:1"><span>세</span></div></div><div class="calc" id="peopleCalc"><b>인원을 선택해주세요.</b><br><span class="help">유료 관람인원과 인솔자 수를 선택하면 예약 가능 여부와 무료 인솔 인원을 확인할 수 있습니다.</span></div>
       </section>
 
       <section class="card">
@@ -213,7 +213,7 @@
       <section class="card hidden" id="generalGroupSection">
         <h2><span class="section-no">4</span>먹이 구매</h2>
         <div class="help" style="margin-top:10px">먹이 12종 세트: 미어캣, 핀치, 라쿤, 오리, 토끼, 카피바라, 토코투칸, 기니피그, 프레디독, 잉어, 씨클리드, 수생거북</div>
-        <div class="grid2" style="margin-top:14px"><div><label for="feedPurchase">먹이 세트 구매 (세트당 10,000원)</label><select id="feedPurchase"><option value="no">구매 안 함</option><option value="yes">구매함</option></select></div><div id="feedQuantityRow" class="hidden"><label for="feedQuantity">먹이 세트 수량</label><input id="feedQuantity" type="number" inputmode="numeric" min="1" step="1" value="1"></div></div>
+        <div class="grid2" style="margin-top:14px"><div><label class="req" for="feedPurchase">먹이 세트 구매 (세트당 10,000원)</label><select id="feedPurchase"><option value="no">구매 안 함</option><option value="yes">구매함</option></select></div><div id="feedQuantityRow" class="hidden"><label class="req" for="feedQuantity">먹이 세트 수량</label><input id="feedQuantity" type="number" inputmode="numeric" min="1" step="1" value="1"></div></div>
         <div class="calc" style="margin-top:12px">먹이 구매금액 <b id="feedOrderSummary">0원</b> · 현장결제</div>
       </section>
 
@@ -679,9 +679,9 @@
   </div>
 </div>
 
-<script src="./shared_booking_rules_v1.js?v=release-1792499658639"></script>
-<script src="./shared_booking_allocations_v1.js?v=release-1792499658639"></script>
-<script src="./customer_group_program_v1.js?v=release-1792499658639"></script>
+<script src="./shared_booking_rules_v1.js?v=release-1792500956413"></script>
+<script src="./shared_booking_allocations_v1.js?v=release-1792500956413"></script>
+<script src="./customer_group_program_v1.js?v=release-1792500956413"></script>
 <script>
 const PRICE=15000;
 
@@ -969,7 +969,8 @@ function renderVisitDays(){
 }
 function calcPeople(){
   const {p,c,free,paidChap,amount}=window.ZRBookingRules.calculatePeople($("paidCount").value,$("chaperoneCount").value,PRICE);
-  $("peopleCalc").innerHTML=`유료인원 <b>${p||0}명</b><br>인솔자 <b>${c||0}명</b><br>무료 인솔자 <b>${free}명</b> <span class="help">※ 유료인원 5명당 1명 무료</span><br>유료 인솔자 <b>${paidChap}명</b><br><span class="money">${money(amount)}</span> <span class="help">* VAT 포함</span>`;
+  if(window.ZRGroupMinimum)window.ZRGroupMinimum.renderPeople();
+  else $("peopleCalc").innerHTML=`유료인원 <b>${p||0}명</b><br>인솔자 <b>${c||0}명</b><br>무료 인솔자 <b>${free}명</b> <span class="help">※ 유료인원 5명당 1명 무료</span><br>유료 인솔자 <b>${paidChap}명</b><br><span class="money">${money(amount)}</span> <span class="help">* VAT 포함</span>`;
   return {p,c,free,paidChap,amount}
 }
 function refreshExitTimes(){
@@ -1328,7 +1329,7 @@ $("submitBooking").onclick=async()=>{
 
 initCounts();initTimes();initMonths();renderCustomerCafeMenus();renderVisitDays();refreshExitTimes();refreshPlayStarts();refreshSummary();
 </script>
-<script src="./customer_features_loader_v1.js?v=release-1792499658639"></script><script src="./shared_store_dispatch_v1.js?v=release-1792499658639"></script><script src="./shared_reservation_records_v1.js?v=release-1792499658639"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=release-1792499658639"></script><script src="./shared_inquiry_records_v1.js?v=release-1792499658639"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792499658639"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792499658639"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792499658639"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792499658639"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792499658639"></script><script src="./cancel_review_state_v1.js?v=release-1792499658639"></script><script src="./customer_cancel_commit_v1.js?v=release-1792499658639"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792499658639"></script>
-<script src="./shared_group_notice_v1.js?v=release-1792499658639"></script>
+<script src="./customer_features_loader_v1.js?v=release-1792500956413"></script><script src="./shared_store_dispatch_v1.js?v=release-1792500956413"></script><script src="./shared_reservation_records_v1.js?v=release-1792500956413"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=release-1792500956413"></script><script src="./shared_inquiry_records_v1.js?v=release-1792500956413"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792500956413"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792500956413"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792500956413"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792500956413"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792500956413"></script><script src="./cancel_review_state_v1.js?v=release-1792500956413"></script><script src="./customer_cancel_commit_v1.js?v=release-1792500956413"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792500956413"></script>
+<script src="./shared_group_notice_v1.js?v=release-1792500956413"></script>
 </body>
 </html>

@@ -82,7 +82,7 @@ function keyFromPagination(el){return el?.closest?.('[data-zr-pagination-key]')?
 function isOutsourceFilterControl(target){return ['outsourceStart','outsourceEnd','outsourceVendorFilter'].includes(target?.id||'')}
 function loadOutsourcePeopleStability(){
   if(document.getElementById('zrAdminOutsourcePeopleStabilityV1')||window.__ZR_ADMIN_OUTSOURCE_PEOPLE_STABILITY_V1)return;
-  const s=document.createElement('script');s.id='zrAdminOutsourcePeopleStabilityV1';s.async=false;s.src='./admin_outsource_people_stability_v1.js?v=release-1792499658639';document.body.appendChild(s);
+  const s=document.createElement('script');s.id='zrAdminOutsourcePeopleStabilityV1';s.async=false;s.src='./admin_outsource_people_stability_v1.js?v=release-1792500956413';document.body.appendChild(s);
 }
 
 function installEvents(){
