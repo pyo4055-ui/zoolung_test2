@@ -155,7 +155,7 @@ service cloud.firestore {
            && d.changePlayHoldDuration == b.reservationChangeRequest.playDuration));
     }
     function bookingProgram(b) {
-      return b.get('groupType','') == '유치원, 어린이집'
+      return b.get('groupType','') in ['유치원, 어린이집','유치원/어린이집','유치원','어린이집']
         && timestamp.date(int(b.date.split('-')[0]),int(b.date.split('-')[1]),int(b.date.split('-')[2])).dayOfWeek() <= 5
         && b.entryTime < '12:00';
     }
@@ -223,7 +223,7 @@ service cloud.firestore {
     }
     function allocationActive(b) { return !(b.get('status','cancelled') in ['cancelled','rejected','done']); }
     function allocationProgram(b,day) {
-      return allocationActive(b) && b.get('date','') == day && b.get('groupType','') == '유치원, 어린이집'
+      return allocationActive(b) && b.get('date','') == day && b.get('groupType','') in ['유치원, 어린이집','유치원/어린이집','유치원','어린이집']
         && b.get('entryTime','23:59') < '12:00'
         && timestamp.date(int(day.split('-')[0]),int(day.split('-')[1]),int(day.split('-')[2])).dayOfWeek() <= 5;
     }

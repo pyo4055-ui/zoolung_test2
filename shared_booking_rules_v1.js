@@ -93,7 +93,7 @@
     if(within(s.peakSeasonPeriods))return '성수기';
     return date<earliestBookingDate(s,now)?'예약 마감':'';
   }
-  function groupProgram(group,date,entry){const d=new Date(date+'T12:00:00+09:00'),day=d.getUTCDay(),t=toMin(entry);return group==='유치원, 어린이집'&&Number.isFinite(d.getTime())&&day>=1&&day<=5&&t!==null&&t<720}
+  function groupProgram(group,date,entry){const d=new Date(date+'T12:00:00+09:00'),day=d.getUTCDay(),t=toMin(entry);return ['유치원, 어린이집','유치원/어린이집','유치원','어린이집'].includes(group)&&Number.isFinite(d.getTime())&&day>=1&&day<=5&&t!==null&&t<720}
   function programBookingCount(rows,date,excludeId){return rows.filter(b=>b.date===date&&(!excludeId||b.id!==excludeId)&&!['cancelled','rejected'].includes(b.status)&&!b.__changePlayHold&&(b.__availabilityOnly?b.programCapacity!==false:groupProgram(b.groupType,b.date,b.entryTime))).length}
   function bookingCapacityClosed(s,rows,b){
     if((s.manualClosed||[]).includes(b.date))return true;
