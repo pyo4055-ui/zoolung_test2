@@ -17,7 +17,7 @@ function previewCount(date){
   catch{return 0}
 }
 function selectedYm(){
-  const ym=String($('adminMonth')?.value||'');
+  const ym=String($('adminCalendar')?.dataset.renderedMonth||'');
   return /^\d{4}-\d{2}$/.test(ym)?ym:'';
 }
 function injectStyle(){

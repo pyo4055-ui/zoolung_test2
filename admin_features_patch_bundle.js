@@ -751,7 +751,7 @@
 
   function paintManualClosedDaysV9(){
     const root=document.getElementById('adminCalendar');
-    const ym=document.getElementById('adminMonth')?.value||'';
+    const ym=document.getElementById('adminCalendar')?.dataset.renderedMonth||'';
     if(!root||!/^\d{4}-\d{2}$/.test(ym))return;
     let manual=[];
     try{manual=settings().manualClosed||[];}catch{}
@@ -862,18 +862,18 @@
   }
   function loadAdminScheduleTab(){
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
-    addScript('zrAdminScheduleScript','./admin_schedule_tab_v14.js?v=release-1792500956413',()=>{
-      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792500956413');
-      addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792500956413');
-      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=release-1792500956413');
-      addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=release-1792500956413');
+    addScript('zrAdminScheduleScript','./admin_schedule_tab_v14.js?v=release-1792502780932',()=>{
+      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792502780932');
+      addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792502780932');
+      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=release-1792502780932');
+      addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=release-1792502780932');
     });
   }
 
   setTimeout(()=>{
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
-    addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=release-1792500956413');
-    addScript('zrAdminOpsV10','./admin_ops_v10.js?v=release-1792500956413',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=release-1792500956413'));
+    addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=release-1792502780932');
+    addScript('zrAdminOpsV10','./admin_ops_v10.js?v=release-1792502780932',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=release-1792502780932'));
     loadAdminScheduleTab();
   },0);
 })();
