@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>주렁주렁 인트로</title>
+<style>
+  :root{--bg:#38271e}
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    background:var(--bg);
+  }
+  body{overflow:hidden}
+
+  /* All supplied PNGs share one canvas/coordinate system.
+     Keep every layer perfectly aligned, but scale that shared canvas as one
+     cover surface so wide monitors never reveal brown side bars. */
+  .intro-frame{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    height:100svh;
+    overflow:hidden;
+    isolation:isolate;
+    background:var(--bg);
+  }
+
+  .intro-layer{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    will-change:transform,opacity;
+  }
+  .intro-layer img{
+    position:absolute;
+    inset:0;
+    display:block;
+    width:100%;
+    height:100%;
+    max-width:none;
+    object-fit:cover;
+    object-position:center center;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+
+  .intro-copy{position:absolute;left:56%;right:4%;top:42%;color:#fff;text-shadow:0 2px 10px #38271e;overflow-wrap:anywhere}
+  .intro-copy span{display:block;font-size:clamp(12px,1.7vw,28px);line-height:1.5}
+  .intro-copy strong{display:block;font-size:clamp(20px,2.7vw,44px);line-height:1.35;word-break:keep-all}
+  @media(max-width:700px){.intro-copy{display:none}}
+  .penguin-layer{z-index:1;transform:translate3d(0,105%,0)}
+  .otter-layer{z-index:2;transform:translate3d(0,-105%,0)}
+  .capybara-layer{z-index:3;transform:translate3d(-105%,0,0)}
+  .copy-layer{z-index:4;opacity:0}
+
+  /* All three animals enter together; only their directions differ. */
+  .intro-frame.run .penguin-layer,
+  .intro-frame.run .otter-layer,
+  .intro-frame.run .capybara-layer{
+    animation-duration:1.38s;
+    animation-timing-function:cubic-bezier(.18,.72,.22,1);
+    animation-delay:.06s;
+    animation-fill-mode:forwards;
+  }
+  .intro-frame.run .penguin-layer{animation-name:penguinIn}
+  .intro-frame.run .otter-layer{animation-name:otterIn}
+  .intro-frame.run .capybara-layer{animation-name:capybaraIn}
+  .intro-frame.run .copy-layer{
+    animation:copyIn .52s cubic-bezier(.2,.76,.24,1) 1.52s forwards;
+  }
+
+  @keyframes penguinIn{
+    0%{transform:translate3d(0,105%,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes otterIn{
+    0%{transform:translate3d(0,-105%,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes capybaraIn{
+    0%{transform:translate3d(-105%,0,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+  @keyframes copyIn{
+    0%{opacity:0;transform:scale(.985)}
+    100%{opacity:1;transform:scale(1)}
+  }
+  .intro-frame.still .intro-layer{animation:none!important;transform:none!important;opacity:1!important}
+
+  @media(prefers-reduced-motion:reduce){
+    .penguin-layer,.otter-layer,.capybara-layer{transform:none!important}
+    .copy-layer{opacity:1!important}
+    .intro-frame.run .intro-layer{animation:none!important}
+  }
+</style>
+</head>
+<body>
+  <main id="introFrame" class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
+    <div class="intro-layer penguin-layer">
+      <img src="./assets/login/penguin.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer otter-layer">
+      <img src="./assets/login/otter.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer capybara-layer">
+      <img src="./assets/login/capybara.png" alt="" decoding="async">
+    </div>
+    <div class="intro-layer copy-layer">
+      <div class="intro-copy"><span>도시 한가운데, 생명의 숲이 열리다</span><strong>도심속에서 만나는<br>따뜻한 교감</strong></div>
+    </div>
+  </main>
+<script>
+  const frame=document.getElementById('introFrame');
+  const images=[...frame.querySelectorAll('img')];
+
+  const notify=event=>{
+    try{window.parent.postMessage({source:'zr-admin-intro-html-v1',event},'*')}catch{}
+  };
+
+  let finished=false,started=false;
+  let assetTimeout=0,animationTimeout=0;
+  const finish=()=>{
+    if(finished)return;
+    finished=true;
+    clearTimeout(assetTimeout);clearTimeout(animationTimeout);
+    notify('ended');
+  };
+  const fail=()=>{
+    if(finished)return;
+    finished=true;
+    clearTimeout(assetTimeout);clearTimeout(animationTimeout);
+    frame.classList.add('still');
+    notify('error');
+  };
+
+  frame.addEventListener('animationstart',event=>{
+    if(event.target.classList.contains('copy-layer')&&event.animationName==='copyIn')finish();
+  });
+
+  const start=()=>{
+    if(started||finished)return;
+    started=true;
+    clearTimeout(assetTimeout);
+    notify('ready');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(finished)return;
+      frame.classList.add('run');
+      notify('playing');
+      if(matchMedia('(prefers-reduced-motion: reduce)').matches){finish();return}
+      // The logo's real animation start reveals all three parent cards.
+      // This is only recovery if animation events are unavailable.
+      animationTimeout=setTimeout(finish,4000);
+    }));
+  };
+
+  assetTimeout=setTimeout(fail,8000);
+  Promise.all(images.map(async img=>{
+    if(typeof img.decode==='function'){await img.decode();return}
+    if(img.complete){if(img.naturalWidth>0)return;throw new Error('intro image unavailable')}
+    await new Promise((resolve,reject)=>{
+      img.addEventListener('load',resolve,{once:true});
+      img.addEventListener('error',reject,{once:true});
+    });
+  })).then(start).catch(fail);
+</script>
+</body>
+</html>

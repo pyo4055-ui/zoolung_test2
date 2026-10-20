@@ -1,9 +1,431 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // 관리자 계정 확인
     function isScheduleStaff() {
       return request.auth != null
-        && request.auth.token.email == 'zoolung09@zoolungzoolung.com';
+        && request.auth.token.get('email', '') == 'zoolung09@zoolungzoolung.com';
+    }
+
+    // Staff-owned fields cannot be supplied or changed by a customer.
+    function staffBookingFields() {
+      return ['settlement', 'settlementStatus', 'settlementCompletedAt',
+        'additionalSales', 'outsourcingVendorId', 'outsourcingVendorSnapshot',
+        'confirmedAt',
+        'adminLastModifiedBy', 'adminLastModifiedAt', 'cancelReviewed',
+        'cancelReviewedAt', 'cancelReviewedBy'];
+    }
+    function validCustomerBooking(d) {
+      return d.paidCount is int && d.paidCount >= 0
+        && d.chaperoneCount is int && d.chaperoneCount >= 0
+        && d.paidCount + d.chaperoneCount >= 15
+        && d.participantAgeMin is int && d.participantAgeMin >= 0
+        && d.participantAgeMax is int && d.participantAgeMax >= d.participantAgeMin
+        && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.entryTime is string && d.entryTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && d.exitTime is string && d.exitTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && d.exitTime > d.entryTime
+        && d.orgName is string && d.orgName.size() > 0
+        && d.managerName is string && d.managerName.size() > 0
+        && d.contact is string && d.contact.matches('^[0-9]{2,3}-?[0-9]{3,4}-?[0-9]{4}$');
+    }
+    function customerBookingFields() {
+      return ['id','ownerUid','bridgeVersion','createdAt','updatedAt','statusUpdatedAt','status',
+        'date','groupType','groupBookingMode','participantAgeMin','participantAgeMax',
+        'paidCount','chaperoneCount','freeChaperone','paidChaperone','entryAmount','totalAmount',
+        'entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','mealDuration','cafe',
+        'playUse','playStart','playEnd','playDuration','feedOrder',
+        'orgName','managerName','contact','email','notes',
+        'customerViewedGuideMapAt','customerViewedParkingAt','customerViewedScheduleAt',
+        'reservationChangeRequest','changePlayHoldRequestId','cancelledAt','cancelledBy','cancelReason','cancelReviewed'];
+    }
+    function validDate(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && timestamp.date(int(value.split('-')[0]),int(value.split('-')[1]),int(value.split('-')[2])).year() >= 2000;
+    }
+    function timeMinutes(value) {
+      let parts = value.split(':');
+      return int(parts[0])*60+int(parts[1]);
+    }
+    function validInterval(start,end) {
+      return start is string && end is string
+        && start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$') && start < end;
+    }
+    function validPlayOptions(d) {
+      let span = timeMinutes(d.playEnd)-timeMinutes(d.playStart);
+      return validInterval(d.playStart,d.playEnd) && span in [30,60] && d.get('playDuration',span) == span;
+    }
+    function validCustomerOptions(d) {
+      return validDate(d.date)
+        && d.get('playUse','no') in ['yes','no']
+        && (d.get('playUse','no') != 'yes' ||
+          validPlayOptions(d))
+        && d.get('mealType','none') in ['none','lunchbox','cafe']
+        && (d.get('mealType','none') == 'none' || validInterval(d.mealStart,d.mealEnd))
+        && d.get('email','') is string && d.get('email','').size() <= 320
+        && d.get('notes','') is string && d.get('notes','').size() <= 20000
+        && d.orgName.size() <= 300 && d.managerName.size() <= 100
+        && d.get('entryAmount',0) is number && d.get('entryAmount',0) >= 0
+        && d.get('totalAmount',0) is number && d.get('totalAmount',0) >= 0;
+    }
+    function validCustomerChange(d) {
+      let r = d.get('reservationChangeRequest', {});
+      return r is map && r.get('status','pending') == 'pending'
+        && r.keys().hasOnly(['id','status','oldDate','oldEntryTime','oldExitTime',
+          'requestedDate','requestedTime','requestedExitTime','changePlay','playUse','playStart','playEnd','playDuration',
+          'changeMeal','mealType','mealStart','mealEnd','orgName','requesterName','requesterMobile','people','body','createdAt','updatedAt']);
+    }
+    function customerBookingCreate() {
+      return validCustomerBooking(request.resource.data)
+        && request.resource.data.keys().hasOnly(customerBookingFields().concat(['schedulePublished','customerSchedule']))
+        && validCustomerOptions(request.resource.data) && validCustomerChange(request.resource.data)
+        && request.resource.data.get('mealLoc','') in ['', '자리배정 없음']
+        && request.resource.data.status == 'pending'
+        && !request.resource.data.keys().hasAny(staffBookingFields())
+        && request.resource.data.get('schedulePublished', false) == false
+        && request.resource.data.get('customerSchedule', null) == null;
+    }
+    function customerBookingUpdate() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let cancellation = request.resource.data.status == 'cancelled'
+        && resource.data.status in ['pending', 'confirmed', 'hold']
+        && request.resource.data.cancelledBy == 'customer'
+        && request.resource.data.cancelReviewed == false;
+      return (!changed.hasAny(['paidCount','chaperoneCount','participantAgeMin','participantAgeMax','date','entryTime','exitTime','orgName','managerName','contact']) || validCustomerBooking(request.resource.data))
+        && changed.hasOnly(customerBookingFields())
+        && (resource.data.status == 'pending' || !changed.hasAny([
+          'date','groupType','groupBookingMode','participantAgeMin','participantAgeMax',
+          'paidCount','chaperoneCount','freeChaperone','paidChaperone','entryAmount','totalAmount',
+          'entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','mealDuration','cafe',
+          'playUse','playStart','playEnd','playDuration','feedOrder','orgName','managerName','contact','email','notes']))
+        && (!changed.hasAny(['date','playUse','playStart','playEnd','playDuration','mealType','mealStart','mealEnd','email','notes','orgName','managerName','entryAmount','totalAmount']) || validCustomerOptions(request.resource.data))
+        && (!changed.hasAny(['reservationChangeRequest']) || validCustomerChange(request.resource.data))
+        && (!changed.hasAny(['mealLoc']) || request.resource.data.get('mealLoc','') in ['', '자리배정 없음'])
+        && (request.resource.data.status == resource.data.status || cancellation)
+        && !changed.hasAny(['settlement', 'settlementStatus', 'settlementCompletedAt',
+          'additionalSales', 'outsourcingVendorId', 'outsourcingVendorSnapshot',
+          'schedulePublished', 'customerSchedule', 'confirmedAt',
+          'adminLastModifiedBy', 'adminLastModifiedAt', 'cancelReviewedAt', 'cancelReviewedBy'])
+        && (!changed.hasAny(['cancelReviewed']) || cancellation);
+    }
+
+    function customerAvailabilityWrite(reservationId) {
+      let d = request.resource.data;
+      let dedicated = d.get('changePlayHoldDedicated', false) == true;
+      // This collection is readable by other customers: never accept private fields.
+      return d.keys().hasOnly(['id', 'ownerUid', 'date', 'status',
+          'programCapacity', 'playUse', 'playStart', 'playEnd', 'playDuration',
+          'changePlayHoldDedicated', 'changePlayHoldActive', 'changePlayHoldRequestId',
+          'changePlayHoldSourceBookingId', 'sourceBookingId', 'changePlayHoldDate',
+          'changePlayHoldStart', 'changePlayHoldEnd', 'changePlayHoldDuration',
+          'bridgeVersion', 'updatedAt'])
+        && d.get('id', reservationId) == reservationId
+        && (dedicated ? (reservationId == 'changePlayHold_' + d.changePlayHoldRequestId && bookingAllocationValid(reservationId,{},d) && customerDedicatedHold(d)) : customerBookingAvailability(d, reservationId));
+    }
+    function customerBookingAvailability(d, reservationId) {
+      let b = getAfter(/databases/$(database)/documents/reservations/$(reservationId)).data;
+      return b.ownerUid == request.auth.uid
+        && d.date == b.date && d.status == b.status
+        && d.get('playUse', 'no') == b.get('playUse', 'no')
+        && d.get('playStart', '') == b.get('playStart', '')
+        && d.get('playEnd', '') == b.get('playEnd', '')
+        && d.get('programCapacity',false) == bookingProgram(b)
+        && (!d.get('changePlayHoldActive',false) ||
+          (b.get('reservationChangeRequest',{}).get('status','') == 'pending'
+           && d.changePlayHoldRequestId == b.reservationChangeRequest.id
+           && d.changePlayHoldDate == b.reservationChangeRequest.requestedDate
+           && d.changePlayHoldStart == b.reservationChangeRequest.playStart
+           && d.changePlayHoldEnd == b.reservationChangeRequest.playEnd
+           && d.changePlayHoldDuration == b.reservationChangeRequest.playDuration));
+    }
+    function bookingProgram(b) {
+      return b.get('groupType','') == '유치원, 어린이집'
+        && timestamp.date(int(b.date.split('-')[0]),int(b.date.split('-')[1]),int(b.date.split('-')[2])).dayOfWeek() <= 5
+        && b.entryTime < '12:00';
+    }
+    function customerDedicatedHold(d) {
+      // Releasing a hold is harmless; active holds must belong to an owned booking.
+      return (d.get('changePlayHoldActive', false) == false
+          && d.status == 'done' && d.date == '' && d.playUse == 'no')
+        || (d.changePlayHoldActive == true
+          && getAfter(/databases/$(database)/documents/reservations/$(d.sourceBookingId)).data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/reservations/$(d.sourceBookingId)).data.status in ['pending', 'confirmed', 'hold']
+          && d.status == 'pending' && d.playUse == 'yes'
+          && validDate(d.date)
+          && d.playStart is string && d.playStart.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && d.playEnd is string && d.playEnd.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && d.playEnd > d.playStart && d.playDuration in [30, 60]
+          && (int(d.playEnd.split(':')[0]) * 60 + int(d.playEnd.split(':')[1])
+            - int(d.playStart.split(':')[0]) * 60 - int(d.playStart.split(':')[1])) == d.playDuration
+          && d.get('changePlayHoldSourceBookingId', d.sourceBookingId) == d.sourceBookingId
+          && d.get('changePlayHoldDate', d.date) == d.date
+          && d.get('changePlayHoldStart', d.playStart) == d.playStart
+          && d.get('changePlayHoldEnd', d.playEnd) == d.playEnd
+          && d.get('changePlayHoldDuration', d.playDuration) == d.playDuration);
+    }
+
+    function customerInquiryText(text) {
+      // Legacy displays interpret these markers as staff actions.
+      return text is string && text.size() <= 20000
+        && !text.matches('(?s).*\\[관리자 답변\\].*')
+        && !text.matches('(?s)^\\[사전답사 확정\\].*');
+    }
+    function validChangeOrder(d) {
+      let o = d.get('changeOrder', null);
+      return o == null || (o is map
+        && o.keys().hasOnly(['paidCount','chaperoneCount','feedQuantity','cafeItems'])
+        && o.paidCount is int && o.paidCount >= 0
+        && o.chaperoneCount is int && o.chaperoneCount >= 0
+        && o.paidCount + o.chaperoneCount >= 15
+        && o.feedQuantity is int && o.feedQuantity >= 0
+        && o.cafeItems is list && o.cafeItems.size() <= 100);
+    }
+    function customerInquiryCreate() {
+      let d = request.resource.data;
+      return d.get('changeRequestStatus', 'pending') == 'pending'
+        && !d.keys().hasAny(['repliedBy', 'repliedAt', 'reply', 'answer',
+          'smsSentAt', 'smsSentBy', 'confirmedAt', 'confirmedBy',
+          'completedAt', 'completedBy', 'adminLastModifiedBy', 'adminLastModifiedAt'])
+        && customerInquiryText(d.get('content', ''))
+        && customerInquiryText(d.get('message', ''))
+        && customerInquiryText(d.get('inquiry', ''))
+        && customerInquiryText(d.get('text', ''))
+        && (!d.get('changeRequest',false) ||
+          (d.changeRequest == true && validChangeOrder(d) && d.changeBookingId is string
+           && getAfter(/databases/$(database)/documents/reservations/$(d.changeBookingId)).data.ownerUid == request.auth.uid
+           && getAfter(/databases/$(database)/documents/reservations/$(d.changeBookingId)).data.status in ['pending','confirmed','hold']
+           && validDate(d.changeRequestedDate)
+           && validInterval(d.changeRequestedTime,d.changeRequestedExitTime)));
+    }
+
+    // =========================
+    // 단체예약 원본 DB
+    // =========================
+    function allocationConfig() {
+      return exists(/databases/$(database)/documents/bookingAllocationConfig/main)
+        ? get(/databases/$(database)/documents/bookingAllocationConfig/main).data : {};
+    }
+    function allocationActive(b) { return !(b.get('status','cancelled') in ['cancelled','rejected','done']); }
+    function allocationProgram(b,day) {
+      return allocationActive(b) && b.get('date','') == day && b.get('groupType','') == '유치원, 어린이집'
+        && b.get('entryTime','23:59') < '12:00'
+        && timestamp.date(int(day.split('-')[0]),int(day.split('-')[1]),int(day.split('-')[2])).dayOfWeek() <= 5;
+    }
+    function allocationUsesRange(start,end,minute) {
+      return timeMinutes(start) <= minute && minute < timeMinutes(end);
+    }
+    function allocationUsesSlot(b,day,minute) {
+      return allocationActive(b) && b.get('date','') == day && b.get('playUse','no') == 'yes'
+        && allocationUsesRange(b.playStart,b.playEnd,minute);
+    }
+    function allocationSlotHas(id,day,minute) {
+      let key = day + '__' + string(minute);
+      return getAfter(/databases/$(database)/documents/playgroundAllocations/$(key)).data.members.get(id,false) == true;
+    }
+    function allocationRangePresent(id,day,start,end) {
+      let a = timeMinutes(start);
+      let span = timeMinutes(end)-a;
+      return a%15 == 0 && span in [30,60]
+        && allocationSlotHas(id,day,a) && allocationSlotHas(id,day,a+15)
+        && (span == 30 || (allocationSlotHas(id,day,a+30) && allocationSlotHas(id,day,a+45)));
+    }
+    function activeAllocationValid(id,after) {
+      let day = after.get('date','');
+      return (!allocationProgram(after,day) || getAfter(/databases/$(database)/documents/bookingAllocations/$(day)).data.members.get(id,false) == true)
+        && (after.get('playUse','no') != 'yes' || allocationRangePresent(id,day,after.playStart,after.playEnd));
+    }
+    function bookingAllocationValid(id,before,after) {
+      let config = allocationConfig();
+      return config.get('maintenance',false) != true && (config.get('enforced',false) != true || !allocationActive(after) || after.get('date','') < config.get('startDate','') || activeAllocationValid(id,after));
+    }
+    function allocationSource(id) {
+      return id.matches('^changePlayHold_.*')
+        ? getAfter(/databases/$(database)/documents/reservationAvailability/$(id)).data
+        : (existsAfter(/databases/$(database)/documents/reservations/$(id)) ? getAfter(/databases/$(database)/documents/reservations/$(id)).data : {});
+    }
+    function allocationSettings() {
+      return exists(/databases/$(database)/documents/customerGuides/main) ? get(/databases/$(database)/documents/customerGuides/main).data.get('reservationSettings',{}) : {};
+    }
+    function allocationReplacedHold(old,d,b) {
+      let source = get(/databases/$(database)/documents/reservations/$(b.sourceBookingId)).data;
+      let previousId = 'changePlayHold_'+source.get('changePlayHoldRequestId','');
+      let previous = allocationSource(previousId);
+      return previous.get('sourceBookingId','') == b.sourceBookingId && previous.get('ownerUid','') == b.ownerUid
+        && !allocationActive(previous) && !d.members.keys().hasAny([previousId])
+        && d.members.diff(old).affectedKeys().hasOnly([d.lastBookingId,previousId]);
+    }
+    function allocationMembers(old,d,b,required) {
+      return d.version == 1 && d.members is map
+        && d.keys().hasOnly(['version','members','lastBookingId','updatedAt'])
+        && (isScheduleStaff() || b.get('ownerUid','') == request.auth.uid)
+        && (d.members.diff(old).affectedKeys().hasOnly([d.lastBookingId])
+            || (b.get('changePlayHoldDedicated',false) && !allocationActive(allocationSource(b.sourceBookingId))
+              && d.members.diff(old).affectedKeys().hasOnly([d.lastBookingId,b.sourceBookingId])
+              && !d.members.keys().hasAny([b.sourceBookingId]))
+            || (b.get('changePlayHoldDedicated',false) && allocationReplacedHold(old,d,b)))
+        && (required ? d.members.get(d.lastBookingId,false) == true : !d.members.keys().hasAny([d.lastBookingId]));
+    }
+    match /bookingAllocationConfig/{configId} {
+      allow read: if request.auth != null;
+      allow create, update: if isScheduleStaff() && configId == 'main';
+      allow delete: if false;
+    }
+    match /bookingAllocations/{day} {
+      function valid() {
+        let d = request.resource.data;
+        let old = exists(/databases/$(database)/documents/bookingAllocations/$(day)) ? resource.data.members : {};
+        let b = allocationSource(d.lastBookingId);
+        let settings = allocationSettings();
+        let cap = settings.get('autoCloseLimit',4);
+        return validDate(day) && allocationMembers(old,d,b,allocationProgram(b,day))
+          && (cap <= 0 || d.members.size() <= cap || d.members.size() <= old.size() || settings.get('autoCloseOverrideOpen',[]).hasAny([day]));
+      }
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && ((isScheduleStaff() && allocationConfig().get('enforced',false) != true) || valid());
+      allow delete: if false;
+    }
+    function allocationOwnOverlap(d,b) {
+      let relatedId = b.get('changePlayHoldDedicated',false) ? b.sourceBookingId : 'changePlayHold_'+b.get('changePlayHoldRequestId',b.get('reservationChangeRequest',{}).get('id',''));
+      let related = allocationSource(relatedId);
+      return d.members.keys().hasOnly([d.lastBookingId,relatedId]) && related.get('ownerUid','') == b.get('ownerUid','')
+        && (b.get('changePlayHoldDedicated',false) || related.get('sourceBookingId','') == d.lastBookingId);
+    }
+    match /playgroundAllocations/{slotId} {
+      function valid() {
+        let d = request.resource.data;
+        let old = exists(/databases/$(database)/documents/playgroundAllocations/$(slotId)) ? resource.data.members : {};
+        let parts = slotId.split('__');
+        let b = allocationSource(d.lastBookingId);
+        return parts.size() == 2 && validDate(parts[0]) && parts[1].matches('^[0-9]{1,4}$') && int(parts[1])%15 == 0 && int(parts[1]) < 1440
+          && allocationMembers(old,d,b,allocationUsesSlot(b,parts[0],int(parts[1])))
+          && (allocationSettings().get('playgroundLimitEnabled',true) == false || d.members.size() <= 1 || d.members.size() <= old.size()
+            || allocationOwnOverlap(d,b));
+      }
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && ((isScheduleStaff() && allocationConfig().get('enforced',false) != true) || valid());
+      allow delete: if false;
+    }
+
+    match /reservations/{reservationId} {
+
+      allow get: if request.auth != null && !exists(/databases/$(database)/documents/reservations/$(reservationId));
+      // 관리자는 전체 조회
+      // 고객은 본인이 만든 예약만 조회
+      allow read: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+        );
+
+      // 관리자 예약 생성
+      // 고객은 자기 UID로만 예약 생성
+      allow create: if bookingAllocationValid(reservationId,{},request.resource.data) && (isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.get('id',reservationId) == reservationId
+          && customerBookingCreate()
+        ));
+
+      // 관리자 수정
+      // 고객은 자기 예약만 수정
+      allow update: if bookingAllocationValid(reservationId,resource.data,request.resource.data) && (isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.get('id',reservationId) == reservationId
+          && customerBookingUpdate()
+        ));
+
+      // 과거 예약 정리는 관리자만 영구 삭제 가능
+      allow delete: if isScheduleStaff() && bookingAllocationValid(reservationId,resource.data,{});
+    }
+
+
+    // =========================
+    // 예약 가능 여부 공유 DB
+    // 놀이터 중복확인 등에 사용
+    // =========================
+    match /reservationAvailability/{reservationId} {
+
+      // 로그인된 고객/관리자 모두 조회 가능
+      allow read: if request.auth != null;
+
+      // 관리자 생성 가능
+      // 고객은 자기 UID 데이터만 생성
+      allow create: if isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+          && customerAvailabilityWrite(reservationId)
+        );
+
+      // 관리자 수정 가능
+      // 고객은 자기 데이터만 수정
+      allow update: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+          && customerAvailabilityWrite(reservationId)
+        );
+
+      // 과거 예약 정리는 관리자만 영구 삭제 가능
+      allow delete: if isScheduleStaff();
+    }
+
+
+    // =========================
+    // 고객 1:1 문의 공유 DB
+    // PC/모바일 관리자에서 같은 문의를 조회하고 답변 상태를 공유
+    // =========================
+    match /customerInquiries/{inquiryId} {
+      // Missing reads are restricted to the caller's namespaced change requests.
+      allow get: if request.auth != null
+        && inquiryId.matches('^inq_change_' + request.auth.uid + '_.*$')
+        && !exists(/databases/$(database)/documents/customerInquiries/$(inquiryId));
+
+      // 관리자는 전체 조회
+      // 고객은 본인 브라우저 인증 UID로 접수한 문의만 조회
+      allow read: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+        );
+
+      // 고객은 자기 UID로 문의 생성 가능
+      // 관리자는 기존 로컬 문의의 1회 마이그레이션 가능
+      allow create: if isScheduleStaff()
+        || (
+          request.auth != null
+          && request.resource.data.ownerUid == request.auth.uid
+          && customerInquiryCreate()
+        );
+
+      // 관리자 답변/상태 변경 가능
+      // 고객은 자기 문의만 수정 가능
+      allow update: if isScheduleStaff()
+        || (
+          request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'sharedInquiryVersion'])
+        );
+
+      // 문의는 기록 보존을 위해 영구 삭제하지 않음
+      allow delete: if false;
+    }
+
+
+    // =========================
+    // 현장 스케줄
+    // =========================
+    match /mealSeatAllocations/{dateId} {
+      allow read, write: if isScheduleStaff();
     }
 
     match /scheduleGroups/{groupId} {
@@ -11,9 +433,52 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+
+    // =========================
+    // 현장 공용 메모
+    // =========================
     match /scheduleSharedMemos/{dateId} {
       allow read, create, update: if isScheduleStaff();
       allow delete: if false;
+    }
+
+
+    // =========================
+    // 고객 방문 안내
+    // 컨텐츠 / 사진URL / 소요시간
+    // 설명 / 주의사항
+    // =========================
+    match /customerGuides/{guideId} {
+
+      // 고객은 읽기만 가능
+      allow read: if request.auth != null;
+
+      // 관리자만 설정 변경 가능
+      allow create, update: if isScheduleStaff();
+
+      allow delete: if false;
+    }
+
+
+    // =========================
+    // 공유 카페 메뉴: 기존 예약의 주문 스냅샷과 별도로 관리
+    // =========================
+    match /cafeCatalog/current {
+      allow read: if request.auth != null;
+      allow create, update: if isScheduleStaff()
+        && request.resource.data.keys().hasOnly(['items', 'revision', 'updatedAt'])
+        && request.resource.data.items is list
+        && request.resource.data.items.size() <= 200
+        && request.resource.data.revision is int
+        && request.resource.data.revision > 0;
+      allow delete: if false;
+    }
+
+    // =========================
+    // 그 외 모든 DB 접근 차단
+    // =========================
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

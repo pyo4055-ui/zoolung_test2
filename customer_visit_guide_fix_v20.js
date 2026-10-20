@@ -3,13 +3,15 @@
 if(window.__ZR_CUSTOMER_GUIDE_FIX_V20)return;
 window.__ZR_CUSTOMER_GUIDE_FIX_V20=true;
 
+// Set synchronously by the customer-only loader before shared modules load.
+const customerOnly=window.__ZR_CUSTOMER_RUNTIME_LOADER_V1===true;
 const FV='12.17.1';
 const STAFF_EMAIL='zoolung09@zoolungzoolung.com';
 const COLLECTION='customerGuides';
 const DOC_ID='main';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const safeUrl=u=>/^https?:\/\//i.test(String(u||'').trim())?String(u).trim():'';
+const safeUrl=u=>window.ZRDisplaySafety.httpUrl(u);
 const clone=v=>JSON.parse(JSON.stringify(v));
 const uid=p=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
 const toast=s=>{try{window.toast?.(s)}catch{}};
@@ -134,23 +136,33 @@ function bindAdmin(){
   const tab=$('zrGuideAdminTab'),save=$('zrGuideAdminSave');if(!tab||!save)return false;
   if(tab.dataset.v25Bound)return true;tab.dataset.v25Bound='1';
   tab.addEventListener('click',()=>setTimeout(()=>{draft=clone(current);renderAdmin();},0));
-  save.onclick=null;save.dataset.zrGuideSaveOwner='v25';save.addEventListener('click',saveGuide,true);
+  save.dataset.zrGuideSaveOwner='v25';window.ZRDialogs.bindSave(save,saveGuide);
   return true;
 }
+(window.ZRAdminFormActions||(window.ZRAdminFormActions={})).guide={save:()=>window.ZRDialogs.runSave($('zrGuideAdminSave'),()=>saveGuide(new Event('click'))),discard:()=>{draft=clone(current);renderAdmin()}};
+let guideSaving=false;
 async function saveGuide(e){
   e.preventDefault();e.stopImmediatePropagation();
+  if(guideSaving)return false;
   if(!isStaff())return toast('관리자 DB 로그인을 확인해주세요.');
   if(!db||!FS)return toast('고객 안내 DB 연결 중입니다. 잠시 후 다시 눌러주세요.');
+  const saveUid=window.zrReservationFirebase?.auth?.currentUser?.uid;
+  if(!saveUid)return false;
   collect();const cleaned=normalize(draft);
-  const b=$('zrGuideAdminSave'),old=b?.textContent||'안내 설정 저장';if(b){b.disabled=true;b.textContent='저장 중...'}
+  const b=$('zrGuideAdminSave'),old=b?.textContent||'저장';
+  const controls=[...($('zrGuideAdminSection')?.querySelectorAll('input,textarea,select,button')||[])].map(el=>({el,disabled:el.disabled}));
+  guideSaving=true;controls.forEach(({el})=>el.disabled=true);if(b){b.disabled=true;b.textContent='저장 중…'}
   try{
-    const payload={zoo:cleaned.zoo,playground:cleaned.playground,contents:cleaned.zoo.contents,notices:cleaned.zoo.notices,updatedAtMs:Date.now()};
+    const payload={guideEditMeta:window.ZRAdminEditMeta?.make()||null,zoo:cleaned.zoo,playground:cleaned.playground,contents:cleaned.zoo.contents,notices:cleaned.zoo.notices,updatedAtMs:Date.now()};
     await FS.setDoc(FS.doc(db,COLLECTION,DOC_ID),payload,{merge:true});
-    current=clone(cleaned);draft=clone(cleaned);playAckSig='';toast('동물원·놀이터 안내 설정을 저장했습니다.');
+    if(!isStaff()||window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return false;
+    current=clone(cleaned);draft=clone(cleaned);playAckSig='';toast('동물원·놀이터 안내 설정을 저장했습니다.');window.ZRAdminFormDrafts?.saved('guide');return true;
   }catch(err){
+    if(window.zrReservationFirebase?.auth?.currentUser?.uid!==saveUid)return false;
     const code=String(err?.code||err?.name||'unknown').replace(/^firestore\//,'');const msg=String(err?.message||'').slice(0,220);
-    console.error('customer guide v25 save',err);toast(`고객 안내 저장 실패 · ${code}`);try{alert(`고객 안내 설정 저장 실패\n오류코드: ${code}\n${msg}`)}catch{}
-  }finally{if(b){b.disabled=false;b.textContent=old}}
+    console.error('customer guide v25 save',err);toast(`고객 안내 저장 실패 · ${code}`);try{window.ZRDialogs.alert(`고객 안내 설정 저장 실패\n오류코드: ${code}\n${msg}`)}catch{}
+    return false;
+  }finally{guideSaving=false;controls.forEach(({el,disabled})=>el.disabled=disabled);if(b){b.disabled=false;b.textContent=old}}
 }
 
 function cardsHtml(section){
@@ -170,17 +182,19 @@ function ensurePlayModal(){
   const m=document.createElement('div');m.id='zrPlayGuideModal';m.className='zr-guide-modal hidden';m.innerHTML=`<div class="zr-guide-sheet" role="dialog" aria-modal="true" aria-labelledby="zrPlayGuideTitle"><div class="zr-guide-head"><h2 id="zrPlayGuideTitle">놀이터 이용 안내</h2><p>선택한 놀이터 입장시간 기준으로 이용 안내를 확인해주세요.</p><div class="zr-guide-entry" id="zrPlayGuideEntry">놀이터 입장시간 --:--</div></div><div class="zr-guide-cards" id="zrPlayGuideCards"></div><div id="zrPlayGuideNotices"></div><div class="zr-guide-actions"><button type="button" class="zr-guide-back" id="zrPlayGuideBack">놀이터 입장시간 다시 선택</button><button type="button" class="zr-guide-confirm" id="zrPlayGuideConfirm">안내사항을 확인했습니다</button></div></div>`;
   document.body.appendChild(m);
   $('zrPlayGuideBack').onclick=()=>{m.classList.add('hidden');playAckValue='';playAckSig='';setTimeout(()=>$('playStart')?.focus?.(),30)};
-  $('zrPlayGuideConfirm').onclick=()=>{const v=String($('playStart')?.value||'').trim();if(!v)return;m.classList.add('hidden');playAckValue=v;playAckSig=sectionSig('playground');toast('놀이터 안내사항을 확인했습니다.')};
+  $('zrPlayGuideConfirm').onclick=()=>{const v=String($('playStart')?.value||'').trim();if(!v)return;m.classList.add('hidden');playAckValue=v;playAckSig=sectionSig('playground');window.__ZR_PLAY_GUIDE_ACK_ONCE=true;toast('놀이터 안내사항을 확인했습니다.')};
 }
 function renderPlayCustomer(){
   ensurePlayModal();const v=String($('playStart')?.value||'').trim();$('zrPlayGuideEntry').textContent=`선택한 놀이터 입장시간 ${v||'--:--'}`;
   $('zrPlayGuideCards').innerHTML=cardsHtml(current.playground);$('zrPlayGuideNotices').innerHTML=noticesHtml(current.playground,'놀이터 이용 주의사항');
 }
 function openPlayGuide(){
+  if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return;document.getElementById('zrGuideModal')?.classList.add('hidden');const final=document.getElementById('zrFinalGuideModalV31');if(final&&!final.classList.contains('hidden'))return;
   const v=String($('playStart')?.value||'').trim();if(!v||String($('playUse')?.value||'')!=='yes')return;
   renderPlayCustomer();$('zrPlayGuideModal').classList.remove('hidden');const sh=$('zrPlayGuideModal').querySelector('.zr-guide-sheet');if(sh)sh.scrollTop=0;
 }
 function playAcknowledged(){
+  if(window.__ZR_FINAL_DIRECT_SUBMIT)return true;if(window.__ZR_PLAY_GUIDE_ACK_ONCE)return true;
   const v=String($('playStart')?.value||'').trim();if(String($('playUse')?.value||'')!=='yes'||!v)return true;
   return playAckValue===v&&playAckSig===sectionSig('playground');
 }
@@ -207,16 +221,16 @@ function watchZooModal(){
 async function init(){
   try{
     FS=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-firestore.js`);const z=window.zrReservationFirebase;if(!z?.db)throw new Error('Firebase DB 브리지가 아직 초기화되지 않았습니다.');db=z.db;
-    if(unsub)unsub();unsub=FS.onSnapshot(FS.doc(db,COLLECTION,DOC_ID),snap=>{
-      current=normalize(snap.exists()?snap.data():DEFAULT_GUIDES);
-      if($('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden')){draft=clone(current);renderAdmin()}
+    if(unsub)unsub();const {onAuthStateChanged}=await import(`https://www.gstatic.com/firebasejs/${FV}/firebase-auth.js`);unsub=window.ZRDocumentListener.connect({auth:z.auth,ref:FS.doc(db,COLLECTION,DOC_ID),onAuthStateChanged,onSnapshot:FS.onSnapshot,onData:snap=>{
+      current=normalize(snap.exists()?snap.data():DEFAULT_GUIDES);if(!snap.metadata?.hasPendingWrites)window.ZRAdminEditMeta?.publish('guide',snap.exists()?snap.data().guideEditMeta:null);
+      if(!guideSaving&&!window.ZRAdminFormDrafts?.isDirty('guide')&&!customerOnly&&$('zrGuideAdminSection')&&!$('zrGuideAdminSection').classList.contains('hidden')){draft=clone(current);renderAdmin()}
       if($('zrGuideModal')&&!$('zrGuideModal').classList.contains('hidden'))renderZooCustomer();
       if($('zrPlayGuideModal')&&!$('zrPlayGuideModal').classList.contains('hidden'))renderPlayCustomer();
-    },err=>console.error('customer guide v25 read',err));
+    },onError:err=>console.error('customer guide v25 read',err)});
   }catch(err){console.error('customer guide v25 init',err)}
 }
 function boot(){
-  const t=setInterval(()=>{if(bindAdmin())clearInterval(t)},200);setTimeout(()=>clearInterval(t),20000);
+  if(!customerOnly){const t=setInterval(()=>{if(bindAdmin())clearInterval(t)},200);setTimeout(()=>clearInterval(t),20000)}
   bindCustomer();watchZooModal();
   const wait=setInterval(()=>{if(!window.zrReservationFirebase?.auth||!window.zrReservationFirebase?.db)return;clearInterval(wait);init()},200);setTimeout(()=>clearInterval(wait),20000);
 }

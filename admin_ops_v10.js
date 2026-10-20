@@ -191,7 +191,7 @@ function outsourceRowsV10(){
   const start=$('outsourceStart')?.value||'',end=$('outsourceEnd')?.value||'',f=$('outsourceVendorFilter')?.value||'';
   return (typeof bookings==='function'?bookings():[]).filter(b=>{
     if(!b||b.__availabilityOnly)return false;
-    if(!(b.status==='confirmed'||b.status==='cancelled'||b.settlement?.savedAt))return false;
+    if(!b.settlement?.savedAt||['cancelled','rejected'].includes(b.status))return false;
     const v=vendorInfo(b);if(f&&v.id!==f)return false;
     if(start&&String(b.date||'')<start)return false;if(end&&String(b.date||'')>end)return false;
     return true;
@@ -216,7 +216,7 @@ function renderOutsourcingPaymentsV10(){
   listEl.innerHTML=list.length?list.map(b=>{
     const v=vendorInfo(b),st=b.settlement,done=!!st?.savedAt,cancelled=b.status==='cancelled';
     const head=`<div class="row"><div><b>${esc(b.orgName||'')}</b><div class="help">접수 ${dateOnly(b.createdAt)} · 방문 ${esc(b.date||'')}</div></div><span class="status ${done?'confirmed':'pending'}">${esc(v.name)} · ${done?'실제결제 입력':'실제결제 미입력'}</span></div>`;
-    const action=`<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn-soft" onclick="openAdminBookingDetail('${esc(b.id)}')">${done?'결제 수정':'결제 입력'}</button></div>`;
+    const action=`<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn-soft" onclick="openAdminBookingDetail('${window.ZRDisplaySafety.inlineString(b.id)}')">${done?'결제 수정':'결제 입력'}</button></div>`;
     if(!done)return `<div class="booking-item">${head}<div class="help" style="margin-top:8px">${cancelled?'예약 취소 건입니다.':'실제 인원과 결제금액을 입력하면 매출에 반영됩니다.'}</div>${action}</div>`;
     const snap=st.vendorSnapshot||v,isSelf=v.id==='self';
     const tr=isSelf?'수수료 없음':snap.ticketFeeType==='percent'?`${Number(snap.ticketFeeValue||0)}%`:`유료 1인당 ${typeof money==='function'?money(Number(snap.ticketFeeValue||0)):Number(snap.ticketFeeValue||0).toLocaleString()+'원'}`;
@@ -232,8 +232,6 @@ function bindOutsourceV10(){
   const search=$('outsourceSearch');if(search)search.onclick=renderOutsourcingPaymentsV10;
   const filter=$('outsourceVendorFilter');if(filter)filter.onchange=renderOutsourcingPaymentsV10;
   const tabBtn=$('outsourceTabBtn');if(tabBtn&&!tabBtn.dataset.zr10){tabBtn.dataset.zr10='1';tabBtn.addEventListener('click',()=>setTimeout(renderOutsourcingPaymentsV10,30));}
-  const tab=$('tab-outsourcing');const help=tab?[...tab.querySelectorAll('.help')].find(x=>(x.textContent||'').includes('업체별로 조회')):null;
-  if(help)help.textContent='자체와 아웃소싱 업체를 함께 조회할 수 있으며 실제 결제 미입력 예약도 표시됩니다.';
 }
 
 function refreshAll(){patchGroupTypes();ensureActivityBasisUi();bindActivityExcel();bindOutsourceV10();}
