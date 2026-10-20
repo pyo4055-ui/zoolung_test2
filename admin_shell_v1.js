@@ -28,6 +28,7 @@ const ITEMS=[
   {id:'menuadmin',group:'settings',label:'카페 메뉴 설정',dataTab:'menuadmin',sectionId:'tab-menuadmin'},
   {id:'settings',group:'settings',label:'예약 설정',dataTab:'settings',sectionId:'tab-settings'}
 ];
+ITEMS.push({id:'groupNotice',group:'settings',label:'단체 안내문구 설정',dataTab:'group-notice',sectionId:'tab-group-notice'});
 ITEMS.push(
  {id:'smsSettings',group:'settings',label:'문자 설정',routeBase:'settings',buttonId:'zrSettingsConfirmSmsSubtabV1',sectionId:'zrSettingsConfirmSmsPanelV1'},
  {id:'vendorSettings',group:'settings',label:'아웃소싱 업체 설정',routeBase:'settings',buttonId:'zrSettingsOutsourceSubtabV1',sectionId:'zrSettingsOutsourcePanelV1'}

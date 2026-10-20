@@ -70,7 +70,7 @@ function queueWrite(value){
 }
 function settingsWritePayload(value,scope){
   const fields={
-    sms:['smsTemplateText'],scheduleSms:['scheduleCustomerNotifyMessage','scheduleCustomerNotifyTemplateVersion'],
+    groupNotice:['groupReservationNotice'],sms:['smsTemplateText'],scheduleSms:['scheduleCustomerNotifyMessage','scheduleCustomerNotifyTemplateVersion'],
     vendor:['outsourcingVendors'],'reservation-limits':['autoCloseLimit','autoClose','playgroundLimitEnabled'],
     'booking-period':['bookingStart','bookingEnd','holidayBookingAllowed'],'holiday-dates':['holidayDatesByYear'],
     'booking-lead':['bookingLeadDays'],'booking-Closure':['regularClosurePeriods'],'booking-Peak':['peakSeasonPeriods']

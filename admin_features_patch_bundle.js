@@ -263,7 +263,7 @@
     const total=groups.reduce((s,g)=>s+g.items.reduce((x,it)=>x+Number(it.amount||0),0),0);
     let r=1,rows=[],merges=[];
     rows.push(`<row r="${r}" ht="28" customHeight="1">${cStr(`A${r}`,`${month}월 단체 식사 주문 내역`,1)}</row>`);merges.push(`A${r}:G${r}`);r++;
-    rows.push(`<row r="${r}" ht="18" customHeight="1">${cStr(`F${r}`,'최종수정자 :',7)}${cStr(`G${r}`,'',7)}</row>`);r++;
+    rows.push(`<row r="${r}" ht="18" customHeight="1">${cStr(`F${r}`,'최종수정자 :',7)}${cStr(`G${r}`,String(localStorage.getItem('zr_admin_display_name_v1')||'').trim(),7)}</row>`);r++;
     const now=new Date(),f=n=>String(n).padStart(2,'0'),today=`${now.getFullYear()}-${f(now.getMonth()+1)}-${f(now.getDate())}`;
     rows.push(`<row r="${r}" ht="18" customHeight="1">${cStr(`F${r}`,'최종수정일 :',7)}${cStr(`G${r}`,today,7)}</row>`);r++;
     const heads=['날짜(예약일)','식사시간','단체명','메뉴','수량','금액','특이사항'];
@@ -274,7 +274,8 @@
         let cells='';
         if(i===0){
           const ds=String(g.b.date||''),dateText=ds.length>=10?`${ds.slice(5,7)}월 ${ds.slice(8,10)}일`:ds;
-          cells+=cStr(`A${r}`,dateText,3)+cStr(`B${r}`,g.b.mealStart||'미정',3)+cStr(`C${r}`,g.b.orgName||'',3);
+          const mealTime=g.b.schedulePublished?(g.b.customerSchedule?.segments?.find(segment=>segment.type==='meal')?.start||g.b.mealStart||'미정'):'스케줄X';
+          cells+=cStr(`A${r}`,dateText,3)+cStr(`B${r}`,mealTime,3)+cStr(`C${r}`,g.b.orgName||'',3);
         }
         cells+=cStr(`D${r}`,it.name,3)+(typeof it.qty==='number'?cNum(`E${r}`,it.qty,3):cStr(`E${r}`,it.qty,3))+cNum(`F${r}`,it.amount,4)+cStr(`G${r}`,'',3);
         rows.push(`<row r="${r}" ht="22" customHeight="1">${cells}</row>`);r++;
@@ -861,18 +862,18 @@
   }
   function loadAdminScheduleTab(){
     if(!window.zrReservationFirebase){setTimeout(loadAdminScheduleTab,300);return}
-    addScript('zrAdminScheduleScript','./admin_schedule_tab_v14.js?v=release-1792494605886',()=>{
-      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792494605886');
-      addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792494605886');
-      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=release-1792494605886');
-      addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=release-1792494605886');
+    addScript('zrAdminScheduleScript','./admin_schedule_tab_v14.js?v=release-1792496525829',()=>{
+      addScript('zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792496525829');
+      addScript('zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792496525829');
+      addScript('zrAdminScheduleExcelScript','./admin_schedule_excel_v3.js?v=release-1792496525829');
+      addScript('zrScheduleUiFixV4','./schedule_ui_fix_v4.js?v=release-1792496525829');
     });
   }
 
   setTimeout(()=>{
     paintManualClosedDaysV9();renderOutsourcePeopleV9();
-    addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=release-1792494605886');
-    addScript('zrAdminOpsV10','./admin_ops_v10.js?v=release-1792494605886',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=release-1792494605886'));
+    addScript('zrStaffLoginFixV14','./reservation_staff_login_fix_v14.js?v=release-1792496525829');
+    addScript('zrAdminOpsV10','./admin_ops_v10.js?v=release-1792496525829',()=>addScript('zrAdminOpsV11Patch','./admin_ops_v11_patch.js?v=release-1792496525829'));
     loadAdminScheduleTab();
   },0);
 })();

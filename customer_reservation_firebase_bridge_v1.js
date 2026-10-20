@@ -187,13 +187,15 @@ async function updatePendingBooking(id,booking){
     if(!snap.exists())throw Error('예약 정보를 찾을 수 없습니다.');
     const old=snap.data();
     if(old.ownerUid!==user.uid)throw Error('예약 소유자를 확인해주세요.');
-    if(old.status!=='pending')throw Error('예약 상태가 변경되었습니다. 예약 조회에서 변경 요청을 접수해주세요.');
-    saved={...old,...booking,id:String(id),ownerUid:user.uid,createdAt:old.createdAt,statusUpdatedAt:old.statusUpdatedAt,status:'pending'};
+    if(!window.ZRBookingRules.canDirectEdit(old)||!window.ZRBookingRules.canDirectEdit({...booking,status:old.status}))throw Error('방문 7일 이내 예약은 예약 조회에서 변경 요청으로 접수해주세요.');
+    if(old.reservationChangeRequest?.status==='pending')throw Error('처리 중인 변경 요청이 있습니다. 관리자에게 문의해주세요.');
+    saved={...old,...booking,id:String(id),ownerUid:user.uid,createdAt:old.createdAt,statusUpdatedAt:old.statusUpdatedAt,status:old.status,schedulePublished:false,customerSchedule:null,mealLoc:''};
     const patch=bookingWritePatch(String(id),old,saved,user.uid);
     const allocate=await window.ZRBookingAllocations.prepare(F,db,tx,String(id),old,saved);
     allocate();
     tx.set(ref,{...patch,updatedAt:F.serverTimestamp()},{merge:true});
     tx.set(F.doc(db,AVAIL_COLLECTION,String(id)),{...availabilityPatch(saved,user.uid),updatedAt:F.serverTimestamp()},{merge:true});
+    tx.set(F.doc(db,'scheduleGroups',String(id)),{customerInvalidated:true,customerInvalidatedAt:F.serverTimestamp()},{merge:true});
   });
   if(auth.currentUser?.uid!==user.uid)throw Error('booking session changed');
   ownFull.set(String(id),saved);legacyLocal.delete(String(id));applyCustomerCache();

@@ -1,8 +1,8 @@
-import {editQuickTime,injectQuickTimeStyle} from './quick_time.js?v=release-1792494605886';
-import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js?v=release-1792494605886';
-import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js?v=release-1792494605886';
-import {initDetail,openDetail,quickField,openCafe} from './detail.js?v=release-1792494605886';
-import {initContent,openContentEditor} from './content.js?v=release-1792494605886';
+import {editQuickTime,injectQuickTimeStyle} from './quick_time.js?v=release-1792496525829';
+import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js?v=release-1792496525829';
+import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js?v=release-1792496525829';
+import {initDetail,openDetail,quickField,openCafe} from './detail.js?v=release-1792496525829';
+import {initContent,openContentEditor} from './content.js?v=release-1792496525829';
 
 let groupMemoGid="";
 const STAFF_ID_KEY="zr_schedule_display_name_v1";
@@ -55,7 +55,7 @@ $("groupMemoSave").onclick=async()=>{
   }catch(e){writeError(e)}
 };
 
-async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()})).filter(g=>g.programNotRequired!==true);const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
+async function refreshFromServer(){if(!auth.currentUser)return;try{setSync("새로고침 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date)),snap=await F.getDocs(q);state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()})).filter(g=>g.programNotRequired!==true&&!g.customerInvalidated);const memo=await F.getDoc(F.doc(db,"scheduleSharedMemos",state.date));state.data.sharedMemos[state.date]=memo.exists()?(memo.data().text||""):"";render();setSync("실시간 연결됨","ok");toast("공용 데이터를 새로고침했습니다.")}catch(e){writeError(e)}}
 $("refreshBtn").onclick=refreshFromServer;
 
 let sharedMemoLoad=0;
@@ -93,7 +93,7 @@ $("sharedMemoClose").onclick=()=>$("sharedMemoModal").classList.add("hidden");
 
 let listenerGeneration=0;
 function stopListeners(){listenerGeneration++;if(state.unsubGroups){state.unsubGroups();state.unsubGroups=null}if(state.unsubMemo){state.unsubMemo();state.unsubMemo=null}if(state.unsubCatalog){state.unsubCatalog();state.unsubCatalog=null}}
-function startListeners(){if(!auth.currentUser||!currentStaffId())return;stopListeners();const token=listenerGeneration,date=state.date,uid=auth.currentUser.uid;const current=()=>token===listenerGeneration&&state.date===date&&auth.currentUser?.uid===uid;setSync("연결 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date));state.unsubGroups=F.onSnapshot(q,snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()})).filter(g=>g.programNotRequired!==true);setSync("실시간 연결됨","ok");render()},e=>{if(current())writeError(e)});state.unsubMemo=F.onSnapshot(F.doc(db,"scheduleSharedMemos",state.date),snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.data.sharedMemos[state.date]=snap.exists()?(snap.data().text||""):"";setSync("실시간 연결됨","ok")},e=>{if(current())writeError(e)});state.unsubCatalog=F.onSnapshot(F.doc(db,"scheduleGroups","content_catalog_v1"),snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.catalog=new Map(Object.entries(DEFAULT_CATALOG));const list=snap.exists()&&Array.isArray(snap.data()?.catalog)?snap.data().catalog:[];list.forEach(x=>{if(x?.id)state.catalog.set(String(x.id),{name:String(x.name||x.id),color:x.color||"#edf0ed"})});scheduleEnhance()},e=>{if(current())console.debug("schedule catalog",e)})}
+function startListeners(){if(!auth.currentUser||!currentStaffId())return;stopListeners();const token=listenerGeneration,date=state.date,uid=auth.currentUser.uid;const current=()=>token===listenerGeneration&&state.date===date&&auth.currentUser?.uid===uid;setSync("연결 중","wait");const q=F.query(F.collection(db,"scheduleGroups"),F.where("date","==",state.date));state.unsubGroups=F.onSnapshot(q,snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.data.groups=snap.docs.map(d=>normalizeGroup({id:d.id,...d.data()})).filter(g=>g.programNotRequired!==true&&!g.customerInvalidated);setSync("실시간 연결됨","ok");render()},e=>{if(current())writeError(e)});state.unsubMemo=F.onSnapshot(F.doc(db,"scheduleSharedMemos",state.date),snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.data.sharedMemos[state.date]=snap.exists()?(snap.data().text||""):"";setSync("실시간 연결됨","ok")},e=>{if(current())writeError(e)});state.unsubCatalog=F.onSnapshot(F.doc(db,"scheduleGroups","content_catalog_v1"),snap=>{if(!current()||snap.metadata?.hasPendingWrites)return;state.catalog=new Map(Object.entries(DEFAULT_CATALOG));const list=snap.exists()&&Array.isArray(snap.data()?.catalog)?snap.data().catalog:[];list.forEach(x=>{if(x?.id)state.catalog.set(String(x.id),{name:String(x.name||x.id),color:x.color||"#edf0ed"})});scheduleEnhance()},e=>{if(current())console.debug("schedule catalog",e)})}
 function setdate(d){
   if(!d||d===state.date)return;
   state.date=d;state.activeContentGid="";localSet(PK,state.date);render();if(auth.currentUser&&currentStaffId())startListeners()

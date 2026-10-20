@@ -39,7 +39,7 @@ service cloud.firestore {
         'playUse','playStart','playEnd','playDuration','feedOrder',
         'orgName','managerName','contact','email','notes',
         'customerViewedGuideMapAt','customerViewedParkingAt','customerViewedScheduleAt',
-        'reservationChangeRequest','changePlayHoldRequestId','cancelledAt','cancelledBy','cancelReason','cancelReviewed'];
+        'reservationChangeRequest','changePlayHoldRequestId','cancelledAt','cancelledBy','cancelReason','cancelReviewed','schedulePublished','customerSchedule'];
     }
     function validDate(value) {
       return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
@@ -88,15 +88,28 @@ service cloud.firestore {
         && request.resource.data.get('schedulePublished', false) == false
         && request.resource.data.get('customerSchedule', null) == null;
     }
+    function directEditDate(date) {
+      let today = request.time + duration.value(9,'h');
+      let parts = date.split('-');
+      return timestamp.date(int(parts[0]),int(parts[1]),int(parts[2]))
+          > timestamp.date(today.year(),today.month(),today.day()) + duration.value(7,'d');
+    }
+    function customerDirectEdit() {
+      return resource.data.status in ['pending','confirmed']
+        && directEditDate(resource.data.date)
+        && (request.resource.data.date == resource.data.date || directEditDate(request.resource.data.date))
+        && resource.data.get('reservationChangeRequest',{}).get('status','') != 'pending';
+    }
     function customerBookingUpdate() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let direct = customerDirectEdit();
       let cancellation = request.resource.data.status == 'cancelled'
         && resource.data.status in ['pending', 'confirmed', 'hold']
         && request.resource.data.cancelledBy == 'customer'
         && request.resource.data.cancelReviewed == false;
       return (!changed.hasAny(['paidCount','chaperoneCount','participantAgeMin','participantAgeMax','date','entryTime','exitTime','orgName','managerName','contact']) || validCustomerBooking(request.resource.data))
         && changed.hasOnly(customerBookingFields())
-        && (resource.data.status == 'pending' || !changed.hasAny([
+        && (direct || !changed.hasAny([
           'date','groupType','groupBookingMode','participantAgeMin','participantAgeMax',
           'paidCount','chaperoneCount','freeChaperone','paidChaperone','entryAmount','totalAmount',
           'entryTime','exitTime','mealType','mealLoc','mealStart','mealEnd','mealDuration','cafe',
@@ -107,8 +120,10 @@ service cloud.firestore {
         && (request.resource.data.status == resource.data.status || cancellation)
         && !changed.hasAny(['settlement', 'settlementStatus', 'settlementCompletedAt',
           'additionalSales', 'outsourcingVendorId', 'outsourcingVendorSnapshot',
-          'schedulePublished', 'customerSchedule', 'confirmedAt',
+          'confirmedAt',
           'adminLastModifiedBy', 'adminLastModifiedAt', 'cancelReviewedAt', 'cancelReviewedBy'])
+        && (!changed.hasAny(['schedulePublished','customerSchedule']) || (direct
+          && request.resource.data.get('schedulePublished',false) == false && request.resource.data.get('customerSchedule',null) == null))
         && (!changed.hasAny(['cancelReviewed']) || cancellation);
     }
 
@@ -429,7 +444,22 @@ service cloud.firestore {
     }
 
     match /scheduleGroups/{groupId} {
+      function customerInvalidation() {
+        let before = get(/databases/$(database)/documents/reservations/$(groupId)).data;
+        let after = getAfter(/databases/$(database)/documents/reservations/$(groupId)).data;
+        return request.auth != null && before.ownerUid == request.auth.uid
+          && before.status in ['pending','confirmed'] && after.status == before.status
+          && directEditDate(before.date)
+          && after.updatedAt == request.time && before.get('updatedAt',null) != after.updatedAt
+          && after.get('schedulePublished',false) == false && after.get('customerSchedule',null) == null
+          && request.resource.data.customerInvalidated == true
+          && request.resource.data.customerInvalidatedAt == request.time;
+      }
       allow read, create, update: if isScheduleStaff();
+      allow create: if customerInvalidation()
+        && request.resource.data.keys().hasOnly(['customerInvalidated','customerInvalidatedAt']);
+      allow update: if customerInvalidation()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerInvalidated','customerInvalidatedAt']);
       allow delete: if false;
     }
 

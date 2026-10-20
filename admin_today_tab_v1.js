@@ -71,7 +71,7 @@ async function listenSchedule(){
     const q=FS.query(FS.collection(db,'scheduleGroups'),FS.where('date','==',requestedDate));
     unsub=FS.onSnapshot(q,s=>{
       if(generation!==scheduleGeneration)return;scheduleLoading=false;
-      remote=new Map(s.docs.filter(d=>d.id!=='content_catalog_v1').map(d=>[d.id,{id:d.id,...d.data()}]));
+      remote=new Map(s.docs.filter(d=>d.id!=='content_catalog_v1'&&!d.data().customerInvalidated).map(d=>[d.id,{id:d.id,...d.data()}]));
       renderStatus('스케줄 실시간 연결','ok');render();
     },e=>{console.error('today schedule read',e);renderStatus('스케줄 연결 확인 필요','err')});
   }catch(e){console.error('today schedule listen',e);renderStatus('스케줄 연결 확인 필요','err')}
