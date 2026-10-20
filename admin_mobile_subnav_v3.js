@@ -146,6 +146,9 @@ const MENUS={
             "targetId": "zrSettingsOperationSubtabV1"
           },
           {
+            "label": "공휴일 설정", "targetId": "zrSettingsHolidaySubtabV1"
+          },
+          {
             "label": "정기휴무 설정",
             "targetId": "zrSettingsClosureSubtabV1"
           },
@@ -250,6 +253,7 @@ const PARENT_GROUP={
   "guide": "settings",
   "menuadmin": "settings",
   "vendorSettings": "settings",
+  "groupNotice": "settings",
   "cleanup": "records"
 };
 

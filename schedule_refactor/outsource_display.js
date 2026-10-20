@@ -1,4 +1,4 @@
-import {state,$,auth,db,F} from './core.js?v=release-1792498821086';
+import {state,$,auth,db,F} from './core.js?v=release-1792499658639';
 
 const vendorRows=new Map();
 

@@ -1,5 +1,5 @@
-import {editMetaHtml} from './edit_meta.js?v=release-1792498821086';
-import {state,$,T,DEFAULT_CATALOG,SHORT,SLOT,START_MIN,MAX_PICK,pad,tm,min,esc,currentList,today,tel} from './core.js?v=release-1792498821086';
+import {editMetaHtml} from './edit_meta.js?v=release-1792499658639';
+import {state,$,T,DEFAULT_CATALOG,SHORT,SLOT,START_MIN,MAX_PICK,pad,tm,min,esc,currentList,today,tel} from './core.js?v=release-1792499658639';
 let pending=false;
 function fullAxisFor(groups){const used=[900];groups.forEach(g=>{[g.ps,g.pe,g.eta,g.aend].forEach(t=>{const m=min(t);if(m!=null)used.push(m)});(g.segments||[]).forEach(s=>{const a=min(s.start),b=min(s.end);if(a!=null)used.push(a);if(b!=null)used.push(b)})});let end=Math.max(900,Math.ceil(Math.max(...used)/60)*60);end=Math.min(MAX_PICK,end);return {start:START_MIN,end}}
 function todayAxisFor(groups){
