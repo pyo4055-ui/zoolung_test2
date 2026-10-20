@@ -183,7 +183,7 @@ function wrapOpenDetail(){
 }
 function wrapStatusSetter(){
   const current=window.setBookingStatus;if(typeof current!=='function')return false;if(current.__zrStatusSelectorRepaint)return true;if(current===statusSetterWrap)return true;
-  const base=current,wrapped=function(id,status){const out=base.apply(this,arguments);const b=byId(id);if(b)refreshDirect(b);return out};
+  const base=current,wrapped=function(id,status){const out=base.apply(this,arguments);const done=saved=>{if(saved!==false){const b=byId(id);if(b)refreshDirect(b)}return saved};return out&&typeof out.then==='function'?out.then(done):done(out)};
   wrapped.__zrStatusSelectorRepaint=true;wrapped.__zrBase=base;window.setBookingStatus=wrapped;try{setBookingStatus=wrapped}catch{}statusSetterWrap=wrapped;return true;
 }
 function installStatusBindings(){

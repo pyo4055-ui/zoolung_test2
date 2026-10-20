@@ -150,7 +150,7 @@ function selectMode(next){
   const map={monthly:'zrSalesMonthlyPanel',prev:'zrSalesPrevPanel',year:'zrSalesYearPanel',cafe:'zrSalesCafePanel'};
   Object.entries(map).forEach(([k,id])=>$(id)?.classList.toggle('active',k===mode));renderAll();
 }
-function hideKnownSections(){KNOWN_SECTIONS.forEach(id=>$(id)?.classList.add('hidden'))}
+function hideKnownSections(){KNOWN_SECTIONS.forEach(id=>$(id)?.classList.add('hidden'));document.querySelectorAll('#adminView > section').forEach(section=>{if(section.id!=='tab-sales-dashboard')section.classList.add('hidden')});$('tab-inquiry-reply-v1')?.classList.add('hidden');$('tab-group-notice')?.classList.add('hidden');document.dispatchEvent(new CustomEvent('zr:admin-route-leave-inquiries'))}
 window.ZRAdminOpenSales=()=>openDashboard();
 function openDashboard(){
   const sec=ensureSection();if(!sec)return;ensureInputs();hideKnownSections();sec.classList.remove('hidden');

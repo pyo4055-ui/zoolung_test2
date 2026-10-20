@@ -30,13 +30,13 @@ function takeLegacyGuideGuard(id){
 
 async function loadCustomerBookingUx(){
   if(window.__ZR_CUSTOMER_BOOKING_UX_V24)return;
-  await loadScript('zrCustomerBookingUxV24','./customer_booking_ux_v24.js?v=release-1792499658639');
+  await loadScript('zrCustomerBookingUxV24','./customer_booking_ux_v24.js?v=release-1792500956413');
 }
 
 async function loadCustomerVisitGuideV16(){
   if(window.__ZR_CUSTOMER_VISIT_GUIDE_V16){takeLegacyGuideGuard('zrCustomerVisitGuideV16');return}
   takeLegacyGuideGuard('zrCustomerVisitGuideV16');
-  await loadScript('zrCustomerVisitGuideV16','./customer_visit_guide_v16.js?v=release-1792499658639');
+  await loadScript('zrCustomerVisitGuideV16','./customer_visit_guide_v16.js?v=release-1792500956413');
 }
 
 function installPlayZooGuideGuard(){
@@ -52,12 +52,12 @@ function installPlayZooGuideGuard(){
 async function loadCustomerGuideFixV20(){
   if(window.__ZR_CUSTOMER_GUIDE_FIX_V20){takeLegacyGuideGuard('zrCustomerVisitGuideFixV20');return}
   takeLegacyGuideGuard('zrCustomerVisitGuideFixV20');
-  await loadScript('zrCustomerVisitGuideFixV20','./customer_visit_guide_fix_v20.js?v=release-1792499658639');
+  await loadScript('zrCustomerVisitGuideFixV20','./customer_visit_guide_fix_v20.js?v=release-1792500956413');
 }
 
 async function loadParkingInfo(){
   if(window.__ZR_PARKING_INFO_V31)return;
-  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=release-1792499658639');
+  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=release-1792500956413');
 }
 
 function installFinalConfirmBridge(){
@@ -80,24 +80,24 @@ async function loadCustomerModules(){
   // Explicit customer-only dependency list. No admin tabs, settlement, Excel,
   // schedule editor, warning dashboard or cleanup workspace are loaded here.
   const modules=[
-    ['zrCustomerViewTrackingV1','./customer_view_tracking_v1.js?v=release-1792499658639'],
-    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=release-1792499658639'],
-    ['zrCustomerCancelCommitV1','./customer_cancel_commit_v1.js?v=release-1792499658639'],
-    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=release-1792499658639'],
-    ['zrCustomerStatusBannerV1','./customer_status_banner_v1.js?v=release-1792499658639'],
-    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=release-1792499658639'],
-    ['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=release-1792499658639'],
-    ['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=release-1792499658639'],
-    ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792499658639'],
-    ['zrCustomerInquiryVisitV1','./customer_inquiry_visit_v1.js?v=release-1792499658639'],
-    ['zrCustomerInquiryValidationV1','./customer_inquiry_validation_v1.js?v=release-1792499658639'],
-    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=release-1792499658639'],
-    ['zrCustomerGroupMinimumV1','./customer_group_minimum_v1.js?v=release-1792499658639'],
-    ['zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792499658639'],
-    ['zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792499658639'],
-    ['zrCustomerValidationFocusV1','./customer_validation_focus_v1.js?v=release-1792499658639'],
-    ['zrCustomerScheduleUiV5','./customer_schedule_ui_v5.js?v=release-1792499658639'],
-    ['zrCustomerVisualThemeV1','./customer_visual_theme_v1.js?v=release-1792499658639']
+    ['zrCustomerViewTrackingV1','./customer_view_tracking_v1.js?v=release-1792500956413'],
+    ['zrCustomerLookupActionsV1','./customer_lookup_actions_v1.js?v=release-1792500956413'],
+    ['zrCustomerCancelCommitV1','./customer_cancel_commit_v1.js?v=release-1792500956413'],
+    ['zrCustomerInfoTabsV1Script','./customer_info_tabs_v1.js?v=release-1792500956413'],
+    ['zrCustomerStatusBannerV1','./customer_status_banner_v1.js?v=release-1792500956413'],
+    ['zrCustomerTimeGuideGuardV2','./customer_time_guide_guard_v2.js?v=release-1792500956413'],
+    ['zrCustomerPlaygroundBookingGuardV1','./customer_playground_booking_guard_v1.js?v=release-1792500956413'],
+    ['zrCustomerHolidayBookingSettingV1','./customer_holiday_booking_setting_v1.js?v=release-1792500956413'],
+    ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792500956413'],
+    ['zrCustomerInquiryVisitV1','./customer_inquiry_visit_v1.js?v=release-1792500956413'],
+    ['zrCustomerInquiryValidationV1','./customer_inquiry_validation_v1.js?v=release-1792500956413'],
+    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=release-1792500956413'],
+    ['zrCustomerGroupMinimumV1','./customer_group_minimum_v1.js?v=release-1792500956413'],
+    ['zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792500956413'],
+    ['zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792500956413'],
+    ['zrCustomerValidationFocusV1','./customer_validation_focus_v1.js?v=release-1792500956413'],
+    ['zrCustomerScheduleUiV5','./customer_schedule_ui_v5.js?v=release-1792500956413'],
+    ['zrCustomerVisualThemeV1','./customer_visual_theme_v1.js?v=release-1792500956413']
   ];
   for(const [id,src] of modules)await loadScript(id,src);
 }

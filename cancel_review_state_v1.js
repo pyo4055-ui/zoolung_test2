@@ -70,10 +70,9 @@ function installAdminCancelHook(){
   if(typeof base!=='function'||base.__zrCancelReviewV1)return false;
   const wrapped=function(id,status){
     const out=base.apply(this,arguments);
-    if(String(status||'')==='cancelled'){
-      const bid=String(id||'');
-      [30,120,320].forEach(ms=>setTimeout(()=>markCancelledUnreviewed(bid),ms));
-    }
+    const completed=saved=>{if(saved!==false&&String(status||'')==='cancelled')markCancelledUnreviewed(String(id||''));return saved};
+    if(out&&typeof out.then==='function')return out.then(completed);
+    completed(out);
     return out;
   };
   wrapped.__zrCancelReviewV1=true;wrapped.__zrBase=base;

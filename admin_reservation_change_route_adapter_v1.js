@@ -101,8 +101,10 @@ function installStyle(){
   #zrReservationChangeAdminList .zr-cr-status.done{background:#e7f5ed!important;border-color:#b9dcc7!important;color:#1f7a4d!important}
   #zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-apply],#zrReservationChangeAdminList .zr-cr-actions button[data-change-apply]{background:#fc5404!important;border-color:#fc5404!important;color:#fff!important}
   #zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-detail],#zrReservationChangeAdminList .zr-cr-actions button[data-change-detail]{background:#f5f1ee!important;border-color:#ddd1c9!important;color:#5b463b!important}
-  #zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-done],#zrReservationChangeAdminList .zr-cr-actions button[data-change-done]{background:#8a5a44!important;border-color:#8a5a44!important;color:#fff!important}
-  #zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-zr-shared-done],#zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-change-done],#zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-done].is-done{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}
+  #zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-done],#zrReservationChangeAdminList .zr-cr-actions button[data-change-done]{background:#005b35!important;border-color:#005b35!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+  #zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-zr-shared-done],#zrReservationChangeAdminList .zr-cr-card:has(.zr-cr-status.done) .zr-cr-actions button[data-change-done],#zrReservationChangeAdminList .zr-cr-actions button[data-zr-shared-done].is-done{background:#005b35!important;border-color:#005b35!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+  html.zr-admin-shell-mounted body #adminView #zrReservationChangeAdminList .zr-cr-actions button:is([data-zr-shared-done],[data-change-done]){background:#005b35!important;border-color:#005b35!important;color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;transition:none!important}
+  html.zr-admin-shell-mounted body #adminView #zrReservationChangeAdminList .zr-cr-actions button:is([data-zr-shared-done],[data-change-done]):hover{background:#00482a!important;border-color:#00482a!important}
   `;document.head.appendChild(s);
 }
 function observeRouteClick(e){
@@ -146,6 +148,7 @@ function observeRouteClick(e){
 }
 function boot(){
   installStyle();installHeaderGuard();
+  document.addEventListener('zr:admin-route-leave-inquiries',leaveSpecialMode);
   document.addEventListener('click',observeRouteClick,true);
   let tries=0;const timer=setInterval(()=>{installHeaderGuard();if(++tries>80)clearInterval(timer)},100);
 }

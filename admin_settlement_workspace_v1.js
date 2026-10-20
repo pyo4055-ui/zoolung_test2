@@ -78,10 +78,10 @@ function calc(root,b){
 }
 function readExtraRows(root){return window.ZRSettlementRules.normalizeExtras([...root.querySelectorAll('[data-zr-extra-row]')].map(row=>({category:row.querySelector('select').value,amount:row.querySelector('input').value,quantity:row.querySelector('[data-zr-extra-quantity]')?.value})))}
 function extraRow(item={category:'shop',amount:0}){
-  return `<div data-zr-extra-row class="grid2" style="margin-top:8px"><div><label>부가매출 항목</label><select aria-label="부가매출 항목">${Object.entries(window.ZRSettlementRules.extraCategories).map(([value,label])=>`<option value="${value}" ${item.category===value?'selected':''}>${label}</option>`).join('')}</select></div><div><label>부가매출 금액</label><div style="display:flex;gap:6px"><input type="number" aria-label="부가매출 금액" min="0" step="1" value="${Number(item.amount)||0}" style="min-width:0"><button type="button" class="btn-gray" data-zr-extra-remove aria-label="부가매출 항목 제거">제거</button></div></div><div data-zr-extra-quantity-wrap ${['passport','feed'].includes(item.category)?'':'hidden'}><label>${item.category==='feed'?'먹이 12종 세트':'여권'} 수량</label><input data-zr-extra-quantity type="number" min="0" step="1" aria-label="부가매출 수량" placeholder="개수" value="${item.quantity==null?'':Number(item.quantity)||0}"></div></div>`;
+  return `<div data-zr-extra-row class="grid2" style="margin-top:8px"><div><label>부가매출 항목</label><select aria-label="부가매출 항목">${Object.entries(window.ZRSettlementRules.extraCategories).map(([value,label])=>`<option value="${value}" ${item.category===value?'selected':''}>${label}</option>`).join('')}</select></div><div><label>부가매출 금액</label><div style="display:flex;gap:6px"><input type="number" aria-label="부가매출 금액" min="0" step="1" value="${Number(item.amount)||0}" style="min-width:0"><button type="button" class="btn-gray" data-zr-extra-remove aria-label="부가매출 항목 제거">제거</button></div></div><div data-zr-extra-quantity-wrap ${['passport','feed'].includes(item.category)?'':'hidden'}><label>구매 수량</label><input data-zr-extra-quantity type="number" min="0" step="1" aria-label="부가매출 수량" placeholder="개수" value="${item.quantity==null?'':Number(item.quantity)||0}"></div></div>`;
 }
 const savedExtras=window.ZRSettlementRules.savedExtras;
-function syncExtraCategory(e){const row=e.target.closest?.('[data-zr-extra-row]');if(!row||e.target.tagName!=='SELECT')return;const wrap=row.querySelector('[data-zr-extra-quantity-wrap]');wrap.querySelector('label').textContent=(e.target.value==='feed'?'먹이 12종 세트':'여권')+' 수량';wrap.hidden=!['passport','feed'].includes(e.target.value)}
+function syncExtraCategory(e){const row=e.target.closest?.('[data-zr-extra-row]');if(!row||e.target.tagName!=='SELECT')return;const wrap=row.querySelector('[data-zr-extra-quantity-wrap]');const hidden=!['passport','feed'].includes(e.target.value);if(wrap.hidden!==hidden)wrap.hidden=hidden}
 document.addEventListener('input',syncExtraCategory,true);
 document.addEventListener('change',syncExtraCategory,true);
 document.addEventListener('input',e=>{if(!e.target.matches?.('[data-zr-extra-quantity]'))return;const row=e.target.closest('[data-zr-extra-row]');if(['feed','passport'].includes(row.querySelector('select').value)){const quantity=Number(e.target.value);if(Number.isSafeInteger(quantity)&&quantity>=0){const amount=row.querySelector('input');amount.value=quantity*10000;amount.dispatchEvent(new Event('input',{bubbles:true}))}}});
@@ -98,6 +98,7 @@ function injectStyle(){
   [data-zr-extra-row] input{flex:1 1 0;width:0!important;min-width:0!important}
   [data-zr-extra-quantity-wrap][hidden]{display:none!important}
   [data-zr-extra-quantity-wrap] input{width:100%!important}
+  [data-zr-extra-quantity-wrap],[data-zr-extra-quantity-wrap] *{animation:none!important;transition:none!important}
   [data-zr-extra-remove]{flex:0 0 54px!important;white-space:nowrap!important;padding:0 10px!important}
 
   #zrSettlementWorkspaceModal .modal-card{position:relative;width:min(760px,calc(100vw - 28px));max-height:86vh;overflow:auto;padding-top:24px}
