@@ -311,7 +311,7 @@ function showHolidayHelp(){
   modal.hidden=false;return true;
 }
 function decorateAdminCalendar(){
-  const root=$('adminCalendar'),ym=String($('adminMonth')?.value||'');if(!root||!/^\d{4}-\d{2}$/.test(ym)||typeof api()?.isHoliday!=='function')return;
+  const root=$('adminCalendar'),ym=String($('adminCalendar')?.dataset.renderedMonth||'');if(!root||!/^\d{4}-\d{2}$/.test(ym)||typeof api()?.isHoliday!=='function')return;
   const [y,m]=ym.split('-').map(Number);
   root.querySelectorAll('.day').forEach(day=>{
     const first=day.querySelector('.num > span:first-child')||day.querySelector('.num span');

@@ -198,7 +198,7 @@ function decorateBrand(){
 }
 function decorateCalendar(){
   const cal=$('adminCalendar');if(!cal)return;
-  const ym=String($('adminMonth')?.value||'');
+  const ym=String($('adminCalendar')?.dataset.renderedMonth||'');
   if(!/^\d{4}-\d{2}$/.test(ym))return;
   const [year,month]=ym.split('-').map(Number);
   const now=new Date();
