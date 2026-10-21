@@ -1,8 +1,8 @@
-import {editQuickTime,injectQuickTimeStyle} from './quick_time.js?v=release-1792536903563';
-import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js?v=release-1792536903563';
-import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js?v=release-1792536903563';
-import {initDetail,openDetail,quickField,openCafe} from './detail.js?v=release-1792536903563';
-import {initContent,openContentEditor} from './content.js?v=release-1792536903563';
+import {editQuickTime,injectQuickTimeStyle} from './quick_time.js?v=release-1792577604735';
+import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js?v=release-1792577604735';
+import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js?v=release-1792577604735';
+import {initDetail,openDetail,quickField,openCafe} from './detail.js?v=release-1792577604735';
+import {initContent,openContentEditor} from './content.js?v=release-1792577604735';
 
 let groupMemoGid="";
 const STAFF_ID_KEY="zr_schedule_display_name_v1";
@@ -101,7 +101,7 @@ function setdate(d){
 $("date").onchange=()=>setdate($("date").value);$("prev").onclick=()=>setdate(shift(state.date,-1));$("next").onclick=()=>setdate(shift(state.date,1));$("today").onclick=()=>setdate(today());
 
 async function login(){const staffId=normalizeStaffId($("staffId")?.value||"");const pw=$("pw").value;$("staffIdErr")?.classList.toggle("hidden",!!staffId);if(!staffId){$("staffId")?.focus();return}if(!pw)return;$("pwerr").classList.add("hidden");$("loginBtn").disabled=true;$("loginBtn").textContent="로그인 중...";try{await F.setPersistence(auth,F.browserLocalPersistence);await F.signInWithEmailAndPassword(auth,STAFF_EMAIL,pw);setStaffId(staffId);$("pw").value="";$("login").classList.add("hidden");startListeners();render()}catch(e){console.error(e);$("pwerr").textContent="로그인에 실패했습니다. 비밀번호를 확인해주세요.";$("pwerr").classList.remove("hidden")}finally{$("loginBtn").disabled=false;$("loginBtn").textContent="로그인"}}
-$("loginBtn").onclick=login;$("staffId").oninput=()=>$("staffIdErr")?.classList.add("hidden");$("staffId").onkeydown=e=>{if(e.key==="Enter")$("pw")?.focus()};$("pw").onkeydown=e=>{if(e.key==="Enter")login()};
+$("loginBtn").onclick=login;$("staffId").oninput=()=>$("staffIdErr")?.classList.add("hidden");$("staffId").onkeydown=e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==="Enter"){e.preventDefault();$("pw")?.focus()}};$("pw").onkeydown=e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==="Enter"){e.preventDefault();login()}};
 F.onAuthStateChanged(auth,user=>{const validUser=user&&String(user.email||"").toLowerCase()===STAFF_EMAIL.toLowerCase(),staffId=currentStaffId();syncStaffBadge();if(validUser&&staffId){$("login").classList.add("hidden");startListeners()}else{stopListeners();state.data.groups=[];$("login").classList.remove("hidden");setSync(validUser?"아이디 입력 필요":"로그인 필요","wait");render();setTimeout(()=>$("staffId")?.focus(),60)}});
 
 injectDisplayStyle();injectQuickTimeStyle();window.addEventListener("resize",scheduleEnhance);render();setInterval(render,60000);

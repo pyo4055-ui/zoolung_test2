@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<script src="./shared_booking_rules_v1.js?v=release-1792536903563"></script>
-<script src="./shared_booking_allocations_v1.js?v=release-1792536903563"></script>
-<script src="./shared_meal_seating_v1.js?v=release-1792536903563"></script>
-<script src="./shared_document_listener_v1.js?v=release-1792536903563"></script>
-<script src="./shared_display_safety_v1.js?v=release-1792536903563"></script>
-<script src="./shared_dialogs_v1.js?v=release-1792536903563"></script>
+<script src="./shared_booking_rules_v1.js?v=release-1792577604735"></script>
+<script src="./shared_booking_allocations_v1.js?v=release-1792577604735"></script>
+<script src="./shared_meal_seating_v1.js?v=release-1792577604735"></script>
+<script src="./shared_document_listener_v1.js?v=release-1792577604735"></script>
+<script src="./shared_display_safety_v1.js?v=release-1792577604735"></script>
+<script src="./shared_dialogs_v1.js?v=release-1792577604735"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f6f7f4">
@@ -44,7 +44,7 @@
 </style>
 </head>
 <body class="viewLocked">
-<div class="login" id="login"><div class="loginbox"><h1>현장스케줄 로그인</h1><p>동탄점 현장 운영 스케줄</p><input id="staffId" type="text" maxlength="20" autocomplete="username" placeholder="아이디"><div class="error hidden" id="staffIdErr">아이디를 입력해주세요.</div><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button><div class="scheduleLoginEmployee">내부 직원용</div></div></div>
+<div class="login" id="login"><div class="loginbox"><h1>현장스케줄 로그인</h1><p>동탄점 현장 운영 스케줄</p><input id="staffId" type="text" inputmode="text" lang="ko" autocapitalize="none" spellcheck="false" maxlength="20" autocomplete="off" placeholder="아이디"><div class="error hidden" id="staffIdErr">아이디를 입력해주세요.</div><input id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"><div class="error hidden" id="pwerr">비밀번호가 올바르지 않습니다.</div><button class="primary" id="loginBtn">로그인</button><div class="scheduleLoginEmployee">내부 직원용</div></div></div>
 
 <header><div class="top"><div class="brand">주렁주렁 동탄점 <small>현장 단체 스케줄</small></div><div class="topRight"><span class="scheduleUserBadge empty" id="scheduleUserBadge">접속자 미설정</span><button class="sharedMemoBtn" id="sharedMemoBtn">📝 공용 메모</button><button class="editLock locked" id="editLock">🔒 수정 불가</button></div></div></header>
 
@@ -118,10 +118,10 @@
 </div></div>
 
 <div class="toast" id="toast"></div>
-<script src="./modal_ux_consistency_v1.js?v=release-1792536903563"></script>
-<script type="module" src="./schedule_refactor/app.js?v=release-1792536903563"></script>
+<script src="./modal_ux_consistency_v1.js?v=release-1792577604735"></script>
+<script type="module" src="./schedule_refactor/app.js?v=release-1792577604735"></script>
 
-<script type="module" src="./schedule_refactor/outsource_display.js?v=release-1792536903563"></script>
-<script src="./schedule_login_animals_v1.js?v=release-1792536903563"></script>
+<script type="module" src="./schedule_refactor/outsource_display.js?v=release-1792577604735"></script>
+<script src="./schedule_login_animals_v1.js?v=release-1792577604735"></script>
 </body>
 </html>
