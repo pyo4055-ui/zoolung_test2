@@ -176,23 +176,22 @@ function bindGuideMap(){
 
 function summaryBlock(title,items){return `<section class="zrfinal31-summary"><b>${esc(title)}</b><ul>${items.slice(0,2).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`}
 function finalModal(){
-  if($('zrFinalGuideModalV31'))return;const m=document.createElement('div');m.id='zrFinalGuideModalV31';m.className='zrfinal31 hidden';m.innerHTML=`<div class="zrfinal31-sheet"><h2>예약 전 최종 확인</h2><div id="zrFinalChecksV31"></div><div class="zrfinal31-parking" id="zrFinalParkingV31"></div><div class="zrfinal31-actions"><button type="button" class="zrfinal31-back" id="zrFinalBackV31">예약 내용 다시 보기</button><button type="button" class="zrfinal31-ok" id="zrFinalOkV31">확인 후 예약 신청</button></div></div>`;document.body.appendChild(m);
-  $('zrFinalBackV31').onclick=()=>m.classList.add('hidden');
+  if($('zrFinalGuideModalV31'))return;const m=document.createElement('div');m.id='zrFinalGuideModalV31';m.className='zrfinal31 hidden';m.innerHTML=`<div class="zrfinal31-sheet" role="dialog" aria-modal="true" aria-label="예약자 정보 확인"><h2>예약자 정보 확인</h2><div id="zrFinalChecksV31"></div><div class="zrfinal31-parking" id="zrFinalParkingV31"></div><div class="zrfinal31-actions"><button type="button" class="zrfinal31-back" id="zrFinalBackV31">수정하기</button><button type="button" class="zrfinal31-ok" id="zrFinalOkV31">맞습니다 · 예약 접수</button></div></div>`;document.body.appendChild(m);
+  $('zrFinalBackV31').onclick=()=>{m.classList.add('hidden');pendingButton=null;$('managerName')?.focus();$('managerName')?.scrollIntoView({block:'center',behavior:'smooth'})};
   $('zrFinalOkV31').onclick=()=>{m.classList.add('hidden');submitBypass=true;window.__ZR_FINAL_DIRECT_SUBMIT=true;const b=pendingButton;pendingButton=null;setTimeout(()=>{b?.click?.();setTimeout(()=>{submitBypass=false;window.__ZR_FINAL_DIRECT_SUBMIT=false},250)},0)};
 }
 function finalLocation(title,place,address){return `<div class="zrfinal31-place"><b>${esc(title)}</b><br>${esc(place)}<br>${esc(address)}${mapButtons(address)}</div>`}
 function showFinal(){
-  finalModal();const play=String($('playUse')?.value||'')==='yes';
-  const zoo=guideNotices('zoo',FALLBACK_ZOO),playItems=guideNotices('playground',FALLBACK_PLAY);
-  $('zrFinalChecksV31').innerHTML=summaryBlock('동물원 이용 안내',zoo)+(window.ZRGroupBooking?.general()?summaryBlock('관람 방식',['직원 인솔이나 별도 스케줄 없이 자율 관람합니다.']):'')+(window.ZRGroupBooking?.general()?'' : play?summaryBlock('놀이터 이용 안내',playItems):`<section class="zrfinal31-summary"><b>놀이터</b><div style="font-size:12px;color:#6a746d">이용 안 함</div></section>`);
-  const p=parkingPresentation();
-  $('zrFinalParkingV31').innerHTML=`<h3>${esc(p.title)}</h3>${p.general?'':finalLocation(p.dropoffTitle,p.dropoffPlace,p.dropoffAddress)}${finalLocation(p.busTitle,p.busPlace,p.busAddress)}${notesHtml(p.busNote)}`;
+  finalModal();
+  $('zrFinalChecksV31').innerHTML='<section class="zrfinal31-summary"><b>예약자 이름</b><p style="font-size:20px;font-weight:700;overflow-wrap:anywhere">'+esc($('managerName')?.value||'미입력')+'</p><b>연락처</b><p style="font-size:20px;font-weight:700;overflow-wrap:anywhere">'+esc($('contact')?.value||'미입력')+'</p></section>';
+  $('zrFinalParkingV31').textContent='예약 안내와 일정 확인을 위해 정확한 연락처가 필요합니다. 번호가 다르면 확정 안내를 받지 못해 단체 이용에 불편이 생길 수 있으니 한 번 더 확인해주세요.';
   $('zrFinalGuideModalV31').classList.remove('hidden');
+  $('zrFinalBackV31').focus();
 }
 function bookingButton(b){const t=(b?.textContent||b?.value||'').replace(/\s+/g,'');return !!b&&/(예약.*(신청|완료|하기)|신청하기|예약하기)/.test(t)&&!/예약확인|추가예약/.test(t)}
 function bindFinal(){
   document.addEventListener('click',e=>{
-    if(submitBypass||!customerVisible())return;const b=e.target?.closest?.('button,input[type="submit"],a');if(!bookingButton(b)||b.closest('#zrFinalGuideModalV31')||b.closest('#zrGuideModal')||b.closest('#zrPlayGuideModal'))return;
+    if(submitBypass||!customerVisible())return;const b=e.target?.closest?.('button,input[type="submit"],a');if(b?.id!=='submitBooking'||!bookingButton(b)||b.closest('#zrFinalGuideModalV31')||b.closest('#zrGuideModal')||b.closest('#zrPlayGuideModal'))return;
     e.preventDefault();e.stopImmediatePropagation();pendingButton=b;showFinal();
   },true);
 }
