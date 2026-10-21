@@ -93,6 +93,8 @@ function injectStyle(){
 #zrUnsavedGuardModal .zr-unsaved-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:19px}
 #zrUnsavedGuardModal button{min-height:44px;border-radius:11px;font-size:13px;font-weight:900;cursor:pointer}
 #zrUnsavedKeep{border:1px solid #d5ddd7;background:#fff;color:#4f5b54}
+#zrUnsavedDiscard{border:1px solid #d5ddd7;background:#f5f1eb;color:#4f5b54}
+#zrUnsavedDiscard[hidden]{display:none!important}
 #zrUnsavedSave{border:1px solid var(--zr-v3-orange,#fc5404);background:var(--zr-v3-orange,#fc5404);color:#fff}
 @media(max-width:520px){#zrUnsavedGuardModal .zr-unsaved-actions{grid-template-columns:1fr}#zrUnsavedKeep{grid-column:auto}}
 `;
@@ -100,11 +102,12 @@ function injectStyle(){
 }
 function ensureDecisionModal(){
   let m=$('zrUnsavedGuardModal');if(m)return m;
-  m=document.createElement('div');m.id='zrUnsavedGuardModal';m.className='modal hidden';m.innerHTML=`<div class="zr-unsaved-sheet" role="dialog" aria-modal="true" aria-labelledby="zrUnsavedTitle"><h3 id="zrUnsavedTitle">저장하지 않은 변경사항이 있습니다</h3><p id="zrUnsavedText"></p><div class="zr-unsaved-actions"><button type="button" id="zrUnsavedKeep">계속 수정</button><button type="button" id="zrUnsavedSave">저장하고 이동</button></div></div>`;document.body.appendChild(m);
+  m=document.createElement('div');m.id='zrUnsavedGuardModal';m.className='modal hidden';m.innerHTML=`<div class="zr-unsaved-sheet" role="dialog" aria-modal="true" aria-labelledby="zrUnsavedTitle"><h3 id="zrUnsavedTitle">저장하지 않은 변경사항이 있습니다</h3><p id="zrUnsavedText"></p><div class="zr-unsaved-actions"><button type="button" id="zrUnsavedKeep">계속 수정</button><button type="button" id="zrUnsavedDiscard" hidden>저장 안 하고 닫기</button><button type="button" id="zrUnsavedSave">저장하고 이동</button></div></div>`;document.body.appendChild(m);
   $('zrUnsavedKeep').onclick=()=>closeDecision();
+  $('zrUnsavedDiscard').onclick=()=>{const d=decision;if(!d||$('zrUnsavedSave').disabled)return;closeDecision();d.discard?.()};
   $('zrUnsavedSave').onclick=async()=>{
     const d=decision;if(!d)return;
-    const b=$('zrUnsavedSave');b.disabled=true;const old=b.textContent;b.textContent='저장 중…';
+    const b=$('zrUnsavedSave');b.disabled=true;const old=b.textContent;b.textContent='저장 중…';$('zrUnsavedDiscard').disabled=true;
     $('zrUnsavedKeep').disabled=false;
     const pendingTimer=setTimeout(()=>{if(decision===d){$('zrUnsavedText').textContent='서버의 저장 응답을 기다리고 있습니다. 계속 수정을 누르면 이동을 취소하고 현재 화면으로 돌아갑니다. 저장 요청은 연결 복구 후 완료될 수 있습니다.';b.textContent='저장 확인 대기'}},10000);
     try{await d.save?.()}catch{toast('저장하지 못했습니다. 입력한 내용을 확인해주세요.')}finally{clearTimeout(pendingTimer);if(decision===d){closeDecision();$('zrUnsavedKeep').disabled=false;b.disabled=false;b.textContent=old}}
@@ -112,8 +115,8 @@ function ensureDecisionModal(){
   return m;
 }
 function closeDecision(clear=true){const m=$('zrUnsavedGuardModal');if(m)m.classList.add('hidden');if(clear){if(decision)decision.cancelled=true;decision=null}}
-function ask({text,save}){
-  injectStyle();const m=ensureDecisionModal();decision={save};$('zrUnsavedSave').disabled=false;$('zrUnsavedKeep').disabled=false;$('zrUnsavedText').textContent=text;$('zrUnsavedSave').textContent='저장하고 이동';m.classList.remove('hidden');requestAnimationFrame(()=>$('zrUnsavedKeep')?.focus());
+function ask({text,save,discard}){
+  injectStyle();const m=ensureDecisionModal();decision={save,discard};$('zrUnsavedDiscard').hidden=!discard;$('zrUnsavedDiscard').disabled=false;$('zrUnsavedSave').disabled=false;$('zrUnsavedKeep').disabled=false;$('zrUnsavedText').textContent=text;$('zrUnsavedSave').textContent=discard?'저장하고 닫기':'저장하고 이동';m.classList.remove('hidden');requestAnimationFrame(()=>$('zrUnsavedKeep')?.focus());
 }
 window.ZRAdminUnsavedChanges={requestMove:({text,save,move})=>ask({text,save:async()=>{try{const request=decision;const ok=await save();if(request?.cancelled)return;if(ok===true)move();else toast('저장이 완료되지 않아 현재 화면을 유지합니다.')}catch{toast('저장하지 못했습니다. 입력한 내용을 확인해주세요.')}}})};
 
@@ -166,12 +169,31 @@ function askScheduleMove(continueMove){
   });
 }
 
+// Dismissal is not a save: incomplete modal drafts must remain closable.
+function dismissModalDraft(t){
+  if(!t.matches('[data-close],.zr-modal-ux-header-close,.zr-modal-ux-close-source,#zrSettlementWorkspaceClose,#zr2EditCancel,#zr2QuickCancel,#zrSharedChangeApplyCancel,#zr14ContentClose'))return false;
+  const modal=t.closest('.modal,.zr14-modal');if(!modal)return false;
+  if(modal.id==='zr2EditModal')editBaseline='';
+  if(modal.id==='zr2QuickModal')quickBaseline='';
+  for(const state of forms.values())if(modal.contains(state.root)){
+    // Restore persistent editor fields before acknowledging discarded changes.
+    for(const old of state.values){if(old.el.isConnected){old.el.value=old.value;old.el.checked=old.checked}}
+    acceptForm(state.spec[0]);
+  }
+  return true;
+}
+
 function interceptClick(e){
   if(bypass)return;
   const t=e.target?.closest?.('button,a,input[type="button"],input[type="submit"]')||(e.target?.matches?.('.modal')?e.target:null);if(!t||t.closest('#zrUnsavedGuardModal'))return;
   // A click can land on the backdrop after dragging from an input.
   if(t.matches('.modal')&&pointerStartTarget!==t){e.preventDefault();e.stopImmediatePropagation();return;}
 
+  const closing=t.matches('[data-close],.zr-modal-ux-header-close,.zr-modal-ux-close-source,#zrSettlementWorkspaceClose,#zr2EditCancel,#zr2QuickCancel,#zrSharedChangeApplyCancel,#zr14ContentClose')&&t.closest('.modal,.zr14-modal');
+  if(closing&&pendingOwners().length){
+    e.preventDefault();e.stopImmediatePropagation();
+    ask({text:'수정한 내용이 아직 저장되지 않았습니다. 저장하고 닫거나, 변경사항을 버리고 닫을 수 있습니다.',discard:()=>{dismissModalDraft(t);runBypass(()=>t.click())},save:async()=>{if(await saveDrafts(pendingOwners()))runBypass(()=>t.click())}});return;
+  }
   if(t.matches('[data-zr-admin-item][aria-haspopup]'))return;
   const navigation=t.matches('#adminRefresh,[data-zr-admin-item],[data-zr-admin-subitem],[data-zr-subtab-mode],#adminView .admin-tabs button,#adminLogout,[data-close],.zr-modal-ux-header-close,.zr-modal-ux-close-source,#zrSettlementWorkspaceClose,#zrInquiryTemplateCancelEdit,#zrPreviewNotifyTemplateCancel,#zrPreviewNotifyVisitSubtab,#zrPreviewNotifyTemplateSubtab,[data-template-edit],[data-pvn-template-edit],.modal,#zrAdminDailyMemoPrev,#zrAdminDailyMemoNext,#zrAdminDailyMemoToday,#zr2EditCancel,#zr2QuickCancel,#zrSharedChangeApplyCancel,#zr14ContentClose,#zrscPrev,#zrscNext,#zrscToday');
   const owners=navigation?pendingOwners():[];
