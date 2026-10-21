@@ -86,7 +86,7 @@ function intercept(e){
 }
 function loadCancelCleanup(){
   if(document.getElementById('zrAdminReservationCleanupCancelV1')||window.__ZR_ADMIN_RESERVATION_CLEANUP_CANCEL_V1)return;
-  const s=document.createElement('script');s.id='zrAdminReservationCleanupCancelV1';s.async=false;s.src='./admin_reservation_cleanup_cancel_v1.js?v=release-1792577604735';document.body.appendChild(s);
+  const s=document.createElement('script');s.id='zrAdminReservationCleanupCancelV1';s.async=false;s.src='./admin_reservation_cleanup_cancel_v1.js?v=release-1792577939325';document.body.appendChild(s);
 }
 
 document.addEventListener('click',intercept,true);
