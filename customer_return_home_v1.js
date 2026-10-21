@@ -10,7 +10,7 @@ function ensureModalUxConsistency(){
   const s=document.createElement('script');
   s.id='zrModalUxConsistencyV1';
   s.async=false;
-  s.src='./modal_ux_consistency_v1.js?v=release-1792578553900';
+  s.src='./modal_ux_consistency_v1.js?v=release-1792586551421';
   document.body.appendChild(s);
 }
 function customerVisible(){

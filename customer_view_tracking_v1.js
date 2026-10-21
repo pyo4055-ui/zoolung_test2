@@ -20,7 +20,7 @@ function ensureRecovery(){
   const s=document.createElement('script');
   s.id='zrCustomerFirebaseBridgeRecoveryV1';
   s.async=false;
-  s.src='./customer_firebase_bridge_recovery_v1.js?v=release-1792578553900';
+  s.src='./customer_firebase_bridge_recovery_v1.js?v=release-1792586551421';
   document.body.appendChild(s);
 }
 async function ensureFirebase(timeout=7000){

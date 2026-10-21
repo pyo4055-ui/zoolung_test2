@@ -90,13 +90,14 @@ function injectStyle(){
 #zrUnsavedGuardModal .zr-unsaved-sheet{width:min(470px,100%);background:#fff;border-radius:18px;padding:22px 20px 18px;box-sizing:border-box;box-shadow:0 24px 80px rgba(0,0,0,.3)}
 #zrUnsavedGuardModal h3{margin:-22px -20px 14px;padding:18px 20px;font-size:19px;color:#fff;background:var(--zr-v3-orange,#fc5404);border-radius:18px 18px 0 0}
 #zrUnsavedGuardModal p{margin:0;color:#59655d;font-size:13px;line-height:1.65;word-break:keep-all}
-#zrUnsavedGuardModal .zr-unsaved-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:19px}
-#zrUnsavedGuardModal button{min-height:44px;border-radius:11px;font-size:13px;font-weight:900;cursor:pointer}
+#zrUnsavedGuardModal .zr-unsaved-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:19px}
+#zrUnsavedGuardModal button{min-height:42px;min-width:0;padding:9px 5px;border-radius:10px;font-size:12px;white-space:nowrap;font-weight:900;cursor:pointer}
 #zrUnsavedKeep{border:1px solid #d5ddd7;background:#fff;color:#4f5b54}
 #zrUnsavedDiscard{border:1px solid #d5ddd7;background:#f5f1eb;color:#4f5b54}
 #zrUnsavedDiscard[hidden]{display:none!important}
+#zrUnsavedGuardModal .zr-unsaved-actions:has(#zrUnsavedDiscard[hidden]){grid-template-columns:repeat(2,minmax(0,1fr))}
 #zrUnsavedSave{border:1px solid var(--zr-v3-orange,#fc5404);background:var(--zr-v3-orange,#fc5404);color:#fff}
-@media(max-width:520px){#zrUnsavedGuardModal .zr-unsaved-actions{grid-template-columns:1fr}#zrUnsavedKeep{grid-column:auto}}
+@media(max-width:520px){#zrUnsavedGuardModal .zr-unsaved-actions{gap:5px}#zrUnsavedGuardModal button{font-size:11px;padding:9px 3px}}
 `;
   document.head.appendChild(s);
 }
