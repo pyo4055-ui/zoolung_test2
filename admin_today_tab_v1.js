@@ -51,7 +51,7 @@ function scheduleSegments(b){
   return list.filter(s=>s?.start&&s?.end).slice().sort((a,z)=>String(a.start).localeCompare(String(z.start)));
 }
 function bookingSignature(rows){
-  return JSON.stringify(rows.map(b=>[b.id,b.status,b.date,b.entryTime,b.groupType,b.groupBookingMode,b.exitTime,b.paidCount,b.chaperoneCount,b.mealType,b.mealStart,b.mealEnd,b.playUse,b.playStart,b.playEnd,b.playDuration,b.notes,b.schedulePublished,b.customerViewedParkingAt,b.customerViewedGuideMapAt,b.customerViewedScheduleAt,b.cafe?.items,b.feedOrder,b.additionalSales,b.settlement?.additionalSales,b.settlement?.actualPassportAmount,b.settlement?.actualShopAmount,b.settlement?.actualCanoeAmount]));
+  return JSON.stringify(rows.map(b=>[b.id,b.status,b.date,b.entryTime,b.participantAgeMax,b.groupType,b.groupBookingMode,b.exitTime,b.paidCount,b.chaperoneCount,b.mealType,b.mealStart,b.mealEnd,b.playUse,b.playStart,b.playEnd,b.playDuration,b.notes,b.schedulePublished,b.customerViewedParkingAt,b.customerViewedGuideMapAt,b.customerViewedScheduleAt,b.cafe?.items,b.feedOrder,b.additionalSales,b.settlement?.additionalSales,b.settlement?.actualPassportAmount,b.settlement?.actualShopAmount,b.settlement?.actualCanoeAmount]));
 }
 function isStaff(){const u=window.zrReservationFirebase?.auth?.currentUser;return !!u&&String(u.email||'').toLowerCase()===STAFF_EMAIL.toLowerCase()}
 function stopSchedule(){if(unsub){unsub();unsub=null}remote=new Map()}
@@ -119,12 +119,21 @@ function scheduleBars(b){
   if(!segs.length)return '<div class="zr-today-schedule-empty">스케줄이 아직 반영되지 않았습니다.</div>';
   return `<div class="zr-today-schedule-bars">${segs.map(s=>`<div class="zr-today-schedule-seg" style="background:${esc(segmentColor(s))}" title="${esc(segmentName(s)+' '+s.start+'~'+s.end)}"><b>${esc(segmentName(s))}</b><span>${esc(s.start)}~${esc(s.end)}</span></div>`).join('')}</div>`;
 }
+function agePreparationHtml(b){
+  const raw=b.participantAgeMax,age=Number(raw),paid=Number(b.paidCount);
+  if(raw==null||String(raw).trim()===''||!Number.isInteger(age)||age<0)return '<span><b>나이별 준비물: 최대 만 나이 확인 필요</b></span>';
+  if(!Number.isInteger(paid)||paid<0)return '<span><b>나이별 준비물: 유료 관람인원 확인 필요</b></span>';
+  const items=[];
+  if(age<=12)items.push('컬러링북 '+paid+'권');
+  if(age>=7)items.push('가이드북 '+paid+'권','주렁주화 '+paid+'개');
+  return items.map(text=>'<span><b>'+text+'</b></span>').join('');
+}
 function preparationHtml(b){
   const st=b.settlement||{},savedExtras=st.additionalSales??b.additionalSales;const feedRows=Array.isArray(savedExtras)?savedExtras.filter(x=>x.category==='feed'&&x.quantity!=null):[];const count=feedRows.length?feedRows.reduce((n,x)=>n+Number(x.quantity||0),0):Number(b.feedOrder?.quantity||0);
   const labels={shop:'상품샵',feed:'먹이',passport:'여권',canoe:'카누',cafe:'카페'};
   const extras=Array.isArray(st.additionalSales)?st.additionalSales:Array.isArray(b.additionalSales)?b.additionalSales:Object.entries({shop:st.actualShopAmount,passport:st.actualPassportAmount,canoe:st.actualCanoeAmount}).map(([category,amount])=>({category,amount}));
   const rows=extras.filter(x=>x?.category!=='feed'&&labels[x?.category]&&(Number(x.amount)>0||Number(x.quantity)>0)).map(x=>`<span>${labels[x.category]}${Number(x.quantity)>0?' · '+Number(x.quantity)+'개':x.category==='passport'?' · 수량 미등록':''}</span>`);
-  return `<div class="zr-today-cafe"><div class="zr-today-cafe-title">미리 준비할 내역</div><div class="zr-today-cafe-items"><span><b>먹이 준비: ${window.ZRBookingRules?.requiresProgramSchedule(b)!==false?'오전 프로그램 먹이 5종':count>0?count+'개':'0개 · 구매 안 함'}</b></span>${rows.join('')}</div></div>`;
+  return `<div class="zr-today-cafe"><div class="zr-today-cafe-title">미리 준비할 내역</div><div class="zr-today-cafe-items"><span><b>먹이 준비: ${window.ZRBookingRules?.requiresProgramSchedule(b)!==false?'오전 프로그램 먹이 5종':count>0?count+'개':'0개 · 구매 안 함'}</b></span>${agePreparationHtml(b)}${rows.join('')}</div></div>`;
 }
 function cardHtml(b){
   const paid=Number(b.paidCount||0),chap=Number(b.chaperoneCount||0),all=viewAll(b),items=cafeItems(b),type=groupType(b);
