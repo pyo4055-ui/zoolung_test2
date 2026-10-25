@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id);
 function general(){
   const group=$('groupType')?.value,date=$('visitDay')?.value,entry=$('entryTime')?.value;
   if(!group)return false;
-  if(group!=='유치원, 어린이집')return true;
+  if(!['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes(group))return true;
   return !!(date&&entry&&!window.ZRBookingRules.groupProgram(group,date,entry));
 }
 function order(){
