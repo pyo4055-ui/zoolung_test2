@@ -34,8 +34,10 @@ function visible(el){
   if(!el||el.disabled||el.type==='hidden')return false;
   try{const s=getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&el.getClientRects().length>0}catch{return true}
 }
+const FIELD_LABELS={groupType:'단체 유형',paidCount:'유료 관람인원',chaperoneCount:'인솔자 수',participantAgeMin:'참가자 최소 만 나이',participantAgeMax:'참가자 최대 만 나이',visitMonth:'방문 월',visitDay:'방문 일자',mealType:'식사 여부',entryTime:'입장시간',exitTime:'퇴장시간',mealStart:'식사 시작시간',mealDuration:'식사 이용시간',playUse:'놀이터 이용 여부',playStart:'놀이터 입장시간',playDuration:'놀이터 이용시간',feedPurchase:'먹이 세트 구매 여부',feedQuantity:'먹이 세트 수량',orgName:'단체명',managerName:'예약자명',contact:'연락처',email:'이메일',notes:'특이사항',privacy:'개인정보 수집 및 이용 동의'};
 function labelText(el,root){
   if(!el)return '필수 항목';
+  if(FIELD_LABELS[el.id])return FIELD_LABELS[el.id];
   if(el.id){
     const direct=root.querySelector(`label[for="${CSS.escape(el.id)}"]`);
     const t=norm(direct?.textContent).replace(/\s*\*+\s*$/,'');
@@ -52,7 +54,7 @@ function labelText(el,root){
     const t=norm(groupLabel?.textContent).replace(/\s*\*+\s*$/,'');
     if(t)return t;
   }
-  return norm(el.getAttribute('aria-label')||el.placeholder||el.name||el.id)||'필수 항목';
+  return norm(el.getAttribute('aria-label')||el.placeholder)||'필수 항목';
 }
 function requiredByLabel(el){
   if(el.required||el.getAttribute('aria-required')==='true')return true;
@@ -70,11 +72,15 @@ function invalid(el){
   try{return !el.checkValidity()}catch{return false}
 }
 function messageFor(el,label){
+  if(['participantAgeMin','participantAgeMax'].includes(el.id)&&el.validity?.rangeOverflow&&el.max==='7')return '유치원·어린이집은 참가자 나이를 만 7세까지 입력할 수 있습니다. 입력한 나이나 단체 유형을 수정해주세요.';
+  if(el.validity?.typeMismatch&&el.type==='email')return '이메일 주소를 확인해주세요. (예: name@example.com)';
+  if(el.validity?.stepMismatch)return `${label}: 소수점 없이 정수로 입력해주세요.`;
   if(el.validity?.patternMismatch)return `${label} 형식을 확인해주세요.`;
-  if(el.validity?.rangeUnderflow||el.validity?.rangeOverflow)return `${label} 값을 확인해주세요.`;
-  if(el.type==='checkbox'||el.type==='radio')return `${label}을(를) 확인해주세요.`;
-  if(el.tagName==='SELECT')return `${label}을(를) 선택해주세요.`;
-  return `${label}을(를) 입력해주세요.`;
+  if(el.validity?.rangeUnderflow)return `${label}: ${el.min} 이상으로 입력해주세요.`;
+  if(el.validity?.rangeOverflow)return `${label}: ${el.max} 이하로 입력해주세요.`;
+  if(el.type==='checkbox'||el.type==='radio')return `${label}: 확인해주세요.`;
+  if(el.tagName==='SELECT')return `${label}: 선택해주세요.`;
+  return `${label}: 입력해주세요.`;
 }
 function clearField(el){
   if(!el)return;
@@ -109,7 +115,7 @@ function collectIssues(root){
       const group=controls.filter(x=>x.type==='radio'&&x.name===el.name&&visible(x));
       const required=group.some(requiredByLabel);
       if(required&&!group.some(x=>x.checked)){
-        const first=group[0],label=labelText(first,root);issues.push({el:first,message:`${label}을(를) 선택해주세요.`});
+        const first=group[0],label=labelText(first,root);issues.push({el:first,message:`${label}: 선택해주세요.`});
       }
       continue;
     }
@@ -141,6 +147,7 @@ function clearOnEdit(e){
   const root=$(ROOT_ID);if(!root||!root.contains(e.target))return;
   if(!e.target.matches?.('input,select,textarea'))return;
   if(!invalid(e.target))clearField(e.target);
+  if(e.target.id==='groupType')for(const id of ['participantAgeMin','participantAgeMax']){const input=$(id);if(input)clearField(input);}
 }
 function boot(){
   installStyle();

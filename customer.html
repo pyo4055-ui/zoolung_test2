@@ -943,7 +943,8 @@ function monthOptions(){
   return out
 }
 function initMonths(){
-  const opts=monthOptions();
+  const currentMonth=window.ZRBookingRules.koreaDate().slice(0,7);
+  const opts=monthOptions().filter(o=>o.key>=currentMonth);
   const customerCur=$("visitMonth").value;
   $("visitMonth").innerHTML='<option value="">선택</option>'+opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
   if(opts.some(o=>o.key===customerCur))$("visitMonth").value=customerCur;
@@ -953,16 +954,17 @@ function renderVisitDays(){
   $("visitDay").innerHTML='<option value="">선택</option>';
   if(!ym)return;
   let [y,m]=ym.split("-").map(Number);
-  const last=new Date(y,m,0).getDate(), today=new Date(); today.setHours(0,0,0,0);
+  const last=new Date(y,m,0).getDate(), today=window.ZRBookingRules.koreaDate();
   const s=settings(), openStart=new Date(s.bookingStart+"T00:00:00"), openEnd=new Date(s.bookingEnd+"T23:59:59");
   for(let d=1;d<=last;d++){
     const dt=new Date(y,m-1,d), date=validDateStr(y,m,d), wd=dt.getDay();
     const policyReason=window.ZRBookingRules.bookingBlockReason(s,date);
-    let disabled=!!policyReason || dt<today || dt<openStart || dt>openEnd || wd===0 || wd===6 || isDateClosed(date,{});
+    let disabled=!!policyReason || date<today || dt<openStart || dt>openEnd || wd===0 || wd===6 || isDateClosed(date,{});
     let tag="";
     if(wd===0||wd===6)tag=" (주말)";
     else if(isDateClosed(date,{}))tag=" (마감)";
     if(policyReason)tag=` (${policyReason})`;
+    if(date<today)tag=" (지난 날짜 · 예약 불가)";
     if(editingBookingId&&!window.ZRBookingRules.canDirectEdit({status:'pending',date})){disabled=true;tag=" (변경 요청 필요)"}
     const o=document.createElement("option");o.value=date;o.textContent=`${d}일${tag}`;o.disabled=disabled;$("visitDay").appendChild(o);
   }
