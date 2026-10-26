@@ -14,7 +14,7 @@ const fee=(amount,type,value)=>Number(amount||0)<=0?0:(type==='percent'?Math.rou
 const freeChap=(paid,chap)=>Math.min(Math.floor(Math.max(0,Number(paid||0))/5),Math.max(0,Number(chap||0)));
 const addMin=(start,dur)=>{const m=toMin(start);return m==null||!dur?'':toTime(m+Number(dur||0))};
 function recalcSettlement(b,v){
-if(!b.settlement)return;
+if(!b.settlement||b.settlement.preserveHistoricalAmounts)return;
 const st=b.settlement,s=snapshot(v),paid=Number(st.actualPaidCount||0),paidChap=Number(st.actualPaidChaperone||0),cafe=Number(st.actualCafeAmount||0),ticket=(paid+paidChap)*s.groupPrice;
 Object.assign(st,{vendorId:v.id,vendorSnapshot:s,ticketUnitPrice:s.groupPrice,ticketAmount:ticket,totalActualSales:ticket+cafe+window.ZRSettlementRules.extraTotal(st.additionalSales),ticketFee:v.id==='self'?0:fee(ticket,s.ticketFeeType,s.ticketFeeValue),cafeFee:v.id==='self'?0:fee(cafe,s.cafeFeeType,s.cafeFeeValue),savedAt:new Date().toISOString()});
 st.totalFee=st.ticketFee+st.cafeFee;

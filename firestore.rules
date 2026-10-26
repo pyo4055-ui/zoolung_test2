@@ -252,7 +252,7 @@ service cloud.firestore {
     }
     function bookingAllocationValid(id,before,after) {
       let config = allocationConfig();
-      return config.get('maintenance',false) != true && (config.get('enforced',false) != true || !allocationActive(after) || after.get('date','') < config.get('startDate','') || activeAllocationValid(id,after));
+      return config.get('maintenance',false) != true && ((isScheduleStaff() && after.get('legacyImport',{}).get('capacityExempt',false) == true) || config.get('enforced',false) != true || !allocationActive(after) || after.get('date','') < config.get('startDate','') || activeAllocationValid(id,after));
     }
     function allocationSource(id) {
       return id.matches('^changePlayHold_.*')

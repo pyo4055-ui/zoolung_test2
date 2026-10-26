@@ -27,6 +27,7 @@ async function prepare(F,db,tx,id,before,after){
   const config=await tx.get(F.doc(db,CONFIG,'main'));
   if(config.exists()&&config.data().maintenance===true)throw Error('예약 저장 시스템을 점검 중입니다. 잠시 후 다시 시도해주세요.');
   if(!config.exists()||config.data().enforced!==true)return ()=>{};
+  if(after?.legacyImport?.capacityExempt===true)return ()=>{};
   const settingSnap=await tx.get(F.doc(db,'customerGuides','main'));
   const settings=settingSnap.exists()?settingSnap.data().reservationSettings||{}:{};
   const targets=[];

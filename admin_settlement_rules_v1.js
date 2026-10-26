@@ -13,7 +13,7 @@ if(window.ZRSettlementRules)return;
     return Math.round(value*Math.max(0,Number(multiplier||0)));
   };
   function syncToCurrentRules(b,currentVendor){
-    const st=b?.settlement;if(!st||!st.savedAt)return false;
+    const st=b?.settlement;if(!st||!st.savedAt||st.preserveHistoricalAmounts)return false;
     const id=assignedVendorId(b);if(!id||id==='self')return false;
     const cur=currentVendor(id),old=fallbackVendor(b)||{};
     const rule=cur||old;if(!rule)return false;
@@ -52,7 +52,7 @@ function applyPayment(b,c,now){
   return vendorSnap;
 }
   function normalizeLegacySettlement(b,markNow,vendorFor,nowIso){
-    if(!b?.settlement)return false;
+    if(!b?.settlement||b.settlement.preserveHistoricalAmounts)return false;
     const st=b.settlement,snap=vendorFor(b)||st.vendorSnapshot||{};
     const vendorId=st.vendorId||b.outsourcingVendorId||snap.id||'self';
     const paid=paidAdmissions(st),unit=Math.max(0,Number(st.ticketUnitPrice??snap.groupPrice??0));

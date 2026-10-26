@@ -33,6 +33,7 @@ ITEMS.push(
  {id:'smsSettings',group:'settings',label:'문자 설정',routeBase:'settings',buttonId:'zrSettingsConfirmSmsSubtabV1',sectionId:'zrSettingsConfirmSmsPanelV1'},
  {id:'vendorSettings',group:'settings',label:'아웃소싱 업체 설정',routeBase:'settings',buttonId:'zrSettingsOutsourceSubtabV1',sectionId:'zrSettingsOutsourcePanelV1'}
 );
+GROUPS.push({id:'legacy',label:'이전 예약'});ITEMS.push({id:'legacyUpload',group:'legacy',label:'(구) 예약접수 업로드',buttonId:'legacyUploadButton',sectionId:'tab-legacy-upload'});
 const VALID_ITEM_IDS=new Set(ITEMS.map(x=>x.id));
 const $=id=>document.getElementById(id);
 let rail=null,header=null,editor=null,adminObserver=null,pendingSync=false,activeId='',stylePromise=null,editButton=null,collapseButton=null,readyTimer=null;
