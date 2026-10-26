@@ -25,8 +25,8 @@ async function initializeWhenReady(){
   if(initialized||initializing)return;
   let ready=false;try{ready=window.parent!==window&&window.parent.zrReservationFirebase?.isStaff()===true}catch{}
   if(!ready)return;
-  initializing=true;
-  try{const v=await api('state');state=v;month=state.rows.find(r=>r.year===year())?.month||1;initialized=true;clearInterval(authWait);render();msg('엑셀 파일을 선택해 불러오거나 예약을 추가해주세요.');}
+  initializing=true;msg('공용 업로드 목록을 불러오고 있습니다.');
+  try{const v=await api('state');state=v;const first=[...state.rows].sort((a,b)=>a.year-b.year||a.month-b.month)[0];if(first&&!state.rows.some(r=>r.year===year()))$('year').value=String(first.year);month=Math.min(...state.rows.filter(r=>r.year===year()).map(r=>r.month),13);if(month===13)month=1;initialized=true;clearInterval(authWait);render();msg('엑셀 파일을 선택해 불러오거나 예약을 추가해주세요.');}
   catch(e){msg(e.message);}
   finally{initializing=false;busy=!initialized;buttons();}
 }

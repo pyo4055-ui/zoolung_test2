@@ -10,7 +10,7 @@ async function sharedState(){
  const local=await localState(),db=await database();
  const migrated=await new Promise((resolve,reject)=>{const q=db.transaction('drafts').objectStore('drafts').get(uid+':shared-v1');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)});
  if(!migrated){
-  for(const row of local.rows||[]){const ref=F.doc(z.db,'legacyImportDrafts',String(row.id));await F.runTransaction(z.db,async tx=>{if(!(await tx.get(ref)).exists())tx.set(ref,p.JSON.parse(JSON.stringify({row:JSON.stringify(row),deleted:false})))})}
+  let migratedCount=0;for(const row of local.rows||[]){window.dispatchEvent(new CustomEvent('legacy-progress',{detail:`기존 업로드 목록을 공용 저장소로 옮기는 중 ${++migratedCount} / ${local.rows.length}건`}));const ref=F.doc(z.db,'legacyImportDrafts',String(row.id));await F.runTransaction(z.db,async tx=>{if(!(await tx.get(ref)).exists())tx.set(ref,p.JSON.parse(JSON.stringify({row:JSON.stringify(row),deleted:false})))})}
   await new Promise((resolve,reject)=>{const t=db.transaction('drafts','readwrite');t.objectStore('drafts').put(true,uid+':shared-v1');t.oncomplete=resolve;t.onerror=()=>reject(t.error)});
  }
  const snap=await F.getDocs(F.collection(z.db,'legacyImportDrafts'));sharedBaseline=new Map(snap.docs.map(d=>[d.id,d.data()]));
