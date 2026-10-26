@@ -3,6 +3,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function resetDeleted(collection, id) {
+      return exists(/databases/$(database)/documents/operationalReset/main)
+        && id in get(/databases/$(database)/documents/operationalReset/main).data.get(collection, []);
+    }
+    match /legacyImportDrafts/{draftId} {
+      allow read, create, update, delete: if isScheduleStaff();
+    }
+
     // 관리자 계정 확인
     function isScheduleStaff() {
       return request.auth != null
@@ -336,24 +344,24 @@ service cloud.firestore {
 
       // 관리자 예약 생성
       // 고객은 자기 UID로만 예약 생성
-      allow create: if bookingAllocationValid(reservationId,{},request.resource.data) && (isScheduleStaff()
+      allow create: if !resetDeleted('reservations', reservationId) && (bookingAllocationValid(reservationId,{},request.resource.data) && (isScheduleStaff()
         || (
           request.auth != null
           && request.resource.data.ownerUid == request.auth.uid
           && request.resource.data.get('id',reservationId) == reservationId
           && customerBookingCreate()
-        ));
+        )));
 
       // 관리자 수정
       // 고객은 자기 예약만 수정
-      allow update: if bookingAllocationValid(reservationId,resource.data,request.resource.data) && (isScheduleStaff()
+      allow update: if !resetDeleted('reservations', reservationId) && (bookingAllocationValid(reservationId,resource.data,request.resource.data) && (isScheduleStaff()
         || (
           request.auth != null
           && resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerUid == request.auth.uid
           && request.resource.data.get('id',reservationId) == reservationId
           && customerBookingUpdate()
-        ));
+        )));
 
       // 과거 예약 정리는 관리자만 영구 삭제 가능
       allow delete: if isScheduleStaff() && bookingAllocationValid(reservationId,resource.data,{});
@@ -371,22 +379,22 @@ service cloud.firestore {
 
       // 관리자 생성 가능
       // 고객은 자기 UID 데이터만 생성
-      allow create: if isScheduleStaff()
+      allow create: if !resetDeleted('reservationAvailability', reservationId) && (isScheduleStaff()
         || (
           request.auth != null
           && request.resource.data.ownerUid == request.auth.uid
           && customerAvailabilityWrite(reservationId)
-        );
+        ));
 
       // 관리자 수정 가능
       // 고객은 자기 데이터만 수정
-      allow update: if isScheduleStaff()
+      allow update: if !resetDeleted('reservationAvailability', reservationId) && (isScheduleStaff()
         || (
           request.auth != null
           && resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerUid == request.auth.uid
           && customerAvailabilityWrite(reservationId)
-        );
+        ));
 
       // 과거 예약 정리는 관리자만 영구 삭제 가능
       allow delete: if isScheduleStaff();
@@ -413,22 +421,22 @@ service cloud.firestore {
 
       // 고객은 자기 UID로 문의 생성 가능
       // 관리자는 기존 로컬 문의의 1회 마이그레이션 가능
-      allow create: if isScheduleStaff()
+      allow create: if !resetDeleted('customerInquiries', inquiryId) && (isScheduleStaff()
         || (
           request.auth != null
           && request.resource.data.ownerUid == request.auth.uid
           && customerInquiryCreate()
-        );
+        ));
 
       // 관리자 답변/상태 변경 가능
       // 고객은 자기 문의만 수정 가능
-      allow update: if isScheduleStaff()
+      allow update: if !resetDeleted('customerInquiries', inquiryId) && (isScheduleStaff()
         || (
           request.auth != null
           && resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt', 'sharedInquiryVersion'])
-        );
+        ));
 
       // 문의는 기록 보존을 위해 영구 삭제하지 않음
       allow delete: if false;
@@ -456,11 +464,12 @@ service cloud.firestore {
           && request.resource.data.customerInvalidated == true
           && request.resource.data.customerInvalidatedAt == request.time;
       }
-      allow read, create, update: if isScheduleStaff();
-      allow create: if customerInvalidation()
-        && request.resource.data.keys().hasOnly(['customerInvalidated','customerInvalidatedAt']);
-      allow update: if customerInvalidation()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerInvalidated','customerInvalidatedAt']);
+      allow read: if isScheduleStaff();
+      allow create, update: if !resetDeleted('scheduleGroups', groupId) && (isScheduleStaff());
+      allow create: if !resetDeleted('scheduleGroups', groupId) && (customerInvalidation()
+        && request.resource.data.keys().hasOnly(['customerInvalidated','customerInvalidatedAt']));
+      allow update: if !resetDeleted('scheduleGroups', groupId) && (customerInvalidation()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['customerInvalidated','customerInvalidatedAt']));
       allow delete: if false;
     }
 

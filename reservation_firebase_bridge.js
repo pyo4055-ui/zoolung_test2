@@ -101,7 +101,7 @@ async function startListeners(user){
   const generation=listenerGeneration;
   const current=()=>generation===listenerGeneration&&auth.currentUser?.uid===user.uid;
   if(isStaff(user)){
-    await migrateStaffLocal(user);
+    // Firestore is authoritative; never recreate deleted records from browser caches.
     if(!current())return;
     stopFull=F.onSnapshot(F.collection(db,FULL_COLLECTION),snap=>{
     if(!current())return;

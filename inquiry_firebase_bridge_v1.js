@@ -32,7 +32,7 @@ function directWrite(list,source){
   finally{applyingRemote=false}
   dispatchChanged(source);
 }
-function mergeRemote(remote){return mergeRecords(remote,readLocal(),currentUser?.uid||'')}
+function mergeRemote(remote){return mergeRecords(remote,readLocal().filter(item=>!item.sharedInquiryId),currentUser?.uid||'')}
 function sameSession(user){return !!user&&auth?.currentUser?.uid===user.uid&&currentUser?.uid===user.uid}
 async function upsertItem(item,user,force=false){
   if(!sameSession(user)||!db||!F)return false;
