@@ -186,7 +186,7 @@
 
   function fixCalendarSearchHandler(){
     const btn=$('adminMonthSearch');
-    if(btn)btn.onclick=()=>renderAdmin();
+    if(btn)btn.onclick=()=>{const month=$('adminMonth')?.value,calendar=$('adminCalendar');if(calendar&&/^\d{4}-\d{2}$/.test(month||''))calendar.dataset.renderedMonth=month;renderAdmin();};
   }
 
   function augmentVendorColorUi(){

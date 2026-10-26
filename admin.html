@@ -1307,7 +1307,7 @@ function adminGuard(showMessage=true){
 
 function renderAdmin(){
   if(!adminGuard(false))return;
-  const ym=document.getElementById('adminCalendar').dataset.renderedMonth||document.getElementById('adminMonth').value||monthOptions()[0].key;document.getElementById('adminCalendar').dataset.renderedMonth=ym;$("adminMonth").value=ym;
+  const ym=document.getElementById('adminCalendar').dataset.renderedMonth||document.getElementById('adminMonth').value||monthOptions()[0].key;document.getElementById('adminCalendar').dataset.renderedMonth=ym;
   const bs=activeBookings().filter(b=>monthKey(b.date)===ym);
   $("kpiTeams").textContent=bs.length+"팀";$("kpiPeople").textContent=bs.reduce((s,b)=>s+totalPeople(b),0)+"명";$("kpiPending").textContent=bs.filter(b=>b.status==="pending").length+"건";
   const [y,m]=ym.split("-").map(Number), first=new Date(y,m-1,1).getDay(), last=new Date(y,m,0).getDate();

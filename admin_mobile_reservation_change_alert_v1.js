@@ -64,7 +64,7 @@ function contentOf(item){for(const k of ['content','message','inquiry','text'])i
 function questionOf(item){const t=contentOf(item),i=t.lastIndexOf(REPLY_MARKER);return (i<0?t:t.slice(0,i)).trim()}
 function isChangeInquiry(item){const q=questionOf(item);return item?.changeRequest===true||/^\[예약 변경 요청\]/.test(q)||q.includes('\n[예약 변경 정보]\n')}
 function localPendingReservation(){return allBookings().filter(b=>String(b.status||'')==='pending').length}
-function localPendingChange(){return readInquiries().filter(item=>isChangeInquiry(item)&&!['done','rejected'].includes(String(item?.changeRequestStatus||'pending'))).length}
+function localPendingChange(){let rows=[];try{rows=typeof window.bookings==='function'?window.bookings():JSON.parse(localStorage.getItem('zr_bookings')||'[]')}catch{}return rows.filter(b=>b&&!b.__availabilityOnly&&b.reservationChangeRequest&&!['done','rejected'].includes(String(b.reservationChangeRequest.status||'pending'))).length}
 function countValue(v){const n=Number(v);return Number.isFinite(n)&&n>0?Math.trunc(n):0}
 function setText(el,v){if(!el)return;const text=String(countValue(v));if(el.textContent!==text)el.textContent=text}
 function syncBadge(){

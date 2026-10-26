@@ -27,8 +27,7 @@ function hasReply(text){return String(text||'').lastIndexOf(REPLY_MARKER)>=0}
 function isChangePending(status){return !['done','rejected'].includes(String(status||'pending'))}
 function pendingChangeCount(all,inquiries){
   const shared=all.map(b=>b?.reservationChangeRequest).filter(r=>r&&typeof r==='object');
-  if(shared.length)return shared.filter(r=>isChangePending(r.status)).length;
-  return inquiries.filter(item=>isChangeInquiry(item)&&isChangePending(item?.changeRequestStatus)).length;
+  return shared.filter(r=>isChangePending(r.status)).length;
 }
 function cafeOrdered(b){return String(b?.mealType||'')==='cafe'||(Array.isArray(b?.cafe?.items)&&b.cafe.items.some(x=>Number(x?.qty||0)>0))}
 function paymentDone(b){return !!(b?.settlement?.savedAt||b?.settlementStatus==='completed'||b?.settlementCompletedAt)}
