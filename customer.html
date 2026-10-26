@@ -1144,6 +1144,7 @@ function validateBooking(){
   const pc=calcPeople();
   if(!$("groupType").value)return "단체 정보를 선택해주세요.";
   const ageMin=$("participantAgeMin").value,ageMax=$("participantAgeMax").value;
+  const ageError=window.ZRBookingRules.participantAgeError($("groupType").value,ageMax);if(ageError)return ageError;
   if(ageMin===""||ageMax==="")return "참가자 만 나이(인솔자 제외)를 입력해주세요.";
   if(!Number.isSafeInteger(Number(ageMin))||!Number.isSafeInteger(Number(ageMax))||Number(ageMin)<0||Number(ageMax)<Number(ageMin))return "참가자 만 나이를 최소 나이부터 최대 나이 순서로 입력해주세요.";
   if(pc.p<15)return "유료인원은 15명 이상이어야 합니다.";

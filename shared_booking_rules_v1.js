@@ -93,6 +93,7 @@
     if(within(s.peakSeasonPeriods))return '성수기';
     return date<earliestBookingDate(s,now)?'예약 마감':'';
   }
+  function participantAgeError(group,max){return ['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes(group)&&Number(max)>7?'유치원·어린이집은 참가자 최대 만 나이가 7세 이하여야 합니다. 나이 또는 단체 유형을 확인해주세요.':''}
   function groupProgram(group,date,entry){const d=new Date(date+'T12:00:00+09:00'),day=d.getUTCDay(),t=toMin(entry);return ['유치원, 어린이집','유치원/어린이집','유치원','어린이집'].includes(group)&&Number.isFinite(d.getTime())&&day>=1&&day<=5&&t!==null&&t<720}
   function programBookingCount(rows,date,excludeId){return rows.filter(b=>b.date===date&&(!excludeId||b.id!==excludeId)&&!['cancelled','rejected'].includes(b.status)&&!b.__changePlayHold&&(b.__availabilityOnly?b.programCapacity!==false:groupProgram(b.groupType,b.date,b.entryTime))).length}
   function bookingCapacityClosed(s,rows,b){
@@ -121,5 +122,5 @@
     const days=(Date.parse(String(b.date)+'T00:00:00Z')-Date.parse(koreaDate(now)+'T00:00:00Z'))/86400000;
     return Number.isInteger(days)&&days>7;
   }
-  window.ZRBookingRules=Object.freeze({canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
+  window.ZRBookingRules=Object.freeze({participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
 })();

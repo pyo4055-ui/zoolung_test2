@@ -23,6 +23,7 @@ service cloud.firestore {
         && d.paidCount + d.chaperoneCount >= 15
         && d.participantAgeMin is int && d.participantAgeMin >= 0
         && d.participantAgeMax is int && d.participantAgeMax >= d.participantAgeMin
+        && (!(d.groupType in ['유치원','어린이집','유치원, 어린이집','유치원/어린이집']) || d.participantAgeMax <= 7)
         && d.date is string && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && d.entryTime is string && d.entryTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
         && d.exitTime is string && d.exitTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')

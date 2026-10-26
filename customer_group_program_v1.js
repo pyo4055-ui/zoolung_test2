@@ -17,6 +17,7 @@ function order(){
 function amount(){try{return order().amount}catch{return 0}}
 function fields(){return {groupBookingMode:general()?'general':'program',mealLoc:general()?'자리배정 없음':'',feedOrder:order()}}
 function presentation(){
+  for(const id of ['participantAgeMin','participantAgeMax']){const input=$(id);if(input){if(['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes($('groupType')?.value))input.max='7';else input.removeAttribute('max');}}
   const isGeneral=general(),title=$('mealType')?.closest('section')?.querySelector?.('h2');
   if(title){const text=[...title.childNodes].find(n=>n.nodeType===3);if(text)text.textContent=isGeneral?'방문시간':'식사 및 방문시간'}
   for(const id of ['sumMeal','sumPlay']){const row=$(id);row?.classList.toggle('hidden',isGeneral);row?.previousElementSibling?.classList.toggle('hidden',isGeneral)}
