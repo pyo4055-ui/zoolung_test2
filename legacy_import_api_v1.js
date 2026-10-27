@@ -21,10 +21,12 @@ async function sharedState(){
  if(z.user?.uid!==uid)throw Error('로그인 정보가 변경되었습니다. 다시 열어주세요.');return {rows};
 }
 let sharedBaseline=new Map();
+// Firestore maps do not guarantee property order across reads.
+function sameDraft(a,b){return a===undefined||b===undefined?a===b:a.deleted===b.deleted&&a.row===b.row}
 async function persist(s){
  const p=host(),z=p.zrReservationFirebase,F=await p.ZRLegacyFirebase(),next=new Map(s.rows.map(r=>[String(r.id),{row:JSON.stringify(r),deleted:false}]));
- const changes=[];for(const[id,value]of next)if(JSON.stringify(sharedBaseline.get(id))!==JSON.stringify(value))changes.push([id,value]);for(const[id,value]of sharedBaseline)if(!next.has(id)&&!value.deleted)changes.push([id,{deleted:true}]);
- for(let i=0;i<changes.length;i+=100){const chunk=changes.slice(i,i+100);await F.runTransaction(z.db,async tx=>{const docs=[];for(const[id,value]of chunk){const ref=F.doc(z.db,'legacyImportDrafts',id),snap=await tx.get(ref),before=sharedBaseline.get(id);if(JSON.stringify(snap.exists()?snap.data():undefined)!==JSON.stringify(before))throw Error('다른 브라우저에서 목록을 수정했습니다. 새로고침 후 다시 저장해주세요.');docs.push([ref,value])}for(const[ref,value]of docs)tx.set(ref,p.JSON.parse(JSON.stringify(value)))});for(const[id,value]of chunk)sharedBaseline.set(id,value)}
+ const changes=[];for(const[id,value]of next)if(!sameDraft(sharedBaseline.get(id),value))changes.push([id,value]);for(const[id,value]of sharedBaseline)if(!next.has(id)&&!value.deleted)changes.push([id,{deleted:true}]);
+ for(let i=0;i<changes.length;i+=100){const chunk=changes.slice(i,i+100);await F.runTransaction(z.db,async tx=>{const docs=[];for(const[id,value]of chunk){const ref=F.doc(z.db,'legacyImportDrafts',id),snap=await tx.get(ref),before=sharedBaseline.get(id);if(!sameDraft(snap.exists()?snap.data():undefined,before))throw Error('다른 브라우저에서 목록을 수정했습니다. 새로고침 후 다시 저장해주세요.');docs.push([ref,value])}for(const[ref,value]of docs)tx.set(ref,p.JSON.parse(JSON.stringify(value)))});for(const[id,value]of chunk)sharedBaseline.set(id,value)}
 }
 async function state(){return sharedState()}
 
