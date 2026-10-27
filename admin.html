@@ -1663,7 +1663,7 @@ window.showMealDay=function(date){
 
 
 function currentAdminTab(){
-  const visible=["calendar","activity","meals","menuadmin","inquiries","settings"].find(t=>!$("tab-"+t).classList.contains("hidden"));
+  const visible=["calendar","activity","meals","menuadmin","inquiries","settings"].find(t=>$("tab-"+t)&&!$("tab-"+t).classList.contains("hidden"));
   return visible||"";
 }
 async function refreshAdminCurrentTab(){
@@ -1672,7 +1672,7 @@ async function refreshAdminCurrentTab(){
   try{
     const views=[...(window.ZRAdminRefreshViews||new Map())].map(([id,render])=>({element:$(id),render})).filter(({element})=>element&&!element.closest('.hidden,[hidden]'));
     const current=views.find(view=>!views.some(other=>other!==view&&view.element.contains(other.element)));
-    if(current)await current.render();
+    if(current){if(await current.render()===false)return false;}
     else{
       const tab=currentAdminTab();
       if(tab==="calendar")renderAdmin();

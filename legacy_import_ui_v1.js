@@ -30,6 +30,13 @@ async function initializeWhenReady(){
   catch(e){msg(e.message);}
   finally{initializing=false;busy=!initialized;buttons();}
 }
+window.ZRLegacyRefresh=async()=>{
+ if(busy||!initialized){msg('목록을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');return false;}
+ if(state.rows.some(r=>r.edited&&!r.registered)){msg('저장하지 않은 수정 내용이 있습니다. 수정 내용 저장 후 새로고침해주세요.');return false;}
+ busy=true;buttons();
+ try{const next=await api('state');state=next;selected.clear();page=1;render();msg('업로드 목록을 새로고침했습니다.');return true;}
+ finally{busy=false;buttons();}
+};
 const authWait=setInterval(initializeWhenReady,1000);
 window.addEventListener('focus',initializeWhenReady);
 initializeWhenReady();

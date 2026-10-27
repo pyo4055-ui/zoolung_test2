@@ -3,6 +3,11 @@
 function mount(){const tabs=document.querySelector('.admin-tabs'),calendar=document.getElementById('tab-calendar');if(!tabs||!calendar)return false;
 const b=document.createElement('button');b.id='legacyUploadButton';b.className='btn-gray';b.textContent='(구) 예약접수 업로드';tabs.append(b);
 const section=document.createElement('section');section.id='tab-legacy-upload';section.className='hidden';const frame=document.createElement('iframe');frame.title='(구) 예약접수 업로드';frame.src='./legacy_import.html';frame.style.cssText='width:100%;height:calc(100vh - 130px);min-height:650px;border:0';section.append(frame);calendar.parentElement.append(section);
+(window.ZRAdminRefreshViews||(window.ZRAdminRefreshViews=new Map())).set('tab-legacy-upload',async()=>{
+ const refresh=frame.contentWindow?.ZRLegacyRefresh;
+ if(typeof refresh!=='function')throw Error('업로드 화면을 준비 중입니다. 잠시 후 다시 시도해주세요.');
+ return refresh();
+});
 b.onclick=()=>{if(typeof adminGuard==='function'&&!adminGuard())return;for(const s of calendar.parentElement.children)if(s.tagName==='SECTION')s.classList.add('hidden');section.classList.remove('hidden');};
 document.addEventListener('click',e=>{if(e.target.closest('#legacyUploadButton,[data-zr-admin-item="legacyUpload"]'))return;if(e.target.closest('.admin-tabs button,#zrAdminShellNav button'))section.classList.add('hidden')},true);
 function history(){const now=new Date(),last=now.getFullYear()+2;document.querySelectorAll('select').forEach(s=>{if(s.closest('.modal,[role=dialog]'))return;const opts=[...s.options];if(opts.some(o=>/^\d{4}-\d{2}$/.test(o.value))){const old=s.value,values=new Set(opts.map(o=>o.value));for(let y=2022;y<=last;y++)for(let m=1;m<=12;m++){const v=`${y}-${String(m).padStart(2,'0')}`;if(!values.has(v))s.add(new Option(`${y}년 ${m}월`,v))}[...s.options].sort((a,b)=>a.value.localeCompare(b.value)).forEach(o=>s.append(o));s.value=old;}else if(opts.length&&opts.every(o=>!o.value||/^20\d{2}$/.test(o.value))&&opts.some(o=>/^20\d{2}$/.test(o.value))){const old=s.value,values=new Set(opts.map(o=>o.value));for(let y=2022;y<=last;y++)if(!values.has(String(y)))s.add(new Option(y+'년',y));[...s.options].sort((a,b)=>a.value.localeCompare(b.value)).forEach(o=>s.append(o));s.value=old;}})}
