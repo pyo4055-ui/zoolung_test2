@@ -411,12 +411,13 @@
   };
   const vendorRuleFor=(id,b)=>currentVendor(id)||fallbackVendor(b)||{id,name:id,ticketFeeType:'flat',ticketFeeValue:0,cafeFeeType:'flat',cafeFeeValue:0};
 
+  const exportVendorId=b=>assignedVendorId(b)||'self';
   function filteredOutsourceBookings(){
     syncAllSettlementRules();
     const start=$('outsourceStart')?.value||'',end=$('outsourceEnd')?.value||'',filter=$('outsourceVendorFilter')?.value||'';
     return bookings().filter(b=>{
       if(!b||b.__availabilityOnly||!b.settlement?.savedAt||['cancelled','rejected'].includes(b.status))return false;
-      const id=assignedVendorId(b);return id&&id!=='self'&&(!filter||id===filter)&&(!start||b.date>=start)&&(!end||b.date<=end);
+      const id=exportVendorId(b),query=String($('zrOutsourceOrgSearch')?.value||'').trim(),norm=v=>String(v||'').toLowerCase().replace(/\s/g,'');return (!filter||id===filter)&&(query?norm(b.orgName).includes(norm(query)):(!start||b.date>=start)&&(!end||b.date<=end));
     }).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.orgName||'').localeCompare(String(b.orgName||''),'ko'));
   }
 
@@ -479,11 +480,11 @@
   function downloadOutsourceExcel(){
     if(!adminGuard())return;
     const list=filteredOutsourceBookings(),filter=$('outsourceVendorFilter')?.value||'',start=$('outsourceStart')?.value||'',end=$('outsourceEnd')?.value||'';
-    if(!list.length){toast('조회 조건에 해당하는 아웃소싱 예약이 없습니다.');return;}
-    const ids=filter?[filter]:[...new Set(list.map(assignedVendorId))];
+    if(!list.length){toast('조회 조건에 해당하는 정산 내역이 없습니다.');return;}
+    const ids=filter?[filter]:[...new Set(list.map(exportVendorId))];
     const groups=ids.map(id=>{
-      const sample=list.find(b=>assignedVendorId(b)===id),vendor=vendorRuleFor(id,sample)||{id,name:id};
-      return {vendor,rows:list.filter(b=>assignedVendorId(b)===id)};
+      const sample=list.find(b=>exportVendorId(b)===id),vendor=id==='self'?{id:'self',name:'자체',ticketFeeType:'flat',ticketFeeValue:0,cafeFeeType:'flat',cafeFeeValue:0}:vendorRuleFor(id,sample)||{id,name:id};
+      return {vendor,rows:list.filter(b=>exportVendorId(b)===id)};
     }).filter(g=>g.rows.length);
     try{
       const bytes=buildOutsourceXlsx(groups,start,end),selected=filter?(groups[0]?.vendor?.name||'업체'):'전체';
