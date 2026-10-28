@@ -77,10 +77,11 @@ function patchDay(day,bookings){
   const meta=day.querySelector(':scope > .meta');if(!meta)return;
   meta.classList.remove('zr-cal-meta');
   meta.querySelector(':scope > .zr-cal-status-summary')?.remove();
-  day.querySelector(':scope > .zr-cal-status-summary')?.remove();
-
+  const existing=day.querySelector(':scope > .zr-cal-status-summary');
   const html=summaryHtml(pending,hold,confirmed,completed,cancelled,preview);
-  if(!html)return;
+  if(!html){existing?.remove();return}
+  // The observer also sees this summary: unchanged output must not mutate the DOM.
+  if(existing){if(existing.innerHTML!==html)existing.innerHTML=html;return}
   const summary=document.createElement('div');
   summary.className='zr-cal-status-summary';
   summary.innerHTML=html;
