@@ -154,7 +154,7 @@ function cancelText(b){
 }
 function downloadActivityXlsxV10(){
   if(typeof adminGuard==='function'&&!adminGuard())return;
-  const list=activityFilteredV10();if(!list.length){if(typeof toast==='function')toast('내려받을 예약 현황이 없습니다.');return;}
+  const list=(typeof window.activityFilteredBookings==='function'?window.activityFilteredBookings():activityFilteredV10());if(!list.length){if(typeof toast==='function')toast('내려받을 예약 현황이 없습니다.');return;}
   try{
     const bytes=buildActivityXlsxV10(list),start=$('activityStart')?.value||'',end=$('activityEnd')?.value||'',basis=activityBasis()==='reservation'?'예약일':'접수일';
     const suffix=start||end?`_${start||'전체'}_${end||'전체'}`:'';
