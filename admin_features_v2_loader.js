@@ -78,7 +78,7 @@ const loadScript=(id,src)=>new Promise((resolve,reject)=>{
 });
 
 async function loadAdminBase(){
-  await loadScript('zrAdminBaseRuntime','./admin_base_runtime.js?v=cafe-editor-20261023');
+  await loadScript('zrAdminBaseRuntime','./admin_base_runtime.js?v=perf-20261029');
 }
 
 async function loadAdminPatchChain(){

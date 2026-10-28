@@ -62,7 +62,8 @@ function applyAnonymousCache(){
   refreshUi();
 }
 function applyStaffCache(){
-  const next=[...ownFull.values()].map(x=>clone(x));if(JSON.stringify(readLocal())===JSON.stringify(next))return;directWriteLocal(next);
+  const serialized=JSON.stringify([...ownFull.values()]);if(localStorage.getItem(BOOKING_KEY)===serialized)return;
+  applyingRemote=true;try{localStorage.setItem(BOOKING_KEY,serialized)}finally{applyingRemote=false}
   refreshUi();
 }
 function stopListeners(){
@@ -105,7 +106,7 @@ async function startListeners(user){
     if(!current())return;
     stopFull=F.onSnapshot(F.collection(db,FULL_COLLECTION),snap=>{
     if(!current())return;
-      ownFull=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
+      for(const change of snap.docChanges()){const d=change.doc;if(change.type==='removed')ownFull.delete(d.id);else ownFull.set(d.id,{id:d.id,...d.data()})}
       applyStaffCache();
     },e=>{if(!current())return;console.error('reservation staff listener',e);toastSafe('공용 예약 DB 연결을 확인해주세요.')});
   }else{
