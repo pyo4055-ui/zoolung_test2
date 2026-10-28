@@ -7,7 +7,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dateOnly=v=>{const s=String(v||'');const m=s.match(/\d{4}-\d{2}-\d{2}/);return m?m[0]:s.slice(0,10)};
 const ACTIVITY_BASIS_KEY='zr_activity_date_basis_v10';
-const activityBasis=()=>localStorage.getItem(ACTIVITY_BASIS_KEY)==='reservation'?'reservation':'reception';
+const activityBasis=()=>($('activityDateBasis')?.value||localStorage.getItem(ACTIVITY_BASIS_KEY))==='reservation'?'reservation':'reception';
 
 /* ===== 단체 구분: 유치원 / 어린이집 분리 ===== */
 function patchGroupSelect(sel){
@@ -41,16 +41,16 @@ function patchGroupTypes(){
 const oldActivityFiltered=typeof window.activityFilteredBookings==='function'?window.activityFilteredBookings:(typeof activityFilteredBookings==='function'?activityFilteredBookings:null);
 function activityBaseWithoutDates(){
   if(!oldActivityFiltered)return typeof bookings==='function'?bookings():[];
-  const s=$('activityStart'),e=$('activityEnd'),sv=s?.value||'',ev=e?.value||'';
+  const fields=['activityStart','activityEnd','activityStartDate','activityEndDate'].map($).filter(Boolean),values=fields.map(el=>el.value);
   try{
-    if(s)s.value='';if(e)e.value='';
+    fields.forEach(el=>el.value='');
     const out=oldActivityFiltered();
     return Array.isArray(out)?out:[];
   }catch(err){console.debug('activity base filter',err);return typeof bookings==='function'?bookings():[];}
-  finally{if(s)s.value=sv;if(e)e.value=ev;}
+  finally{fields.forEach((el,i)=>el.value=values[i]);}
 }
 function activityFilteredV10(){
-  const start=$('activityStart')?.value||'',end=$('activityEnd')?.value||'',basis=activityBasis();
+  const start=($('activityStartDate')||$('activityStart'))?.value||'',end=($('activityEndDate')||$('activityEnd'))?.value||'',basis=activityBasis();
   return activityBaseWithoutDates().filter(b=>{
     if(!b||b.__availabilityOnly)return false;
     const key=basis==='reservation'?String(b.date||''):dateOnly(b.createdAt);
