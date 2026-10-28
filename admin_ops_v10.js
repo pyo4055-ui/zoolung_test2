@@ -117,7 +117,7 @@ function cancelText(b){
   const dt=b.cancelledAt?dateOnly(b.cancelledAt):'';
   return [src,dt].filter(Boolean).join(' · ');
 }
-  function buildActivityXlsxV10(list){
+  function buildActivityXlsxV10(list,partsOnly=false){
     const headers=['접수일','접수자','예약일','예약업체','지역','기관','예약명','담당자','연락처','도착','퇴장','소인','인솔자','예상매출','식사여부','주차(차량)','취소','특이사항','소인','유료인솔자','무료인솔자','총입장','매출','카페','상품','카누','먹이','여권','DM','식사시간','놀이터 이용'];
     const grouped={9:['이용시간',2],11:['예약인원',3],18:['실제입장',5],23:['부대매출',5]},covered=new Set(),merges=['A1:H2'];
     for(const [i,[name,n]] of Object.entries(grouped)){for(let j=Number(i)+1;j<Number(i)+n;j++)covered.add(j);merges.push(`${col(Number(i)+1)}4:${col(Number(i)+n)}4`)}
@@ -144,7 +144,13 @@ function cancelText(b){
   const wr=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
   const root=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
   const types=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
-  return zipStore([{name:'[Content_Types].xml',data:types},{name:'_rels/.rels',data:root},{name:'xl/workbook.xml',data:wb},{name:'xl/_rels/workbook.xml.rels',data:wr},{name:'xl/styles.xml',data:styles},{name:'xl/worksheets/sheet1.xml',data:sheet}]);
+  if(partsOnly)return {sheet,styles,root};
+  const months=[...new Set(list.map(b=>String(b.date||'').slice(0,7)))].sort();
+  if(months.some(m=>!/^\d{4}-\d{2}$/.test(m)))throw Error('예약일을 확인해주세요.');
+  const files=[],defs=[],rels=[],overrides=[];
+  months.forEach((m,i)=>{const id=i+1,p=buildActivityXlsxV10(list.filter(b=>String(b.date).slice(0,7)===m),true);files.push({name:'xl/worksheets/sheet'+id+'.xml',data:p.sheet});defs.push('<sheet name="'+m.slice(2,4)+'년 '+m.slice(5)+'월" sheetId="'+id+'" r:id="rId'+id+'"/>');rels.push('<Relationship Id="rId'+id+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+id+'.xml"/>');overrides.push('<Override PartName="/xl/worksheets/sheet'+id+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>')});
+  files.push({name:'[Content_Types].xml',data:types.replace(/<Override PartName="\/xl\/worksheets\/sheet1.xml"[^>]*\/>/,()=>overrides.join(''))},{name:'_rels/.rels',data:root},{name:'xl/workbook.xml',data:wb.replace(/<sheets>.*?<\/sheets>/,()=>'<sheets>'+defs.join('')+'</sheets>')},{name:'xl/_rels/workbook.xml.rels',data:wr.replace(/<Relationship Id="rId1"[^>]*\/>/,()=>rels.join('')).replace('Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"','Id="rId'+(months.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"')},{name:'xl/styles.xml',data:styles});
+  return zipStore(files);
 }
 function downloadActivityXlsxV10(){
   if(typeof adminGuard==='function'&&!adminGuard())return;

@@ -423,7 +423,7 @@
   function sheetXmlForVendor(vendor,rows,title){
     const ticketRule=feeRuleText(vendor.ticketFeeType,vendor.ticketFeeValue,'ticket');
     const cafeRule=feeRuleText(vendor.cafeFeeType,vendor.cafeFeeValue,'cafe');
-    const headers=['입장 날짜','단체명','입장','입장매출',`매표 수수료 (${ticketRule})`,'카페매출',`카페 수수료 (${cafeRule})`,'총 수수료','비고'];
+    const headers=['입장 날짜','단체명','입장','입장매출',vendor.monthly?'매표 수수료':`매표 수수료 (${ticketRule})`,'카페매출',vendor.monthly?'카페 수수료':`카페 수수료 (${cafeRule})`,'총 수수료','비고'];
     let r=1,xmlRows=[];
     xmlRows.push(`<row r="${r}" ht="28" customHeight="1">${cStr(`A${r}`,title,1)}</row>`);r++;
     xmlRows.push(`<row r="${r}" ht="24" customHeight="1">${headers.map((h,i)=>cStr(`${String.fromCharCode(65+i)}${r}`,h,2)).join('')}</row>`);r++;
@@ -431,7 +431,7 @@
     rows.forEach(b=>{
       const st=b.settlement,done=!!(st&&st.savedAt),ad=done?paidAdmissions(st):0,ticket=done?Number(st.ticketAmount||0):0,ticketFee=done?Number(st.ticketFee||0):0,cafe=done?Number(st.actualCafeAmount||0):0,cafeFee=done?Number(st.cafeFee||0):0,fee=done?Number(st.totalFee||0):0;
       totalAdmissions+=ad;totalTicket+=ticket;totalTicketFee+=ticketFee;totalCafe+=cafe;totalCafeFee+=cafeFee;totalFee+=fee;
-      const note=b.status==='cancelled'?'예약취소':done?'':'실제결제 미입력';
+      const note=vendor.monthly?`${b.__exportVendor.name} / 매표 ${feeRuleText(b.__exportVendor.ticketFeeType,b.__exportVendor.ticketFeeValue,'ticket')} / 카페 ${feeRuleText(b.__exportVendor.cafeFeeType,b.__exportVendor.cafeFeeValue,'cafe')}`:b.status==='cancelled'?'예약취소':done?'':'실제결제 미입력';
       let cells=cStr(`A${r}`,fmtDate(b.date),3)+cStr(`B${r}`,b.orgName||'',3);
       cells+=done?cNum(`C${r}`,ad,3):cBlank(`C${r}`,3);
       cells+=done?cNum(`D${r}`,ticket,4):cBlank(`D${r}`,4);
@@ -454,9 +454,12 @@
   }
 
   function buildOutsourceXlsx(groups,start,end){
+    const all=groups.flatMap(g=>g.rows.map(b=>({...b,__exportVendor:g.vendor}))),months=[...new Set(all.map(b=>String(b.date||'').slice(0,7)))].sort();
+    if(months.some(m=>!/^\d{4}-\d{2}$/.test(m)))throw Error('예약일을 확인해주세요.');
+    groups=months.map(m=>({month:m,vendor:{name:m.slice(2,4)+'년 '+m.slice(5)+'월',monthly:true},rows:all.filter(b=>String(b.date).slice(0,7)===m).sort((a,b)=>a.date.localeCompare(b.date))}));
     const files=[],sheetDefs=[],rels=[];
     groups.forEach((g,i)=>{
-      const idx=i+1,name=safeSheetName(g.vendor.name, i),title=titleFor(start,end,g.vendor.name);
+      const idx=i+1,name=safeSheetName(g.vendor.name, i),title=titleFor(g.month+'-01',g.month+'-31','아웃소싱 정산');
       sheetDefs.push(`<sheet name="${xmlEsc(name)}" sheetId="${idx}" r:id="rId${idx}"/>`);
       rels.push(`<Relationship Id="rId${idx}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${idx}.xml"/>`);
       files.push({name:`xl/worksheets/sheet${idx}.xml`,data:sheetXmlForVendor(g.vendor,g.rows,title)});
