@@ -37,11 +37,14 @@ function typeCounts(rows){
   rows.forEach(b=>{const key=groupType(b);map.set(key,(map.get(key)||0)+1)});
   return [...map.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko'));
 }
+let countsSnapshot=null;
 function counts(){
+  const rawBookings=localStorage.getItem('zr_bookings'),rawInquiries=localStorage.getItem(INQUIRY_KEY),day=today(),reader=window.bookings;
+  if(countsSnapshot&&countsSnapshot.rawBookings===rawBookings&&countsSnapshot.rawInquiries===rawInquiries&&countsSnapshot.day===day&&countsSnapshot.reader===reader)return countsSnapshot.value;
   const date=today(),all=allBookings();
   const rows=all.filter(b=>String(b.status||'')==='confirmed'&&String(b.date||'')===date);
   const inquiries=inquiryList();
-  return {
+  const value={
     confirmedTeams:rows.length,
     groupTypes:typeCounts(rows),
     visitors:rows.reduce((sum,b)=>sum+Math.max(0,Number(b.paidCount||0))+Math.max(0,Number(b.chaperoneCount||0)),0),
@@ -52,6 +55,7 @@ function counts(){
     pendingPreview:inquiries.filter(x=>/^\[사전답사 문의\]/.test(contentOf(x))).length,
     pendingReservation:all.filter(b=>String(b.status||'')==='pending').length
   };
+  countsSnapshot={rawBookings,rawInquiries,day,reader,value};return value;
 }
 function injectStyle(){
   if($('zrAdminSmartPanelStyleV1'))return;

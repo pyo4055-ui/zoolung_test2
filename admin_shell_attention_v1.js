@@ -83,10 +83,17 @@ function observeMetric(){
   urgentObserver.observe(metric,{subtree:true,childList:true,characterData:true});
   syncUrgent();return true;
 }
+let warningSnapshot=null;
 function refreshHiddenWarning(){
+  if(document.hidden)return;
   if(!document.documentElement.classList.contains('zr-admin-shell-mounted'))return;
   const section=$('tab-warning'),refresh=$('zrWarningRefresh');
-  if(section&&section.classList.contains('hidden')&&refresh&&!refresh.disabled)refresh.click();
+  if(section&&section.classList.contains('hidden')&&refresh&&!refresh.disabled){
+    const raw=localStorage.getItem('zr_bookings'),date=new Date().toDateString();
+    if(!warningSnapshot||warningSnapshot.raw!==raw||warningSnapshot.date!==date||warningSnapshot.refresh!==refresh){
+      refresh.click();warningSnapshot={raw,date,refresh};
+    }
+  }
   observeMetric();
   const count=urgentCount();if(count!==lastUrgent)syncUrgent();
 }
