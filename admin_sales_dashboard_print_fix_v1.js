@@ -47,6 +47,7 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-filter input,#tab-sales-dashboard .zr-sales-filter select{min-height:0!important;height:7.5mm!important;font-size:7pt!important;color:#302c29!important;background:#fff!important;border-color:#e2d9d0!important}
     #tab-sales-dashboard .zr-sales-kpis{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:1.7mm!important;margin-bottom:2mm!important;min-width:0!important;max-width:100%!important}
     #tab-sales-dashboard .zr-sales-kpi{min-width:0!important;min-height:0!important;padding:2mm!important;border:1px solid #e2d9d0!important;border-radius:1.8mm!important;background:#fff!important;box-shadow:none!important;overflow:hidden!important}
+    #tab-sales-dashboard .zr-sales-card .zr-sales-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
     #tab-sales-dashboard .zr-sales-kpi:first-child{box-shadow:inset 0 1.2mm 0 #fc5404!important}
     #tab-sales-dashboard .zr-sales-kpi span{font-size:6.2pt!important;color:#716963!important}#tab-sales-dashboard .zr-sales-kpi strong{font-size:10.5pt!important;margin-top:.8mm!important;white-space:nowrap!important;color:#302c29!important}#tab-sales-dashboard .zr-sales-kpi small{font-size:5.2pt!important;margin-top:.5mm!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:#8a817a!important}
     #tab-sales-dashboard .zr-sales-grid2{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:2mm!important;min-width:0!important;max-width:100%!important;margin-bottom:0!important}
@@ -71,6 +72,9 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-day{min-width:0!important;height:25mm!important;grid-template-rows:3mm 1fr 3mm!important}
     #tab-sales-dashboard .zr-sales-day-track{height:18mm!important}#tab-sales-dashboard .zr-sales-day-bar{width:1.8mm!important;min-height:.5mm!important}
     #tab-sales-dashboard .zr-sales-day-value,#tab-sales-dashboard .zr-sales-day-label{font-size:4pt!important;line-height:2.7mm!important;color:#776c64!important}
+    #tab-sales-dashboard .zr-sales-kpi strong{font-size:9pt!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important}
+    #tab-sales-dashboard .zr-sales-filter input,#tab-sales-dashboard .zr-sales-filter select{padding:1mm 2mm!important;line-height:normal!important;width:100%!important;min-width:0!important}
+    #tab-sales-dashboard th,#tab-sales-dashboard td{white-space:normal!important;overflow-wrap:anywhere!important}
   </style></head><body><div id="zrSalesPrintSheet"><section id="tab-sales-dashboard"><div class="zr-sales-print-title">${title}</div>${clone.outerHTML}</section></div></body></html>`);doc.close();
   const cleanup=()=>{try{frame.remove()}catch{}};
   const run=()=>{try{fitOnePage(doc);frame.contentWindow?.addEventListener('afterprint',cleanup,{once:true});frame.contentWindow?.focus();frame.contentWindow?.print();setTimeout(cleanup,120000)}catch{cleanup()}};

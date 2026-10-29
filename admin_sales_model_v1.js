@@ -7,7 +7,7 @@ function allBookings(includeAvailability=false){try{const list=readBookings();re
 function extraBreakdown(st={}){
   if(Array.isArray(st.additionalSales)){
     const out={shop:0,passport:0,canoe:0,other:0,feed:0,cafeExtra:0,total:0,hasField:true};
-    const keys={shop:'shop',feed:'feed',passport:'passport',canoe:'canoe',cafe:'cafeExtra'};
+    const keys={shop:'shop',feed:'feed',passport:'passport',canoe:'canoe',cafe:'cafeExtra',other:'other'};
     for(const row of st.additionalSales){const key=keys[row?.category],amount=Number(row?.amount);if(!key||!Number.isFinite(amount)||amount<0)continue;out[key]+=amount;out.total+=amount}
     return out;
   }

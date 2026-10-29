@@ -108,7 +108,7 @@ function ensureInputs(){
   ['zrSalesMonth','zrSalesPrevBase','zrSalesPrevCompare','zrSalesYearBase','zrSalesYearCompare','zrSalesCafeMonth'].forEach(id=>{const el=$(id);if(el&&!el.dataset.bound){el.dataset.bound='1';el.addEventListener('change',renderAll)}});
 }
 function extraMonthlyTable(ym){
-  const keys=[['shop','상품샵'],['feed','먹이'],['passport','여권'],['canoe','카누'],['cafeExtra','카페'],['other','기존 기타']],sum=Object.fromEntries(keys.map(([key])=>[key,0]));
+  const keys=[['shop','상품샵'],['feed','먹이'],['passport','여권'],['canoe','카누'],['cafeExtra','카페'],['other','기타']],sum=Object.fromEntries(keys.map(([key])=>[key,0]));
   for(const row of rowsForMonth(ym))for(const [key] of keys)sum[key]+=Number(row.extraMeta[key]||0);
   const total=Object.values(sum).reduce((a,b)=>a+b,0);
   return `<div class="zr-sales-card zr-extra-monthly" style="grid-column:1/-1;width:100%;box-sizing:border-box;margin-top:12px"><h3>${esc(monthLabel(ym))} 부가매출</h3><div class="zr-sales-table-scroll"><table><thead><tr>${keys.map(([,label])=>`<th>${label}</th>`).join('')}<th>합계</th></tr></thead><tbody><tr>${keys.map(([key])=>`<td>${money(sum[key])}</td>`).join('')}<td>${money(total)}</td></tr></tbody></table></div></div>`;
@@ -116,11 +116,11 @@ function extraMonthlyTable(ym){
 function renderMonthly(){
   const ym=$('zrSalesMonth')?.value||currentMonth(),rows=rowsForMonth(ym),a=aggregate(rows),body=$('zrSalesMonthlyBody');if(!body)return;
   body.innerHTML=`<div class="zr-sales-kpis">
-    ${metricCard('총매출',money(a.total),`${monthLabel(ym)} 실제결제 기준`)}
-    ${metricCard('매표매출',money(a.ticket),`실제 유료 ${a.paid.toLocaleString('ko-KR')}명`)}
-    ${metricCard('카페매출',money(a.cafe),`${rows.filter(r=>r.cafe>0).length.toLocaleString('ko-KR')}개 단체 이용`)}
-    ${metricCard('부가매출',money(a.extra),a.hasExtra?'저장된 부가매출 합계':'현재 별도 입력 데이터 없음')}
-    ${metricCard('정산 건수',`${a.count.toLocaleString('ko-KR')}건`,'실제결제 저장완료')}
+    ${metricCard('총매출',money(a.total))}
+    ${metricCard('매표매출',money(a.ticket))}
+    ${metricCard('카페매출',money(a.cafe))}
+    ${metricCard('부가매출',money(a.extra))}
+    ${metricCard('정산 건수',`${a.count.toLocaleString('ko-KR')}건`)}
   </div>
   <div class="zr-sales-grid2">
     <div class="zr-sales-card"><h3>단체 유형 비율</h3><div class="help">정산 건수 기준 · 유치원, 어린이집, 학교, 학원 등</div>${pie(groupShares(rows),'해당 월 정산 데이터가 없습니다.')}</div>

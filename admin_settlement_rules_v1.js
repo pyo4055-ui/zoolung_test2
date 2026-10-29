@@ -37,7 +37,7 @@ if(window.ZRSettlementRules)return;
   }
 function vendorSnapshot(v){return {id:v.id,name:v.name,groupPrice:Number(v.groupPrice||0),ticketFeeType:v.ticketFeeType==='percent'?'percent':'flat',ticketFeeValue:Number(v.ticketFeeValue||0),cafeFeeType:v.cafeFeeType==='percent'?'percent':'flat',cafeFeeValue:Number(v.cafeFeeValue||0)}}
 function paymentError(c){if(!c.vendor)return 'vendor';if(c.unit<=0)return 'unit';return ''}
-const extraCategories=Object.freeze({shop:'상품샵',feed:'먹이',passport:'여권',canoe:'카누',cafe:'카페'});
+const extraCategories=Object.freeze({shop:'상품샵',feed:'먹이',passport:'여권',canoe:'카누',cafe:'카페',other:'기타'});
 function normalizeExtras(rows){
   if(!Array.isArray(rows))return [];
   return rows.map(row=>{const amount=Number(row.amount??0);if(!Object.hasOwn(extraCategories,row.category)||!Number.isSafeInteger(amount)||amount<0)throw Error('부가매출 항목과 금액을 확인해주세요.');const result={category:row.category,amount};if(['passport','feed'].includes(row.category)&&row.quantity!==''&&row.quantity!=null){const quantity=Number(row.quantity);if(!Number.isSafeInteger(quantity)||quantity<0)throw Error('수량은 0 이상의 정수로 입력해주세요.');result.quantity=quantity;}return result});
@@ -77,7 +77,7 @@ function withFeedQuantity(rows,b){return rows.map(row=>row.category==='feed'&&ro
 function savedExtras(st,b={}){
   if(Array.isArray(st.additionalSales))return withFeedQuantity(st.additionalSales,b);
   if(Array.isArray(b.additionalSales))return withFeedQuantity(b.additionalSales,b);
-  const rows=[['shop',st.actualShopAmount??st.shopAmount??st.productAmount],['passport',st.actualPassportAmount??st.passportAmount],['canoe',st.actualCanoeAmount??st.canoeAmount]].filter(([,v])=>Number(v)>0).map(([category,amount])=>({category,amount:Number(amount)}));
+  const rows=[['shop',st.actualShopAmount??st.shopAmount??st.productAmount],['passport',st.actualPassportAmount??st.passportAmount],['canoe',st.actualCanoeAmount??st.canoeAmount],['other',st.actualOtherAmount??st.otherAmount??st.extraAmount??st.additionalAmount]].filter(([,v])=>Number(v)>0).map(([category,amount])=>({category,amount:Number(amount)}));
   const feed=Number(b.feedOrder?.amount||0);
   if(!st.savedAt&&!b.settlementCompletedAt&&Number.isSafeInteger(feed)&&feed>0)rows.push({category:'feed',amount:feed,quantity:Number(b.feedOrder?.quantity||0)});
   return rows;
