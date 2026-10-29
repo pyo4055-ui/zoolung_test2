@@ -25,7 +25,7 @@ function changeText(cur,base,isMoney=true){
   return {diff:`${diff>0?'+':''}${isMoney?money(diff):`${diff.toLocaleString('ko-KR')}건`}`,rate:`${rate>0?'+':''}${rate.toFixed(1)}%`,cls:rate>0?'up':rate<0?'down':''};
 }
 function compareRow(label,cur,base,isMoney=true){const c=changeText(cur,base,isMoney);return `<tr><th>${esc(label)}</th><td>${isMoney?money(cur):`${cur.toLocaleString('ko-KR')}건`}</td><td>${isMoney?money(base):`${base.toLocaleString('ko-KR')}건`}</td><td class="${c.cls}">${esc(c.diff)}</td><td class="${c.cls}">${esc(c.rate)}</td></tr>`}
-function metric(label,value,sub=''){return `<div class="zr-sales-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}</div>`}
+function metric(label,value,sub='',summary=null){return `<div class="zr-sales-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}${summary?`<div class="zr-sales-fee-summary" style="font-size:11px;line-height:1.6;margin-top:6px;overflow-wrap:anywhere"><div style="color:#716963">아웃소싱 수수료 ${money(summary.fee)}</div><div style="color:#42594e;font-weight:600">수수료 차감 후 매출 ${money(summary.net)}</div></div>`:''}</div>`}
 function pie(data,empty){
   const total=data.reduce((s,x)=>s+Number(x.value||0),0);
   if(!total)return `<div class="zr-sales-empty-pie"><div class="zr-sales-pie zr-sales-pie-empty"></div><div class="help">${esc(empty)}</div></div>`;
@@ -82,8 +82,8 @@ function renderAnnual(){
   const y=new Date().getFullYear(),base=Math.max(2000,Number(refs.base?.value||y)),comp=Math.max(2000,Number(refs.comp?.value||y-1));
   const a=aggregate(settledInYear(base)),b=aggregate(settledInYear(comp));
   refs.body.innerHTML=`<div class="zr-sales-grid2" style="margin-bottom:12px">
-    <div class="zr-sales-card"><h3>${base}년</h3><div class="help">기준 연도</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metric('총매출',money(a.total))}${metric('건수',`${a.count}건`)}</div></div>
-    <div class="zr-sales-card"><h3>${comp}년</h3><div class="help">비교 연도</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metric('총매출',money(b.total))}${metric('건수',`${b.count}건`)}</div></div>
+    <div class="zr-sales-card"><h3>${base}년</h3><div class="help">기준 연도</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metric('총매출',money(a.total),'',a)}${metric('건수',`${a.count}건`)}</div></div>
+    <div class="zr-sales-card"><h3>${comp}년</h3><div class="help">비교 연도</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metric('총매출',money(b.total),'',b)}${metric('건수',`${b.count}건`)}</div></div>
   </div>
   <div class="zr-sales-card"><h3>연도별 전년 매출 비교</h3><div class="help">1월~12월 전체 실제결제 매출 기준</div><div class="zr-sales-table-scroll" style="max-height:none"><table class="zr-sales-compare-table"><thead><tr><th>항목</th><th>${base}년</th><th>${comp}년</th><th>증감</th><th>증감률</th></tr></thead><tbody>${compareRow('총매출',a.total,b.total)}${compareRow('매표매출',a.ticket,b.ticket)}${compareRow('카페매출',a.cafe,b.cafe)}${compareRow('부가매출',a.extra,b.extra)}${compareRow('정산 건수',a.count,b.count,false)}</tbody></table></div></div>
   <div class="zr-sales-note" data-zr-help-only>선택한 두 연도의 실제결제 저장 데이터를 연도 전체로 합산합니다. 진행 중인 연도는 현재까지 저장된 데이터까지만 집계됩니다.</div>`;

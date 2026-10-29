@@ -75,6 +75,7 @@ function standalonePrint(){
     #tab-sales-dashboard .zr-sales-kpi strong{font-size:9pt!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.3!important}
     #tab-sales-dashboard .zr-sales-filter input,#tab-sales-dashboard .zr-sales-filter select{padding:1mm 2mm!important;line-height:normal!important;width:100%!important;min-width:0!important}
     #tab-sales-dashboard th,#tab-sales-dashboard td{white-space:normal!important;overflow-wrap:anywhere!important}
+  #tab-sales-dashboard .zr-sales-fee-summary{font-size:6pt!important;line-height:1.5!important;white-space:normal!important;overflow-wrap:anywhere!important}
   </style></head><body><div id="zrSalesPrintSheet"><section id="tab-sales-dashboard"><div class="zr-sales-print-title">${title}</div>${clone.outerHTML}</section></div></body></html>`);doc.close();
   const cleanup=()=>{try{frame.remove()}catch{}};
   const run=()=>{try{fitOnePage(doc);frame.contentWindow?.addEventListener('afterprint',cleanup,{once:true});frame.contentWindow?.focus();frame.contentWindow?.print();setTimeout(cleanup,120000)}catch{cleanup()}};

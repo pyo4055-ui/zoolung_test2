@@ -27,7 +27,7 @@ function pie(data,empty='집계 데이터가 없습니다.'){
   const legend=data.map((x,i)=>{const pct=x.value/total*100;return `<div class="zr-sales-legend-row"><span class="zr-sales-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><span>${esc(x.name)}</span><b>${pct.toFixed(1)}%</b><small>${Number.isInteger(x.value)?`${x.value.toLocaleString('ko-KR')}`:money(x.value)}</small></div>`}).join('');
   return `<div class="zr-sales-pie-wrap"><div class="zr-sales-pie" style="background:conic-gradient(${parts.join(',')})"></div><div class="zr-sales-legend">${legend}</div></div>`;
 }
-function metricCard(label,value,sub=''){return `<div class="zr-sales-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}</div>`}
+function metricCard(label,value,sub='',summary=null){return `<div class="zr-sales-kpi"><span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}${summary?`<div class="zr-sales-fee-summary" style="font-size:11px;line-height:1.6;margin-top:6px;overflow-wrap:anywhere"><div style="color:#716963">아웃소싱 수수료 ${money(summary.fee)}</div><div style="color:#42594e;font-weight:600">수수료 차감 후 매출 ${money(summary.net)}</div></div>`:''}</div>`}
 function changeText(cur,base,isMoney=true){
   const diff=cur-base;if(base===0)return {diff:isMoney?money(diff):`${diff.toLocaleString('ko-KR')}건`,rate:cur===0?'0.0%':'신규',cls:diff>0?'up':diff<0?'down':''};
   const rate=diff/base*100;return {diff:`${diff>0?'+':''}${isMoney?money(diff):`${diff.toLocaleString('ko-KR')}건`}`,rate:`${rate>0?'+':''}${rate.toFixed(1)}%`,cls:rate>0?'up':rate<0?'down':''};
@@ -117,7 +117,7 @@ function extraMonthlyTable(ym){
 function renderMonthly(){
   const ym=$('zrSalesMonth')?.value||currentMonth(),rows=rowsForMonth(ym),a=aggregate(rows),body=$('zrSalesMonthlyBody');if(!body)return;
   body.innerHTML=`<div class="zr-sales-kpis">
-    ${metricCard('총매출',money(a.total))}
+    ${metricCard('총매출',money(a.total),'',a)}
     ${metricCard('매표매출',money(a.ticket))}
     ${metricCard('카페매출',money(a.cafe))}
     ${metricCard('부가매출',money(a.extra))}
@@ -134,8 +134,8 @@ function renderCompare(kind){
   const isPrev=kind==='prev';const base=$(isPrev?'zrSalesPrevBase':'zrSalesYearBase')?.value||currentMonth();const comp=$(isPrev?'zrSalesPrevCompare':'zrSalesYearCompare')?.value||shiftMonth(base,isPrev?-1:-12);
   const a=aggregate(rowsForMonth(base)),b=aggregate(rowsForMonth(comp)),body=$(isPrev?'zrSalesPrevBody':'zrSalesYearBody');if(!body)return;
   body.innerHTML=`<div class="zr-sales-grid2" style="margin-bottom:12px">
-    <div class="zr-sales-card"><h3>${esc(monthLabel(base))}</h3><div class="help">기준 월</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metricCard('총매출',money(a.total))}${metricCard('건수',`${a.count}건`)}</div></div>
-    <div class="zr-sales-card"><h3>${esc(monthLabel(comp))}</h3><div class="help">비교 월</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metricCard('총매출',money(b.total))}${metricCard('건수',`${b.count}건`)}</div></div>
+    <div class="zr-sales-card"><h3>${esc(monthLabel(base))}</h3><div class="help">기준 월</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metricCard('총매출',money(a.total),'',a)}${metricCard('건수',`${a.count}건`)}</div></div>
+    <div class="zr-sales-card"><h3>${esc(monthLabel(comp))}</h3><div class="help">비교 월</div><div class="zr-sales-kpis" style="grid-template-columns:1fr 1fr;margin:0">${metricCard('총매출',money(b.total),'',b)}${metricCard('건수',`${b.count}건`)}</div></div>
   </div>
   <div class="zr-sales-card"><h3>${isPrev?'전월':'전년'} 매출 비교</h3><div class="zr-sales-table-scroll" style="max-height:none"><table class="zr-sales-compare-table"><thead><tr><th>항목</th><th>${esc(monthLabel(base))}</th><th>${esc(monthLabel(comp))}</th><th>증감</th><th>증감률</th></tr></thead><tbody>${compareRow('총매출',a.total,b.total)}${compareRow('매표매출',a.ticket,b.ticket)}${compareRow('카페매출',a.cafe,b.cafe)}${compareRow('부가매출',a.extra,b.extra)}${compareRow('정산 건수',a.count,b.count,false)}</tbody></table></div></div>
   <div class="zr-sales-note">기준 월과 비교 월을 자유롭게 선택할 수 있어 특정 월끼리 회사 보고용 비교가 가능합니다.</div>`;

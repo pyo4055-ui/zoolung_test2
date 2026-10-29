@@ -25,11 +25,12 @@ function extraBreakdown(st={}){
   });
   return out;
 }
+function savedCommission(b){const st=b?.settlement||{},id=st.vendorId||b?.outsourcingVendorId;if(!id||id==='self')return 0;const number=v=>Number.isFinite(Number(v))?Math.max(0,Number(v)):0;return st.totalFee!=null?number(st.totalFee):number(st.ticketFee)+number(st.cafeFee)}
 function salesRow(b){
   const st=b?.settlement||{};const ex=extraBreakdown(st);
   const ticket=Math.max(0,Number(st.ticketAmount||0)),cafe=Math.max(0,Number(st.actualCafeAmount||0));
   const total=ticket+cafe+ex.total;
-  return {booking:b,st,date:String(b?.date||''),ticket,cafe,extra:ex.total,total,extraMeta:ex,
+  return {booking:b,st,date:String(b?.date||''),ticket,cafe,extra:ex.total,total,extraMeta:ex,fee:savedCommission(b),
     group:String(b?.groupType||'미분류').trim()||'미분류',
     vendorId:String(st.vendorId||b?.outsourcingVendorId||'self'),
     vendorName:String(st?.vendorSnapshot?.name||b?.outsourcingVendorSnapshot?.name||(st.vendorId==='self'?'자체':'미분류')).trim()||'미분류'};
@@ -42,7 +43,7 @@ function rowsForMonth(ym){
   }).map(salesRow);
 }
 function aggregateRows(rows){
-  return rows.reduce((a,r)=>{a.total+=r.total;a.ticket+=r.ticket;a.cafe+=r.cafe;a.extra+=r.extra;a.count++;a.paid+=Math.max(0,Number(r.st.actualPaidCount||0))+Math.max(0,Number(r.st.actualPaidChaperone||0));a.hasExtra=a.hasExtra||r.extraMeta.hasField;return a},{total:0,ticket:0,cafe:0,extra:0,count:0,paid:0,hasExtra:false});
+  return rows.reduce((a,r)=>{a.total+=r.total;a.fee+=r.fee;a.net+=r.total-r.fee;a.ticket+=r.ticket;a.cafe+=r.cafe;a.extra+=r.extra;a.count++;a.paid+=Math.max(0,Number(r.st.actualPaidCount||0))+Math.max(0,Number(r.st.actualPaidChaperone||0));a.hasExtra=a.hasExtra||r.extraMeta.hasField;return a},{total:0,fee:0,net:0,ticket:0,cafe:0,extra:0,count:0,paid:0,hasExtra:false});
 }
 function groupShares(rows,valueFn=()=>1){
   const m=new Map();rows.forEach(r=>m.set(r.group,(m.get(r.group)||0)+Math.max(0,Number(valueFn(r)||0))));
@@ -63,9 +64,9 @@ function extra(st={}){return extraBreakdown(st).total}
 function aggregateBookings(bookings){
   return bookings.reduce((a,b)=>{
     const st=b.settlement||{},ticket=Math.max(0,Number(st.ticketAmount||0)),cafe=Math.max(0,Number(st.actualCafeAmount||0)),add=extra(st);
-    a.ticket+=ticket;a.cafe+=cafe;a.extra+=add;a.total+=ticket+cafe+add;a.count++;
+    a.fee+=savedCommission(b);a.net+=ticket+cafe+add-savedCommission(b);a.ticket+=ticket;a.cafe+=cafe;a.extra+=add;a.total+=ticket+cafe+add;a.count++;
     return a;
-  },{ticket:0,cafe:0,extra:0,total:0,count:0});
+  },{ticket:0,cafe:0,extra:0,total:0,fee:0,net:0,count:0});
 }
 function normOrg(v){return String(v||'').toLowerCase().replace(/\s+/g,'').replace(/[()\[\]{}._-]/g,'').trim()}
 function visitRows(){
