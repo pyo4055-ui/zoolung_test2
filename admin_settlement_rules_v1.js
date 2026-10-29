@@ -40,7 +40,7 @@ function paymentError(c){if(!c.vendor)return 'vendor';if(c.unit<=0)return 'unit'
 const extraCategories=Object.freeze({shop:'상품샵',feed:'먹이',passport:'여권',canoe:'카누',cafe:'카페',other:'기타'});
 function normalizeExtras(rows){
   if(!Array.isArray(rows))return [];
-  return rows.map(row=>{const amount=Number(row.amount??0);if(!Object.hasOwn(extraCategories,row.category)||!Number.isSafeInteger(amount)||amount<0)throw Error('부가매출 항목과 금액을 확인해주세요.');const result={category:row.category,amount};if(['passport','feed'].includes(row.category)&&row.quantity!==''&&row.quantity!=null){const quantity=Number(row.quantity);if(!Number.isSafeInteger(quantity)||quantity<0)throw Error('수량은 0 이상의 정수로 입력해주세요.');result.quantity=quantity;}return result});
+  return rows.map(row=>{const amount=Number(row.amount??0);if(!Object.hasOwn(extraCategories,row.category)||!Number.isSafeInteger(amount)||amount<0)throw Error('부가매출 항목과 금액을 확인해주세요.');const result={category:row.category,amount};if(row.category==='other')result.label=String(row.label??'').trim().slice(0,50);if(['passport','feed'].includes(row.category)&&row.quantity!==''&&row.quantity!=null){const quantity=Number(row.quantity);if(!Number.isSafeInteger(quantity)||quantity<0)throw Error('수량은 0 이상의 정수로 입력해주세요.');result.quantity=quantity;}return result});
 }
 function extraTotal(rows){return normalizeExtras(rows).reduce((sum,row)=>sum+row.amount,0)}
 function applyPayment(b,c,now){

@@ -109,9 +109,10 @@ function ensureInputs(){
 }
 function extraMonthlyTable(ym){
   const keys=[['shop','상품샵'],['feed','먹이'],['passport','여권'],['canoe','카누'],['cafeExtra','카페'],['other','기타']],sum=Object.fromEntries(keys.map(([key])=>[key,0]));
-  for(const row of rowsForMonth(ym))for(const [key] of keys)sum[key]+=Number(row.extraMeta[key]||0);
+  const otherLabels=new Set();
+  for(const row of rowsForMonth(ym)){for(const [key] of keys)sum[key]+=Number(row.extraMeta[key]||0);for(const item of row.st.additionalSales||[]){if(item.category==='other'&&Number(item.amount)>0&&String(item.label||'').trim())otherLabels.add(String(item.label).trim());}}
   const total=Object.values(sum).reduce((a,b)=>a+b,0);
-  return `<div class="zr-sales-card zr-extra-monthly" style="grid-column:1/-1;width:100%;box-sizing:border-box;margin-top:12px"><h3>${esc(monthLabel(ym))} 부가매출</h3><div class="zr-sales-table-scroll"><table><thead><tr>${keys.map(([,label])=>`<th>${label}</th>`).join('')}<th>합계</th></tr></thead><tbody><tr>${keys.map(([key])=>`<td>${money(sum[key])}</td>`).join('')}<td>${money(total)}</td></tr></tbody></table></div></div>`;
+  return `<div class="zr-sales-card zr-extra-monthly" style="grid-column:1/-1;width:100%;box-sizing:border-box;margin-top:12px"><h3>${esc(monthLabel(ym))} 부가매출</h3><div class="zr-sales-table-scroll"><table><thead><tr>${keys.map(([,label])=>`<th>${label}</th>`).join('')}<th>합계</th></tr></thead><tbody><tr>${keys.map(([key])=>`<td>${money(sum[key])}${key==='other'&&otherLabels.size?`<small style="display:block;margin-top:4px;font-size:11px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;color:#716963">${[...otherLabels].map(esc).join(' · ')}</small>`:''}</td>`).join('')}<td>${money(total)}</td></tr></tbody></table></div></div>`;
 }
 function renderMonthly(){
   const ym=$('zrSalesMonth')?.value||currentMonth(),rows=rowsForMonth(ym),a=aggregate(rows),body=$('zrSalesMonthlyBody');if(!body)return;
