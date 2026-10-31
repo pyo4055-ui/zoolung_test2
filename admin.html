@@ -370,11 +370,12 @@
     <div class="card" style="margin-top:14px">
       <div class="grid2">
         <div>
-          <label>조회 월</label>
-          <select id="adminMonth"></select>
+          <label for="adminMonth">조회 월</label>
+          <input type="month" id="adminMonth" min="2022-01" aria-label="조회 월">
+          <style>#tab-calendar .grid2:has(#adminMonth){display:flex!important;align-items:flex-end!important;gap:10px!important;flex-wrap:wrap!important}#tab-calendar .grid2:has(#adminMonth)>div:first-child{flex:0 0 170px!important;max-width:100%}#adminMonth{box-sizing:border-box;width:170px!important;max-width:100%;height:42px}#adminMonthSearch{display:none!important}#adminThisMonth{height:42px;white-space:nowrap}</style>
         </div>
         <div style="display:flex;align-items:end;gap:8px;flex-wrap:wrap">
-          <button class="btn-primary" id="adminMonthSearch">조회하기</button>
+          <button class="btn-primary" id="adminMonthSearch" hidden aria-hidden="true" tabindex="-1">조회하기</button>
           <button class="btn-soft" id="adminThisMonth">이번 달</button>
         </div>
       </div>
@@ -1014,9 +1015,9 @@ function initMonths(){
   const opts=monthOptions();
   const customerCur=$("visitMonth").value, adminCur=$("adminMonth").value;
   $("visitMonth").innerHTML='<option value="">선택</option>'+opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
-  $("adminMonth").innerHTML=opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join("");
+  // Keep the archive month input value when refreshing customer month options.
   if(opts.some(o=>o.key===customerCur))$("visitMonth").value=customerCur;
-  if(opts.some(o=>o.key===adminCur))$("adminMonth").value=adminCur;
+  if(/^\d{4}-\d{2}$/.test(adminCur)&&adminCur>="2022-01")$("adminMonth").value=adminCur;
   else if(opts.length){const now=new Date(),current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;$("adminMonth").value=opts.some(o=>o.key===current)?current:opts[0].key;}
 }
 function renderVisitDays(){
@@ -1829,10 +1830,11 @@ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==="settings")renderSmsSettings();
 });
 
+$("adminMonth").addEventListener("change",()=>{const input=$("adminMonth");if(input.value&&input.checkValidity())$("adminMonthSearch").click();});
 $("adminMonthSearch").onclick=()=>{$("adminCalendar").dataset.renderedMonth=$("adminMonth").value;renderAdmin()};
 $("adminThisMonth").onclick=()=>{
   const d=new Date(),key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-  if([...$("adminMonth").options].some(o=>o.value===key))$("adminMonth").value=key;
+  $("adminMonth").value=key;
   $("adminCalendar").dataset.renderedMonth=$("adminMonth").value;
   renderAdmin();
 };
