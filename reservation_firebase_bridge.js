@@ -183,7 +183,7 @@ async function saveBooking(value,options={}){
     Object.assign(value,b);return true;
   };
   const operation=writeChain.then(task,task);writeChain=operation.catch(()=>{});
-  try{return await operation}catch(e){console.error('administrator booking save',e);toastSafe(e.code==='meal-seat-conflict'?e.message:'공용 DB에 저장하지 못했습니다. 입력한 내용을 유지합니다. 다시 저장해주세요.');return false}
+  try{return await operation}catch(e){console.error('administrator booking save',e);toastSafe(String(e.code||'').endsWith('resource-exhausted')?'서버 사용량 한도에 도달해 저장하지 못했습니다. 입력한 내용을 별도로 보관하고, 한도 회복 후 다시 시도해주세요.':e.code==='meal-seat-conflict'?e.message:'공용 DB에 저장하지 못했습니다. 입력한 내용을 유지합니다. 다시 저장해주세요.');return false}
 }
 
 function queueBookingSync(before,after){
