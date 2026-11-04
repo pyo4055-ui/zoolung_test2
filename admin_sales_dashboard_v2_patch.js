@@ -51,7 +51,7 @@ function syncRail(){
 }
 function clickMode(mode){
   const btn=$('tab-sales-dashboard')?.querySelector(`[data-zr-sales-mode="${mode}"]`);if(!btn)return;
-  btn.click();setTimeout(syncRail,20);
+  btn.click();syncRail();
 }
 function ensureRailSubmenu(){
   const parent=$('zrAdminSalesDashboardRailV1');if(!parent)return false;
@@ -61,7 +61,7 @@ function ensureRailSubmenu(){
   host.insertBefore(wrap,parent);wrap.appendChild(parent);parent.setAttribute('aria-haspopup','true');parent.setAttribute('aria-expanded','false');
   const chevron=document.createElement('span');chevron.className='zr-admin-shell-submenu-chevron';chevron.setAttribute('aria-hidden','true');chevron.textContent='⌄';parent.appendChild(chevron);
   const menu=document.createElement('div');menu.className='zr-admin-shell-submenu';const inner=document.createElement('div');inner.className='zr-admin-shell-submenu-inner';
-  SUBS.forEach(sub=>{const b=document.createElement('button');b.type='button';b.className='zr-admin-shell-subitem';b.dataset.zrSalesRailMode=sub.mode;b.textContent=sub.label;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if($('tab-sales-dashboard')?.classList.contains('hidden'))window.ZRAdminOpenSales?.();setTimeout(()=>clickMode(sub.mode),20)});inner.appendChild(b)});
+  SUBS.forEach(sub=>{const b=document.createElement('button');b.type='button';b.className='zr-admin-shell-subitem';b.dataset.zrSalesRailMode=sub.mode;b.textContent=sub.label;b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if($('tab-sales-dashboard')?.classList.contains('hidden')){window.ZRAdminOpenSales?.(sub.mode);syncRail()}else clickMode(sub.mode)});inner.appendChild(b)});
   menu.appendChild(inner);wrap.appendChild(menu);
   parent.addEventListener('click',()=>setTimeout(syncRail,30));syncRail();return true;
 }
