@@ -44,8 +44,10 @@ function headerText(title,path){
   if(p&&p.textContent!==path)p.textContent=path;
 }
 function enforceHeader(){
-  if(mode==='requests'||mode==='sms')headerText('예약변경현황','고객 › 예약변경현황');
-  else if(mode==='inquiry'||mode==='examples')headerText('1:1 문의','고객 › 1:1 문의');
+  if(mode==='requests')headerText('예약변경 관리','예약 관리 › 예약변경 관리 › 예약변경 요청');
+  else if(mode==='sms')headerText('문자 설정','설정 › 문자 설정 › 예약변경 확정문자');
+  else if(mode==='inquiry')headerText('단체문의 관리','고객 응대 › 단체문의 관리 › 문의 현황');
+  else if(mode==='examples')headerText('단체문의 관리','고객 응대 › 단체문의 관리 › 단체문의 답변예시');
 }
 function installHeaderGuard(){
   const header=$('zrAdminShellHeader');if(!header||headerObserver)return false;
