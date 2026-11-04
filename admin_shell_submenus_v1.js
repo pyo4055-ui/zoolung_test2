@@ -82,6 +82,7 @@ function injectStyle(){
 function isTargetActive(target){
   return !!target&&!target.closest('.hidden,[hidden]')&&(target.classList.contains('btn-primary')||target.classList.contains('zr-subtab-active')||target.getAttribute('aria-selected')==='true');
 }
+window.ZRAdminSubmenuLabel=id=>{const items=SUBMENUS[id]||[];return items.find(x=>isTargetActive($(x.targetId)))?.label||(items.length===1?items[0].label:'');};
 function reservationChangeActive(){
   return isTargetActive($('zrReservationChangeAdminRequestSubtab'))||isTargetActive($('zrReservationChangeAdminSmsSubtab'));
 }
@@ -101,7 +102,7 @@ function syncReservationChangeShell(){
   setClassState(rail?.querySelector('[data-zr-admin-item="inquiries"]'),'is-active',false);
   const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
   if(title&&title.textContent!=='예약변경 관리')title.textContent='예약변경 관리';
-  if(path&&path.textContent!=='예약 관리 / 예약변경 관리')path.textContent='예약 관리 / 예약변경 관리';
+  if(path&&path.textContent!=='예약 관리 › 예약변경 관리 › 예약변경 요청')path.textContent='예약 관리 › 예약변경 관리 › 예약변경 요청';
 
   const main=$('tab-inquiry-reply-v1');
   if(main){
