@@ -10,6 +10,7 @@ const money=n=>Number(n||0).toLocaleString('ko-KR')+'원';
 
 function counts(paidValue,chapValue){return window.ZRBookingRules.minimumPeople(paidValue,chapValue)}
 
+function ruleText(){const p=window.ZRBookingRules.groupPricing();return p.eventEnabled===true?'단체예약은 관람인원과 인솔자 합계 '+(Number(p.eventMinimum)||15)+'명부터 가능하며, 인솔자는 전원 무료입니다.':'단체예약은 유료인원 합계 15명부터 가능합니다. 유료인원 '+(Number(p.freePerPaid)||5)+'명당 인솔자 1명이 무료입니다.'}
 function currentCounts(){return counts($('paidCount')?.value,$('chaperoneCount')?.value)}
 function customerFormVisible(){
   const v=$('customerView');
@@ -35,7 +36,7 @@ function ensureTopNotice(){
   if(!notice)return;
   const old='※ 단체 예약은 <b>유료인원 15명 이상</b>부터 가능합니다. 결제는 현장에서 진행됩니다.';
   const next='※ 단체 예약은 <b>유료 관람인원과 유료 인솔자를 합산해 15명 이상</b>부터 가능합니다. 결제는 현장에서 진행됩니다.';
-  if(notice.innerHTML.includes(old))notice.innerHTML=notice.innerHTML.replace(old,next);
+  const message='※ '+ruleText()+' 결제는 현장에서 진행됩니다.';if(notice.textContent!==message)notice.textContent=message;
 }
 
 function ensureRuleHelp(){
@@ -49,7 +50,7 @@ function ensureRuleHelp(){
     help=document.createElement('div');help.id='zrGroupMinimumRuleV1';help.className='help';help.style.marginTop='6px';
     old?old.replaceWith(help):sel.insertAdjacentElement('afterend',help);
   }
-  help.innerHTML='<b>단체예약은 유료인원 합계 15명부터 가능합니다.</b><br>유료 15명 충족 후, 유료인원 5명당 인솔자 1명이 무료입니다.<br>15명이 부족한 경우 인솔자 일부가 유료로 적용될 수 있습니다.';
+  const message=ruleText();if(help.textContent!==message)help.textContent=message;
 }
 
 function renderPeopleGuide(){
@@ -59,7 +60,7 @@ function renderPeopleGuide(){
   if(!c.paid){box.innerHTML='<b>인원을 선택해주세요.</b><br><span class="help">유료 관람인원과 인솔자 수를 선택하면 예약 가능 여부와 무료 인솔 인원을 확인할 수 있습니다.</span>';return}
 
   if(!c.eligible){
-    box.innerHTML=`<b class="danger">예약 불가 · 현재 유료인원 ${c.totalPaid}명</b><br><span class="help">단체예약은 유료인원 합계 15명부터 가능합니다. 유료 관람인원 또는 인솔자 수를 확인해주세요.</span>`;
+    box.innerHTML=`<b class="danger">예약 인원 확인 · 관람 ${c.paid}명 / 인솔 ${c.chaperone}명</b><br><span class="help">${ruleText()}</span>`;
   }else{
     let reason='';
     if(c.requiredPaidChaperone>0){
@@ -122,7 +123,7 @@ function patchValidateBooking(){
   const base=cur;
   const wrapped=function(){
     const c=currentCounts();
-    if(c.paid>0&&!c.eligible)return '단체예약은 유료인원 합계 15명부터 가능합니다. 유료 관람인원 또는 인솔자 수를 확인해주세요.';
+    if(c.paid>0&&!c.eligible)return ruleText();
     const el=$('paidCount');
     if(c.eligible&&c.paid<MIN_PAID&&el){
       const original=el.value;
@@ -157,6 +158,7 @@ function refresh(){
   ensurePaidOptions();ensureTopNotice();ensureRuleHelp();patchBookingData();patchValidateBooking();patchRefreshSummary();renderPeopleGuide();
 }
 
+document.addEventListener('zr:reservation-settings-synced',()=>{refresh();window.refreshSummary?.()});
 function boot(){
   refresh();
   window.addEventListener('change',e=>{
@@ -171,7 +173,7 @@ function boot(){
     const c=currentCounts();
     if(c.eligible)return;
     e.preventDefault();e.stopImmediatePropagation();
-    try{window.toast?.('단체예약은 유료인원 합계 15명부터 가능합니다. 인원 수를 확인해주세요.')}catch{}
+    try{window.toast?.(ruleText())}catch{}
     try{paid.scrollIntoView({behavior:'smooth',block:'center'})}catch{}
   },true);
   const t=setInterval(refresh,300);setTimeout(()=>clearInterval(t),20000);
