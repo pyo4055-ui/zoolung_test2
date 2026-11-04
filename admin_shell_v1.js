@@ -98,14 +98,15 @@ function setActive(id,fromSync=false){
   rail?.querySelectorAll('[data-zr-admin-item]').forEach(b=>b.classList.toggle('is-active',b.dataset.zrAdminItem===id));
   const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
   if(title&&title.textContent!==item.label)title.textContent=item.label;
-  if(path&&path.textContent!==`${groupLabel(item.group)} / ${item.label}`)path.textContent=`${groupLabel(item.group)} / ${item.label}`;
+  const leaf=window.ZRAdminSubmenuLabel?.(id);const breadcrumb=[groupLabel(item.group),item.label,leaf].filter(Boolean).join(' › ');
+  if(path&&path.textContent!==breadcrumb)path.textContent=breadcrumb;
 }
 function syncAvailability(){
   rail?.querySelectorAll('[data-zr-admin-item]').forEach(b=>{
     const item=ITEMS.find(x=>x.id===b.dataset.zrAdminItem);if(!item)return;
     const ready=!!findTarget(item);
     b.classList.toggle('is-unavailable',!ready);
-    b.setAttribute('aria-disabled',ready?'false':'true');
+    const disabled=ready?'false':'true';if(b.getAttribute('aria-disabled')!==disabled)b.setAttribute('aria-disabled',disabled);
   });
 }
 function applyMenuPrefs(){
@@ -192,7 +193,7 @@ function syncActive(){
     rail?.querySelectorAll('[data-zr-admin-item]').forEach(b=>b.classList.toggle('is-active',b.dataset.zrAdminItem==='salesDashboard'));
     const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');
     if(title&&title.textContent!=='매출 현황')title.textContent='매출 현황';
-    if(path&&!path.textContent.startsWith('매출 / 매출 현황'))path.textContent='매출 / 매출 현황';
+    if(path&&!path.textContent.startsWith('매출 › 매출 현황'))path.textContent='매출 › 매출 현황';
     return;
   }
   const special=[['smsSettings',['zrSettingsConfirmSmsPanelV1','zrSettingsScheduleSmsPanelV1','zrReservationChangeSmsPanel','zrPreviewNotifyTemplatePanel']],['vendorSettings',['zrSettingsOutsourcePanelV1']]].find(([,ids])=>ids.some(id=>{const el=$(id);return el&&!el.closest('.hidden,[hidden]')}));
