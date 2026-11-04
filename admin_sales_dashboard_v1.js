@@ -146,7 +146,7 @@ function renderAll(){const sec=$('tab-sales-dashboard');if(!sec||sec.classList.c
 window.ZRSalesViews=Object.freeze({register(name,render){reportViews[name]=render},refresh:renderAll});
 function selectMode(next){
   mode=next||'monthly';const sec=ensureSection();if(!sec)return;
-  const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');const sub=({monthly:'월매출 현황',prev:'전월매출 현황',year:'전년매출 현황',cafe:'단체 카페매출',revisit:'재방문율'})[mode];if(title&&title.textContent!=='매출 현황')title.textContent='매출 현황';const breadcrumb='매출 / 매출 현황 / '+sub;if(path&&path.textContent!==breadcrumb)path.textContent=breadcrumb;
+  const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');const sub=({monthly:'월매출 현황',prev:'전월매출 현황',year:'전년매출 현황',cafe:'단체 카페매출',revisit:'재방문율'})[mode];if(title&&title.textContent!=='매출 현황')title.textContent='매출 현황';const breadcrumb='매출 › 매출 현황 › '+sub;if(path&&path.textContent!==breadcrumb)path.textContent=breadcrumb;
   const label=({monthly:'월매출현황',prev:'전월매출현황',year:'전년매출현황',cafe:'단체 카페매출',revisit:'재방문율'})[mode]||'매출현황';const heading=sec.querySelector('.zr-sales-title');if(heading)heading.textContent=label;
   let help=sec.querySelector('.zr-sales-page-help');if(!help&&heading){help=document.createElement('button');help.type='button';help.className='zr-admin-section-help zr-sales-page-help';help.textContent='?';heading.parentElement.style.cssText='display:flex;align-items:center;gap:9px';heading.after(help)}if(help){help.setAttribute('aria-label',label+' 도움말');help.onclick=()=>window.ZRAdminHelp?.open(label,['매출은 방문일 기준으로 실제결제를 저장한 예약만 집계합니다. 취소·거절 예약은 제외합니다.','부가매출은 조회한 달의 상품샵·먹이·여권·카누·추가 카페 결제 합계입니다.'],sec)}
   sec.querySelectorAll('[data-zr-sales-mode]').forEach(b=>b.classList.toggle('active',b.dataset.zrSalesMode===mode));
