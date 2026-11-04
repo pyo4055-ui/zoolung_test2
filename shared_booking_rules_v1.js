@@ -12,12 +12,17 @@
     const free=Math.min(c,Math.floor(p/5)),paidChap=Math.max(0,c-free),amount=(p+paidChap)*price;
     return {p,c,free,paidChap,amount};
   }
-  function minimumPeople(paidValue,chapValue){
+  function groupPricing(){return window.settings?.()?.groupPricing||{}}
+  function minimumPeople(paidValue,chapValue,policy=groupPricing()){
+    const ratio=Math.max(1,Math.min(100,Math.trunc(Number(policy.freePerPaid)||5)));
+    const eventMinimum=Math.max(1,Math.min(1000,Math.trunc(Number(policy.eventMinimum)||15)));
     const paid=Math.max(0,Number(paidValue||0)),chaperone=Math.max(0,Number(chapValue||0));
+    if(policy.eventEnabled===true&&paid+chaperone>=eventMinimum)return {paid,chaperone,requiredPaidChaperone:0,freeChaperone:chaperone,paidChaperone:0,totalPaid:paid,eligible:true};
+    if(policy.eventEnabled===true)return {paid,chaperone,requiredPaidChaperone:chaperone,freeChaperone:0,paidChaperone:chaperone,totalPaid:paid+chaperone,eligible:false};
     const shortage=Math.max(0,15-paid);
     if(paid+chaperone<15)return {paid,chaperone,requiredPaidChaperone:chaperone,freeChaperone:0,paidChaperone:chaperone,totalPaid:paid+chaperone,eligible:false};
     const requiredPaidChaperone=Math.min(chaperone,shortage),basePaid=paid+requiredPaidChaperone;
-    const freeChaperone=Math.min(Math.max(0,chaperone-requiredPaidChaperone),Math.floor(basePaid/5));
+    const freeChaperone=Math.min(Math.max(0,chaperone-requiredPaidChaperone),Math.floor(basePaid/ratio));
     const paidChaperone=chaperone-freeChaperone;
     return {paid,chaperone,requiredPaidChaperone,freeChaperone,paidChaperone,totalPaid:paid+paidChaperone,eligible:true};
   }
@@ -122,5 +127,5 @@
     const days=(Date.parse(String(b.date)+'T00:00:00Z')-Date.parse(koreaDate(now)+'T00:00:00Z'))/86400000;
     return Number.isInteger(days)&&days>7;
   }
-  window.ZRBookingRules=Object.freeze({participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
+  window.ZRBookingRules=Object.freeze({groupPricing,participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
 })();
