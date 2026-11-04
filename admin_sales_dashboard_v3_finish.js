@@ -104,7 +104,7 @@ function syncRail(){
     const inner=wrap.querySelector('.zr-admin-shell-submenu-inner');if(inner){const b=document.createElement('button');b.type='button';b.className='zr-admin-shell-subitem';b.dataset.zrSalesRailMode='revisit';b.textContent='재방문율';b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if($('tab-sales-dashboard')?.classList.contains('hidden'))window.ZRAdminOpenSales?.();setTimeout(()=>selectMode('revisit'),20)});inner.appendChild(b)}
   }
   const mode=currentMode();wrap.querySelectorAll('[data-zr-sales-rail-mode]').forEach(b=>b.classList.toggle('is-active',!$('tab-sales-dashboard')?.classList.contains('hidden')&&b.dataset.zrSalesRailMode===mode));
-  if(mode==='revisit'&&!$('tab-sales-dashboard')?.classList.contains('hidden')){const path=$('zrAdminShellPath');if(path)path.textContent='매출 / 매출 현황 / 재방문율'}
+  if(mode==='revisit'&&!$('tab-sales-dashboard')?.classList.contains('hidden')){const path=$('zrAdminShellPath');if(path&&path.textContent!=='매출 › 매출 현황 › 재방문율')path.textContent='매출 › 매출 현황 › 재방문율'}
 }
 function activatePanels(){
   const sec=$('tab-sales-dashboard');if(!sec)return;
