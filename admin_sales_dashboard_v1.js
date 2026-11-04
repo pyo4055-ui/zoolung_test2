@@ -129,6 +129,7 @@ function renderMonthly(){
   </div>
   ${extraMonthlyTable(ym)}
   <div class="zr-sales-note">매출은 예약의 방문일을 기준으로 해당 월에 포함하며, 실제결제가 저장된 건만 집계합니다. 취소·거절 예약은 제외합니다. 부가매출은 실제결제에서 입력한 항목별 금액을 합산합니다.</div>`;
+  document.dispatchEvent(new CustomEvent('zr:sales-monthly-rendered'));
 }
 function renderCompare(kind){
   const isPrev=kind==='prev';const base=$(isPrev?'zrSalesPrevBase':'zrSalesYearBase')?.value||currentMonth();const comp=$(isPrev?'zrSalesPrevCompare':'zrSalesYearCompare')?.value||shiftMonth(base,isPrev?-1:-12);
@@ -141,10 +142,11 @@ function renderCompare(kind){
   <div class="zr-sales-note">기준 월과 비교 월을 자유롭게 선택할 수 있어 특정 월끼리 회사 보고용 비교가 가능합니다.</div>`;
 }
 const reportViews={};
-function renderAll(){renderMonthly();renderCompare('prev');reportViews.year?.();reportViews.cafe?.();const sec=$('tab-sales-dashboard');if(sec)window.ZRAdminHelp?.tidy(sec)}
+function renderAll(){const sec=$('tab-sales-dashboard');if(!sec||sec.classList.contains('hidden'))return;if(mode==='monthly')renderMonthly();else if(mode==='prev')renderCompare('prev');else reportViews[mode]?.();window.ZRAdminHelp?.tidy(sec)}
 window.ZRSalesViews=Object.freeze({register(name,render){reportViews[name]=render},refresh:renderAll});
 function selectMode(next){
   mode=next||'monthly';const sec=ensureSection();if(!sec)return;
+  const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');const sub=({monthly:'월매출 현황',prev:'전월매출 현황',year:'전년매출 현황',cafe:'단체 카페매출',revisit:'재방문율'})[mode];if(title&&title.textContent!=='매출 현황')title.textContent='매출 현황';const breadcrumb='매출 / 매출 현황 / '+sub;if(path&&path.textContent!==breadcrumb)path.textContent=breadcrumb;
   const label=({monthly:'월매출현황',prev:'전월매출현황',year:'전년매출현황',cafe:'단체 카페매출',revisit:'재방문율'})[mode]||'매출현황';const heading=sec.querySelector('.zr-sales-title');if(heading)heading.textContent=label;
   let help=sec.querySelector('.zr-sales-page-help');if(!help&&heading){help=document.createElement('button');help.type='button';help.className='zr-admin-section-help zr-sales-page-help';help.textContent='?';heading.parentElement.style.cssText='display:flex;align-items:center;gap:9px';heading.after(help)}if(help){help.setAttribute('aria-label',label+' 도움말');help.onclick=()=>window.ZRAdminHelp?.open(label,['매출은 방문일 기준으로 실제결제를 저장한 예약만 집계합니다. 취소·거절 예약은 제외합니다.','부가매출은 조회한 달의 상품샵·먹이·여권·카누·추가 카페 결제 합계입니다.'],sec)}
   sec.querySelectorAll('[data-zr-sales-mode]').forEach(b=>b.classList.toggle('active',b.dataset.zrSalesMode===mode));
@@ -152,13 +154,13 @@ function selectMode(next){
   Object.entries(map).forEach(([k,id])=>$(id)?.classList.toggle('active',k===mode));renderAll();
 }
 function hideKnownSections(){KNOWN_SECTIONS.forEach(id=>$(id)?.classList.add('hidden'));document.querySelectorAll('#adminView > section').forEach(section=>{if(section.id!=='tab-sales-dashboard')section.classList.add('hidden')});$('tab-inquiry-reply-v1')?.classList.add('hidden');$('tab-group-notice')?.classList.add('hidden');document.dispatchEvent(new CustomEvent('zr:admin-route-leave-inquiries'))}
-window.ZRAdminOpenSales=()=>openDashboard();
-function openDashboard(){
+window.ZRAdminOpenSales=next=>openDashboard(next);
+function openDashboard(next){
   const sec=ensureSection();if(!sec)return;ensureInputs();hideKnownSections();sec.classList.remove('hidden');
   document.querySelectorAll('#zrAdminShellRail [data-zr-admin-item]').forEach(b=>b.classList.remove('is-active'));
   $('zrAdminSalesDashboardRailV1')?.classList.add('is-active');
-  const title=$('zrAdminShellPageTitle'),path=$('zrAdminShellPath');if(title)title.textContent='매출 현황';if(path)path.textContent='매출 / 매출 현황';
-  selectMode(mode);
+  
+  selectMode(next||mode);
 }
 function ensureRailItem(){
   const group=document.querySelector('#zrAdminShellRail .zr-admin-shell-group[data-group="sales"]');if(!group)return false;
