@@ -73,7 +73,7 @@ function settingsWritePayload(value,scope){
     groupNotice:['groupReservationNotice','groupReservationNoticeBlocks'],sms:['smsTemplateText'],scheduleSms:['scheduleCustomerNotifyMessage','scheduleCustomerNotifyTemplateVersion'],
     vendor:['outsourcingVendors'],'reservation-limits':['autoCloseLimit','autoClose','playgroundLimitEnabled'],
     'booking-period':['bookingStart','bookingEnd','holidayBookingAllowed'],'holiday-dates':['holidayDatesByYear'],
-    'booking-lead':['bookingLeadDays'],'booking-Closure':['regularClosurePeriods'],'booking-Peak':['peakSeasonPeriods']
+    'group-pricing':['groupPricing'],'drink-service':['drinkService'],'booking-lead':['bookingLeadDays'],'booking-Closure':['regularClosurePeriods'],'booking-Peak':['peakSeasonPeriods']
   }[scope];
   if(!fields)return clean(value);
   return Object.fromEntries(fields.filter(key=>Object.prototype.hasOwnProperty.call(value,key)).map(key=>[key,value[key]]));
