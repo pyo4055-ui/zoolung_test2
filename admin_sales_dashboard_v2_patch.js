@@ -47,7 +47,7 @@ function syncRail(){
   const wrap=$('zrSalesDashboardRailWrap');if(!wrap)return;
   const active=currentMode();wrap.querySelectorAll('[data-zr-sales-rail-mode]').forEach(b=>b.classList.toggle('is-active',!$('tab-sales-dashboard')?.classList.contains('hidden')&&b.dataset.zrSalesRailMode===active));
   const sec=$('tab-sales-dashboard'),on=sec&&!sec.classList.contains('hidden');wrap.querySelector(':scope > .zr-admin-shell-item')?.setAttribute('aria-expanded',String(wrap.classList.contains('is-submenu-open')));
-  if(on){const path=$('zrAdminShellPath'),sub=SUBS.find(x=>x.mode===active);if(path)path.textContent=`매출 / 매출 현황 / ${sub?.label||'월매출 현황'}`}
+  if(on){const path=$('zrAdminShellPath'),sub=SUBS.find(x=>x.mode===active);const text=`매출 › 매출 현황 › ${active==='revisit'?'재방문율':sub?.label||'월매출 현황'}`;if(path&&path.textContent!==text)path.textContent=text}
 }
 function clickMode(mode){
   const btn=$('tab-sales-dashboard')?.querySelector(`[data-zr-sales-mode="${mode}"]`);if(!btn)return;
