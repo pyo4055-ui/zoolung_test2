@@ -34,7 +34,7 @@ function injectStyle(){
 }
 function button(id,label,mode){const b=document.createElement('button');b.type='button';b.id=id;b.textContent=label;b.dataset.zrSubtabMode=mode;return b}
 function selectMode(bar,panels,mode){
-  if(bar?.id==='zrSettingsSubtabsV1')panels={...panels,holiday:$('zrSettingsHolidayPanelV1'),closure:$('zrSettingsClosurePanelV1'),peak:$('zrSettingsPeakPanelV1')};
+  if(bar?.id==='zrSettingsSubtabsV1')panels={...panels,groupPricing:$('zrSettingsGroupPricingPanelV1'),drinkService:$('zrSettingsDrinkServicePanelV1'),holiday:$('zrSettingsHolidayPanelV1'),closure:$('zrSettingsClosurePanelV1'),peak:$('zrSettingsPeakPanelV1')};
   bar?.querySelectorAll('[data-zr-subtab-mode]').forEach(b=>{const active=b.dataset.zrSubtabMode===mode;b.classList.toggle('zr-subtab-active',active);b.setAttribute('aria-selected',String(active))});
   Object.entries(panels).forEach(([key,p])=>p?.classList.toggle('hidden',key!==mode));
 }
