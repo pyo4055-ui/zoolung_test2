@@ -1,3 +1,4 @@
+import {initBenefits} from './group_benefits.js';
 import {editQuickTime,injectQuickTimeStyle} from './quick_time.js?v=release-1792586551421';
 import {state,$,PK,STAFF_EMAIL,DEFAULT_CATALOG,auth,db,F,normalizeGroup,localSet,shift,today,savePatch,writeError,toast,setSync} from './core.js?v=release-1792586551421';
 import {renderView,scheduleEnhance,injectDisplayStyle} from './display.js?v=release-1792586551421';
@@ -104,4 +105,5 @@ async function login(){const staffId=normalizeStaffId($("staffId")?.value||"");c
 $("loginBtn").onclick=login;$("staffId").oninput=()=>$("staffIdErr")?.classList.add("hidden");$("staffId").onkeydown=e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==="Enter"){e.preventDefault();$("pw")?.focus()}};$("pw").onkeydown=e=>{if(e.isComposing||e.keyCode===229)return;if(e.key==="Enter"){e.preventDefault();login()}};
 F.onAuthStateChanged(auth,user=>{const validUser=user&&String(user.email||"").toLowerCase()===STAFF_EMAIL.toLowerCase(),staffId=currentStaffId();syncStaffBadge();if(validUser&&staffId){$("login").classList.add("hidden");startListeners()}else{stopListeners();state.data.groups=[];$("login").classList.remove("hidden");setSync(validUser?"아이디 입력 필요":"로그인 필요","wait");render();setTimeout(()=>$("staffId")?.focus(),60)}});
 
+initBenefits(render);
 injectDisplayStyle();injectQuickTimeStyle();window.addEventListener("resize",scheduleEnhance);render();setInterval(render,60000);
