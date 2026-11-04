@@ -88,7 +88,7 @@ function replaceVendorPie(body,rows){
 }
 function render(){
   injectStyle();
-  const body=$('zrSalesMonthlyBody'),month=$('zrSalesMonth');if(!body||!month)return false;
+  const body=$('zrSalesMonthlyBody'),month=$('zrSalesMonth');if(!body||!month||$('tab-sales-dashboard')?.classList.contains('hidden')||!$('zrSalesMonthlyPanel')?.classList.contains('active'))return false;
   const ym=month.value||'',rows=monthRows(ym),daily=dailyData(ym,rows),week=weekdayData(rows);
   const maxAmount=daily.reduce((a,b)=>b.amount>a.amount?b:a,{label:'-',amount:0}),maxCount=daily.reduce((a,b)=>b.count>a.count?b:a,{label:'-',count:0});
   const weekAmount=week.reduce((a,b)=>b.amount>a.amount?b:a,{label:'-',amount:0}),weekCount=week.reduce((a,b)=>b.count>a.count?b:a,{label:'-',count:0});
@@ -103,14 +103,8 @@ function render(){
   </div>`;
   return true;
 }
-function schedule(){setTimeout(render,35)}
-function bind(){
-  document.addEventListener('change',e=>{if(e.target?.id==='zrSalesMonth')schedule()},true);
-  document.addEventListener('click',e=>{if(e.target?.closest?.('[data-zr-sales-mode="monthly"],[data-zr-sales-rail-mode="monthly"],#zrAdminSalesDashboardRailV1'))schedule()},true);
-}
-function boot(){
-  bind();injectStyle();let tries=0;const t=setInterval(()=>{tries++;if(render()||tries>60)clearInterval(t)},100);[180,500,1000].forEach(ms=>setTimeout(render,ms));
-}
+document.addEventListener('zr:sales-monthly-rendered',render);
+function boot(){injectStyle();render();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(render,60));
+
 })();
