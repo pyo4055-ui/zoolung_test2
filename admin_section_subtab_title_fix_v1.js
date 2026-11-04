@@ -31,6 +31,8 @@ const GROUPS=[
   ]},
   {sectionId:'tab-settings',items:[
     {targetId:'zrSettingsHolidaySubtabV1',title:'공휴일 설정',help:['연도별 공휴일 날짜를 관리합니다.','공휴일 예약 허용 여부는 예약 운영에서 설정합니다.']},
+    {targetId:'zrSettingsGroupPricingSubtabV1',title:'단체가 설정',help:['일반 무료 인솔자 기준과 인솔자 전원 무료 이벤트를 설정합니다.','저장한 설정은 이후 예약 계산에 반영됩니다. 기존 완료 결제는 바뀌지 않습니다.']},
+    {targetId:'zrSettingsDrinkServiceSubtabV1',title:'음료 제공 설정',help:['현장스케줄의 인솔자 음료 제공 기능을 켜고 끕니다.','음료 메뉴를 추가하거나 수정하고 현장에서 수량과 제공완료를 기록합니다.']},
     {targetId:'zrSettingsClosureSubtabV1',title:'정기휴무 설정',help:['정기휴무 날짜 또는 기간을 지정해 고객 예약을 차단합니다.','시작일과 종료일을 포함하며, 저장 후 고객 날짜 목록에 정기휴무로 표시됩니다.']},
     {targetId:'zrSettingsPeakSubtabV1',title:'성수기 설정',help:['단체 예약을 받지 않는 성수기 날짜 또는 기간을 지정합니다.','저장한 기간은 고객 날짜 목록에 성수기로 표시되며 기존 예약은 변경하지 않습니다.']},
     {targetId:'zrSettingsOperationSubtabV1',title:'예약 운영',help:['고객 예약 가능 기간, 공휴일 예약 여부, 자동 마감 등 기본 예약 운영 기준을 설정합니다.','변경한 설정은 고객 예약 가능 여부에 직접 반영되므로 저장 전 기간과 제한 값을 확인합니다.']},
