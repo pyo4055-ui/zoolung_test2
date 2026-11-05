@@ -30,6 +30,8 @@ const SUBMENUS={
     {id:'guide-parking',label:'주차 안내',targetId:'zrGuideParkingSubtabV1'}
   ],
   settings:[
+    {id:'settings-group-pricing',label:'단체가 설정',targetId:'zrSettingsGroupPricingSubtabV1'},
+    {id:'settings-drink-service',label:'음료 제공 설정',targetId:'zrSettingsDrinkServiceSubtabV1'},
     {id:'settings-operation',label:'예약 운영',targetId:'zrSettingsOperationSubtabV1'},
     {id:'settings-closure',label:'정기휴무 설정',targetId:'zrSettingsClosureSubtabV1'},
     {id:'settings-peak',label:'성수기 설정',targetId:'zrSettingsPeakSubtabV1'}

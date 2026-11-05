@@ -111,6 +111,11 @@ export function currentList(){
     .sort((a,b)=>String(a.ps||"99:99").localeCompare(String(b.ps||"99:99"))||String(a.org||"").localeCompare(String(b.org||""),"ko"));
 }
 export async function savePatch(gid,patch){
+  if(Object.hasOwn(patch,"actualPaid")||Object.hasOwn(patch,"actualChap")){
+    if(!state.benefitSettingsReady)throw Error("단체가 설정을 불러오는 중입니다. 잠시 후 다시 저장해주세요.");
+    for(const key of ["actualPaid","actualChap"])if(Object.hasOwn(patch,key)&&patch[key]!==""&&(!Number.isSafeInteger(Number(patch[key]))||Number(patch[key])<0))throw Error("실제 인원은 0 이상의 정수로 입력해주세요.");
+    patch={...patch,actualPeoplePricing:clone(state.benefitSettings?.groupPricing||{})};
+  }
   setSync("저장 중","wait");
   const by=String(window.zrScheduleIdentity?.()||"").replace(/\s+/g," ").trim().slice(0,20);
   const onsiteMeta=by?{onsiteLastModifiedBy:by,onsiteLastModifiedAt:F.serverTimestamp()}:{};

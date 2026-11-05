@@ -11,7 +11,7 @@ const vendorById=id=>vendors().find(v=>v.id===id)||null;
 const selectedVendorId=b=>b.outsourcingVendorId||b.settlement?.vendorId||'self';
 const snapshot=v=>({id:v.id,name:v.name,groupPrice:Number(v.groupPrice||0),ticketFeeType:v.ticketFeeType==='percent'?'percent':'flat',ticketFeeValue:Number(v.ticketFeeValue||0),cafeFeeType:v.cafeFeeType==='percent'?'percent':'flat',cafeFeeValue:Number(v.cafeFeeValue||0)});
 const fee=(amount,type,value)=>Number(amount||0)<=0?0:(type==='percent'?Math.round(Number(amount||0)*Number(value||0)/100):Math.round(Number(value||0)));
-const freeChap=(paid,chap)=>Math.min(Math.floor(Math.max(0,Number(paid||0))/5),Math.max(0,Number(chap||0)));
+const freeChap=(paid,chap)=>window.ZRBookingRules.minimumPeople(paid,chap).freeChaperone;
 const addMin=(start,dur)=>{const m=toMin(start);return m==null||!dur?'':toTime(m+Number(dur||0))};
 function recalcSettlement(b,v){
 if(!b.settlement||b.settlement.preserveHistoricalAmounts)return;
