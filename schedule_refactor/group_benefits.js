@@ -24,6 +24,14 @@ export function initBenefits(render){
   new MutationObserver(update).observe(document.getElementById('detailModal'),{attributes:true,attributeFilter:['class']});
  }
 }
+export function drinkError(items,actualChap,completed=false){
+ if(items.some(x=>!Number.isSafeInteger(x.qty)||x.qty<0||x.qty>1000))return '수량을 0~1000의 정수로 입력해주세요.';
+ const total=items.reduce((n,x)=>n+x.qty,0);
+ if(actualChap===''||actualChap==null||!Number.isSafeInteger(Number(actualChap))||Number(actualChap)<0)return '실제 인솔자 수를 먼저 입력해주세요.';
+ if(total>Number(actualChap))return '음료는 인솔자 1명당 1잔까지 제공됩니다. 실제 인솔자 수와 음료 수량을 확인해주세요.';
+ if(completed&&!total)return '제공할 음료 수량을 입력해주세요.';
+ return '';
+}
 function openDrinks(id){
  const g=state.data.groups.find(x=>x.id===id);if(!g||!settingsReady||!state.benefitSettings?.drinkService?.enabled)return;
  const previous=JSON.stringify(g.drinkService||null),saved=g.drinkService||{},menus=[...(state.benefitSettings.drinkService.menus||[])];
@@ -37,12 +45,11 @@ function openDrinks(id){
  for(const selector of ['[data-save]','[data-complete]'])dialog.querySelector(selector).disabled=!state.editMode;
  async function persist(completed){
   if(!state.editMode)return;const items=collect();const error=dialog.querySelector('[data-error]');error.textContent='';
-  if(items.some(x=>!Number.isSafeInteger(x.qty)||x.qty<0||x.qty>1000)){error.textContent='수량을 0~1000의 정수로 입력해주세요.';return}
-  const total=items.reduce((n,x)=>n+x.qty,0);if(completed&&!total){error.textContent='제공할 음료 수량을 입력해주세요.';return}
+  const invalid=drinkError(items,g.actualChap,completed);if(invalid){error.textContent=invalid;return}
   const value={items:items.filter(x=>x.qty>0),completed,modifiedBy:window.zrScheduleIdentity?.()||'',modifiedAt:new Date().toISOString(),completedAt:completed?new Date().toISOString():''};
   const buttons=[...dialog.querySelectorAll('button')];buttons.forEach(x=>x.disabled=true);
   try{
-   await F.runTransaction(db,async tx=>{const ref=F.doc(db,'scheduleGroups',id),snap=await tx.get(ref);if(!snap.exists())throw Error('단체 스케줄을 찾을 수 없습니다.');if(JSON.stringify(snap.data().drinkService||null)!==previous)throw Error('다른 직원이 음료 내역을 수정했습니다. 닫은 뒤 다시 확인해주세요.');tx.set(ref,{drinkService:value,onsiteLastModifiedBy:value.modifiedBy,onsiteLastModifiedAt:F.serverTimestamp(),updatedAt:F.serverTimestamp()},{merge:true})});
+   await F.runTransaction(db,async tx=>{const ref=F.doc(db,'scheduleGroups',id),snap=await tx.get(ref);if(!snap.exists())throw Error('단체 스케줄을 찾을 수 없습니다.');const settings=await tx.get(F.doc(db,'customerGuides','main'));if(settings.data()?.reservationSettings?.drinkService?.enabled!==true)throw Error('음료 제공 설정이 꺼져 있습니다.');const invalid=drinkError(items,snap.data().actualChap,completed);if(invalid)throw Error(invalid);if(JSON.stringify(snap.data().drinkService||null)!==previous)throw Error('다른 직원이 음료 내역을 수정했습니다. 닫은 뒤 다시 확인해주세요.');tx.set(ref,{drinkService:value,onsiteLastModifiedBy:value.modifiedBy,onsiteLastModifiedAt:F.serverTimestamp(),updatedAt:F.serverTimestamp()},{merge:true})});
    g.drinkService=value;dialog.close();refresh();
   }catch(e){error.textContent=e.message||'저장하지 못했습니다. 다시 시도해주세요.';buttons.forEach(x=>x.disabled=false)}
  }
