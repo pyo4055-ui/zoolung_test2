@@ -1,4 +1,4 @@
-import {state,auth,db,F,savePatch,toast,esc} from './core.js';
+import {state,auth,db,F,savePatch,toast,esc} from './core.js?v=release-1792586551421';
 let refresh=()=>{},unsubscribe=null,settingsReady=false;
 export function peopleResult(g){
  if(g.actualPaid===''||g.actualPaid==null||g.actualChap===''||g.actualChap==null)return null;
