@@ -7,9 +7,14 @@
   function totalPeople(b){return [b?.paidCount,b?.chaperoneCount].reduce((sum,value)=>sum+(Number.isFinite(Number(value))?Number(value):0),0)}
   function validDateStr(y,m,d){return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`}
   function sameIntervalOverlap(s1,e1,s2,e2){return Math.max(s1,s2)<Math.min(e1,e2)}
-  function calculatePeople(paidCount,chaperoneCount,price){
+  function unitPrice(){
+    const price=groupPricing().unitPrice;
+    return Number.isSafeInteger(price)&&price>0?price:15000;
+  }
+  function calculatePeople(paidCount,chaperoneCount,price=unitPrice()){
     const p=Number(paidCount||0),c=Number(chaperoneCount||0);
-    const free=Math.min(c,Math.floor(p/5)),paidChap=Math.max(0,c-free),amount=(p+paidChap)*price;
+    const {freeChaperone:free,paidChaperone:paidChap,totalPaid}=minimumPeople(p,c);
+    const amount=totalPaid*price;
     return {p,c,free,paidChap,amount};
   }
   function groupPricing(){return window.settings?.()?.groupPricing||{}}
@@ -43,7 +48,7 @@
       }
       if(!items.length)throw Error('카페 메뉴를 1개 이상 선택해주세요.');
     }
-    const people=minimumPeople(paid,chap),entryAmount=people.totalPaid*15000,cafe={items,amount:items.reduce((sum,item)=>sum+item.subtotal,0)};
+    const people=minimumPeople(paid,chap),entryAmount=people.totalPaid*unitPrice(),cafe={items,amount:items.reduce((sum,item)=>sum+item.subtotal,0)};
     if(!Number.isSafeInteger(entryAmount+cafe.amount+quantity*10000))throw Error('예약 금액을 확인해주세요.');
     return {paidCount:paid,chaperoneCount:chap,freeChaperone:people.freeChaperone,paidChaperone:people.paidChaperone,entryAmount,cafe,feedOrder:{kind:'12-species',quantity,unitPrice:10000,amount:quantity*10000},totalAmount:entryAmount+cafe.amount+quantity*10000};
   }
@@ -127,5 +132,5 @@
     const days=(Date.parse(String(b.date)+'T00:00:00Z')-Date.parse(koreaDate(now)+'T00:00:00Z'))/86400000;
     return Number.isInteger(days)&&days>7;
   }
-  window.ZRBookingRules=Object.freeze({groupPricing,participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
+  window.ZRBookingRules=Object.freeze({unitPrice,groupPricing,participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
 })();

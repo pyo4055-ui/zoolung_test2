@@ -3,7 +3,7 @@
 if(window.__ZR_ADMIN_SETTLEMENT_WORKSPACE_V1)return;
 window.__ZR_ADMIN_SETTLEMENT_WORKSPACE_V1=true;
 
-const KEY='zr_bookings',BASE_PRICE=15000,HOLD='hold';
+const KEY='zr_bookings',HOLD='hold';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let currentId='';
@@ -35,7 +35,7 @@ function money(v){
 const snap=window.ZRSettlementRules.vendorSnapshot;
 function currentSnapshot(b){return b?.settlement?.vendorSnapshot||b?.outsourcingVendorSnapshot||null}
 function vendorsFor(b){
-  const base=[{id:'self',name:'자체',groupPrice:BASE_PRICE,ticketFeeType:'flat',ticketFeeValue:0,cafeFeeType:'flat',cafeFeeValue:0}];
+  const base=[{id:'self',name:'자체',groupPrice:b?.settlement?.savedAt && (b.settlement.vendorId||'self')==='self' ? (b.settlement.ticketUnitPrice ?? b.settlement.vendorSnapshot?.groupPrice ?? 15000) : window.ZRBookingRules.unitPrice(),ticketFeeType:'flat',ticketFeeValue:0,cafeFeeType:'flat',cafeFeeValue:0}];
   try{(settings().outsourcingVendors||[]).filter(v=>String(v?.name||'').trim()).slice(0,10).forEach(v=>base.push(snap(v)))}catch{}
   const selected=b?.settlement?.vendorId||b?.outsourcingVendorId||currentSnapshot(b)?.id||'self';
   const old=currentSnapshot(b);

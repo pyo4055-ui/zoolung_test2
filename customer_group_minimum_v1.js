@@ -4,7 +4,7 @@ if(window.__ZR_CUSTOMER_GROUP_MINIMUM_V1)return;
 window.__ZR_CUSTOMER_GROUP_MINIMUM_V1=true;
 
 const MIN_PAID=15;
-const PRICE=15000;
+
 const $=id=>document.getElementById(id);
 const money=n=>Number(n||0).toLocaleString('ko-KR')+'원';
 
@@ -73,17 +73,6 @@ function renderPeopleGuide(){
   if(sum)sum.textContent=`유료 ${c.totalPaid}명 / 무료 인솔 ${c.freeChaperone}명`;
 }
 
-function legacyTotalPaid(c){
-  const oldFree=Math.min(Math.floor(Math.max(0,c.paid)/5),Math.max(0,c.chaperone));
-  return c.paid+(c.chaperone-oldFree);
-}
-function adjustVisibleTotal(){
-  const c=currentCounts(),total=$('sumTotal');if(!c||!total)return;
-  const baseAmount=Number(String(total.textContent||'').replace(/[^0-9]/g,''));
-  if(!Number.isFinite(baseAmount))return;
-  const delta=c.totalPaid-legacyTotalPaid(c);
-  if(delta)total.textContent=money(Math.max(0,baseAmount+delta*PRICE));
-}
 function adjustFinalReview(){
   const c=currentCounts(),review=$('finalReview');if(!review||!c.paid)return;
   const people=`<b>인원</b> 유료 관람 ${c.paid}명 / 인솔자 ${c.chaperone}명 (무료 ${c.freeChaperone}명, 유료 ${c.paidChaperone}명)<br>`;
@@ -107,7 +96,7 @@ function patchBookingData(){
     const extras=Number.isFinite(oldEntry)&&Number.isFinite(oldTotal)?Math.max(0,oldTotal-oldEntry):Math.max(0,Number(b.cafe?.amount||0));
     b.freeChaperone=c.freeChaperone;
     b.paidChaperone=c.paidChaperone;
-    b.entryAmount=c.totalPaid*PRICE;
+    b.entryAmount=c.totalPaid*window.ZRBookingRules.unitPrice();
     b.totalAmount=b.entryAmount+extras;
     return b;
   };
@@ -145,7 +134,7 @@ function patchRefreshSummary(){
   const base=cur;
   const wrapped=function(){
     const out=base.apply(this,arguments);
-    renderPeopleGuide();adjustVisibleTotal();adjustFinalReview();
+    renderPeopleGuide();adjustFinalReview();
     return out;
   };
   wrapped.__zrGroupMinimumV1=true;wrapped.__zrBase=base;
@@ -155,6 +144,8 @@ function patchRefreshSummary(){
 
 window.ZRGroupMinimum=Object.freeze({renderPeople:renderPeopleGuide});
 function refresh(){
+  const label=$('groupUnitPriceLabel');
+  if(label)label.value='1명당 '+money(window.ZRBookingRules.unitPrice())+' (VAT 포함)';
   ensurePaidOptions();ensureTopNotice();ensureRuleHelp();patchBookingData();patchValidateBooking();patchRefreshSummary();renderPeopleGuide();
 }
 

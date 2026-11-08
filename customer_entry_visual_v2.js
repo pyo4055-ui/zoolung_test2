@@ -235,7 +235,7 @@ function ensureGuideModal(){
     <div class="zr-guide-v2-head"><h2 id="zrCustomerGroupGuideTitleV2">단체 안내사항</h2><button type="button" class="zr-guide-v2-close" id="zrCustomerGroupGuideCloseV2">닫기</button></div>
     <div class="zr-guide-v2-body"><p class="zr-guide-v2-lead">주렁주렁 동탄점 단체 이용 전 주요 혜택과 예약 기준을 확인해주세요.</p>
       <div class="zr-guide-v2-list">
-        <div class="zr-guide-v2-item"><b>단체 요금</b><span>유료인원 15명 이상부터 단체예약이 가능하며, 단체요금은 1인 15,000원(VAT 포함)입니다.</span></div>
+        <div class="zr-guide-v2-item"><b>단체 요금</b><span>유료인원 15명 이상부터 단체예약이 가능하며, 단체요금은 1인 ${window.ZRBookingRules.unitPrice().toLocaleString("ko-KR")}원(VAT 포함)입니다.</span></div>
         <div class="zr-guide-v2-item"><b>인솔 혜택</b><span>유료인원 5명당 인솔자 1명이 무료 적용되며, 기준을 초과한 인솔자는 유료로 계산됩니다.</span></div>
         <div class="zr-guide-v2-item"><b>이용 선택</b><span>평일 12:00 이전 입장하는 유치원·어린이집 단체는 식사와 놀이터를 사전 예약할 수 있습니다.</span></div>
         <div class="zr-guide-v2-item"><b>방문 일정</b><span>평일 오전 유치원·어린이집 단체는 파크 입장까지 직원이 안내하며, 입장 후에는 자율 관람합니다. 단체 간 동선이 겹치지 않도록 배정한 방문 일정은 예약확인 페이지에서 확인할 수 있습니다. 그 외 일반단체는 직원 인솔 및 별도 일정 없이 자율 관람합니다.</span></div>

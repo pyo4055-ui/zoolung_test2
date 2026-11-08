@@ -193,12 +193,6 @@ function bindBookingTransition(){
 
 function simplifyMinimumCopy(){
   const root=$('customerView');if(!root)return;
-  const notice=[...root.querySelectorAll(':scope > .notice,.notice')].find(el=>/단체\s*예약/.test(norm(el.textContent))&&/15명/.test(norm(el.textContent)));
-  const noticeHtml='※ 단체 예약은 <b>유료인원 합계 15명 이상</b>부터 가능합니다. 결제는 현장에서 진행됩니다.';
-  if(notice&&notice.innerHTML!==noticeHtml)notice.innerHTML=noticeHtml;
-  const help=$('zrGroupMinimumRuleV1');
-  const helpHtml='<b>유료인원 합계 15명 이상부터 예약 가능합니다.</b><br>15명 충족 후 유료인원 5명당 인솔자 1명이 무료입니다.';
-  if(help&&help.innerHTML!==helpHtml)help.innerHTML=helpHtml;
   const calc=$('peopleCalc');
   calc?.querySelectorAll('.help').forEach(el=>{
     if(/인솔자\s*\d+명은 최소 유료인원 15명 충족을 위해 유료로 적용됩니다/.test(norm(el.textContent))){

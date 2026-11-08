@@ -18,7 +18,9 @@ function mount(){
     if(field==='groupPricing'){
      const ratio=Number(panel.querySelector('[data-ratio]').value);
      if(!Number.isSafeInteger(ratio)||ratio<1||ratio>100){window.toast?.('무료 인솔자 기준은 1~100명으로 입력해주세요.');return false}
-     value={freePerPaid:ratio,eventMinimum:15,eventEnabled:panel.querySelector('[data-enabled]').checked};
+     const price=Number(panel.querySelector('[data-unit-price]').value);
+     if(!Number.isSafeInteger(price)||price<1||price>100000000){window.toast?.('단체가는 1원부터 1억원까지 정수로 입력해주세요.');return false}
+     value={...read().groupPricing,unitPrice:price,freePerPaid:ratio,eventMinimum:15,eventEnabled:panel.querySelector('[data-enabled]').checked};
     }else{
      const menus=[...panel.querySelectorAll('[data-menu]')].map(row=>({id:row.dataset.menu,name:row.querySelector('input').value.trim()}));
      if(menus.some(x=>!x.name||x.name.length>40)||new Set(menus.map(x=>x.name)).size!==menus.length){window.toast?.('음료 이름은 중복 없이 1~40자로 입력해주세요.');return false}
@@ -37,7 +39,8 @@ function mount(){
   const config=read()[field]||{},signature=JSON.stringify(config);if(panel.dataset.dirty||panel.dataset.signature===signature)continue;
   panel.dataset.signature=signature;const fields=panel.querySelector('[data-fields]');
   if(field==='groupPricing'){
-   fields.innerHTML='<label>일반 무료 인솔자 기준</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">유료인원 <input data-ratio type="number" min="1" max="100" style="width:90px" aria-label="무료 인솔자 1명당 유료인원">명당 인솔자 1명 무료</div><label style="display:flex;align-items:center;gap:8px;margin-top:20px"><input data-enabled type="checkbox" style="width:auto">인솔자 전원 무료 이벤트 사용</label><p class="help">이벤트 사용 시 관람인원과 인솔자 합계 15명 이상이면 인솔자 전원 무료입니다. 끄면 일반 기준으로 계산합니다.</p>';
+   fields.innerHTML='<label>1인 단체가 (VAT 포함)<input data-unit-price type="number" min="1" max="100000000" step="1"></label><p class="help">저장 시점부터 새로 입력하는 자체 실제결제에 변경 단가가 적용됩니다. 이전 결제는 당시 단가를 유지합니다.</p><label>일반 무료 인솔자 기준</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">유료인원 <input data-ratio type="number" min="1" max="100" style="width:90px" aria-label="무료 인솔자 1명당 유료인원">명당 인솔자 1명 무료</div><label style="display:flex;align-items:center;gap:8px;margin-top:20px"><input data-enabled type="checkbox" style="width:auto">인솔자 전원 무료 이벤트 사용</label><p class="help">이벤트 사용 시 관람인원과 인솔자 합계 15명 이상이면 인솔자 전원 무료입니다. 끄면 일반 기준으로 계산합니다.</p>';
+   fields.querySelector('[data-unit-price]').value=window.ZRBookingRules.unitPrice();
    fields.querySelector('[data-ratio]').value=config.freePerPaid||5;fields.querySelector('[data-enabled]').checked=config.eventEnabled===true;
   }else{
    fields.innerHTML='<label style="display:flex;align-items:center;gap:8px"><input data-enabled type="checkbox" style="width:auto">인솔자 음료 제공 사용</label><div data-menus></div><button type="button" class="btn-soft" data-add style="margin-top:12px">음료 추가</button>';
