@@ -98,18 +98,32 @@
     .copy-layer{opacity:1!important}
     .intro-frame.run .intro-layer{animation:none!important}
   }
+.intro-layer svg{position:absolute;inset:0;width:100%;height:100%}
+  .intro-layer img{visibility:hidden}
 </style>
 </head>
 <body>
   <main id="introFrame" class="intro-frame" aria-label="주렁주렁 관리자 인트로 애니메이션">
     <div class="intro-layer penguin-layer">
       <img src="./assets/login/penguin.png" alt="" decoding="async">
+      <svg aria-hidden="true" viewBox="0 0 1672 940" preserveAspectRatio="xMidYMid slice">
+        <defs><clipPath id="edge-penguin"><polygon points="0,663 1672,570 1672,940 0,940"/></clipPath></defs>
+        <image href="./assets/login/penguin.png" width="1672" height="940" clip-path="url(#edge-penguin)"/>
+      </svg>
     </div>
     <div class="intro-layer otter-layer">
       <img src="./assets/login/otter.png" alt="" decoding="async">
+      <svg aria-hidden="true" viewBox="0 0 1672 940" preserveAspectRatio="xMidYMid slice">
+        <defs><clipPath id="edge-otter"><polygon points="0,0 1672,0 1672,346 0,251"/></clipPath></defs>
+        <image href="./assets/login/otter.png" width="1672" height="940" clip-path="url(#edge-otter)"/>
+      </svg>
     </div>
     <div class="intro-layer capybara-layer">
       <img src="./assets/login/capybara.png" alt="" decoding="async">
+      <svg aria-hidden="true" viewBox="0 0 1672 940" preserveAspectRatio="xMidYMid slice">
+        <defs><clipPath id="edge-capybara"><polygon points="0,255 1672,350 1672,566 0,659"/></clipPath></defs>
+        <image href="./assets/login/capybara.png" width="1672" height="940" clip-path="url(#edge-capybara)"/>
+      </svg>
     </div>
     <div class="intro-layer copy-layer">
       <div class="intro-copy"><span>도시 한가운데, 생명의 숲이 열리다</span><strong>도심속에서 만나는<br>따뜻한 교감</strong></div>
