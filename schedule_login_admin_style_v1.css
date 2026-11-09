@@ -1,6 +1,7 @@
 /* Onsite schedule login card matched to the approved administrator login visual.
    Visual-only layer: existing Firebase authentication and schedule data behavior stay unchanged. */
 
+html:has(#login.login:not(.hidden)){scrollbar-gutter:auto;overflow:hidden}
 #login.login{
   position:fixed!important;
   inset:0!important;

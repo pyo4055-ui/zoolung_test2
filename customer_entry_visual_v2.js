@@ -40,6 +40,7 @@ function injectStyle(){
     --zr-v2-close-line:#eaded5;
     --zr-v2-close-text:#470910;
   }
+  html.zr-customer-entry-v2.zr-customer-entry-v2-active{scrollbar-gutter:auto}
   html.zr-customer-entry-v2 body>header .top-actions{display:none!important}
   html.zr-customer-entry-v2.zr-customer-entry-v2-active body>header{display:none!important}
   html.zr-customer-entry-v2.zr-customer-entry-v2-active body{background:var(--zr-v2-brown)!important}
