@@ -1,4 +1,5 @@
 /* Zoolung Dongtan admin login intro visual. UI only; auth/data behavior unchanged. */
+html.zr-admin-login-clean{scrollbar-gutter:auto;overflow:hidden}
 html.zr-admin-login-clean,
 html.zr-admin-login-clean body{
   background:#38271e!important;
