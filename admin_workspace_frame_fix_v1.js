@@ -4,6 +4,11 @@ if(window.__ZR_ADMIN_WORKSPACE_FRAME_FIX_V1)return;
 window.__ZR_ADMIN_WORKSPACE_FRAME_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
+function workspaceVisible(){
+  const root=document.documentElement.classList;
+  return root.contains('zr-admin-shell-mounted')&&!root.contains('zr-admin-login-clean');
+}
+
 const SECTION_IDS=['tab-today','tab-calendar','tab-schedule','tab-warning','tab-activity','tab-meals','tab-cleanup','tab-inquiries','tab-preview-visit','zrGuideAdminSection','tab-outsourcing','tab-menuadmin','tab-settings'];
 let rootObserver=null,adminObserver=null,scheduled=false,loginIdentityResetDone=false;
 
@@ -118,17 +123,22 @@ function fixLoginIdentityPlacement(){
   }
   return true;
 }
-function apply(){scheduled=false;injectStyle();fixLoginIdentityPlacement();forceFrame();fluidize()}
-function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(apply)}
+function apply(){scheduled=false;if(!workspaceVisible())return;forceFrame();fluidize()}
+function schedule(){if(scheduled||!workspaceVisible())return;scheduled=true;requestAnimationFrame(apply)}
 function installObservers(){
   const admin=$('adminView');
-  if(!rootObserver){rootObserver=new MutationObserver(schedule);rootObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
+  if(!rootObserver){rootObserver=new MutationObserver(()=>{fixLoginIdentityPlacement();schedule()});rootObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
   if(admin&&!adminObserver){adminObserver=new MutationObserver(schedule);adminObserver.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']})}
 }
+let booted=false;
 function boot(){
-  apply();installObservers();
+  injectStyle();fixLoginIdentityPlacement();installObservers();schedule();
+  if(booted)return;
+  booted=true;
+  const login=$('adminLoginModal');
+  if(login)new MutationObserver(fixLoginIdentityPlacement).observe(login,{subtree:true,childList:true});
   window.addEventListener('resize',schedule,{passive:true});
-  [50,150,350,800,1600].forEach(ms=>setTimeout(apply,ms));
+
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,0),{once:true});

@@ -4,6 +4,11 @@ if(window.__ZR_ADMIN_SECTION_SUBTAB_TITLE_FIX_V1)return;
 window.__ZR_ADMIN_SECTION_SUBTAB_TITLE_FIX_V1=true;
 
 const $=id=>document.getElementById(id);
+function workspaceVisible(){
+  const root=document.documentElement.classList;
+  return root.contains('zr-admin-shell-mounted')&&!root.contains('zr-admin-login-clean');
+}
+
 const GROUPS=[
   {sectionId:'tab-preview-visit',items:[
     {targetId:'zrPreviewNotifyVisitSubtab',title:'사전답사 현황',help:['사전답사 요청을 확인하고 방문 일정을 확정합니다.']},
@@ -70,9 +75,9 @@ function syncGroup(group){
     help.title=`${meta.title} 도움말`;
   }
 }
-function sync(){scheduled=false;GROUPS.forEach(syncGroup)}
+function sync(){scheduled=false;if(!workspaceVisible())return;GROUPS.forEach(syncGroup)}
 window.ZRAdminSectionTitles={sync};
-function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(sync)}
+function schedule(){if(scheduled||!workspaceVisible())return;scheduled=true;requestAnimationFrame(sync)}
 function showHelp(meta){
   const modal=$('zrAdminSectionHelpModalV1'),title=$('zrAdminHelpTitle'),body=$('zrAdminHelpBody');
   if(!modal||!title||!body)return false;
@@ -80,8 +85,12 @@ function showHelp(meta){
   for(const line of [...new Set([...meta.help,...(window.ZRAdminHelp?.moved(document.getElementById(GROUPS.find(g=>g.items.includes(meta))?.sectionId))||[])])]){const row=document.createElement('div');row.className='zr-admin-help-line';row.textContent=line;body.appendChild(row)}
   modal.hidden=false;setTimeout(()=>$('zrAdminHelpClose')?.focus?.(),0);return true;
 }
+let booted=false;
 function boot(){
-  sync();
+  if(booted){schedule();return}
+  booted=true;
+  new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  schedule();
   const admin=$('adminView');
   if(admin&&!observer){observer=new MutationObserver(schedule);observer.observe(admin,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden','aria-selected','style']})}
   document.addEventListener('click',e=>{
@@ -94,7 +103,7 @@ function boot(){
       setTimeout(schedule,0);setTimeout(schedule,80);setTimeout(schedule,180);
     }
   },true);
-  let tries=0;const t=setInterval(()=>{sync();if(++tries>100)clearInterval(t)},150);
+
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,0),{once:true});
