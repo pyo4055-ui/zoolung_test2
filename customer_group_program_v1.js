@@ -2,10 +2,11 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
+function preschoolGroup(){return ['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes($('groupType')?.value)}
 function general(){
   const group=$('groupType')?.value,date=$('visitDay')?.value,entry=$('entryTime')?.value;
   if(!group)return false;
-  if(!['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes(group))return true;
+  if(!preschoolGroup()||entry>='12:00')return true;
   if(!date)return false;
   const rules=window.ZRBookingRules;
   if(!rules.groupProgram(group,date,entry||'10:30'))return true;
@@ -43,7 +44,7 @@ function presentation(){
 function sync(){
   const isGeneral=general(),meal=$('mealType'),play=$('playUse');if(!meal||!play)return false;
   const waiting=!$('visitDay')?.value||!$('entryTime')?.value;
-  const preschool=['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes($('groupType')?.value);
+  const preschool=preschoolGroup();
   $('selfGuidedVisitHelp')?.classList.toggle('hidden',!isGeneral);
   $('visitTimeHelp')?.classList.toggle('hidden',isGeneral);
   $('afternoonProgramHelp')?.classList.toggle('hidden',!(preschool&&isGeneral));
@@ -68,5 +69,5 @@ function sync(){
   window.ZRParkingGuide?.refresh();
   return changed;
 }
-window.ZRGroupBooking=Object.freeze({general,order,amount,fields,sync,presentation});
+window.ZRGroupBooking=Object.freeze({general,preschoolGroup,order,amount,fields,sync,presentation});
 })();
