@@ -78,7 +78,7 @@ function parkingPresentation(booking){
 }
 function cardHtml(booking){const p=parkingPresentation(booking);return `<div class="zrpk31-title">${esc(p.title)}</div>${p.general?'':locationHtml(p.dropoffTitle,p.dropoffPlace,p.dropoffAddress,p.dropoffNote)}${locationHtml(p.busTitle,p.busPlace,p.busAddress,p.busNote)}`}
 window.ZRParkingGuide=Object.freeze({html:cardHtml,refresh:()=>renderCard()});
-function anchor(){if($('visitTimeHelp'))return $('visitTimeHelp');const a=$('entryTime'),b=$('exitTime');if(!a||!b)return null;const c=[b.closest('.grid2'),b.closest('.grid'),b.parentElement?.parentElement,b.parentElement].filter(Boolean);return c.find(x=>x.contains(a)&&x.contains(b))||b.parentElement}
+function anchor(){const a=$('entryTime'),b=$('exitTime');if(!a||!b)return null;const c=[b.closest('.grid2'),b.closest('.grid'),b.parentElement?.parentElement,b.parentElement].filter(Boolean);return c.find(x=>x.contains(a)&&x.contains(b))||b.parentElement}
 function renderCard(){let r=$('zrParkingInfoCard');if(!r){const a=anchor();if(!a)return false;r=document.createElement('section');r.id='zrParkingInfoCard';a.insertAdjacentElement('afterend',r)}r.innerHTML=cardHtml();return true}
 
 const field=(label,key,value,full=false,area=false)=>`<div class="${full?'full':''}"><label>${label}</label>${area?`<textarea data-pk31="${key}">${esc(value)}</textarea>`:`<input data-pk31="${key}" value="${esc(value)}">`}</div>`;

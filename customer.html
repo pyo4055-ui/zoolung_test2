@@ -193,10 +193,6 @@
 
       <section class="card">
         <h2><span class="section-no">3</span>식사 및 방문시간</h2>
-        <div class="grid2" style="margin-top:14px">
-          <div><label class="req">입장시간</label><select id="entryTime"></select></div>
-          <div><label class="req">퇴장시간</label><select id="exitTime"></select></div>
-        </div>
         <div>
           <label class="req">식사 선택</label>
           <select id="mealType">
@@ -209,6 +205,10 @@
         </div>
         <div class="help hidden" id="afternoonProgramHelp">오후 단체는 자율 관람입니다. 식사와 놀이터는 오전 입장 시에만 예약할 수 있습니다.</div>
         <div class="help" id="visitTimeHelp"></div>
+        <div class="grid2" style="margin-top:14px">
+          <div><label class="req">입장시간</label><select id="entryTime"></select></div>
+          <div><label class="req">퇴장시간</label><select id="exitTime"></select></div>
+        </div>
       </section>
 
       <section class="card hidden" id="generalGroupSection">
@@ -1390,7 +1390,7 @@ $("submitBooking").onclick=async()=>{
 
 initCounts();initTimes();initMonths();renderCustomerCafeMenus();renderVisitDays();refreshExitTimes();refreshPlayStarts();refreshSummary();
 </script>
-<script src="./customer_features_loader_v1.js?v=release-review-2"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=release-review-2"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
+<script src="./customer_features_loader_v1.js?v=visit-order-1"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=release-review-2"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
 <script src="./shared_group_notice_v1.js?v=release-1792586551421"></script>
 </body>
 </html>

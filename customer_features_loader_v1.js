@@ -57,7 +57,7 @@ async function loadCustomerGuideFixV20(){
 
 async function loadParkingInfo(){
   if(window.__ZR_PARKING_INFO_V31)return;
-  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=meal-edit-20261110');
+  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=visit-order-1');
 }
 
 function installFinalConfirmBridge(){
