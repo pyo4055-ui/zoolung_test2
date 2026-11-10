@@ -689,7 +689,7 @@
 
 <script src="./shared_booking_rules_v1.js?v=meal-edit-20261110"></script>
 <script src="./shared_booking_allocations_v1.js?v=release-review-2"></script>
-<script src="./customer_group_program_v1.js?v=entry-first-20261110"></script>
+<script src="./customer_group_program_v1.js?v=meal-first-2"></script>
 <script>
 const PRICE=15000;
 
@@ -1321,7 +1321,7 @@ entrySelect.addEventListener("focus",rememberEntry);
 entrySelect.addEventListener("pointerdown",rememberEntry);
 function applyEntry(){rememberEntry();refreshExitTimes();validateMeal();refreshPlayStarts();refreshSummary()}
 function guardEntry(event){
-  if(!priorEntry||!window.ZRBookingRules.groupProgram($("groupType").value,selectedDate(),priorEntry)||
+  if(!window.ZRBookingRules.groupProgram($("groupType").value,selectedDate(),priorEntry||"10:30")||
      entrySelect.value<"12:00"||(!["lunchbox","cafe"].includes($("mealType").value)&&$("playUse").value!=="yes"))return;
   requestedAfternoon=entrySelect.value;
   entrySelect.value=priorEntry;

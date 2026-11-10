@@ -8,7 +8,7 @@ function general(){
   if(!['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes(group))return true;
   if(!date)return false;
   const rules=window.ZRBookingRules;
-  if(entry&&!rules.groupProgram(group,date,entry))return true;
+  if(!rules.groupProgram(group,date,entry||'10:30'))return true;
   return rules.bookingCapacityClosed(window.settings(),window.bookings(),{
     id:window.zrEditingBookingId?.(),date,groupType:group,entryTime:'10:30'
   });
@@ -46,7 +46,7 @@ function sync(){
   const waiting=!$('visitDay')?.value||!$('entryTime')?.value;
   const preschool=['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes($('groupType')?.value);
   $('afternoonProgramHelp')?.classList.toggle('hidden',!(preschool&&isGeneral));
-  meal.parentElement.classList.toggle('hidden',isGeneral||waiting);
+  meal.parentElement.classList.toggle('hidden',!preschool||isGeneral);
   if(waiting)for(const id of ['cafeSection','mealTimeSection'])$(id)?.classList.add('hidden');
   if(!waiting&&!isGeneral){
     $('cafeSection')?.classList.toggle('hidden',meal.value!=='cafe');
