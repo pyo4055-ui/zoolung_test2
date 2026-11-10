@@ -88,12 +88,12 @@ service cloud.firestore {
     function customerBookingCreate() {
       return validCustomerBooking(request.resource.data)
         && request.resource.data.keys().hasOnly(customerBookingFields())
-        && validCustomerOptions(request.resource.data) && validCustomerChange(request.resource.data)
+        && validCustomerOptions(request.resource.data) && (!('reservationChangeRequest' in request.resource.data) || validCustomerChange(request.resource.data))
         && request.resource.data.get('email','') is string && request.resource.data.get('email','').size() <= 320
         && request.resource.data.get('notes','') is string && request.resource.data.get('notes','').size() <= 20000
         && request.resource.data.get('mealLoc','') in ['', '자리배정 없음']
         && request.resource.data.status == 'pending'
-        && !request.resource.data.keys().hasAny(staffBookingFields())
+        && !('cancelReviewed' in request.resource.data)
         && request.resource.data.get('schedulePublished', false) == false
         && request.resource.data.get('customerSchedule', null) == null;
     }
@@ -250,13 +250,13 @@ service cloud.firestore {
     function allocationRangePresent(id,day,start,end) {
       let a = timeMinutes(start);
       let span = timeMinutes(end)-a;
-      let prefix = /databases/$(database)/documents/playgroundAllocations;
+
       let key = day + '__';
       return a%15 == 0 && span in [30,60]
-        && getAfter(/$(prefix)/$(key + string(a))).data.members[id] == true
-        && getAfter(/$(prefix)/$(key + string(a+15))).data.members[id] == true
-        && (span == 30 || (getAfter(/$(prefix)/$(key + string(a+30))).data.members[id] == true
-          && getAfter(/$(prefix)/$(key + string(a+45))).data.members[id] == true));
+        && getAfter(/databases/$(database)/documents/playgroundAllocations/$(key + string(a))).data.members[id] == true
+        && getAfter(/databases/$(database)/documents/playgroundAllocations/$(key + string(a+15))).data.members[id] == true
+        && (span == 30 || (getAfter(/databases/$(database)/documents/playgroundAllocations/$(key + string(a+30))).data.members[id] == true
+          && getAfter(/databases/$(database)/documents/playgroundAllocations/$(key + string(a+45))).data.members[id] == true));
     }
     function activeAllocationValid(id,after) {
       let day = after.get('date','');
@@ -327,11 +327,12 @@ service cloud.firestore {
         let b = getAfter(/databases/$(database)/documents/reservations/$(id)).data;
         let parts = slotId.split('__');
         let minute = int(parts[1]);
-        return d.version == 1 && d.members is map && d.members.size() == 1 && d.members.get(id,false) == true
+        return d.version == 1 && d.members is map && d.members.size() == 1 && d.members[id] == true
           && d.keys().hasOnly(['version','members','lastBookingId','updatedAt'])
           && b.ownerUid == request.auth.uid && parts.size() == 2
           && parts[1] == string(minute) && minute >= 0 && minute < 1440 && minute % 15 == 0
-          && allocationUsesSlot(b,parts[0],minute);
+          && b.date == parts[0] && b.playUse == 'yes' && allocationActive(b)
+          && timeMinutes(b.playStart) <= minute && minute < timeMinutes(b.playEnd);
       }
       function valid() {
         let d = request.resource.data;
@@ -343,7 +344,8 @@ service cloud.firestore {
           && (allocationSettings().get('playgroundLimitEnabled',true) == false || d.members.size() <= 1 || d.members.size() <= old.size()
             || allocationOwnOverlap(d,b));
       }
-      allow create: if request.auth != null && !request.resource.data.lastBookingId.matches('^changePlayHold_.*') && firstSlot();
+      allow create: if request.auth != null && firstSlot() && !request.resource.data.lastBookingId.matches('^changePlayHold_.*');
+      allow update: if request.auth != null && resource.data.members.size() == 0 && firstSlot() && !request.resource.data.lastBookingId.matches('^changePlayHold_.*');
       allow read: if request.auth != null;
       allow create, update: if request.auth != null && ((isScheduleStaff() && allocationConfig().get('enforced',false) != true) || valid());
       allow delete: if false;
