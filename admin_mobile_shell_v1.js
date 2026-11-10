@@ -116,7 +116,7 @@ const GROUPS={
   }
 };
 const BOTTOM=[["operation","운영"],["reservation","예약 관리"],["customer","고객 응대"],["sales","매출"],["outsourcing","아웃소싱 정산"],["settings","설정"],["records","기록 정리"]];
-const ALERTS=[['activity','예약 대기','zrSmartPendingReservation'],['inquiries','1:1 문의','zrSmartInquiry'],['previewVisit','사전답사','zrSmartPreview']];
+const ALERTS=[['activity','예약 대기','zrSmartPendingReservation'],['inquiries','1:1 문의','zrSmartInquiry'],['reservationChange','예약변경요청','zrSmartReservationChange'],['previewVisit','사전답사','zrSmartPreview']];
 
 function mobile(){return window.matchMedia(`(max-width:${MAX_MOBILE}px)`).matches}
 function adminVisible(){const v=$('adminView');if(!v)return false;try{return !v.classList.contains('hidden')&&getComputedStyle(v).display!=='none'}catch{return false}}
