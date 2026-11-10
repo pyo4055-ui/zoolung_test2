@@ -68,7 +68,7 @@ function ensureHelp(){
 }
 function setHelp(text,kind='ok'){
   const n=ensureHelp();if(!n)return;
-  n.textContent=text;
+  if(n.textContent!==text)n.textContent=text;
   n.className=`help zr-${kind}`;
   n.style.display=text?'block':'none';
 }
@@ -358,8 +358,8 @@ function syncLock(){
 }
 function watchOptions(){
   const s=playStart(),d=playDuration();
-  if(s&&s!==observingStart){startObserver?.disconnect();observingStart=s;startObserver=new MutationObserver(()=>setTimeout(syncLock,0));startObserver.observe(s,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','value']})}
-  if(d&&d!==observingDuration){durationObserver?.disconnect();observingDuration=d;durationObserver=new MutationObserver(()=>setTimeout(syncLock,0));durationObserver.observe(d,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','value','max']})}
+  if(s&&s!==observingStart){startObserver?.disconnect();observingStart=s;startObserver=new MutationObserver(()=>setTimeout(syncLock,0));startObserver.observe(s,{childList:true})}
+  if(d&&d!==observingDuration){durationObserver?.disconnect();observingDuration=d;durationObserver=new MutationObserver(()=>setTimeout(syncLock,0));durationObserver.observe(d,{childList:true})}
 }
 function apply(){ensureStyle();watchOptions();ensureHelp();syncLock()}
 function guardSubmit(ev){
@@ -371,7 +371,7 @@ function guardSubmit(ev){
 }
 function boot(){
   apply();
-  const t=setInterval(apply,300);setTimeout(()=>clearInterval(t),20000);
+
   document.addEventListener('change',e=>{
     const id=e.target?.id||'';
     if(!['visitMonth','visitDay','playUse','playStart','playDuration','entryTime','exitTime'].includes(id))return;
@@ -382,7 +382,7 @@ function boot(){
   document.addEventListener('click',e=>{if(e.target?.closest?.('#submitBooking'))guardSubmit(e)},true);
   document.addEventListener('submit',e=>{if(e.target?.closest?.('#customerView'))guardSubmit(e)},true);
   const root=$('customerView')||document.body;
-  new MutationObserver(()=>setTimeout(apply,0)).observe(root,{childList:true,subtree:true});
+
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

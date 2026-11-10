@@ -28,7 +28,9 @@ function presentation(){
     for(const option of entrySelect.options){
       if(!option.value)continue;
       const closed=!!date&&rules.bookingCapacityClosed(state,rows,{id:window.zrEditingBookingId?.(),date,groupType:$('groupType')?.value,entryTime:option.value});
-      option.disabled=closed;option.textContent=option.value+(closed?' (예약 마감)':'');
+      const label=option.value+(closed?' (예약 마감)':'');
+      if(option.disabled!==closed)option.disabled=closed;
+      if(option.textContent!==label)option.textContent=label;
     }
   }
   let step=0;

@@ -111,16 +111,18 @@ async function startListeners(user){
   stopListeners();listeningUid=user.uid;
   const generation=listenerGeneration;
   const current=()=>generation===listenerGeneration&&auth.currentUser?.uid===user.uid;
+  let fullReady=false,availabilityReady=false;
+  const refreshWhenReady=()=>{if(fullReady&&availabilityReady)applyCustomerCache()};
   const q=F.query(F.collection(db,FULL_COLLECTION),F.where('ownerUid','==',user.uid));
   stopFull=F.onSnapshot(q,snap=>{
     if(!current())return;
     ownFull=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
-    applyCustomerCache();
+    fullReady=true;refreshWhenReady();
   },e=>{if(current())console.error('reservation owner listener',e)});
   stopAvail=F.onSnapshot(F.collection(db,AVAIL_COLLECTION),snap=>{
     if(!current())return;
     availability=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
-    applyCustomerCache();
+    availabilityReady=true;refreshWhenReady();
   },e=>{if(current())console.error('reservation availability listener',e)});
 }
 async function ensureUser(){

@@ -681,7 +681,7 @@
 
 <script src="./shared_booking_rules_v1.js?v=release-1792586551421"></script>
 <script src="./shared_booking_allocations_v1.js?v=release-1792586551421"></script>
-<script src="./customer_group_program_v1.js?v=preschool-split-20261025"></script>
+<script src="./customer_group_program_v1.js?v=availability-20261110"></script>
 <script>
 const PRICE=15000;
 
@@ -950,23 +950,25 @@ function initMonths(){
   if(opts.some(o=>o.key===customerCur))$("visitMonth").value=customerCur;
 }
 function renderVisitDays(){
-  const ym=$("visitMonth").value;
+  const ym=$("visitMonth").value, previousDay=$("visitDay").value;
   $("visitDay").innerHTML='<option value="">선택</option>';
   if(!ym)return;
   let [y,m]=ym.split("-").map(Number);
   const last=new Date(y,m,0).getDate(), today=window.ZRBookingRules.koreaDate();
   const s=settings(), openStart=new Date(s.bookingStart+"T00:00:00"), openEnd=new Date(s.bookingEnd+"T23:59:59");
+  const rows=activeBookings(),groupType=$("groupType").value;
   for(let d=1;d<=last;d++){
     const dt=new Date(y,m-1,d), date=validDateStr(y,m,d), wd=dt.getDay();
     const policyReason=window.ZRBookingRules.bookingBlockReason(s,date);
     let disabled=!!policyReason || date<today || dt<openStart || dt>openEnd || wd===0 || wd===6 || isDateClosed(date,{});
     let tag="";
     if(wd===0||wd===6)tag=" (주말)";
-    else if(isDateClosed(date,{}))tag=" (마감)";
+    else if((s.manualClosed||[]).includes(date))tag=" (마감)";
+    if(!disabled && window.ZRBookingRules.bookingCapacityClosed(s,rows,{id:editingBookingId,date,groupType,entryTime:"10:30"}))tag=" (오전 마감 · 오후 가능)";
     if(policyReason)tag=` (${policyReason})`;
     if(date<today)tag=" (지난 날짜 · 예약 불가)";
     if(editingBookingId&&!window.ZRBookingRules.canDirectEdit({status:'pending',date})){disabled=true;tag=" (변경 요청 필요)"}
-    const o=document.createElement("option");o.value=date;o.textContent=`${d}일${tag}`;o.disabled=disabled;$("visitDay").appendChild(o);
+    const o=document.createElement("option");o.value=date;o.textContent=`${d}일${tag}`;o.disabled=disabled;$("visitDay").appendChild(o);if(date===previousDay&&!disabled)o.selected=true;
   }
 }
 function calcPeople(){
@@ -1280,6 +1282,7 @@ $("submitInquiry").onclick=()=>{
 };
 
 ["participantAgeMin","participantAgeMax","feedPurchase","feedQuantity","paidCount","chaperoneCount","groupType","orgName","managerName","contact","email"].forEach(id=>$(id).addEventListener("input",refreshSummary));
+$("groupType").addEventListener("change",()=>{renderVisitDays();refreshPlayStarts();refreshSummary()});
 $("visitMonth").onchange=()=>{renderVisitDays();refreshPlayStarts();refreshSummary()};
 $("visitDay").onchange=()=>{refreshPlayStarts();refreshSummary()};
 $("mealType").onchange=()=>{
@@ -1302,6 +1305,7 @@ $("playStart").onchange=()=>{calcPlay();refreshSummary()};$("playDuration").onch
 $("submitBooking").onclick=async()=>{
   if(submissionLocked)return;
   submissionLocked=true;$("submitBooking").disabled=true;
+  try {
   const err=validateBooking();
   if(err){toast(err);submissionLocked=false;$("submitBooking").disabled=false;return}
   const b=bookingData();
@@ -1338,11 +1342,12 @@ $("submitBooking").onclick=async()=>{
   }
   addActivity("submitted",b,"예약 접수");
   showSuccess(b);
+  } finally { submissionLocked=false;$("submitBooking").disabled=false; }
 };
 
 initCounts();initTimes();initMonths();renderCustomerCafeMenus();renderVisitDays();refreshExitTimes();refreshPlayStarts();refreshSummary();
 </script>
-<script src="./customer_features_loader_v1.js?v=release-1792586551421"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
+<script src="./customer_features_loader_v1.js?v=availability-20261110"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=availability-20261110"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
 <script src="./shared_group_notice_v1.js?v=release-1792586551421"></script>
 </body>
 </html>
