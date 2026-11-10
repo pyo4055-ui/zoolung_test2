@@ -193,6 +193,12 @@
 
       <section class="card">
         <h2><span class="section-no">3</span>식사 및 방문시간</h2>
+        <div class="grid2" style="margin-top:14px">
+          <div><label class="req">입장시간</label><select id="entryTime"></select></div>
+          <div><label class="req">퇴장시간</label><select id="exitTime"></select></div>
+        </div>
+        <div class="help" id="visitTimeHelp"></div>
+        <div class="help hidden" id="afternoonProgramHelp">오후 단체는 자율 관람입니다. 식사와 놀이터는 오전 입장 시에만 예약할 수 있습니다.</div>
         <div>
           <label class="req">식사 선택</label>
           <select id="mealType">
@@ -203,11 +209,6 @@
           </select>
           <div class="help">※ 식사 여부와 관계없이 최대 <b>4시간</b> 이용할 수 있습니다.<br>※ 내부 카페에는 어린이를 위한 메뉴가 포함되어 있습니다.</div>
         </div>
-        <div class="grid2" style="margin-top:14px">
-          <div><label class="req">입장시간</label><select id="entryTime"></select></div>
-          <div><label class="req">퇴장시간</label><select id="exitTime"></select></div>
-        </div>
-        <div class="help" id="visitTimeHelp"></div>
       </section>
 
       <section class="card hidden" id="generalGroupSection">
@@ -553,6 +554,13 @@
 
 
 
+<div class="modal hidden" id="afternoonChangeModal" role="dialog" aria-modal="true" aria-labelledby="afternoonChangeTitle">
+  <div class="modal-card" style="max-width:480px">
+    <h2 id="afternoonChangeTitle">오후 입장으로 변경할까요?</h2>
+    <p>오후 입장으로 변경하면 선택한 식사와 놀이터 예약이 해제됩니다.</p>
+    <div class="modal-actions"><button type="button" id="keepMorning" class="btn-soft">오전 시간 유지</button><button type="button" id="acceptAfternoon" class="btn-primary">오후로 변경</button></div>
+  </div>
+</div>
 <div class="modal hidden" id="adminActionConfirmModal">
   <div class="modal-card" style="max-width:480px">
     <h2 id="adminActionConfirmTitle">예약 처리 확인</h2>
@@ -681,7 +689,7 @@
 
 <script src="./shared_booking_rules_v1.js?v=release-1792586551421"></script>
 <script src="./shared_booking_allocations_v1.js?v=release-1792586551421"></script>
-<script src="./customer_group_program_v1.js?v=exit19-20261110"></script>
+<script src="./customer_group_program_v1.js?v=entry-first-20261110"></script>
 <script>
 const PRICE=15000;
 
@@ -1302,7 +1310,27 @@ $("mealType").onchange=()=>{
   if(v==="none"){$("mealStart").value="";$("mealDuration").value="";$("mealEnd").value=""}
   refreshExitTimes();refreshPlayStarts();refreshSummary()
 };
-$("entryTime").onchange=()=>{refreshExitTimes();validateMeal();refreshSummary()};
+const entrySelect=$("entryTime");
+let priorEntry="", requestedAfternoon="";
+function rememberEntry(){priorEntry=entrySelect.value}
+entrySelect.addEventListener("focus",rememberEntry);
+entrySelect.addEventListener("pointerdown",rememberEntry);
+function applyEntry(){rememberEntry();refreshExitTimes();validateMeal();refreshPlayStarts();refreshSummary()}
+function guardEntry(event){
+  if(!priorEntry||!window.ZRBookingRules.groupProgram($("groupType").value,selectedDate(),priorEntry)||
+     entrySelect.value<"12:00"||(!["lunchbox","cafe"].includes($("mealType").value)&&$("playUse").value!=="yes"))return;
+  requestedAfternoon=entrySelect.value;
+  entrySelect.value=priorEntry;
+  event.stopImmediatePropagation();
+  openModal("afternoonChangeModal");
+  $("keepMorning").focus();
+}
+for(const type of ["input","change"])document.addEventListener(type,event=>{
+  if(event.target===entrySelect)guardEntry(event);
+},true);
+entrySelect.onchange=applyEntry;
+$("keepMorning").onclick=()=>{closeModal("afternoonChangeModal");entrySelect.focus()};
+$("acceptAfternoon").onclick=()=>{closeModal("afternoonChangeModal");entrySelect.value=requestedAfternoon;applyEntry();entrySelect.focus()};
 $("exitTime").onchange=()=>{validateMeal();refreshPlayStarts();refreshSummary()};
 $("mealStart").onchange=calcMeal;$("mealDuration").onchange=calcMeal;
 $("playUse").onchange=()=>{

@@ -43,8 +43,16 @@ function presentation(){
 }
 function sync(){
   const isGeneral=general(),meal=$('mealType'),play=$('playUse');if(!meal||!play)return false;
-  meal.parentElement.classList.toggle('hidden',isGeneral);
-  play.closest('section').classList.toggle('hidden',isGeneral);
+  const waiting=!$('visitDay')?.value||!$('entryTime')?.value;
+  const preschool=['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes($('groupType')?.value);
+  $('afternoonProgramHelp')?.classList.toggle('hidden',!(preschool&&isGeneral));
+  meal.parentElement.classList.toggle('hidden',isGeneral||waiting);
+  if(waiting)for(const id of ['cafeSection','mealTimeSection'])$(id)?.classList.add('hidden');
+  if(!waiting&&!isGeneral){
+    $('cafeSection')?.classList.toggle('hidden',meal.value!=='cafe');
+    $('mealTimeSection')?.classList.toggle('hidden',!['cafe','lunchbox'].includes(meal.value));
+  }
+  play.closest('section').classList.toggle('hidden',isGeneral||waiting);
   $('generalGroupSection')?.classList.toggle('hidden',!isGeneral);
   $('feedQuantityRow')?.classList.toggle('hidden',$('feedPurchase')?.value!=='yes');
   const notice=$('finalReview')?.parentElement.querySelector('.notice');if(notice)notice.classList.toggle('hidden',isGeneral);
