@@ -126,11 +126,12 @@
     if(Number.isFinite(Number(b.entryAmount)))b.totalAmount=Number(b.entryAmount)+(b.mealType==='cafe'?Number(b.cafe?.amount||0):0)+b.feedOrder.amount;
     return b;
   }
+  function maxVisitHours(general,meal){return general||meal==="lunchbox"||meal==="cafe"?4:3}
   function requiresProgramSchedule(b){if(b?.groupBookingMode==='general')return false;if(!b?.groupType||!b?.entryTime||!b?.date)return true;return groupProgram(b.groupType,b.date,b.entryTime)}
   function canDirectEdit(b,now=new Date()){
     if(!b||!['pending','confirmed'].includes(b.status))return false;
     const days=(Date.parse(String(b.date)+'T00:00:00Z')-Date.parse(koreaDate(now)+'T00:00:00Z'))/86400000;
     return Number.isInteger(days)&&days>7;
   }
-  window.ZRBookingRules=Object.freeze({unitPrice,groupPricing,participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
+  window.ZRBookingRules=Object.freeze({maxVisitHours,unitPrice,groupPricing,participantAgeError,canDirectEdit,minimumPeople,changeOrder,toMin,toTime,totalPeople,validDateStr,sameIntervalOverlap,calculatePeople,endTime,durationLabel,normalizeSettings,dateClosure,bookingLeadDays,koreaDate,earliestBookingDate,bookingBlockReason,groupProgram,programBookingCount,bookingCapacityClosed,normalizeGroupBooking,requiresProgramSchedule});
 })();

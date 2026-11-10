@@ -57,6 +57,7 @@ function labelText(el,root){
   return norm(el.getAttribute('aria-label')||el.placeholder)||'필수 항목';
 }
 function requiredByLabel(el){
+  if(el.id==='privacy')return true;
   if(el.required||el.getAttribute('aria-required')==='true')return true;
   const holder=el.closest('.field,.form-group,.calc,.row,.grid2>div,.grid>div,div');
   const label=holder?.querySelector?.('label.req,label.required,.req');
@@ -102,6 +103,7 @@ function markField(el,msg,index){
   el.dataset.zrValidationErrorId=id;
   errorAnchor(el).insertAdjacentElement('afterend',note);
 }
+document.addEventListener('zr:booking-form-reset',()=>{document.querySelectorAll('#customerView input,#customerView select,#customerView textarea').forEach(clearField)});
 function collectIssues(root){
   const controls=[...root.querySelectorAll('input,select,textarea')];
   const issues=[];
@@ -136,7 +138,7 @@ function handleAttempt(e){
   const btn=e.target.closest?.('button,input[type="submit"],input[type="button"]');
   if(!btn)return;
   const text=norm(btn.textContent||btn.value).replace(/\s+/g,'');
-  if(text!=='예약신청하기')return;
+  if(btn.id!=='submitBooking'&&text!=='예약신청하기')return;
   const issues=collectIssues(root);
   if(!issues.length)return;
   e.preventDefault();e.stopImmediatePropagation();

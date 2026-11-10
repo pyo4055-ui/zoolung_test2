@@ -197,8 +197,6 @@
           <div><label class="req">입장시간</label><select id="entryTime"></select></div>
           <div><label class="req">퇴장시간</label><select id="exitTime"></select></div>
         </div>
-        <div class="help" id="visitTimeHelp"></div>
-        <div class="help hidden" id="afternoonProgramHelp">오후 단체는 자율 관람입니다. 식사와 놀이터는 오전 입장 시에만 예약할 수 있습니다.</div>
         <div>
           <label class="req">식사 선택</label>
           <select id="mealType">
@@ -207,8 +205,10 @@
             <option value="cafe">내부 카페(식사) 주문</option>
             <option value="none">식사하지 않음</option>
           </select>
-          <div class="help">※ 식사 여부와 관계없이 최대 <b>4시간</b> 이용할 수 있습니다.<br>※ 내부 카페에는 어린이를 위한 메뉴가 포함되어 있습니다.</div>
+          <div class="help">※ 오전 단체는 식사 시 최대 4시간, 식사하지 않으면 최대 3시간 이용할 수 있습니다.<br>※ 내부 카페에는 어린이를 위한 메뉴가 포함되어 있습니다.</div>
         </div>
+        <div class="help hidden" id="afternoonProgramHelp">오후 단체는 자율 관람입니다. 식사와 놀이터는 오전 입장 시에만 예약할 수 있습니다.</div>
+        <div class="help" id="visitTimeHelp"></div>
       </section>
 
       <section class="card hidden" id="generalGroupSection">
@@ -687,7 +687,7 @@
   </div>
 </div>
 
-<script src="./shared_booking_rules_v1.js?v=release-1792586551421"></script>
+<script src="./shared_booking_rules_v1.js?v=meal-edit-20261110"></script>
 <script src="./shared_booking_allocations_v1.js?v=release-1792586551421"></script>
 <script src="./customer_group_program_v1.js?v=entry-first-20261110"></script>
 <script>
@@ -865,7 +865,7 @@ function editPendingBooking(id){
   const fill=(key,value)=>{const el=$(key);if(el)el.value=value??''};
   for(const key of ['groupType','participantAgeMin','participantAgeMax','paidCount','chaperoneCount','orgName','managerName','contact','email','notes'])fill(key,b[key]);
   fill('visitMonth',String(b.date).slice(0,7));renderVisitDays();fill('visitDay',b.date);
-  fill('mealType',b.mealType||'none');$('mealType').onchange();fill('entryTime',b.entryTime);refreshExitTimes();fill('exitTime',b.exitTime);
+  fill('entryTime',b.entryTime);fill('mealType',b.mealType||'none');$('mealType').onchange();refreshExitTimes();fill('exitTime',b.exitTime);
   fill('mealStart',b.mealStart);fill('mealDuration',b.mealDuration||'');calcMeal();
   fill('playUse',b.playUse||'no');$('playUse').onchange();fill('playStart',b.playStart);fill('playDuration',b.playDuration||'');calcPlay();
   for(const item of b.cafe?.items||[])fill('qty_'+item.id,item.qty);
@@ -990,7 +990,7 @@ function calcPeople(){
 }
 function refreshExitTimes(){
   const e=toMin($("entryTime").value), meal=$("mealType").value;
-  const maxHours=4;
+  const maxHours=window.ZRBookingRules.maxVisitHours(window.ZRGroupBooking.general(),meal);
   const cur=$("exitTime").value;
   let opts=['<option value="">선택</option>'];
   for(let t=12*60;t<=19*60;t+=30){
@@ -1130,6 +1130,7 @@ function durationText(){
   return window.ZRBookingRules.durationLabel($("entryTime").value,$("exitTime").value);
 }
 function refreshSummary(){
+  $("groupUnitPriceLabel").value="1명당 "+money(window.ZRBookingRules.unitPrice())+" (VAT 포함)";
   if(window.ZRGroupBooking.sync())refreshExitTimes();
   window.ZRGroupBooking.presentation?.();
   const pc=calcPeople(), ca=$("mealType").value==="cafe"?cafeAmount():0;
@@ -1174,6 +1175,8 @@ function validateBooking(){
   if(isDateClosed(selectedDate(),{groupType:$("groupType").value,entryTime:$("entryTime").value}))return "선택한 날짜는 예약이 마감되었습니다.";
   if(!$("mealType").value)return "식사 여부를 선택해주세요.";
   if(!$("entryTime").value||!$("exitTime").value)return "입장·퇴장시간을 선택해주세요.";
+  const hours=window.ZRBookingRules.maxVisitHours(window.ZRGroupBooking.general(),$("mealType").value);
+  if(toMin($("exitTime").value)-toMin($("entryTime").value)>hours*60)return "퇴장시간을 최대 "+hours+"시간 이내로 선택해주세요.";
   if($("mealType").value!=="none"){
     if(!$("mealStart").value||!$("mealDuration").value)return "식사시간을 선택해주세요.";
     if(!validateMeal())return "식사시간을 방문시간 안으로 조정해주세요.";
@@ -1188,6 +1191,7 @@ function validateBooking(){
   return "";
 }
 function clearBookingForm(){ $("groupType").querySelector("option[data-legacy]")?.remove();
+  document.dispatchEvent(new Event("zr:booking-form-reset"));
   editingBookingId="";$("submitBooking").textContent="예약 신청하기";
   document.querySelectorAll("#customerView input:not([disabled]),#customerView textarea").forEach(x=>{if(x.type==="checkbox")x.checked=false;else if(x.id&&x.id.startsWith("qty_"))x.value=0;else x.value=""});
   document.querySelectorAll("#customerView select").forEach(x=>x.value="");
@@ -1386,7 +1390,7 @@ $("submitBooking").onclick=async()=>{
 
 initCounts();initTimes();initMonths();renderCustomerCafeMenus();renderVisitDays();refreshExitTimes();refreshPlayStarts();refreshSummary();
 </script>
-<script src="./customer_features_loader_v1.js?v=change-save-20261110"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=change-save-20261110"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
+<script src="./customer_features_loader_v1.js?v=meal-edit-20261110"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=change-save-20261110"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
 <script src="./shared_group_notice_v1.js?v=release-1792586551421"></script>
 </body>
 </html>

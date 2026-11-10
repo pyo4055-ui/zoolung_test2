@@ -57,7 +57,7 @@ async function loadCustomerGuideFixV20(){
 
 async function loadParkingInfo(){
   if(window.__ZR_PARKING_INFO_V31)return;
-  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=release-1792586551421');
+  await loadScript('zrParkingInfoV31','./parking_info_v31.js?v=meal-edit-20261110');
 }
 
 function installFinalConfirmBridge(){
@@ -91,11 +91,11 @@ async function loadCustomerModules(){
     ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792586551421'],
     ['zrCustomerInquiryVisitV1','./customer_inquiry_visit_v1.js?v=release-1792586551421'],
     ['zrCustomerInquiryValidationV1','./customer_inquiry_validation_v1.js?v=release-1792586551421'],
-    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=change-save-20261110'],
+    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=meal-edit-20261110'],
     ['zrCustomerGroupMinimumV1','./customer_group_minimum_v1.js?v=options-20261110'],
     ['zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792586551421'],
     ['zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792586551421'],
-    ['zrCustomerValidationFocusV1','./customer_validation_focus_v1.js?v=release-1792586551421'],
+    ['zrCustomerValidationFocusV1','./customer_validation_focus_v1.js?v=meal-edit-20261110'],
     ['zrCustomerScheduleUiV5','./customer_schedule_ui_v5.js?v=release-1792586551421'],
     ['zrCustomerVisualThemeV1','./customer_visual_theme_v1.js?v=release-1792586551421']
   ];
