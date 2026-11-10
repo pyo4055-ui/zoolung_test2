@@ -119,11 +119,19 @@ async function startListeners(user){
     ownFull=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
     fullReady=true;refreshWhenReady();
   },e=>{if(current())console.error('reservation owner listener',e)});
-  stopAvail=F.onSnapshot(F.collection(db,AVAIL_COLLECTION),snap=>{
+  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const available=F.collection(db,AVAIL_COLLECTION);
+  // Older reservations can hold a playground slot on a later visit date.
+  const queries=['date','changePlayHoldDate'].map(field=>F.query(available,F.where(field,'>=',today)));
+  const results=new Map();
+  const stops=queries.map((query,index)=>F.onSnapshot(query,snap=>{
     if(!current())return;
-    availability=new Map(snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
+    results.set(index,snap.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
+    if(results.size!==queries.length)return;
+    availability=new Map([...results.values()].flat());
     availabilityReady=true;refreshWhenReady();
-  },e=>{if(current())console.error('reservation availability listener',e)});
+  },e=>{if(current())console.error('reservation availability listener',e)}));
+  stopAvail=()=>stops.forEach(stop=>stop());
 }
 async function ensureUser(){
   if(auth.currentUser)return auth.currentUser;
