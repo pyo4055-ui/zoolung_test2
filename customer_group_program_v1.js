@@ -6,7 +6,12 @@ function general(){
   const group=$('groupType')?.value,date=$('visitDay')?.value,entry=$('entryTime')?.value;
   if(!group)return false;
   if(!['유치원','어린이집','유치원, 어린이집','유치원/어린이집'].includes(group))return true;
-  return !!(date&&entry&&!window.ZRBookingRules.groupProgram(group,date,entry));
+  if(!date)return false;
+  const rules=window.ZRBookingRules;
+  if(entry&&!rules.groupProgram(group,date,entry))return true;
+  return rules.bookingCapacityClosed(window.settings(),window.bookings(),{
+    id:window.zrEditingBookingId?.(),date,groupType:group,entryTime:'10:30'
+  });
 }
 function order(){
   const purchase=general()&&$('feedPurchase')?.value==='yes';
@@ -21,7 +26,7 @@ function presentation(){
   const isGeneral=general(),title=$('mealType')?.closest('section')?.querySelector?.('h2');
   if(title){const text=[...title.childNodes].find(n=>n.nodeType===3);if(text)text.textContent=isGeneral?'방문시간':'식사 및 방문시간'}
   for(const id of ['sumMeal','sumPlay']){const row=$(id);row?.classList.toggle('hidden',isGeneral);row?.previousElementSibling?.classList.toggle('hidden',isGeneral)}
-  if(isGeneral&&$('visitTimeHelp'))$('visitTimeHelp').textContent='직원 인솔이나 별도 스케줄 없이 자율 관람합니다. 최대 이용시간은 3시간이며, 퇴장은 18:00까지 가능합니다.';
+  if(isGeneral&&$('visitTimeHelp'))$('visitTimeHelp').textContent='직원 인솔이나 별도 스케줄 없이 자율 관람합니다. 최대 이용시간은 4시간이며, 퇴장은 18:00까지 가능합니다.';
   const entrySelect=$('entryTime'),rules=window.ZRBookingRules;
   if(entrySelect?.options&&typeof window.settings==='function'&&typeof window.bookings==='function'){
     const state=window.settings(),rows=window.bookings(),date=$('visitDay')?.value;
@@ -29,7 +34,7 @@ function presentation(){
       if(!option.value)continue;
       const closed=!!date&&rules.bookingCapacityClosed(state,rows,{id:window.zrEditingBookingId?.(),date,groupType:$('groupType')?.value,entryTime:option.value});
       const label=option.value+(closed?' (예약 마감)':'');
-      if(option.disabled!==closed)option.disabled=closed;
+      if(closed&&option.selected){entrySelect.value="";window.refreshExitTimes?.()} if(option.disabled!==closed)option.disabled=closed;
       if(option.textContent!==label)option.textContent=label;
     }
   }

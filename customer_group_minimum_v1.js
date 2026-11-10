@@ -22,7 +22,7 @@ function ensurePaidOptions(){
   const cur=String(sel.value||'');
   const existing=new Set([...sel.options].map(o=>String(o.value)));
   const before=[...sel.options].find(o=>Number(o.value)>=MIN_PAID)||null;
-  for(let n=1;n<MIN_PAID;n++){
+  for(let n=10;n<MIN_PAID;n++){
     if(existing.has(String(n)))continue;
     const o=document.createElement('option');o.value=String(n);o.textContent=`${n}명`;
     before?sel.insertBefore(o,before):sel.appendChild(o);
