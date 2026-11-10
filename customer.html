@@ -681,7 +681,7 @@
 
 <script src="./shared_booking_rules_v1.js?v=release-1792586551421"></script>
 <script src="./shared_booking_allocations_v1.js?v=release-1792586551421"></script>
-<script src="./customer_group_program_v1.js?v=options-20261110"></script>
+<script src="./customer_group_program_v1.js?v=exit19-20261110"></script>
 <script>
 const PRICE=15000;
 
@@ -985,12 +985,12 @@ function refreshExitTimes(){
   const maxHours=4;
   const cur=$("exitTime").value;
   let opts=['<option value="">선택</option>'];
-  for(let t=12*60;t<=18*60;t+=30){
+  for(let t=12*60;t<=19*60;t+=30){
     if(e!=null && t>e && t<=e+maxHours*60)opts.push(`<option value="${toTime(t)}">${toTime(t)}</option>`);
   }
   $("exitTime").innerHTML=opts.join("");
   if([...$("exitTime").options].some(o=>o.value===cur))$("exitTime").value=cur;
-  $("visitTimeHelp").textContent=meal?`동물원 최대 이용시간은 ${maxHours}시간입니다.`:"";
+  $("visitTimeHelp").textContent=meal?`동물원 최대 이용시간은 ${maxHours}시간이며, 퇴장은 19:00까지 가능합니다.`:"";
 }
 function cafeAmount(){
   let total=0;
@@ -1354,7 +1354,7 @@ $("submitBooking").onclick=async()=>{
 
 initCounts();initTimes();initMonths();renderCustomerCafeMenus();renderVisitDays();refreshExitTimes();refreshPlayStarts();refreshSummary();
 </script>
-<script src="./customer_features_loader_v1.js?v=options-20261110"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=availability-20261110"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
+<script src="./customer_features_loader_v1.js?v=exit19-20261110"></script><script src="./shared_store_dispatch_v1.js?v=release-1792586551421"></script><script src="./shared_reservation_records_v1.js?v=release-1792586551421"></script><script src="./customer_reservation_firebase_bridge_v1.js?v=availability-20261110"></script><script src="./shared_inquiry_records_v1.js?v=release-1792586551421"></script><script src="./inquiry_firebase_bridge_v1.js?v=release-1792586551421"></script><script src="./customer_entry_bootstrap_v1.js?v=release-1792586551421"></script><script src="./customer_entry_visual_v2_bootstrap.js?v=release-1792586551421"></script><script src="./customer_reservation_change_request_tag_v1.js?v=release-1792586551421"></script><script src="./customer_finish_low_risk_v1.js?v=release-1792586551421"></script><script src="./cancel_review_state_v1.js?v=release-1792586551421"></script><script src="./customer_cancel_commit_v1.js?v=release-1792586551421"></script><script src="./cafe_catalog_sync_v1.js?v=release-1792586551421"></script>
 <script src="./shared_group_notice_v1.js?v=release-1792586551421"></script>
 </body>
 </html>

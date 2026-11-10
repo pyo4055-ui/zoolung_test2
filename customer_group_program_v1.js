@@ -26,7 +26,7 @@ function presentation(){
   const isGeneral=general(),title=$('mealType')?.closest('section')?.querySelector?.('h2');
   if(title){const text=[...title.childNodes].find(n=>n.nodeType===3);if(text)text.textContent=isGeneral?'방문시간':'식사 및 방문시간'}
   for(const id of ['sumMeal','sumPlay']){const row=$(id);row?.classList.toggle('hidden',isGeneral);row?.previousElementSibling?.classList.toggle('hidden',isGeneral)}
-  if(isGeneral&&$('visitTimeHelp'))$('visitTimeHelp').textContent='직원 인솔이나 별도 스케줄 없이 자율 관람합니다. 최대 이용시간은 4시간이며, 퇴장은 18:00까지 가능합니다.';
+  if(isGeneral&&$('visitTimeHelp'))$('visitTimeHelp').textContent='직원 인솔이나 별도 스케줄 없이 자율 관람합니다. 최대 이용시간은 4시간이며, 퇴장은 19:00까지 가능합니다.';
   const entrySelect=$('entryTime'),rules=window.ZRBookingRules;
   if(entrySelect?.options&&typeof window.settings==='function'&&typeof window.bookings==='function'){
     const state=window.settings(),rows=window.bookings(),date=$('visitDay')?.value;
