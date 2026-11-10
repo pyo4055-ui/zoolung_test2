@@ -248,7 +248,8 @@ async function submitSharedChangeRequest(payload){
       return;
     }
     const bookingRef=F.doc(db,FULL_COLLECTION,bookingId),bookingSnap=await tx.get(bookingRef);
-    if(!bookingSnap.exists()||bookingSnap.data().ownerUid!==user.uid)throw Error('예약 소유자를 확인해주세요.');
+    if(!bookingSnap.exists())throw Error('공용 DB에서 기존 예약을 찾을 수 없습니다. 예약번호를 확인해주세요.');
+    if(bookingSnap.data().ownerUid!==user.uid)throw Error('예약을 접수한 브라우저에서 변경을 요청해주세요.');
     const writes=[],previousId=String(bookingSnap.data().changePlayHoldRequestId||'');
     if(previousId&&previousId!==requestId){
       const previousRef=F.doc(db,AVAIL_COLLECTION,changeHoldDocId(previousId)),previous=await tx.get(previousRef);
@@ -268,8 +269,11 @@ async function submitSharedChangeRequest(payload){
       };
       writes.push({ref:holdRef,data:hold});
     }
-    const allocate=await window.ZRBookingAllocations.prepareWrites(F,db,tx,writes);
-    allocate();for(const w of writes)tx.set(w.ref,w.data,{merge:true});
+    if(writes.length){
+      const allocate=await window.ZRBookingAllocations.prepareWrites(F,db,tx,writes);
+      allocate();
+      for(const w of writes)tx.set(w.ref,w.data,{merge:true});
+    }
     tx.set(ref,{
       ...p,id:String(p.id||requestId),sharedInquiryId:inquiryId,sharedInquiryVersion:1,ownerUid:user.uid,
       changeRequest:true,changeRequestId:requestId,changeBookingId:bookingId,updatedAt:F.serverTimestamp()
