@@ -91,7 +91,7 @@ async function loadCustomerModules(){
     ['zrCustomerReturnHomeV1','./customer_return_home_v1.js?v=release-1792586551421'],
     ['zrCustomerInquiryVisitV1','./customer_inquiry_visit_v1.js?v=release-1792586551421'],
     ['zrCustomerInquiryValidationV1','./customer_inquiry_validation_v1.js?v=release-1792586551421'],
-    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=exit19-20261110'],
+    ['zrCustomerReservationChangeRequestV1','./customer_reservation_change_request_v1.js?v=change-save-20261110'],
     ['zrCustomerGroupMinimumV1','./customer_group_minimum_v1.js?v=options-20261110'],
     ['zrCustomerScheduleScript','./customer_schedule_view_v3.js?v=release-1792586551421'],
     ['zrCustomerBookingRulesScript','./customer_booking_rules_v3.js?v=release-1792586551421'],

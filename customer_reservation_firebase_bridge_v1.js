@@ -254,7 +254,10 @@ async function submitSharedChangeRequest(payload){
       const previousRef=F.doc(db,AVAIL_COLLECTION,changeHoldDocId(previousId)),previous=await tx.get(previousRef);
       if(previous.exists()&&previous.data().sourceBookingId===bookingId)writes.push({ref:previousRef,data:{date:'',status:'done',playUse:'no',playStart:'',playEnd:'',playDuration:0,changePlayHoldActive:false,changePlayHoldDate:'',changePlayHoldStart:'',changePlayHoldEnd:'',changePlayHoldDuration:0,updatedAt:F.serverTimestamp()}});
     }
-    writes.push({ref:bookingRef,data:{changePlayHoldRequestId:holdId?requestId:'',updatedAt:F.serverTimestamp()}});
+    const nextHoldRequestId=holdId?requestId:'';
+    if(previousId!==nextHoldRequestId){
+      writes.push({ref:bookingRef,data:{changePlayHoldRequestId:nextHoldRequestId,updatedAt:F.serverTimestamp()}});
+    }
     if(holdId){
       const date=String(p.changeRequestedDate||p.requestedDate||''),start=String(p.playStart||''),end=String(p.playEnd||''),duration=Number(p.playDuration||0);
       if(!date||!start||!end||![30,60].includes(duration))throw new Error('reservation change playground hold invalid');
