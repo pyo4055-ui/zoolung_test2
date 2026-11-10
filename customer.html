@@ -1325,7 +1325,17 @@ $("submitBooking").onclick=async()=>{
     finally{controls.forEach(([el,disabled])=>{el.disabled=disabled});submissionLocked=false;$("submitBooking").disabled=false;$("submitBooking").textContent=editingBookingId?"예약 수정 저장":"예약 신청하기"}
     return;
   }
-  const bs=bookings();bs.push(b);setStore("zr_bookings",bs);
+  try{
+    const bridge=window.zrReservationFirebase;
+    if(!bridge?.createBooking)throw Error('예약 서버에 연결 중입니다. 잠시 후 다시 시도해주세요.');
+    await bridge.createBooking(b);
+  }catch(e){
+    console.error('customer booking submission',e);
+    const message=/[가-힣]/.test(e.message||'')?e.message:'예약 접수를 확인하지 못했습니다. 입력 내용은 유지됩니다.';
+    toast(message);
+    submissionLocked=false;$("submitBooking").disabled=false;
+    return;
+  }
   addActivity("submitted",b,"예약 접수");
   showSuccess(b);
 };

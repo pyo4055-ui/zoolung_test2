@@ -87,7 +87,7 @@ service cloud.firestore {
     }
     function customerBookingCreate() {
       return validCustomerBooking(request.resource.data)
-        && request.resource.data.keys().hasOnly(customerBookingFields().concat(['schedulePublished','customerSchedule']))
+        && request.resource.data.keys().hasOnly(customerBookingFields())
         && validCustomerOptions(request.resource.data) && validCustomerChange(request.resource.data)
         && request.resource.data.get('email','') is string && request.resource.data.get('email','').size() <= 320
         && request.resource.data.get('notes','') is string && request.resource.data.get('notes','').size() <= 20000
@@ -250,9 +250,13 @@ service cloud.firestore {
     function allocationRangePresent(id,day,start,end) {
       let a = timeMinutes(start);
       let span = timeMinutes(end)-a;
+      let prefix = /databases/$(database)/documents/playgroundAllocations;
+      let key = day + '__';
       return a%15 == 0 && span in [30,60]
-        && allocationSlotHas(id,day,a) && allocationSlotHas(id,day,a+15)
-        && (span == 30 || (allocationSlotHas(id,day,a+30) && allocationSlotHas(id,day,a+45)));
+        && getAfter(/$(prefix)/$(key + string(a))).data.members[id] == true
+        && getAfter(/$(prefix)/$(key + string(a+15))).data.members[id] == true
+        && (span == 30 || (getAfter(/$(prefix)/$(key + string(a+30))).data.members[id] == true
+          && getAfter(/$(prefix)/$(key + string(a+45))).data.members[id] == true));
     }
     function activeAllocationValid(id,after) {
       let day = after.get('date','');
@@ -316,6 +320,19 @@ service cloud.firestore {
         && (b.get('changePlayHoldDedicated',false) || related.get('sourceBookingId','') == d.lastBookingId);
     }
     match /playgroundAllocations/{slotId} {
+      // A new slot has no previous members or overlapping holds to reconcile.
+      function firstSlot() {
+        let d = request.resource.data;
+        let id = d.lastBookingId;
+        let b = getAfter(/databases/$(database)/documents/reservations/$(id)).data;
+        let parts = slotId.split('__');
+        let minute = int(parts[1]);
+        return d.version == 1 && d.members is map && d.members.size() == 1 && d.members.get(id,false) == true
+          && d.keys().hasOnly(['version','members','lastBookingId','updatedAt'])
+          && b.ownerUid == request.auth.uid && parts.size() == 2
+          && parts[1] == string(minute) && minute >= 0 && minute < 1440 && minute % 15 == 0
+          && allocationUsesSlot(b,parts[0],minute);
+      }
       function valid() {
         let d = request.resource.data;
         let old = exists(/databases/$(database)/documents/playgroundAllocations/$(slotId)) ? resource.data.members : {};
@@ -326,6 +343,7 @@ service cloud.firestore {
           && (allocationSettings().get('playgroundLimitEnabled',true) == false || d.members.size() <= 1 || d.members.size() <= old.size()
             || allocationOwnOverlap(d,b));
       }
+      allow create: if request.auth != null && !request.resource.data.lastBookingId.matches('^changePlayHold_.*') && firstSlot();
       allow read: if request.auth != null;
       allow create, update: if request.auth != null && ((isScheduleStaff() && allocationConfig().get('enforced',false) != true) || valid());
       allow delete: if false;

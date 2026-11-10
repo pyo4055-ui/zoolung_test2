@@ -323,6 +323,10 @@ async function boot(){
       isStaff:()=>false,
       ownsBooking:id=>!!auth.currentUser?.uid&&ownFull.get(String(id))?.ownerUid===auth.currentUser.uid,
       waitForWrites,cancelBooking,updatePendingBooking,
+      async createBooking(booking){
+        const user=await ensureUser();
+        await writeBookingPair(String(booking.id),null,booking,user.uid);
+      },
       submitChangeRequest:submitSharedChangeRequest,
       clearChangePlayHold:clearOwnChangePlayHold
     };
