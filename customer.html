@@ -1290,8 +1290,12 @@ $("submitInquiry").onclick=()=>{
 
 ["participantAgeMin","participantAgeMax","feedPurchase","feedQuantity","paidCount","chaperoneCount","groupType","orgName","managerName","contact","email"].forEach(id=>$(id).addEventListener("input",refreshSummary));
 $("groupType").addEventListener("change",()=>{renderVisitDays();refreshPlayStarts();refreshSummary()});
-$("visitMonth").onchange=()=>{renderVisitDays();refreshPlayStarts();refreshSummary()};
-$("visitDay").onchange=()=>{refreshPlayStarts();refreshSummary()};
+function resetVisitTimesForDateChange(){
+  for(const id of ["entryTime","exitTime","mealStart","mealDuration","mealEnd","playStart","playDuration","playEnd"])$(id).value="";
+  refreshExitTimes();refreshPlayStarts();refreshSummary();
+}
+$("visitMonth").onchange=()=>{renderVisitDays();resetVisitTimesForDateChange()};
+$("visitDay").onchange=resetVisitTimesForDateChange;
 $("mealType").onchange=()=>{
   const v=$("mealType").value;$("cafeSection").classList.toggle("hidden",v!=="cafe");$("mealTimeSection").classList.toggle("hidden",!["cafe","lunchbox"].includes(v));
   if(v==="cafe")renderCustomerCafeMenus();
