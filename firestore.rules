@@ -351,6 +351,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // A lookup is explicitly scoped to both customer-supplied fields. This is
+    // not phone verification; it deliberately grants read-only matching access.
+    match /customerLookupSessions/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['managerName','contact','updatedAt'])
+        && request.resource.data.managerName is string
+        && request.resource.data.managerName.size() > 0
+        && request.resource.data.managerName.size() <= 100
+        && request.resource.data.contact is string
+        && request.resource.data.contact.matches('^[0-9]{9,11}$')
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    function matchesCustomerLookup(d) {
+      let session = get(/databases/$(database)/documents/customerLookupSessions/$(request.auth.uid)).data;
+      return session.updatedAt > request.time - duration.value(10, 'm')
+        && d.managerName == session.managerName && d.contact == session.contact;
+    }
     match /reservations/{reservationId} {
 
       allow get: if request.auth != null && !exists(/databases/$(database)/documents/reservations/$(reservationId));
@@ -360,7 +379,7 @@ service cloud.firestore {
         || (
           request.auth != null
           && resource.data.ownerUid == request.auth.uid
-        );
+        ) || (request.auth != null && matchesCustomerLookup(resource.data));
 
       // 관리자 예약 생성
       // 고객은 자기 UID로만 예약 생성

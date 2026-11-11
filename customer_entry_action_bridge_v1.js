@@ -116,9 +116,20 @@ function syncLookupState(){
   }
   return !!has;
 }
-function runLookup(){
+async function runLookup(){
   const v=entryValues();if(!v)return;
   syncNative(v);ensureResultsRegion();
+  const button=$('zrCustomerEntryLookupV2');
+  if(button?.disabled)return;
+  if(button)button.disabled=true;
+  try{
+    if(!window.zrReservationFirebase?.lookupByContact)throw Error('예약 조회 연결을 준비 중입니다. 잠시 후 다시 눌러주세요.');
+    await window.zrReservationFirebase.lookupByContact(v.name,v.phone);
+  }catch(e){
+    console.error('customer contact lookup',e);
+    toast(e.code?'예약 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.':e.message);
+    return;
+  }finally{if(button)button.disabled=false}
   const lookup=$('lookupBooking');
   if(!lookup){toast('예약 조회 화면을 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.');return}
   try{lookup.click()}catch{}

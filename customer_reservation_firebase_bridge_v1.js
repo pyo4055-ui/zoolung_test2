@@ -25,6 +25,7 @@ let auth=null,db=null,F=null,currentUser=null;
 let stopFull=null,stopAvail=null;
 let listenerGeneration=0,listeningUid=null;
 let ownFull=new Map(),availability=new Map(),legacyLocal=new Map();
+let lookupFull=new Map(),lookupInFlight=null;
 let applyingRemote=false,writeChain=Promise.resolve(),lastWriteError=null,bridgeStarted=false;
 
 const readLocal=()=>{try{const rows=JSON.parse(localStorage.getItem(BOOKING_KEY)||'[]');return Array.isArray(rows)?rows.filter(row=>row&&typeof row==='object'&&!Array.isArray(row)):[]}catch{return []}};
@@ -89,7 +90,7 @@ function refreshUi(){
   try{document.dispatchEvent(new CustomEvent('zr:reservation-availability-updated'))}catch{}
 }
 function applyCustomerCache(){
-  const full=[...ownFull.values()].map(x=>clone(x));
+  const full=[...new Map([...lookupFull,...ownFull]).values()].map(x=>clone(x));
   const ids=new Set(full.map(x=>String(x.id)));
   const legacy=[...legacyLocal.values()].filter(x=>!ids.has(String(x.id))).map(x=>({...clone(x),__legacyLocal:true}));
   legacy.forEach(x=>ids.add(String(x.id)));
@@ -139,6 +140,24 @@ async function ensureUser(){
   const cred=await F.signInAnonymously(auth);
   return cred.user;
 }
+async function lookupByContact(name,phone){
+  const managerName=String(name||'').trim(),contact=String(phone||'').replace(/\D/g,'');
+  if(!managerName||managerName.length>100||!/^\d{9,11}$/.test(contact))throw Error('예약자명과 연락처를 확인해주세요.');
+  // Serialize lookups: the server-side scope belongs to this browser's UID.
+  if(lookupInFlight)await lookupInFlight.catch(()=>{});
+  const task=(async()=>{
+    const user=await ensureUser();
+    lookupFull.clear();applyCustomerCache();
+    await F.setDoc(F.doc(db,'customerLookupSessions',user.uid),{managerName,contact,updatedAt:F.serverTimestamp()});
+    const result=await F.getDocsFromServer(F.query(F.collection(db,FULL_COLLECTION),F.where('managerName','==',managerName),F.where('contact','==',contact)));
+    if(auth.currentUser?.uid!==user.uid)throw Error('로그인 상태가 변경되었습니다. 다시 조회해주세요.');
+    lookupFull=new Map(result.docs.map(doc=>[doc.id,{...doc.data(),id:doc.id,__contactLookup:true}]));
+    applyCustomerCache();
+    return result.size;
+  })();
+  lookupInFlight=task;
+  try{return await task}finally{if(lookupInFlight===task)lookupInFlight=null}
+}
 function queueBookingSync(before,after){
   if(applyingRemote)return writeChain;
   const changed=bookingChanges(before,after).map(({id,old,b})=>({id,old:old?clone(old):old,b:clone(b)}));
@@ -151,7 +170,7 @@ function queueBookingSync(before,after){
     if(queuedUid&&user.uid!==queuedUid)throw Error('booking session changed');
     for(const {id,old,b} of changed){
       if(auth?.currentUser?.uid!==user.uid)throw Error('booking session changed');
-      if(b.__availabilityOnly)continue;
+      if(b.__availabilityOnly||b.__contactLookup&&!ownFull.has(id))continue;
       const remoteOwner=ownFull.get(id)?.ownerUid||'';
       if(remoteOwner&&remoteOwner!==user.uid){
         console.warn('skip write: booking is not owned by this customer session',id);continue;
@@ -315,7 +334,7 @@ function patchSetStore(){
 }
 async function boot(){
   if(bridgeStarted)return;bridgeStarted=true;
-  legacyLocal=new Map(readLocal().filter(x=>x&&x.id&&!x.__availabilityOnly).map(x=>[String(x.id),x]));
+  legacyLocal=new Map(readLocal().filter(x=>x&&x.id&&!x.__availabilityOnly&&!x.__contactLookup).map(x=>[String(x.id),x]));
   try{
     const [appMod,authMod,fsMod]=await Promise.all([
       import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-app.js`),
@@ -339,7 +358,7 @@ async function boot(){
       get user(){return currentUser},
       isStaff:()=>false,
       ownsBooking:id=>!!auth.currentUser?.uid&&ownFull.get(String(id))?.ownerUid===auth.currentUser.uid,
-      waitForWrites,cancelBooking,updatePendingBooking,
+      waitForWrites,cancelBooking,updatePendingBooking,lookupByContact,
       async createBooking(booking){
         const user=await ensureUser();
         await writeBookingPair(String(booking.id),null,booking,user.uid);

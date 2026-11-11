@@ -56,7 +56,7 @@ function loadActionBridge(){
   const a=document.createElement('script');
   a.id='zrCustomerEntryActionBridgeV1Script';
   a.async=false;
-  a.src='./customer_entry_action_bridge_v1.js?v=release-1792586551421';
+  a.src='./customer_entry_action_bridge_v1.js?v=contact-lookup-1';
   a.onload=loadLookupSurfaceFix;
   a.onerror=()=>{a.remove();loadLookupSurfaceFix()};
   document.body.appendChild(a);
