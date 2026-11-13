@@ -27,6 +27,7 @@ function fitOnePage(doc){
   sheet.style.zoom=String(Math.max(.54,Math.min(1,targetH/h)));
 }
 function standalonePrint(){
+  if(window.ZRSalesPage&&!window.ZRSalesPage.ready())return;
   const sec=$('tab-sales-dashboard'),panel=sec?.querySelector('.zr-sales-panel.active');if(!sec||sec.classList.contains('hidden')||!panel)return;
   const clone=panel.cloneNode(true);window.zrCopyAdminPrintAppearanceV1?.(panel,clone);syncFormValues(panel,clone);clone.querySelectorAll('button').forEach(b=>b.remove());clone.querySelectorAll('[hidden]').forEach(el=>el.removeAttribute('hidden'));clone.style.display='block';clone.classList.add('active');
   const frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');frame.style.cssText='position:fixed;left:-12000px;top:0;width:1140px;height:780px;border:0;opacity:0;pointer-events:none';document.body.appendChild(frame);

@@ -83,6 +83,7 @@ function ensureRevisitPanel(){
 }
 function renderRevisit(){
   if(currentMode()!=='revisit')return;
+  if(window.ZRSalesPage&&!window.ZRSalesPage.ready())return;
   const p=$('zrSalesRevisitPanel');if(!p)return;
   if(!p.dataset.ready){
     const y=new Date().getFullYear();
@@ -117,6 +118,7 @@ function activatePanels(){
 }
 function refresh(){injectStyle();if(!ensureRevisitPanel())return false;activatePanels();enhanceYearControls();syncRail();recolorCharts();if(currentMode()==='revisit')renderRevisit();return true}
 function bind(){if(bound)return;bound=true;document.addEventListener('click',e=>{if(e.target?.closest?.('#zrAdminSalesDashboardRailV1,[data-zr-sales-rail-mode]'))setTimeout(refresh,50)},true);document.addEventListener('change',e=>{if(e.target?.closest?.('#tab-sales-dashboard'))setTimeout(()=>{enhanceYearControls();recolorCharts()},20)},true)}
+window.ZRSalesViews.register('revisit',renderRevisit);
 function boot(){bind();let tries=0;const t=setInterval(()=>{tries++;if(refresh()&&tries>4)clearInterval(t);if(tries>100)clearInterval(t)},120)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 document.addEventListener('zr:admin-runtime-ready',()=>setTimeout(boot,50),{once:true});
