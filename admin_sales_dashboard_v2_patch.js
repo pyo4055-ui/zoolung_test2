@@ -79,7 +79,6 @@ function yearInputs(){
 function renderAnnual(){
   if(currentMode()!=='year')return;
   const refs=yearInputs();if(!refs?.body)return;
-  if(window.ZRSalesPage&&!window.ZRSalesPage.ready())return;
   const y=new Date().getFullYear(),base=Math.max(2000,Number(refs.base?.value||y)),comp=Math.max(2000,Number(refs.comp?.value||y-1));
   const a=aggregate(settledInYear(base)),b=aggregate(settledInYear(comp));
   refs.body.innerHTML=`<div class="zr-sales-grid2" style="margin-bottom:12px">
@@ -112,7 +111,6 @@ function menuShares(bookings){
   return [...map.values()].filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
 }
 function renderCafeMenu(){
-  if(window.ZRSalesPage&&!window.ZRSalesPage.ready())return;
   if(currentMode()!=='cafe')return;
   const ym=$('zrSalesCafeMonth')?.value||(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`})();
   const bookings=settledInMonth(ym).filter(b=>Number(b?.settlement?.actualCafeAmount||0)>0),menus=menuShares(bookings),sum=bookings.reduce((s,b)=>s+Math.max(0,Number(b?.settlement?.actualCafeAmount||0)),0),avg=bookings.length?Math.round(sum/bookings.length):0,body=$('zrSalesCafeBody');if(!body)return;

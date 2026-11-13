@@ -142,7 +142,7 @@ function renderCompare(kind){
   <div class="zr-sales-note">기준 월과 비교 월을 자유롭게 선택할 수 있어 특정 월끼리 회사 보고용 비교가 가능합니다.</div>`;
 }
 const reportViews={};
-function renderAll(){const sec=$('tab-sales-dashboard');if(!sec||sec.classList.contains('hidden'))return;if(window.ZRSalesPage&&!window.ZRSalesPage.ready())return;if(mode==='monthly')renderMonthly();else if(mode==='prev')renderCompare('prev');else reportViews[mode]?.();window.ZRAdminHelp?.tidy(sec)}
+function renderAll(){const sec=$('tab-sales-dashboard');if(!sec||sec.classList.contains('hidden'))return;if(mode==='monthly')renderMonthly();else if(mode==='prev')renderCompare('prev');else reportViews[mode]?.();window.ZRAdminHelp?.tidy(sec)}
 window.ZRSalesViews=Object.freeze({register(name,render){reportViews[name]=render},refresh:renderAll});
 function selectMode(next){
   mode=next||'monthly';const sec=ensureSection();if(!sec)return;
